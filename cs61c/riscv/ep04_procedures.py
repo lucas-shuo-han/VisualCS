@@ -193,7 +193,7 @@ class Ep04Procedures(NarratedScene):
         self.hold()
         self.clear_stage()
 
-        col = WordColumn(0x1000, 5, cell_w=2.8, font_size=24).move_to(RIGHT * 2.4 + DOWN * 0.3)
+        col = WordColumn(0x1000, 5, cell_w=2.8, font_size=24).move_to(RIGHT * 3.0 + DOWN * 0.3)
         col.texts[0].become(zh("调用者的数据", 22, GREY).move_to(col.cells[0]))
         col.cells[0].set_fill(GREY_D, 0.5)
         sp_arrow = VGroup(Arrow(RIGHT * 1.0, ORIGIN, buff=0, color=C_SP), mono("sp", 28, C_SP))
@@ -259,14 +259,14 @@ class Ep04Procedures(NarratedScene):
         self.say("最后看一个完整的例子：sumSquare 会调用另一个函数 mult。", FadeIn(c, shift=RIGHT * 0.2))
         src = [
             "sumSquare:",
-            "    addi sp, sp, -8    # 序言：腾出空间",
+            "    addi sp, sp, -8    # 腾出空间",
             "    sw   ra, 4(sp)     # 保存 ra",
             "    sw   a1, 0(sp)     # 保存 y",
-            "    mv   a1, a0        # 参数：mult(x, x)",
+            "    mv   a1, a0        # a1 = x",
             "    jal  ra, mult      # ra 被覆盖！",
             "    lw   a1, 0(sp)     # 恢复 y",
-            "    add  a0, a0, a1    # mult(x, x) + y",
-            "    lw   ra, 4(sp)     # 尾声：恢复 ra",
+            "    add  a0, a0, a1    # + y",
+            "    lw   ra, 4(sp)     # 恢复 ra",
             "    addi sp, sp, 8",
             "    jr   ra",
         ]
@@ -281,10 +281,10 @@ class Ep04Procedures(NarratedScene):
         regs.arrange_in_grid(2, 2, buff=(0.6, 0.2)).to_corner(UR, buff=0.45)
         R = dict(zip(["sp", "ra", "a0", "a1"], regs))
         col = WordColumn(0x1000, 4, cell_w=2.5, font_size=22).next_to(regs, DOWN, buff=0.6)
-        col.shift(LEFT * 0.2)
+        col.set_x(3.6)
         col.texts[0].become(zh("调用者的数据", 20, GREY).move_to(col.cells[0]))
         col.cells[0].set_fill(GREY_D, 0.5)
-        sp_arrow = VGroup(Arrow(RIGHT * 0.8, ORIGIN, buff=0, color=C_SP), mono("sp", 24, C_SP))
+        sp_arrow = VGroup(Arrow(RIGHT * 0.6, ORIGIN, buff=0, color=C_SP), mono("sp", 24, C_SP))
         sp_arrow[1].next_to(sp_arrow[0], RIGHT, buff=0.1)
         sp_arrow.next_to(col.cells[0], RIGHT, buff=0.08)
         xy = zh("x = 3，y = 5", 24, GREY_A).next_to(col, DOWN, buff=0.35)
