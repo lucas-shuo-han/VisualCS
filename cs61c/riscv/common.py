@@ -425,6 +425,7 @@ class BitField(VGroup):
         self.labels = VGroup()
         self.ranges = VGroup()
         self.field_digits = []
+        self.bits = ["0" * f[1] for f in fields]
         x = 0.0
         hi = 31
         for f in fields:
@@ -478,6 +479,7 @@ class BitField(VGroup):
     def fill_field(self, i, bits: str) -> AnimationGroup:
         digs = self.field_digits[i]
         assert len(bits) == len(digs), (i, bits)
+        self.bits[i] = bits
         anims = []
         for d, ch in zip(digs, bits):
             new = self._digit(ch, d.get_center())
@@ -487,6 +489,10 @@ class BitField(VGroup):
     def set_bits_now(self, bits: str):
         bits = bits.replace(" ", "").replace("_", "")
         assert len(bits) == 32
+        k = 0
+        for i, f in enumerate(self.fields):
+            self.bits[i] = bits[k:k + f[1]]
+            k += f[1]
         for d, ch in zip(self.digits, bits):
             d.become(self._digit(ch, d.get_center()))
         return self
@@ -564,8 +570,8 @@ def file_icon(name, color=BLUE_C, w=1.3, h=1.6, font_size=22) -> VGroup:
         [w / 2, -h / 2, 0], [-w / 2, -h / 2, 0],
         stroke_color=color, stroke_width=3, fill_color=color, fill_opacity=0.12,
     )
-    corner = Polyline([w / 2 - fold, h / 2, 0], [w / 2 - fold, h / 2 - fold, 0],
-                      [w / 2, h / 2 - fold, 0], stroke_color=color, stroke_width=2)
+    corner = VMobject(stroke_color=color, stroke_width=2).set_points_as_corners(
+        [[w / 2 - fold, h / 2, 0], [w / 2 - fold, h / 2 - fold, 0], [w / 2, h / 2 - fold, 0]])
     label = mono(name, font_size, WHITE).move_to(body)
     if label.width > w * 0.9:
         label.scale_to_fit_width(w * 0.9)
@@ -699,9 +705,12 @@ class NarratedScene(Scene):
                 self.add_subcaption(self._cap_text, duration=dur, offset=-dur)
             self._cap_text = None
 
-    def say(self, text, *anims, need=None, extra=0.0):
+    def say(self, text, *anims, need=None, extra=0.0, run_time=None):
         """Show caption `text` (after the previous one has been readable long
         enough) while playing `anims`."""
+        if run_time is not None:
+            for a in anims:
+                a.run_time = run_time
         self._flush()
         self._close_sub()
         new = self._make_caption(text)
@@ -757,7 +766,7 @@ class NarratedScene(Scene):
         self.wait(1.6)
         self.play(FadeOut(grp, shift=UP * 0.3))
 
-    def end_card(self, lines, next_title=None):
+    def end_card(self, lines, next_title=None, footer=None):
         self.uncaption()
         self.clear_stage()
         head = zh("小结", 40, YELLOW_D)
@@ -774,9 +783,75 @@ class NarratedScene(Scene):
             self.play(FadeIn(it, shift=RIGHT * 0.2), run_time=0.6)
             self.wait(reading_time(it[1].text) * 0.8)
         self.wait(1.5)
-        if next_title:
-            nxt = zh(f"下一集：{next_title}", 30, GREY_A).to_edge(DOWN, buff=0.5)
+        if next_title or footer:
+            nxt = zh(footer or f"下一集：{next_title}", 30, GREY_A).to_edge(DOWN, buff=0.5)
             self.play(FadeIn(nxt, shift=UP * 0.2))
             self.wait(2.2)
         self.play(*[FadeOut(m) for m in self.mobjects], run_time=1.0)
         self.wait(0.5)
+
+
+# ---------------------------------------------------------------- instruction-format episodes
+
+
+def bits_to_hex(bits: str) -> str:
+    return f"0x{int(bits, 2):08X}"
+
+
+class FormatScene(NarratedScene):
+    """Helpers shared by the two instruction-format episodes."""
+
+    def encode(self, bf, fills, note_size=20, rt=0.9):
+        """fills: list of (field index, bits, note). Returns the note mobjects."""
+        notes = VGroup()
+        for i, bits, note in fills:
+            anims = [bf.fill_field(i, bits)]
+            if note:
+                n = mono(note, note_size, bf.fields[i][2]).next_to(bf.ranges[i], DOWN, buff=0.12)
+                if n.width > bf.frames[i].width + 0.3:
+                    n.scale_to_fit_width(bf.frames[i].width + 0.3)
+                notes.add(n)
+                anims.append(FadeIn(n, shift=UP * 0.1))
+            self.play(*anims, run_time=rt)
+        return notes
+
+    def hex_of(self, bf, y_below, color=YELLOW_D, size=34):
+        """Group the 32 digits into nibbles and show the hex value under them."""
+        bits = "".join(bf.bits)
+        hx = f"{int(bits, 2):08X}"
+        nibbles = VGroup()
+        anims = []
+        for k in range(8):
+            grp = VGroup(*bf.digits[4 * k:4 * k + 4])
+            h = mono(hx[k], size, color)
+            h.move_to([grp.get_center()[0], y_below, 0])
+            nibbles.add(h)
+            anims.append(TransformFromCopy(grp, h))
+        seps = VGroup(*[
+            Line(UP * 0.25, DOWN * 0.25, stroke_color=GREY, stroke_width=1.5).move_to(
+                [(bf.digits[4 * k - 1].get_center()[0] + bf.digits[4 * k].get_center()[0]) / 2, y_below, 0])
+            for k in range(1, 8)
+        ])
+        self.play(LaggedStart(*anims, lag_ratio=0.1), FadeIn(seps), run_time=1.6)
+        final = mono(f"0x{hx}", size + 6, color).move_to([bf.get_center()[0], y_below, 0])
+        self.play(ReplacementTransform(nibbles, final[2:]), FadeIn(final[:2]), FadeOut(seps))
+        return final
+
+    def fly_bits(self, row, bf, routes, run_time=1.8):
+        """Fly digits from a source bit_row into BitField fields.
+
+        routes: list of (field index, [source cell indices]) filling the field
+        left to right. Copies land on the field's digit slots, then the field is
+        committed so it can be read back (bf.bits) later."""
+        copies, fills = [], []
+        for fi, srcs in routes:
+            slots = bf.field_digits[fi]
+            for slot, k in zip(slots, srcs):
+                c = row[k][1].copy()
+                copies.append((c, slot))
+            fills.append((fi, "".join(row[k][1].text for k in srcs)))
+        self.play(LaggedStart(*[c.animate.match_height(p).move_to(p).set_color(WHITE) for c, p in copies],
+                              lag_ratio=0.05), run_time=run_time)
+        for fi, bits in fills:
+            self.play(bf.fill_field(fi, bits), run_time=0.01)
+        self.remove(*[c for c, _ in copies])
