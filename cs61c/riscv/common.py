@@ -9,6 +9,10 @@ version: every on-screen string is then looked up in the episode's table in
 i18n/epNN.py (see tools/i18n_check.py). A missing entry is an error, so no
 Chinese can slip into an English video; VCS_I18N_LAX=1 downgrades it to a
 warning while drafting.
+
+VCS_TTS=1 adds a voice-over: every caption (plus the title and the summary) is
+spoken by a neural voice (see tts.py), and each caption stays up at least as
+long as its audio.
 """
 
 from __future__ import annotations
@@ -25,6 +29,7 @@ import series
 LANG = os.environ.get("VCS_LANG", "zh").lower()
 EN = LANG == "en"
 I18N_LAX = os.environ.get("VCS_I18N_LAX") == "1"
+TTS = os.environ.get("VCS_TTS") == "1"
 I18N_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "i18n")
 
 # ideographs, CJK punctuation and fullwidth forms: text that must be translated
@@ -828,9 +833,21 @@ class NarratedScene(Scene):
                 self.add_subcaption(self._cap_text, duration=dur, offset=-dur)
             self._cap_text = None
 
-    def say(self, text, *anims, need=None, extra=0.0, run_time=None):
+    def voice(self, text, speak=None, delay=0.15):
+        """Start the voice-over for `text` now (a no-op unless VCS_TTS=1);
+        returns how long it keeps talking. `speak` overrides the spoken
+        wording (it goes through the translation table like `text`)."""
+        if not TTS or not text:
+            return 0.0
+        import tts
+        path, dur = tts.synth(text, LANG, speak=tr(speak) if speak else None)
+        self.add_sound(str(path), time_offset=delay)
+        return delay + dur
+
+    def say(self, text, *anims, need=None, extra=0.0, run_time=None, speak=None):
         """Show caption `text` (after the previous one has been readable long
-        enough) while playing `anims`."""
+        enough) while playing `anims`. With a voice-over, the caption also stays
+        until its audio has finished."""
         if run_time is not None:
             for a in anims:
                 a.run_time = run_time
@@ -842,9 +859,11 @@ class NarratedScene(Scene):
         if self._cap is not None:
             swap.append(FadeOut(self._cap, run_time=0.3))
         self._cap_t0 = self.time
+        talk = self.voice(text, speak)
         self.play(*swap, *anims)
         self._cap, self._cap_text = new, text
-        self._cap_need = (reading_time(text) if need is None else need) + extra
+        need = reading_time(text) if need is None else need
+        self._cap_need = max(need, talk + 0.35 if talk else 0.0) + extra
 
     def hold(self, extra=0.0):
         """Wait until the current caption has been readable, plus `extra`."""
@@ -891,10 +910,12 @@ class NarratedScene(Scene):
                 parts[-1].scale_to_fit_width(12.6)
         grp = VGroup(*parts).arrange(DOWN, buff=0.4)
         self.play(FadeIn(tag, shift=DOWN * 0.3), FadeIn(num, shift=DOWN * 0.3))
+        t0 = self.time
+        talk = self.voice(f"Episode {n}: {title}." if EN else f"第 {n} 集：{title}。")
         self.play(Write(t), run_time=1.6)
         if subtitle:
             self.play(FadeIn(parts[-1], shift=UP * 0.2))
-        self.wait(1.6)
+        self.wait(max(1.6, talk + 0.5 - (self.time - t0)))
         self.play(FadeOut(grp, shift=UP * 0.3))
 
     def end_card(self, lines, footer=None):
@@ -913,21 +934,32 @@ class NarratedScene(Scene):
         if grp.width > 13.2:
             grp.scale_to_fit_width(13.2)
         grp.move_to(UP * 0.35)
+        talk = self.voice("To sum up." if EN else "小结一下。")
         self.play(FadeIn(head, shift=DOWN * 0.2))
-        for it in items:
+        if talk > 1.05:
+            self.wait(talk - 1.0)
+        for it, s in zip(items, lines):
+            t0 = self.time
+            talk = self.voice(tr(s))
             self.play(FadeIn(it, shift=RIGHT * 0.2), run_time=0.6)
-            self.wait(reading_time(it[1].text) * 0.8)
+            self.wait(max(reading_time(it[1].text) * 0.8, talk + 0.3) - (self.time - t0))
         self.wait(1.5)
+        spoken_footer = None
         if footer is None:
             if self.ep_no < len(series.SERIES):
                 nxt = series.title(series.SERIES[self.ep_no], LANG)
                 footer = f"Next: {nxt}" if EN else f"下一集：{nxt}"
+                spoken_footer = f"Next time: {nxt}." if EN else f"下一集：{nxt}。"
             else:
                 footer = "CS61C RISC-V · The End" if EN else "CS61C RISC-V 系列 · 完"
+                spoken_footer = ("That's the end of the CS61C RISC-V series. Thanks for watching!" if EN
+                                 else "CS61C RISC-V 系列到这里就结束了，感谢观看！")
         if footer:
             nxt = zh(footer, 30, GREY_A).to_edge(DOWN, buff=0.5)
+            t0 = self.time
+            talk = self.voice(spoken_footer or footer)
             self.play(FadeIn(nxt, shift=UP * 0.2))
-            self.wait(2.2)
+            self.wait(max(2.2, talk + 0.8 - (self.time - t0)))
         self.play(*[FadeOut(m) for m in self.mobjects], run_time=1.0)
         self.wait(0.5)
 

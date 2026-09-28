@@ -28,11 +28,13 @@ def table(n):
     return ns.get("EN", {})
 
 
-def narration(path):
+def narration(path, scene=None):
     """(kind, text) in source order; methods are visited in the order
     construct() calls them."""
     tree = ast.parse(path.read_text(encoding="utf-8"))
-    cls = next(n for n in tree.body if isinstance(n, ast.ClassDef))
+    classes = [n for n in tree.body if isinstance(n, ast.ClassDef)]
+    cls = next((c for c in classes if c.name == scene), None) or next(
+        c for c in classes if any(isinstance(f, ast.FunctionDef) and f.name == "construct" for f in c.body))
     methods = {f.name: f for f in cls.body if isinstance(f, ast.FunctionDef)}
     order = []
     for node in ast.walk(methods["construct"]):
@@ -67,7 +69,7 @@ def render(n):
         return lines + ["(not written yet)\n"]
     en = table(n)
     k = 0
-    for kind, zh in narration(path):
+    for kind, zh in narration(path, ep.scene):
         if kind == "say":
             k += 1
         tag = "小结" if kind == "end" else f"{k}"
