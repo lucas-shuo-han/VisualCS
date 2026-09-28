@@ -18,6 +18,32 @@ CJK = "Noto Sans CJK SC"
 MONO = "DejaVu Sans Mono"
 BG = "#0B0D12"
 
+
+def _register_user_fonts():
+    """On Windows, fonts installed per-user are not visible to Pango until the
+    next login. Fall back to registering them for this process -- but note that
+    manimpango then re-adds every registered file on each text render, which is
+    ~100x slower. Prefer `python tools/win_fonts.py` once per login instead."""
+    import glob
+    import os
+    import sys
+
+    if sys.platform != "win32":
+        return
+    import manimpango
+
+    if {CJK, MONO} <= set(manimpango.list_fonts()):
+        return
+    print("warning: fonts not loaded in this Windows session; registering per process "
+          "(slow). Run tools/win_fonts.py to fix.", file=sys.stderr)
+    d = os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\Windows\Fonts")
+    for pat in ("NotoSansCJK*", "DejaVuSans*"):
+        for p in glob.glob(os.path.join(d, pat)):
+            manimpango.register_font(p)
+
+
+_register_user_fonts()
+
 config.background_color = BG
 
 # syntax colors
@@ -78,7 +104,15 @@ def bin_str(v: int, width: int) -> str:
     return format(v & ((1 << width) - 1), f"0{width}b")
 
 
+CJK_RUN = re.compile(r"[⺀-鿿＀-￯　-〿“”‘’…—]+")
+
+
 def mono(s, size=24, color=C_TEXT, **kw) -> Text:
+    # Name the CJK font explicitly for CJK runs: Pango on Windows does not fall
+    # back from the monospace font the way fontconfig does on Linux.
+    t2f = {run: CJK for run in set(CJK_RUN.findall(s))}
+    if t2f:
+        kw["t2f"] = {**t2f, **kw.get("t2f", {})}
     return Text(s, font=MONO, font_size=size, color=color, disable_ligatures=True, **kw)
 
 
@@ -109,10 +143,20 @@ def esc(s: str) -> str:
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
+def _cjk_spans(s: str) -> str:
+    out, last = [], 0
+    for m in CJK_RUN.finditer(s):
+        out.append(esc(s[last:m.start()]))
+        out.append(f'<span font_family="{CJK}">{esc(m.group())}</span>')
+        last = m.end()
+    out.append(esc(s[last:]))
+    return "".join(out)
+
+
 def span(s: str, color) -> str:
     if color is None:
-        return esc(s)
-    return f'<span foreground="{hexc(color)}">{esc(s)}</span>'
+        return _cjk_spans(s)
+    return f'<span foreground="{hexc(color)}">{_cjk_spans(s)}</span>'
 
 
 def highlight(line: str, lang: str = "asm") -> str:
