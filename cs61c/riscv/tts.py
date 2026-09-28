@@ -114,7 +114,12 @@ def spoken(text: str, lang: str) -> str:
     # mnemonics, register names, jargon
     s = sub(r"RISC-V|\b[\w]+\b", lambda m: _SAY_AS.get(m[0], m[0]), s)
     s = sub(r"\b([xatsXATS])(\d{1,2})\b", lambda m: f"{m[1].upper()} {m[2]}", s)
-    s = sub(r"\b(\d)([a-z])\b", r"\1 \2", s)          # 4i
+    if lang == "en":
+        s = sub(r"\b([01])s\b", lambda m: ("zeros", "ones")[int(m[1])], s)
+    s = sub(r"\b(\d)([a-rt-z])\b", r"\1 \2", s)          # 4i
+    # a chain of arrows is a sequence of steps, a single one is "to"
+    if s.count("→") >= 2:
+        s = sub(r"\s*→\s*", "，" if lang == "zh" else ", then ", s)
     s = sub(r"\b(KiB|MiB)\b", lambda m: w[m[1]], s)
     # operators (longest first); a minus sign is binary between spaces, else unary
     s = sub(r"\s[−-]\s", w["minus"], s)
