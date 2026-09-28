@@ -28,6 +28,18 @@
 - Captions are wrapped automatically, but keep each one ≤ ~2 lines (≈ 60
   English words is too many; ≈ 25–30 is comfortable).
 
+## Text rendering
+- **Pango drops or squeezes spaces in small `Text`** ("priority queue" →
+  "priorityqueue", "x = 3" → "x=3"), worse below ~30 pt. The kit's `txt()`,
+  `mono()`, captions, titles and `box_label()` all go through `crisp_text()`,
+  which renders at 4× and scales down. Use those helpers; if you call
+  `Text(...)` directly, do the same.
+- **Don't oversample `MarkupText`**: Manim lays it out with a fixed Pango
+  width, so a 4× font size wraps long lines. `CodeListing` keeps normal size
+  (monospace spacing is fine).
+- Some glyphs (e.g. "≥" in certain fonts) render oddly; if one looks wrong in
+  the contact sheet, reword ("at least") or use `MathTex`.
+
 ## Layout
 - **Text overlapping text** is the #1 bug. It happens when two blocks are
   placed with absolute coordinates and one of them is wider than you guessed

@@ -114,13 +114,23 @@ def bin_str(v: int, width: int) -> str:
     return format(v & ((1 << width) - 1), f"0{width}b")
 
 
+_OVERSAMPLE = 4
+
+
+def crisp_text(s, font, size, color=C_TEXT, **kw) -> Text:
+    """Text rendered at 4x size and scaled down. Pango drops or squeezes spaces
+    at small font sizes ("priority queue" -> "priorityqueue"); oversampling
+    keeps word spacing and kerning right at every size."""
+    return Text(s, font=font, font_size=size * _OVERSAMPLE, color=color, **kw).scale(1 / _OVERSAMPLE)
+
+
 def mono(s, size=24, color=C_TEXT, **kw) -> Text:
-    return Text(s, font=MONO, font_size=size, color=color, disable_ligatures=True, **kw)
+    return crisp_text(s, MONO, size, color, disable_ligatures=True, **kw)
 
 
 def txt(s, size=30, color=C_TEXT, **kw) -> Text:
     """Prose text in the caption font (handles Latin and CJK)."""
-    return Text(s, font=SANS, font_size=size, color=color, **kw)
+    return crisp_text(s, SANS, size, color, **kw)
 
 
 zh = txt  # alias
@@ -207,6 +217,8 @@ class CodeListing(VGroup):
         self.lang = lang
         self.lines = VGroup()
         for s in self.src:
+            # Not oversampled: MarkupText lays out with a fixed Pango width, so a
+            # 4x font size would wrap long lines. Monospace spacing is fine as is.
             t = MarkupText(
                 "|" + highlight(s, lang), font=MONO, font_size=font_size,
                 disable_ligatures=True,
@@ -663,7 +675,7 @@ def file_icon(name, color=BLUE_C, w=1.3, h=1.6, font_size=22) -> VGroup:
 
 def box_label(text, color=BLUE_C, w=None, h=0.8, font_size=28, font=None) -> VGroup:
     font = font or SANS
-    t = Text(text, font=font, font_size=font_size, color=WHITE)
+    t = crisp_text(text, font, font_size, WHITE)
     w = w or t.width + 0.6
     r = RoundedRectangle(corner_radius=0.12, width=w, height=h, stroke_color=color,
                          stroke_width=3, fill_color=color, fill_opacity=0.15)
@@ -699,7 +711,8 @@ def wrap_caption(text: str, max_units: float = 30) -> str:
     total = text_units(text)
     if total <= max_units:
         return text
-    toks = re.findall(r"[A-Za-z0-9_\-\.\[\]\(\)\{\}:+*/<>=#&|~^%',$]+|\s+|.", text)
+    # arrows count as word characters so routes like "S→B→A" never break mid-route
+    toks = re.findall(r"[A-Za-z0-9_\-\.\[\]\(\)\{\}:+*/<>=#&|~^%',$→←]+|\s+|.", text)
     T = len(toks)
     INF = float("inf")
 
@@ -772,8 +785,7 @@ class NarratedScene(Scene):
 
     # -- captions
     def _make_caption(self, text):
-        t = Text(wrap_caption(text), font=SANS, font_size=self.caption_size,
-                 color=C_TEXT, line_spacing=0.9)
+        t = crisp_text(wrap_caption(text), SANS, self.caption_size, C_TEXT, line_spacing=0.9)
         t.move_to([0, self.caption_y, 0])
         if t.get_bottom()[1] < -3.92:
             t.shift(UP * (-3.92 - t.get_bottom()[1]))
@@ -847,7 +859,7 @@ class NarratedScene(Scene):
             head.append(txt(self.series, 28, GREY_B))
         if ep is not None:
             head.append(txt(self.S("episode", n=ep), 30, YELLOW_D))
-        t = Text(title, font=SANS, font_size=60, color=WHITE, weight=BOLD)
+        t = crisp_text(title, SANS, 60, WHITE, weight=BOLD)
         if t.width > 12.5:
             t.scale_to_fit_width(12.5)
         sub = txt(subtitle, 30, GREY_A) if subtitle else None
