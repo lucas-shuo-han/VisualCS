@@ -60,9 +60,9 @@ _WORDS = {
            "<": " 小于 ", ">": " 大于 ", "=": " 等于 ", "+": " 加 ", "×": " 乘 ",
            "±": "正负 ", "→": " 到 ", "–": " 到 ", "minus": " 减 ", "neg": "负 ",
            "star": " 星号 ", "fact": " 的阶乘", "hex": "零x ", "KiB": " KB", "MiB": " MB",
-           "of": "{a} 的第 {i} 项", "imm": "立即数第 {bits} 位", "to": "到", "bar": "、",
+           "of": "{a} 的第 {i} 项", "imm": "立即数第 {bits} 位", "inst": "指令第 {bits} 位", "to": "到", "bar": "、",
            "off": "{r} 加 {n}", "offneg": "{r} 减 {n}", "pow": "{a} 的 {b} 次方",
-           "bs0": " 反斜杠零", "#": " 井号 ", "/": "，"},
+           "bs0": " 反斜杠零", "#": " 井号 ", "/": "，", " / ": "、", "&": " 和 ", "|": "，"},
     "en": {"==": " equals ", "!=": " is not equal to ", ">=": " is greater than or equal to ",
            "<=": " is less than or equal to ", "≥": " is at least ", "≤": " is at most ",
            "<<": " shifted left by ", ">>": " shifted right by ", "<": " is less than ",
@@ -70,9 +70,9 @@ _WORDS = {
            "±": "plus or minus ", "→": " to ", "–": " through ", "minus": " minus ",
            "neg": "negative ", "star": " star ", "fact": " factorial", "hex": "hex ",
            "KiB": " kibibytes", "MiB": " mebibytes",
-           "of": "{a} of {i}", "imm": "immediate bits {bits}", "to": " to ", "bar": ", ",
+           "of": "{a} of {i}", "imm": "immediate bits {bits}", "inst": "instruction bits {bits}", "to": " to ", "bar": ", ",
            "off": "{r} plus {n}", "offneg": "{r} minus {n}", "pow": "{a} to the {b}",
-           "bs0": " backslash zero", "#": " hash ", "/": " or "},
+           "bs0": " backslash zero", "#": " hash ", "/": " or ", " / ": " and ", "&": " and ", "|": ", "},
 }
 
 
@@ -89,9 +89,9 @@ def spoken(text: str, lang: str) -> str:
     s = sub(r"[…]+|——|—", "，" if lang == "zh" else ", ", s)
     s = s.replace("“", "").replace("”", "").replace('"', "")
     s = s.replace("\\0", w["bs0"])
-    # imm[20|10:1|11|19:12], imm[11:0], imm[12]
-    s = sub(r"\bimm\[([0-9:|]+)\]",
-               lambda m: w["imm"].format(bits=m[1].replace(":", w["to"]).replace("|", w["bar"])), s)
+    # imm[20|10:1|11|19:12], imm[11:0], inst[30:25]
+    s = sub(r"\b(imm|inst)\[([0-9:|]+)\]",
+            lambda m: w[m[1]].format(bits=m[2].replace(":", w["to"]).replace("|", w["bar"])), s)
     # 8(sp), -4(sp), 0(x5)
     def _off(m):
         n, r = m[1].replace("−", "-"), _SAY_AS.get(m[2], m[2])
@@ -128,6 +128,7 @@ def spoken(text: str, lang: str) -> str:
     for op in ("==", "!=", ">=", "<=", "<<", ">>", "≥", "≤", "<", ">", "=", "+", "×", "±", "→", "–", "#"):
         s = s.replace(op, w[op])
     s = sub(r"(?<=\w)/(?=\w)", w["/"], s)
+    s = s.replace(" / ", w[" / "]).replace("&", w["&"]).replace("|", w["|"])
     s = sub(r"\s+", " ", s).strip(" ,，")
     return s
 
