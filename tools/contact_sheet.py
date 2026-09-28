@@ -12,18 +12,22 @@ def ts(s):
     return int(h) * 3600 + int(m) * 60 + int(sec) + int(ms) / 1000
 
 
-def main(video, srt, out_dir, per_sheet=9, cols=3):
+def main(video, srt, out_dir, at="end", per_sheet=9, cols=3):
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     for f in out.glob("*.png"):
         f.unlink()
     entries = re.findall(r"(\d\d:\d\d:\d\d,\d+) --> (\d\d:\d\d:\d\d,\d+)", Path(srt).read_text())
-    times = [max(0, ts(b) - 0.15) for a, b in entries]
+    if at == "mid":
+        times = [(ts(a) + ts(b)) / 2 for a, b in entries]
+    else:
+        times = [max(0, ts(b) - 0.15) for a, b in entries]
     frames = []
     for i, t in enumerate(times):
         f = out / f"f{i:03d}.png"
         subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-ss", f"{t:.2f}", "-i", video,
-                        "-frames:v", "1", "-vf", f"drawtext=text='{i}':x=10:y=10:fontsize=28:fontcolor=red", str(f)],
+                        "-frames:v", "1", "-vf",
+                        f"scale=854:-2,drawtext=text='{i}':x=10:y=10:fontsize=28:fontcolor=red", str(f)],
                        check=True)
         frames.append(f)
     for s in range(0, len(frames), per_sheet):
@@ -34,8 +38,6 @@ def main(video, srt, out_dir, per_sheet=9, cols=3):
             args += ["-i", str(f)]
         n = len(chunk)
         inputs = "".join(f"[{k}:v]" for k in range(n))
-        layout = "|".join(f"{(k % cols)}*w0_{(k // cols)}*h0".replace("*w0_", "_").replace("*h0", "") for k in range(n))
-        # build explicit xstack layout
         w, h = "w0", "h0"
         lay = []
         for k in range(n):
@@ -53,4 +55,4 @@ def main(video, srt, out_dir, per_sheet=9, cols=3):
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:4])
+    main(*sys.argv[1:5])

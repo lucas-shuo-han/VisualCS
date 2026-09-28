@@ -182,11 +182,12 @@ class Ep03BranchesLoops(NarratedScene):
         code = CodeListing(["slli t0, t1, 2"], font_size=30).next_to(res, LEFT, buff=0.5)
         self.play(FadeIn(code), TransformFromCopy(src, res))
         box = res[0][0].width
-        digits = VGroup(*[c[1] for c in res])
-        self.play(digits.animate.shift(LEFT * 2 * box), run_time=1.0)
-        self.play(FadeOut(VGroup(*[c[1] for c in res[:2]])))
+        gone = VGroup(*[c[1] for c in res[:2]])
+        keep = VGroup(*[c[1] for c in res[2:]])
+        self.play(FadeOut(gone, shift=UP * 0.4), run_time=0.6)
         for cell in res[:2]:
             cell.remove(cell[1])
+        self.play(keep.animate.shift(LEFT * 2 * box), run_time=1.0)
         zeros = VGroup(*[mono("0", 30, GREY_B).move_to(res[k][0]) for k in (6, 7)])
         self.play(FadeIn(zeros, shift=LEFT * 0.3))
         eq = mono("= 88 = 22 × 4", 30, GREEN_C).next_to(res, RIGHT, buff=0.5)
@@ -247,7 +248,7 @@ class Ep03BranchesLoops(NarratedScene):
             t = mono(str(v), 26).move_to(sq)
             ad = mono(f"0x{0x100 + 4 * k:X}", 16, GREY).next_to(sq, DOWN, buff=0.1)
             arr.add(VGroup(sq, t, ad))
-        arr.arrange(RIGHT, buff=0).next_to(regs, DOWN, buff=0.6).align_to(regs, LEFT).shift(RIGHT * 0.3)
+        arr.arrange(RIGHT, buff=0).next_to(regs, DOWN, buff=0.6).align_to(regs, LEFT).shift(RIGHT * 0.45)
         arr_l = mono("A", 28, GREEN_B).next_to(arr, LEFT, buff=0.25)
         self.say("A 的地址在 a0，n 在 a1；i 用 t0，sum 用 s1。",
                  FadeIn(asm, shift=UP * 0.2), FadeIn(regs), FadeIn(names), FadeIn(arr), FadeIn(arr_l))

@@ -60,7 +60,7 @@ class Ep02Memory(NarratedScene):
         self.say("一个字占 4 个字节，所以相邻两个字的地址相差 4，而不是 1。",
                  LaggedStart(*[Create(r) for r in rows], lag_ratio=0.15))
         self.play(LaggedStart(*[Indicate(l, color=BLUE_B) for l in mem.addr_labels], lag_ratio=0.15))
-        align = zh("字地址通常是 4 的倍数：这叫“对齐”", 26, GREY_A).next_to(mem, RIGHT, buff=0.8)
+        align = zh("字地址通常是 4 的倍数\n这叫“对齐”", 26, GREY_A).next_to(mem, RIGHT, buff=0.8)
         self.say("字的地址通常是 4 的倍数，叫做“对齐”。不对齐的访问可能更慢，甚至直接出错。",
                  FadeIn(align, shift=LEFT * 0.2))
         self.hold()

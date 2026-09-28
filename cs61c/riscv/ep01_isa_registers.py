@@ -94,7 +94,7 @@ class Ep01ISARegisters(NarratedScene):
         self.say("RV32I 一共有 32 个整数寄存器：x0 到 x31。",
                  LaggedStart(*[Indicate(rf.names[i], color=YELLOW_D) for i in range(32)],
                              lag_ratio=0.03, run_time=1.8))
-        one = rf.cells[5]
+        one = rf.cells[8]
         brace = Brace(one, UP, buff=0.05, color=YELLOW_D)
         bl = zh("32 位 = 4 字节 = 1 个字（word）", 24, YELLOW_D).next_to(brace, UP, buff=0.1)
         self.say("每个寄存器 32 位宽。32 位，也就是 4 个字节，称为一个“字”。",
