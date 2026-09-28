@@ -1,7 +1,7 @@
 我要把 **CS182（Berkeley 深度学习课程：Designing, Visualizing and Understanding Deep Neural Networks）** 的课程资料做成一套 3Blue1Brown 风格的系列动画视频。这是一个目标明确的长任务：**请自己推进到做完，中间不用等我确认**。只有遇到必须由我来定的事（比如拿不到课程资料）再停下来问我。
 
 ## 工具
-- 我附上了 skill `notes-to-3b1b-video`（`.skill` 文件）。先安装或加载它，把 `SKILL.md` 完整读一遍，然后按它的流程来：规划 → 写 Manim 场景 → 480p 预览 → 用 contact sheet 看帧、修排版 → 1080p 成片 → 字幕和旁白脚本。
+- 我附上了 skill `notes-to-3b1b-video`（`.skill` 文件，仓库里也有一份：`dist/notes-to-3b1b-video.skill`）。先安装或加载它，把 `SKILL.md` 完整读一遍，然后按它的流程来：规划 → 写 Manim 场景 → 480p 预览 → 用 contact sheet 看帧、修排版 → 1080p 成片 → 字幕和旁白脚本。
 - 如果你是在 GitHub 仓库 `lucas-shuo-han/VisualCS` 里运行，这个 skill 在仓库的 `.claude/skills/notes-to-3b1b-video/` 目录下也有一份。仓库里已经做好的 CS61C RISC-V 系列（`cs61c/riscv/` 和 `videos/cs61c-riscv/`）可以当风格参考。
 - CS182 公式很多，装环境时加上 `--latex`（`bash scripts/setup_env.sh .venv --latex`）。
 
