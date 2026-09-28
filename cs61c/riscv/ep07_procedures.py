@@ -16,9 +16,9 @@ def addr_labels(listing, addrs, size=22):
     return g
 
 
-class Ep04Procedures(NarratedScene):
+class Ep07Procedures(NarratedScene):
     def construct(self):
-        self.title_card(4, "函数调用", "jal · 调用约定 · 栈")
+        self.title_card()
         self.six_steps()
         self.jal_ret()
         self.convention()
@@ -32,7 +32,6 @@ class Ep04Procedures(NarratedScene):
                 "栈向低地址增长：减 sp 压栈，加 sp 出栈",
                 "会调用别的函数的函数，必须先保存 ra",
             ],
-            next_title="指令格式（上）：R / I / S 型",
         )
 
     # ------------------------------------------------------------------ six steps

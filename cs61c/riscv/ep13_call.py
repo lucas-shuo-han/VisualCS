@@ -18,9 +18,9 @@ def seg_box(label, color, w=2.6, h=0.6, size=22):
     return VGroup(r, t)
 
 
-class Ep07CALL(NarratedScene):
+class Ep13CALL(NarratedScene):
     def construct(self):
-        self.title_card(7, "CALL", "编译 · 汇编 · 链接 · 加载")
+        self.title_card()
         self.pipeline()
         self.assembler()
         self.linker()
@@ -34,7 +34,6 @@ class Ep07CALL(NarratedScene):
                 "链接器：拼接各段，按重定位表补全地址",
                 "加载器：建立地址空间，复制代码和数据，跳到 main",
             ],
-            footer="CS61C RISC-V 系列 · 完",
         )
 
     # ------------------------------------------------------------------ overview
@@ -199,7 +198,7 @@ class Ep07CALL(NarratedScene):
         filled = CodeListing(["0x10040:  jal ra, 0x140   # 0x10180 - 0x10040"], font_size=26).move_to(hole, aligned_edge=LEFT)
         self.say("……jal 用的是 PC 相对偏移：0x10180 − 0x10040 = 0x140。", Transform(hole, filled))
         self.hold()
-        self.say("而文件内部的分支完全不用改：PC 相对偏移，整块挪动后依然正确。这正是上一集说的位置无关。",
+        self.say("而文件内部的分支完全不用改：PC 相对偏移，整块挪动后依然正确。这正是前面说过的位置无关。",
                  Indicate(out_segs[0], color=PURPLE_B))
         self.say("顺便一提：现代系统还常用“动态链接”，库在程序运行时才载入。这里讲的是静态链接。")
         self.hold()
@@ -272,8 +271,8 @@ class Ep07CALL(NarratedScene):
                                               *([GrowArrow(arrows[k - 1])] if k else []))
                                for k in range(4)], lag_ratio=0.4, run_time=3))
         eps = VGroup(*[zh(s, 22, GREY_A) for s in [
-            "① 寄存器与算术", "② 内存", "③ 分支与循环", "④ 函数与栈",
-            "⑤⑥ 指令格式", "⑦ CALL",
+            "①② 机器结构与算术", "③④ 内存", "⑤⑥ 分支与循环", "⑦⑧ 函数与栈",
+            "⑨–⑫ 指令编码", "⑬⑭ CALL",
         ]]).arrange(DOWN, aligned_edge=LEFT, buff=0.25).to_edge(RIGHT, buff=0.9).shift(UP * 0.4)
         self.say("寄存器、内存、分支、函数调用、指令编码、编译链接——这就是 CS61C 中 RISC-V 部分的全貌。",
                  LaggedStart(*[FadeIn(e, shift=LEFT * 0.2) for e in eps], lag_ratio=0.15))

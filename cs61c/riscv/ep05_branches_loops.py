@@ -5,9 +5,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import *  # noqa: E402,F403
 
 
-class Ep03BranchesLoops(NarratedScene):
+class Ep05BranchesLoops(NarratedScene):
     def construct(self):
-        self.title_card(3, "决策与循环", "PC · 条件分支 · 位运算 · 循环")
+        self.title_card()
         self.program_counter()
         self.branches()
         self.if_else()
@@ -21,7 +21,6 @@ class Ep03BranchesLoops(NarratedScene):
                 "位运算：and or xor，移位 sll srl sra",
                 "循环：开头判断并跳出，末尾跳回开头",
             ],
-            next_title="函数调用与栈",
         )
 
     # ------------------------------------------------------------------ PC
@@ -75,7 +74,7 @@ class Ep03BranchesLoops(NarratedScene):
         self.hold()
         self.play(FadeOut(VGroup(grid, bgt, mean)), syn.animate.move_to(UP * 2.4))
         j = CodeListing(["j Label      # = jal x0, Label"], font_size=36).next_to(syn, DOWN, buff=0.6)
-        self.say("还有无条件跳转 j Label：直接跳过去。它是 jal x0, Label 的简写，下一集会讲 jal。",
+        self.say("还有无条件跳转 j Label：直接跳过去。它是 jal x0, Label 的简写，第 7 集会讲 jal。",
                  FadeIn(j, shift=UP * 0.15))
         lab = zh("Label 只是代码中某个位置的名字，汇编器会把它换算成地址。", 28, C_LABEL).next_to(j, DOWN, buff=0.6)
         self.say("Label 只是给代码中某个位置起的名字，汇编器会把它换算成地址。", FadeIn(lab))

@@ -1,15 +1,18 @@
 """Render the CS61C RISC-V episodes and collect the videos + subtitles.
 
 Usage:
-    python tools/render.py                 # all episodes, 1080p30
-    python tools/render.py 3 5             # only episodes 3 and 5
-    python tools/render.py --preview 2     # quick 480p15 render of episode 2
+    python tools/render.py                        # all episodes, zh and en, 1080p30
+    python tools/render.py 3 5 --lang en          # only episodes 3 and 5, English
+    python tools/render.py --preview 2            # quick 480p15 render of episode 2
+    python tools/render.py --preview --lax 2 --lang en   # draft: allow missing translations
 
-Each episode renders in its own media directory, so several can run in
-parallel without clobbering Manim's shared text cache.
+Videos land in videos/cs61c-riscv/{zh,en}/. Each (episode, language) renders
+in its own media directory, so several can run in parallel without clobbering
+Manim's shared text cache.
 """
 
 import argparse
+import os
 import shutil
 import subprocess
 import sys
@@ -19,51 +22,57 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "cs61c" / "riscv"
 OUT = ROOT / "videos" / "cs61c-riscv"
-
-EPISODES = {
-    1: ("ep01_isa_registers.py", "Ep01ISARegisters", "01-从C到汇编-ISA与寄存器"),
-    2: ("ep02_memory.py", "Ep02Memory", "02-内存-字节寻址与lw-sw"),
-    3: ("ep03_branches_loops.py", "Ep03BranchesLoops", "03-决策与循环"),
-    4: ("ep04_procedures.py", "Ep04Procedures", "04-函数调用与栈"),
-    5: ("ep05_formats_ris.py", "Ep05FormatsRIS", "05-指令格式上-R-I-S"),
-    6: ("ep06_formats_buj.py", "Ep06FormatsBUJ", "06-指令格式下-B-U-J"),
-    7: ("ep07_call.py", "Ep07CALL", "07-CALL-编译汇编链接加载"),
-}
+sys.path.insert(0, str(SRC))
+import series  # noqa: E402
 
 
-def render(ep, preview, media_root, manim):
-    file, scene, name = EPISODES[ep]
-    media = media_root / f"ep{ep:02d}"
+def render(ep, lang, preview, media_root, manim, lax):
+    e = series.SERIES[ep - 1]
+    media = media_root / lang / f"ep{ep:02d}"
     quality = ["-ql"] if preview else ["-r", "1920,1080", "--fps", "30"]
-    cmd = [manim, *quality, "--media_dir", str(media), file, scene]
-    log = media_root / f"ep{ep:02d}.log"
+    cmd = [manim, *quality, "--media_dir", str(media), e.file, e.scene]
+    log = media_root / lang / f"ep{ep:02d}.log"
     media.mkdir(parents=True, exist_ok=True)
-    with open(log, "w") as fh:
-        rc = subprocess.run(cmd, cwd=SRC, stdout=fh, stderr=subprocess.STDOUT).returncode
+    env = {**os.environ, "VCS_LANG": lang, "PYTHONIOENCODING": "utf-8"}
+    if lax:
+        env["VCS_I18N_LAX"] = "1"
+    with open(log, "w", encoding="utf-8") as fh:
+        rc = subprocess.run(cmd, cwd=SRC, stdout=fh, stderr=subprocess.STDOUT, env=env).returncode
     if rc != 0:
-        return ep, f"FAILED (see {log})"
-    mp4 = next((media / "videos").rglob(f"{scene}.mp4"))
+        return ep, lang, f"FAILED (see {log})"
+    quality_dir = "480p15" if preview else "1080p30"
+    mp4 = next((media / "videos").rglob(f"{quality_dir}/{e.scene}.mp4"))
     srt = mp4.with_suffix(".srt")
     if preview:
-        return ep, str(mp4)
-    OUT.mkdir(parents=True, exist_ok=True)
-    shutil.copy(mp4, OUT / f"{name}.mp4")
-    shutil.copy(srt, OUT / f"{name}.srt")
-    return ep, str(OUT / f"{name}.mp4")
+        return ep, lang, str(mp4)
+    dst = OUT / lang
+    dst.mkdir(parents=True, exist_ok=True)
+    name = series.slug(ep, lang)
+    shutil.copy(mp4, dst / f"{name}.mp4")
+    shutil.copy(srt, dst / f"{name}.srt")
+    return ep, lang, str(dst / f"{name}.mp4")
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("episodes", nargs="*", type=int)
+    ap.add_argument("--lang", choices=["zh", "en", "all"], default="all")
     ap.add_argument("--preview", action="store_true")
+    ap.add_argument("--lax", action="store_true", help="warn instead of failing on missing translations")
     ap.add_argument("--jobs", type=int, default=3)
     ap.add_argument("--media", default=str(ROOT / "media"))
     ap.add_argument("--manim", default=shutil.which("manim") or "manim")
     a = ap.parse_args()
-    eps = a.episodes or sorted(EPISODES)
+    eps = a.episodes or range(1, len(series.SERIES) + 1)
+    langs = ["zh", "en"] if a.lang == "all" else [a.lang]
+    jobs = [(e, l) for e in eps for l in langs]
     with ThreadPoolExecutor(a.jobs) as ex:
-        for ep, result in ex.map(lambda e: render(e, a.preview, Path(a.media), a.manim), eps):
-            print(f"episode {ep}: {result}", flush=True)
+        results = ex.map(lambda j: render(j[0], j[1], a.preview, Path(a.media), a.manim, a.lax), jobs)
+        failed = False
+        for ep, lang, result in results:
+            failed |= result.startswith("FAILED")
+            print(f"episode {ep} [{lang}]: {result}", flush=True)
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":

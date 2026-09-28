@@ -8,9 +8,9 @@ A = [5, 12, 42, 7, 100, 9]
 BASE = 0x100
 
 
-class Ep02Memory(NarratedScene):
+class Ep03Memory(NarratedScene):
     def construct(self):
-        self.title_card(2, "内存", "字节寻址 · 小端序 · lw / sw")
+        self.title_card()
         self.why_memory()
         self.byte_addressing()
         self.load_store()
@@ -23,7 +23,6 @@ class Ep02Memory(NarratedScene):
                 "A[i] 的字节偏移是 4 × i",
                 "lb 符号扩展，lbu 零扩展",
             ],
-            next_title="决策与循环：分支和逻辑运算",
         )
 
     # ------------------------------------------------------------------ why

@@ -11,9 +11,9 @@ assert (0xDEADB000 + 0xFFFFFEEF) & 0xFFFFFFFF == 0xDEADAEEF
 assert (0xDEADC000 - 273) & 0xFFFFFFFF == 0xDEADBEEF
 
 
-class Ep06FormatsBUJ(FormatScene):
+class Ep11FormatsBUJ(FormatScene):
     def construct(self):
-        self.title_card(6, "指令格式（下）", "PC 相对寻址 · B / U / J 型")
+        self.title_card()
         self.pc_relative()
         self.b_format()
         self.u_format()
@@ -27,7 +27,6 @@ class Ep06FormatsBUJ(FormatScene):
                 "U 型：lui / auipc 装入高 20 位",
                 "J 型：jal，范围约 ±1 MiB；jalr 是 I 型",
             ],
-            next_title="CALL：编译、汇编、链接、加载",
         )
 
     # ------------------------------------------------------------------ PC-relative

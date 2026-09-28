@@ -3,14 +3,82 @@
 Every episode is a single `NarratedScene`: captions are timed so each one stays
 on screen long enough to read, and are also exported as an .srt file next to
 the rendered video (handy for adding a voice-over later).
+
+Episodes are written in Chinese. Set VCS_LANG=en to render the English
+version: every on-screen string is then looked up in the episode's table in
+i18n/epNN.py (see tools/i18n_check.py). A missing entry is an error, so no
+Chinese can slip into an English video; VCS_I18N_LAX=1 downgrades it to a
+warning while drafting.
 """
 
 from __future__ import annotations
 
 import math
+import os
 import re
+import sys
 
 from manim import *
+
+import series
+
+LANG = os.environ.get("VCS_LANG", "zh").lower()
+EN = LANG == "en"
+I18N_LAX = os.environ.get("VCS_I18N_LAX") == "1"
+I18N_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "i18n")
+
+# ideographs, CJK punctuation and fullwidth forms: text that must be translated
+NEEDS_TR = re.compile(r"[　-〿㐀-鿿＀-￯]")
+
+_TABLE: dict[str, str] = {}
+
+
+class MissingTranslation(KeyError):
+    pass
+
+
+def load_table(n: int) -> dict:
+    """Load i18n/epNN.py (a module defining a dict `EN`) as the active table."""
+    path = os.path.join(I18N_DIR, f"ep{n:02d}.py")
+    ns: dict = {}
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as fh:
+            exec(compile(fh.read(), path, "exec"), ns)
+    _TABLE.clear()
+    _TABLE.update(ns.get("EN", {}))
+    return _TABLE
+
+
+def tr(s):
+    """The string to show for `s` in the current language."""
+    if not EN or not isinstance(s, str) or not NEEDS_TR.search(s):
+        return s
+    if s in _TABLE:
+        return _TABLE[s]
+    if I18N_LAX:
+        print(f"i18n: missing translation: {s!r}", file=sys.stderr)
+        return s
+    raise MissingTranslation(f"no English for {s!r} (add it to i18n/epNN.py, "
+                             f"or run tools/i18n_check.py)")
+
+
+if EN:
+    # Route every Text through the table, whoever builds it. MarkupText can't
+    # be looked up (the markup is generated), so it must arrive translated.
+    _text_init = Text.__init__
+    _markup_init = MarkupText.__init__
+
+    def _text_init_tr(self, text, *a, **kw):
+        _text_init(self, tr(text), *a, **kw)
+
+    def _markup_init_checked(self, text, *a, **kw):
+        plain = re.sub(r"<[^>]*>", "", text)
+        if NEEDS_TR.search(plain) and not I18N_LAX:
+            raise MissingTranslation(f"untranslated MarkupText {plain!r}")
+        _markup_init(self, text, *a, **kw)
+
+    Text.__init__ = _text_init_tr
+    MarkupText.__init__ = _markup_init_checked
 
 # ---------------------------------------------------------------- fonts & palette
 
@@ -108,6 +176,7 @@ CJK_RUN = re.compile(r"[⺀-鿿＀-￯　-〿“”‘’…—]+")
 
 
 def mono(s, size=24, color=C_TEXT, **kw) -> Text:
+    s = tr(s)
     # Name the CJK font explicitly for CJK runs: Pango on Windows does not fall
     # back from the monospace font the way fontconfig does on Linux.
     t2f = {run: CJK for run in set(CJK_RUN.findall(s))}
@@ -197,7 +266,9 @@ class CodeListing(VGroup):
 
     def __init__(self, lines, lang="asm", font_size=26, line_gap=0.5, **kw):
         super().__init__(**kw)
-        self.src = list(lines)
+        # lines with Chinese comments are translated whole, so the English
+        # table can re-align the comment column
+        self.src = [tr(s) for s in lines]
         self.lang = lang
         self.lines = VGroup()
         for s in self.src:
@@ -672,6 +743,8 @@ def wrap_caption(text: str, max_units: float = 30) -> str:
             return INF
         if last in _BREAK_AFTER:
             return -8
+        if i >= 2 and last.isspace() and toks[i - 2][-1] in ",;:.!?":
+            return -6   # English: break after a clause
         if _is_cjk(last) and _is_cjk(nxt):
             return 5
         return 0
@@ -709,14 +782,17 @@ def wrap_caption(text: str, max_units: float = 30) -> str:
 def reading_time(text: str, cps: float = 5.2) -> float:
     cjk = sum(1 for c in text if ord(c) > 0x2E7F)
     other = len(re.findall(r"[A-Za-z0-9_]+", text))
+    if cjk == 0:
+        return max(1.8, 0.5 + other * 0.3)   # English, ~200 wpm
     return max(1.8, 0.5 + cjk / cps + other * 0.28)
 
 
 class NarratedScene(Scene):
     """Scene with timed, burned-in captions (also exported as .srt)."""
 
-    caption_size = 30
+    caption_size = 28 if EN else 30
     caption_y = -3.42
+    caption_units = 35 if EN else 30   # line width in CJK-character units (Latin ~0.55)
 
     def setup(self):
         self.camera.background_color = BG
@@ -724,10 +800,13 @@ class NarratedScene(Scene):
         self._cap_text = None
         self._cap_t0 = 0.0
         self._cap_need = 0.0
+        # scenes outside the series (scratch tests) get episode 0: no table
+        self.ep_no, self.episode = series.BY_SCENE.get(type(self).__name__, (0, None))
+        load_table(self.ep_no)
 
     # -- captions
     def _make_caption(self, text):
-        t = Text(wrap_caption(text), font=CJK, font_size=self.caption_size,
+        t = Text(wrap_caption(text, self.caption_units), font=CJK, font_size=self.caption_size,
                  color=C_TEXT, line_spacing=0.9)
         t.move_to([0, self.caption_y, 0])
         if t.get_bottom()[1] < -3.92:
@@ -755,6 +834,7 @@ class NarratedScene(Scene):
         if run_time is not None:
             for a in anims:
                 a.run_time = run_time
+        text = tr(text)
         self._flush()
         self._close_sub()
         new = self._make_caption(text)
@@ -795,13 +875,20 @@ class NarratedScene(Scene):
         line.next_to(t, DOWN, buff=0.1)
         return VGroup(t, line)
 
-    def title_card(self, ep, title, subtitle=None):
+    def title_card(self):
+        """Episode number, title and subtitle, all from series.py."""
+        n = self.ep_no
+        title, subtitle = series.title(self.episode, LANG), series.subtitle(self.episode, LANG)
         tag = mono("CS61C  ·  RISC-V", 28, GREY_B)
-        num = zh(f"第 {ep} 集", 30, YELLOW_D)
+        num = zh(f"Episode {n}" if EN else f"第 {n} 集", 30, YELLOW_D)
         t = Text(title, font=CJK, font_size=60, color=WHITE, weight=BOLD)
+        if t.width > 12.6:
+            t.scale_to_fit_width(12.6)
         parts = [tag, num, t]
         if subtitle:
             parts.append(zh(subtitle, 30, GREY_A))
+            if parts[-1].width > 12.6:
+                parts[-1].scale_to_fit_width(12.6)
         grp = VGroup(*parts).arrange(DOWN, buff=0.4)
         self.play(FadeIn(tag, shift=DOWN * 0.3), FadeIn(num, shift=DOWN * 0.3))
         self.play(Write(t), run_time=1.6)
@@ -810,10 +897,12 @@ class NarratedScene(Scene):
         self.wait(1.6)
         self.play(FadeOut(grp, shift=UP * 0.3))
 
-    def end_card(self, lines, next_title=None, footer=None):
+    def end_card(self, lines, footer=None):
+        """Summary bullets, then "next episode" (or, for the last one, the
+        series footer) taken from series.py."""
         self.uncaption()
         self.clear_stage()
-        head = zh("小结", 40, YELLOW_D)
+        head = zh("Summary" if EN else "小结", 40, YELLOW_D)
         items = VGroup(*[
             VGroup(Dot(color=YELLOW_D, radius=0.06), zh(s, 30)).arrange(RIGHT, buff=0.25)
             for s in lines
@@ -821,14 +910,22 @@ class NarratedScene(Scene):
         grp = VGroup(head, items).arrange(DOWN, buff=0.5)
         if grp.height > 6.4:
             grp.scale_to_fit_height(6.4)
+        if grp.width > 13.2:
+            grp.scale_to_fit_width(13.2)
         grp.move_to(UP * 0.35)
         self.play(FadeIn(head, shift=DOWN * 0.2))
         for it in items:
             self.play(FadeIn(it, shift=RIGHT * 0.2), run_time=0.6)
             self.wait(reading_time(it[1].text) * 0.8)
         self.wait(1.5)
-        if next_title or footer:
-            nxt = zh(footer or f"下一集：{next_title}", 30, GREY_A).to_edge(DOWN, buff=0.5)
+        if footer is None:
+            if self.ep_no < len(series.SERIES):
+                nxt = series.title(series.SERIES[self.ep_no], LANG)
+                footer = f"Next: {nxt}" if EN else f"下一集：{nxt}"
+            else:
+                footer = "CS61C RISC-V · The End" if EN else "CS61C RISC-V 系列 · 完"
+        if footer:
+            nxt = zh(footer, 30, GREY_A).to_edge(DOWN, buff=0.5)
             self.play(FadeIn(nxt, shift=UP * 0.2))
             self.wait(2.2)
         self.play(*[FadeOut(m) for m in self.mobjects], run_time=1.0)

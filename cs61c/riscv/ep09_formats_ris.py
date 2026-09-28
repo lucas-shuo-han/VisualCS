@@ -16,9 +16,9 @@ assert bits_to_hex(LW) == "0x00812703"
 assert bits_to_hex(SW) == "0x00E12423"
 
 
-class Ep05FormatsRIS(FormatScene):
+class Ep09FormatsRIS(FormatScene):
     def construct(self):
-        self.title_card(5, "指令格式（上）", "存储程序 · R / I / S 型")
+        self.title_card()
         self.stored_program()
         self.r_format()
         self.i_format()
@@ -31,7 +31,6 @@ class Ep05FormatsRIS(FormatScene):
                 "S 型：立即数拆成两段，rs1、rs2 位置不变",
                 "字段位置固定，硬件译码更简单",
             ],
-            next_title="指令格式（下）：B / U / J 型",
         )
 
     # ------------------------------------------------------------------ stored program
@@ -135,7 +134,7 @@ class Ep05FormatsRIS(FormatScene):
                  *[ReplacementTransform(bf.ranges[k], ibf.ranges[k - 1]) for k in range(2, 6)],
                  run_time=1.6)
         rng = zh("12 位补码：−2048 ~ 2047", 28, YELLOW_D).next_to(ibf, DOWN, buff=0.5)
-        self.say("12 位补码能表示 −2048 到 2047：这就是第 1 集留下的那个问题的答案。",
+        self.say("12 位补码能表示 −2048 到 2047：这就是第 2 集留下的那个问题的答案。",
                  Indicate(ibf.frames[0], color=YELLOW_D, scale_factor=1.05), FadeIn(rng))
         self.hold()
         self.play(FadeOut(rng))

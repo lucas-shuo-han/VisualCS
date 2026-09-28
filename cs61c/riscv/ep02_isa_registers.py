@@ -5,9 +5,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import *  # noqa: E402,F403
 
 
-class Ep01ISARegisters(NarratedScene):
+class Ep02ISARegisters(NarratedScene):
     def construct(self):
-        self.title_card(1, "从 C 到汇编", "指令集架构 · 寄存器 · 算术指令")
+        self.title_card()
         self.hook()
         self.isa()
         self.registers()
@@ -21,7 +21,6 @@ class Ep01ISARegisters(NarratedScene):
                 "算术指令：add / sub rd, rs1, rs2",
                 "addi 带 12 位立即数；mv、li、nop 是伪指令",
             ],
-            next_title="内存：lw、sw 与字节寻址",
         )
 
     # ------------------------------------------------------------------ hook
@@ -148,7 +147,7 @@ class Ep01ISARegisters(NarratedScene):
         self.say("a 开头的用来传递参数（argument）和返回值。",
                  *[Indicate(g, color=C_A, scale_factor=1.1) for g in a_grp])
         special = VGroup(*[VGroup(rf.names[i], rf.cells[i]) for i in (1, 2, 3, 4)])
-        self.say("ra、sp 等有专门用途。它们的规则，第 4 集讲函数调用时再细说。",
+        self.say("ra、sp 等有专门用途。它们的规则，第 7 集讲函数调用时再细说。",
                  *[Indicate(g, color=RED_B, scale_factor=1.1) for g in special])
         self.hold()
         self.clear_stage()
@@ -248,9 +247,9 @@ class Ep01ISARegisters(NarratedScene):
         self.hold()
         neg = CodeListing(["addi s0, s1, -5   # a = b - 5"], font_size=34).next_to(note, DOWN, buff=0.5)
         self.say("RISC-V 没有 subi：减一个常数，就是加一个负数。", FadeIn(neg, shift=UP * 0.2))
-        rng = zh("立即数只有 12 位：范围 −2048 ~ 2047（原因见第 5 集）", 26, GREY_A)
+        rng = zh("立即数只有 12 位：范围 −2048 ~ 2047（原因见第 9 集）", 26, GREY_A)
         rng.next_to(neg, DOWN, buff=0.45)
-        self.say("立即数只有 12 位，范围是 −2048 到 2047。为什么是 12 位？第 5 集揭晓。",
+        self.say("立即数只有 12 位，范围是 −2048 到 2047。为什么是 12 位？第 9 集揭晓。",
                  FadeIn(rng))
         self.hold()
         self.play(FadeOut(VGroup(c, addi, note, neg, rng)))
