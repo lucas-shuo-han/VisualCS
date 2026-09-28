@@ -24,7 +24,7 @@ class Ep11FormatsBUJ(FormatScene):
                 "分支用 PC 相对寻址：目标 = PC + 偏移",
                 "B 型偏移以 2 字节为单位，范围约 ±4 KiB",
                 "打乱的位序让各格式尽量共用同一组连线",
-                "U 型：lui / auipc 装入高 20 位",
+                "U 型：lui / auipc 提供高 20 位",
                 "J 型：jal，范围约 ±1 MiB；jalr 是 I 型",
             ],
         )
@@ -41,7 +41,7 @@ class Ep11FormatsBUJ(FormatScene):
         ], font_size=32, line_gap=0.62).move_to(UP * 0.5 + RIGHT * 0.6)
         addrs = VGroup(*[mono(f"0x{0x1000 + 4 * i:X}", 26, GREY).next_to(code.left_of(i, 0.45), LEFT, buff=0)
                          for i in range(5)])
-        self.say("分支指令需要两个要比较的寄存器 rs1、rs2，再加上一个跳转目标，没有 rd。",
+        self.say("条件分支要比较两个寄存器 rs1、rs2，还要一个跳转目标；它不写寄存器，所以没有 rd。",
                  Write(head), FadeIn(code, shift=UP * 0.2), FadeIn(addrs))
         self.say("可目标地址本身就有 32 位，根本塞不进一条 32 位的指令。怎么办？",
                  Circumscribe(code.glyphs(0, "End"), color=C_LABEL))
@@ -50,13 +50,13 @@ class Ep11FormatsBUJ(FormatScene):
         self.say("观察：分支通常跳得很近——if 和循环体一般只有几条到几十条指令。",
                  Create(arrow), FadeIn(off))
         eq = zh("目标地址 = PC + 偏移量", 34, YELLOW_D).next_to(code, DOWN, buff=0.6)
-        self.say("所以只编码“相对当前 PC 的偏移量”。这叫做 PC 相对寻址。", Write(eq))
+        self.say("所以只编码“相对当前 PC 的偏移量”。这叫 PC 相对寻址（PC-relative addressing）。", Write(eq))
         self.hold()
         note = zh("偏移总是 2 的倍数 → 最低位恒为 0，不必存储", 28, GREY_A).move_to(eq)
-        self.say("指令地址总是 2 的倍数（RISC-V 还支持 16 位的压缩指令），所以偏移的最低位恒为 0，不用存。",
+        self.say("RISC-V 为 16 位的压缩指令留了余地，指令地址总是 2 的倍数，所以偏移的最低位恒为 0，不用存。",
                  FadeOut(eq, shift=UP * 0.2), FadeIn(note, shift=UP * 0.2))
         self.say("于是 12 个比特能表示 13 位的偏移：范围约 ±4 KiB，也就是前后各约 1024 条指令。")
-        self.say("还有个好处：整段代码搬到内存别处，分支的偏移完全不用改。这叫“位置无关”。",
+        self.say("还有个好处：整段代码搬到内存别处，分支的偏移完全不用改。这叫位置无关代码（position-independent code）。",
                  VGroup(code, addrs, arrow, off).animate(rate_func=there_and_back, run_time=2).shift(RIGHT * 1.2))
         self.hold()
         self.clear_stage()
@@ -80,9 +80,9 @@ class Ep11FormatsBUJ(FormatScene):
             *[ReplacementTransform(getattr(sbf, a)[5], getattr(bbf, a)[7]) for a in ("frames", "labels", "ranges")],
             run_time=1.6,
         )
-        imm_legend = zh("黄色都是立即数；上方数字是它对应偏移量的第几位", 24, YELLOW_D)
+        imm_legend = zh("黄色都是立即数；上方标注它存的是偏移量的哪几位", 25 if EN else 24, YELLOW_D)
         imm_legend.next_to(bbf, DOWN, buff=0.5)
-        self.say("但立即数的位顺序被“打乱”了：第 12 位放在最高位，第 11 位被挪到右边那一段的末尾。",
+        self.say("但立即数的位序被“打乱”了：第 12 位放在指令最高位，第 11 位挪到了右边那段的末尾。",
                  FadeIn(imm_legend),
                  Indicate(bbf.frames[0], color=YELLOW_D, scale_factor=1.3),
                  Indicate(bbf.frames[6], color=YELLOW_D, scale_factor=1.3))
@@ -119,7 +119,7 @@ class Ep11FormatsBUJ(FormatScene):
         self.say("U 型只有 rd 和一个 20 位的立即数。lui（load upper immediate）就用这个格式。",
                  FadeIn(ubf.frames), FadeIn(ubf.labels), FadeIn(ubf.ranges))
         reg = BitField([("来自立即数的高 20 位", 20, YELLOW_D), ("低 12 位清零", 12, GREY_B)],
-                       show_ranges=False).move_to(DOWN * 0.6)
+                       show_ranges=False, label_size=25 if EN else 20).move_to(DOWN * 0.6)
         t0 = mono("t0", 28, C_T).next_to(reg.frames, LEFT, buff=0.3)
         code = CodeListing(["lui t0, 0xDEADB"], font_size=32).next_to(reg, UP, buff=0.35)
         self.say("lui t0, 0xDEADB：把 20 位立即数放进 t0 的高 20 位，低 12 位全部清零。",

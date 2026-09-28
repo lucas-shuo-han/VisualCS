@@ -42,7 +42,7 @@ class Ep02ISARegisters(NarratedScene):
         l2 = zh("汇编器 Assembler", 26, GREY_A).next_to(a2, RIGHT, buff=0.3)
         self.say("中间隔着两步翻译：编译器先把 C 变成汇编语言……",
                  GrowArrow(a1), FadeIn(l1), FadeIn(asm, shift=DOWN * 0.2))
-        self.say("……汇编器再把每条汇编指令变成一个 32 位的机器码。",
+        self.say("……汇编器再把每条汇编指令变成一条 32 位的机器指令。",
                  GrowArrow(a2), FadeIn(l2))
         self.play(Circumscribe(machine, color=YELLOW_D, time_width=0.6, run_time=1.5))
         self.say("汇编和机器码几乎一一对应：汇编就是机器指令的“文字版”。",
@@ -56,7 +56,7 @@ class Ep02ISARegisters(NarratedScene):
         isa = box_label("指令集架构  ISA", YELLOW_D, w=9, h=0.9, font_size=32)
         hw = box_label("硬件：CPU 电路", GREEN_C, w=9, h=1.1)
         stack = VGroup(sw, isa, hw).arrange(DOWN, buff=0.35).move_to(UP * 0.4)
-        self.say("汇编指令组成的“词汇表”，叫做指令集架构（ISA）。",
+        self.say("一台 CPU 支持哪些指令、有哪些寄存器，这套规定叫做指令集架构（ISA）。",
                  LaggedStart(FadeIn(sw, shift=DOWN * 0.2), FadeIn(hw, shift=UP * 0.2),
                              lag_ratio=0.3))
         self.play(GrowFromCenter(isa))
@@ -78,7 +78,7 @@ class Ep02ISARegisters(NarratedScene):
         risc.next_to(names, DOWN, buff=0.45)
         self.say("RISC 是“精简指令集”：指令少而规整，硬件就能做得简单、快速。",
                  FadeIn(risc, shift=UP * 0.2))
-        self.say("RV32I 基础指令集只有大约 40 条指令，这个系列就能覆盖其中的大部分。")
+        self.say("RV32I 基础指令集只有大约 40 条指令，这个系列会讲到其中的大部分。")
         self.hold()
         self.clear_stage()
 
@@ -147,7 +147,7 @@ class Ep02ISARegisters(NarratedScene):
         self.say("a 开头的用来传递参数（argument）和返回值。",
                  *[Indicate(g, color=C_A, scale_factor=1.1) for g in a_grp])
         special = VGroup(*[VGroup(rf.names[i], rf.cells[i]) for i in (1, 2, 3, 4)])
-        self.say("ra、sp 等有专门用途。它们的规则，第 7 集讲函数调用时再细说。",
+        self.say("ra、sp 等有专门用途。这些寄存器的使用规则，第 7 集讲函数调用时再细说。",
                  *[Indicate(g, color=RED_B, scale_factor=1.1) for g in special])
         self.hold()
         self.clear_stage()
@@ -156,11 +156,19 @@ class Ep02ISARegisters(NarratedScene):
     def arithmetic(self):
         head = self.heading("算术指令")
         syntax = CodeListing(["add rd, rs1, rs2"], font_size=48).move_to(UP * 1.6)
-        parts = [("add", "操作"), ("rd", "目标"), ("rs1", "源 1"), ("rs2", "源 2")]
+        parts = [("add", "操作名"), ("rd", "目标"), ("rs1", "源 1"), ("rs2", "源 2")]
         notes = VGroup()
         for tok, lab in parts:
             g = syntax.glyphs(0, tok)
-            n = zh(lab, 24, GREY_A).next_to(g, DOWN, buff=0.35)
+            if EN:
+                # Latin labels differ in ascenders ("opname" vs "dest"): an
+                # invisible strut gives them all one top edge, i.e. one baseline
+                n = zh("|" + tr(lab), 24, GREY_A)
+                n[0].set_opacity(0)
+                n.next_to(g, DOWN, buff=0.35)
+                n.shift(RIGHT * (g.get_center()[0] - VGroup(*n[1:]).get_center()[0]))
+            else:
+                n = zh(lab, 24, GREY_A).next_to(g, DOWN, buff=0.35)
             notes.add(n)
         self.say("算术指令的格式是固定的：操作名、目标寄存器，然后是两个源寄存器。",
                  Write(head), FadeIn(syntax, shift=DOWN * 0.2))
@@ -249,7 +257,7 @@ class Ep02ISARegisters(NarratedScene):
         self.say("RISC-V 没有 subi：减一个常数，就是加一个负数。", FadeIn(neg, shift=UP * 0.2))
         rng = zh("立即数只有 12 位：范围 −2048 ~ 2047（原因见第 9 集）", 26, GREY_A)
         rng.next_to(neg, DOWN, buff=0.45)
-        self.say("立即数只有 12 位，范围是 −2048 到 2047。为什么是 12 位？第 9 集揭晓。",
+        self.say("addi 的立即数只有 12 位，范围是 −2048 到 2047。为什么是 12 位？第 9 集揭晓。",
                  FadeIn(rng))
         self.hold()
         self.play(FadeOut(VGroup(c, addi, note, neg, rng)))

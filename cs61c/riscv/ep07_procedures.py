@@ -56,7 +56,7 @@ class Ep07Procedures(NarratedScene):
                 row.add(t)
             rows.add(row)
         rows.arrange(DOWN, buff=0.34, aligned_edge=LEFT).move_to(DOWN * 0.1)
-        self.say("调用一个函数，软件和硬件要配合完成六件事。", Write(head))
+        self.say("调用一个函数，要经过六个基本步骤。", Write(head))
         self.say("先把参数放到函数拿得到的地方，然后跳过去……",
                  LaggedStart(*[FadeIn(r, shift=RIGHT * 0.2) for r in rows[:2]], lag_ratio=0.4))
         self.say("……函数给自己准备局部存储，执行函数体……",
@@ -135,7 +135,7 @@ class Ep07Procedures(NarratedScene):
         call_l = mono("jal f", 26, C_MNEM).next_to(call, UP, buff=0.1)
         self.play(GrowArrow(call), FadeIn(call_l))
         use = CodeListing(["addi t0, x0, 7"], font_size=28).next_to(callee, DOWN, buff=0.6)
-        self.say("如果 f 随手改了调用者还要用的寄存器，数据就被悄悄破坏了。", FadeIn(use))
+        self.say("可 f 也要用寄存器。如果它改写了调用者还要用的值，数据就被悄悄破坏了。", FadeIn(use))
         v = mono("7", 26, RED_B).move_to(use.get_center())
         self.play(v.animate.move_to(t0.box), run_time=1.0)
         self.play(FadeOut(v), t0.set(7))
@@ -160,7 +160,7 @@ class Ep07Procedures(NarratedScene):
                  FadeIn(col1, shift=UP * 0.2))
         self.say("s 寄存器和 sp 是“被调用者保存”的：函数要用，就得先存旧值，返回前原样恢复。",
                  FadeIn(col2, shift=UP * 0.2))
-        self.say("换句话说：跨过一次函数调用，s 寄存器的值保证不变，t 寄存器则不保证。")
+        self.say("换句话说：跨过一次函数调用，s 寄存器的值保证不变；t、a 寄存器则不保证。")
         self.say("那么，这些旧值要存到哪里？答案是内存里的“栈”。")
         self.hold()
         self.clear_stage()
@@ -291,7 +291,7 @@ class Ep07Procedures(NarratedScene):
                  FadeIn(asm, shift=UP * 0.2), FadeIn(regs), FadeIn(col), FadeIn(sp_arrow), FadeIn(xy))
         self.say("sumSquare 自己也要 jal 调用 mult，而 jal 会覆盖 ra。不先保存 ra，就再也回不到调用者了。",
                  Circumscribe(asm[5], color=RED_B))
-        self.say("y 在 a1 里，a 寄存器由调用者保存，mult 可能改掉它，所以 y 也得存到栈上。",
+        self.say("y 也得存到栈上：a1 马上要用来传 x，而且 a 寄存器由调用者保存，mult 也可能改掉它。",
                  Circumscribe(asm[3], color=YELLOW_D))
         self.hold()
 
@@ -300,13 +300,13 @@ class Ep07Procedures(NarratedScene):
         def go(i, *anims, rt=0.7):
             self.play(box.animate.become(asm.line_box(i)), *anims, run_time=rt)
 
-        self.say("序言：腾出两个字，存好 ra 和 y。", FadeIn(box))
+        self.say("先是序言（prologue）：腾出两个字，存好 ra 和 y。", FadeIn(box))
         self.play(R["sp"].set("0xFF8"), sp_arrow.animate.next_to(col.cells[2], RIGHT, buff=0.08))
         go(2)
         self.play(col.set(0xFFC, "ra = 0x1010", C_RA))
         go(3)
         self.play(col.set(0xFF8, "y = 5", C_A))
-        self.say("准备参数 mult(3, 3)，然后 jal：ra 被改成了 0x2014，也就是 jal 的下一条。",
+        self.say("准备参数 mult(3, 3)，然后 jal：ra 被改成 jal 下一条指令的地址，这里是 0x2014。",
                  box.animate.become(asm.line_box(4)))
         self.play(R["a1"].set(3))
         go(5, R["ra"].set("0x2014"))
@@ -314,9 +314,9 @@ class Ep07Procedures(NarratedScene):
         mult.next_to(xy, DOWN, buff=0.35)
         self.play(FadeIn(mult, shift=LEFT * 0.2))
         self.play(R["a0"].set(9), R["a1"].set("???"))
-        self.say("mult 返回时，a1 已经面目全非——幸好 y 存在栈上。", FadeOut(mult))
+        self.say("mult 返回后，a1 里是什么已经说不准了——幸好 y 存在栈上。", FadeOut(mult))
         go(6, R["a1"].set(5))
-        self.say("算出 9 + 5 = 14。尾声：从栈上恢复 ra，sp 加回 8，最后 jr ra 回到调用者。",
+        self.say("算出 9 + 5 = 14。然后是尾声（epilogue）：恢复 ra，sp 加回 8，最后 jr ra 回到调用者。",
                  box.animate.become(asm.line_box(7)))
         self.play(R["a0"].set(14))
         go(8, R["ra"].set("0x1010"))
@@ -326,8 +326,13 @@ class Ep07Procedures(NarratedScene):
         self.hold()
         pro = Brace(VGroup(asm[1], asm[3]), LEFT, color=BLUE_B)
         epi = Brace(VGroup(asm[8], asm[10]), LEFT, color=BLUE_B)
-        pro_l = zh("序言", 22, BLUE_B).next_to(pro, LEFT, buff=0.1)
-        epi_l = zh("尾声", 22, BLUE_B).next_to(epi, LEFT, buff=0.1)
-        self.say("开头几行叫“序言”（prologue），结尾几行叫“尾声”（epilogue）。几乎每个非叶子函数都长这样。",
+        pro_l = zh("序言", 22, BLUE_B)
+        epi_l = zh("尾声", 22, BLUE_B)
+        if EN:  # "prologue"/"epilogue" are too wide for the left margin: run them along the braces
+            pro_l.rotate(PI / 2)
+            epi_l.rotate(PI / 2)
+        pro_l.next_to(pro, LEFT, buff=0.1)
+        epi_l.next_to(epi, LEFT, buff=0.1)
+        self.say("序言保存现场，尾声恢复现场。几乎每个会调用其他函数的函数，都是这个结构。",
                  GrowFromCenter(pro), GrowFromCenter(epi), FadeIn(pro_l), FadeIn(epi_l))
         self.hold(0.5)

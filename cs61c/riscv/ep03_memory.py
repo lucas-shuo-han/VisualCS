@@ -18,7 +18,7 @@ class Ep03Memory(NarratedScene):
         self.end_card(
             [
                 "内存按字节寻址；一个字 = 4 字节",
-                "RISC-V 是小端序：低位字节放在低地址",
+                "小端序：低位字节放在低地址",
                 "lw / sw  寄存器, 偏移(基址)：地址 = 基址 + 偏移",
                 "A[i] 的字节偏移是 4 × i",
                 "lb 符号扩展，lbu 零扩展",
@@ -30,7 +30,7 @@ class Ep03Memory(NarratedScene):
         head = self.heading("内存 Memory")
         regs = box_label("寄存器 × 32", BLUE_C, w=3.2, h=2.2, font_size=30).move_to(LEFT * 3.8)
         mem = box_label("内存：数组、结构体……", GREEN_C, w=4.6, h=4.2, font_size=30).move_to(RIGHT * 3.0)
-        self.say("寄存器只有 32 个，可程序里有数组、结构体，成千上万个变量。它们都放在内存里。",
+        self.say("寄存器只有 32 个，可程序里有数组、结构体，成千上万个变量。寄存器放不下的，就放在内存里。",
                  Write(head), FadeIn(regs, shift=RIGHT * 0.2), FadeIn(mem, shift=LEFT * 0.2))
         load = Arrow(mem.get_left() + UP * 0.6, regs.get_right() + UP * 0.6, buff=0.15, color=YELLOW_D)
         store = Arrow(regs.get_right() + DOWN * 0.6, mem.get_left() + DOWN * 0.6, buff=0.15, color=TEAL_C)
@@ -75,7 +75,7 @@ class Ep03Memory(NarratedScene):
         hi = zh("高位", 22, GREY_B).next_to(pieces[0], DOWN, buff=0.2)
         lo = zh("低位", 22, GREY_B).next_to(pieces[3], DOWN, buff=0.2)
         self.play(FadeIn(hi), FadeIn(lo))
-        self.say("RISC-V 采用小端序（little-endian）：最低位的字节放在最小的地址。")
+        self.say("RISC-V 通常采用小端序（little-endian）：最低位的字节放在最小的地址。")
         targets = []
         for k in range(4):
             t = mono(f"{[0x78, 0x56, 0x34, 0x12][k]:02X}", mem.font_size, byte_cols[3 - k]).move_to(mem.cell(BASE + k))
@@ -202,7 +202,7 @@ class Ep03Memory(NarratedScene):
         self.play(LaggedStart(*[TransformFromCopy(sign, o) for o in reversed(ones)],
                               lag_ratio=0.06, run_time=2.2))
         val = mono("= 0xFFFFFFF3 = −13", 32, RED_B).next_to(bf, DOWN, buff=0.45)
-        self.say("……于是高 24 位全是 1，结果是 0xFFFFFFF3，也就是 −13。有符号的值保持不变。",
+        self.say("……于是高 24 位全是 1，得到 0xFFFFFFF3。0xF3 当作有符号数是 −13，扩展后仍是 −13。",
                  Write(val))
         self.hold()
         zeros = VGroup(*[mono("0", 22, BLUE_B).move_to(d) for d in bf.field_digits[0]])

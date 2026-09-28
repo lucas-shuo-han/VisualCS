@@ -5,6 +5,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import *  # noqa: E402,F403
 
 
+def small(s, size, color=C_TEXT):
+    """Small label text. Built at twice the size and scaled down: at small sizes Pango
+    rounds glyph positions and squeezes the spaces between English words."""
+    return zh(s, size * 2, color).scale(0.5)
+
+
 class Ep05BranchesLoops(NarratedScene):
     def construct(self):
         self.title_card()
@@ -34,7 +40,7 @@ class Ep05BranchesLoops(NarratedScene):
         addrs = VGroup(*[mono(f"0x{4 * i:02X}", 28, GREY).next_to(code.left_of(i, 0.5), LEFT, buff=0)
                          for i in range(4)])
         pc = RegBox("PC", "0x00", color=YELLOW_D, width=1.6, font_size=30).move_to(RIGHT * 4.6 + UP * 2.3)
-        self.say("程序就是一串指令。CPU 用一个特殊的寄存器——程序计数器 PC——记住现在执行到哪一条。",
+        self.say("程序就是内存里的一串指令。CPU 用一个特殊的寄存器——程序计数器（PC）——记住当前指令的地址。",
                  FadeIn(code, shift=UP * 0.2), FadeIn(addrs), FadeIn(pc))
         arrow = pc_arrow().next_to(addrs[0], LEFT, buff=0.2)
         box = code.line_box(0)
@@ -76,7 +82,7 @@ class Ep05BranchesLoops(NarratedScene):
         j = CodeListing(["j Label      # = jal x0, Label"], font_size=36).next_to(syn, DOWN, buff=0.6)
         self.say("还有无条件跳转 j Label：直接跳过去。它是 jal x0, Label 的简写，第 7 集会讲 jal。",
                  FadeIn(j, shift=UP * 0.15))
-        lab = zh("Label 只是代码中某个位置的名字，汇编器会把它换算成地址。", 28, C_LABEL).next_to(j, DOWN, buff=0.6)
+        lab = zh("Label  =  某条指令的地址", 30, C_LABEL).next_to(j, DOWN, buff=0.6)
         self.say("Label 只是给代码中某个位置起的名字，汇编器会把它换算成地址。", FadeIn(lab))
         self.hold()
         self.clear_stage()
@@ -104,7 +110,7 @@ class Ep05BranchesLoops(NarratedScene):
             "Exit:",
         ], font_size=28, line_gap=0.56)
         asm.to_edge(RIGHT, buff=0.35).set_y(0.9)
-        self.say("关键技巧是“条件取反”：C 里 i == j 时执行 then，所以汇编里用 bne——不相等就跳到 Else。",
+        self.say("关键技巧是“条件取反”：C 里 i == j 时执行 then 部分，所以汇编里反过来用 bne——不相等就跳过它，直接去 Else。",
                  FadeIn(asm, shift=LEFT * 0.2))
         self.play(Circumscribe(asm.glyphs(0, "bne"), color=RED_B), Circumscribe(c.glyphs(0, "=="), color=RED_B))
         self.hold()
@@ -148,7 +154,7 @@ class Ep05BranchesLoops(NarratedScene):
         la = mono("t1", 30, C_REG).next_to(ra, LEFT, buff=0.5)
         lb = mono("t2", 30, C_REG).next_to(rb, LEFT, buff=0.5)
         op = mono("and", 30, C_MNEM).next_to(rr, LEFT, buff=0.5)
-        note = zh("（只画出最低 8 位）", 22, GREY).next_to(rows, DOWN, buff=0.35)
+        note = small("（只画出最低 8 位）", 22, GREY).next_to(rows, DOWN, buff=0.35)
         self.play(FadeIn(ra), FadeIn(rb), FadeIn(la), FadeIn(lb), FadeIn(note))
         self.say("and：两位都是 1，结果才是 1。它常用来做“掩码”：只保留想要的那些位。",
                  Create(line), FadeIn(op),
@@ -167,7 +173,7 @@ class Ep05BranchesLoops(NarratedScene):
         ], font_size=28, line_gap=0.55).next_to(note, DOWN, buff=0.35)
         self.say("它们都有立即数版本：andi、ori、xori。比如 andi t0, t1, 0xFF 取出最低的一个字节。",
                  FadeIn(imm[0], shift=UP * 0.15))
-        self.say("RISC-V 没有 not 指令：-1 的每一位都是 1，所以 xori 与 -1 异或就是按位取反。",
+        self.say("RISC-V 没有真正的 not 指令：-1 的每一位都是 1，与它异或就是按位取反。伪指令 not 就是这么实现的。",
                  FadeIn(imm[1], shift=UP * 0.15))
         self.hold()
         self.play(FadeOut(VGroup(ra, rb, rr, line, la, lb, op, note, imm)))
@@ -203,8 +209,10 @@ class Ep05BranchesLoops(NarratedScene):
         srl_n = zh("左边补 0：不再是负数", 26, TEAL_C).next_to(srl, RIGHT, buff=0.4)
         sra_n = zh("左边补符号位：−16 ÷ 4 = −4", 26, GREEN_C).next_to(sra, RIGHT, buff=0.4)
         VGroup(neg, nl, srl, sra, srl_l, sra_l, srl_n, sra_n).move_to(UP * 0.2)
+        # a real srli fills bit 31, not bit 7: say that this row is a toy 8-bit register
+        toy = small("（示意：假设寄存器只有 8 位）", 22, GREY).next_to(VGroup(sra_l, sra), DOWN, buff=0.4)
         self.say("右移有两种。srl 是逻辑右移：左边补 0。",
-                 FadeIn(neg), FadeIn(nl), FadeIn(srl_l), TransformFromCopy(neg, srl))
+                 FadeIn(neg), FadeIn(nl), FadeIn(toy), FadeIn(srl_l), TransformFromCopy(neg, srl))
         self.play(FadeIn(srl_n))
         self.say("sra 是算术右移：左边补符号位。这样负数除以 2 的幂之后，依然是负数。",
                  FadeIn(sra_l), TransformFromCopy(neg, sra))
@@ -238,7 +246,7 @@ class Ep05BranchesLoops(NarratedScene):
         regs = reg_column([("a0", "0x100"), ("a1", 4), ("t0", 0), ("t1", 0), ("t2", 0), ("s1", 0)],
                           width=1.5, buff=0.14, font_size=22)
         regs.move_to(RIGHT * 3.9 + UP * 0.9)
-        names = VGroup(*[zh(s, 20, GREY_B).next_to(r, RIGHT, buff=0.15) for s, r in
+        names = VGroup(*[small(s, 20, GREY_B).next_to(r, RIGHT, buff=0.15) for s, r in
                          zip(["A 的地址", "n", "i", "", "", "sum"], regs)])
         arr_vals = [3, 1, 4, 1]
         arr = VGroup()
@@ -284,7 +292,7 @@ class Ep05BranchesLoops(NarratedScene):
         self.hold()
 
         total = 3
-        self.say("之后每一轮都一样：i 加 1，指针后移 4 个字节，把元素累加进 sum……")
+        self.say("之后每一轮都一样：算出 A + 4i，取出 A[i] 累加进 sum，再让 i 加 1……")
         for i in range(1, 4):
             total += arr_vals[i]
             rt = 0.3
