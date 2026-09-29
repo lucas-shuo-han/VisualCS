@@ -1,0 +1,224 @@
+1
+00:00:06,200 --> 00:00:15,300
+Episode 7 used jal and jr ra. In fact, RISC-V has only two real unconditional jump instructions.
+
+2
+00:00:15,300 --> 00:00:25,000
+jal rd, label stands for "jump and link," but it really links first: it writes PC + 4 into rd, then jumps to label.
+
+3
+00:00:25,000 --> 00:00:34,700
+jalr rd, rs1, imm also links first, but jumps to rs1 + imm: the address comes from a register.
+
+4
+00:00:34,700 --> 00:00:46,266
+Every other jump is a pseudoinstruction: j, jr and ret write the link to x0, discarding it; jal without rd links to ra.
+
+5
+00:00:46,266 --> 00:00:52,900
+Why two? jal's target is fixed at assembly time, which is just right for calling a function by name.
+
+6
+00:00:52,900 --> 00:01:05,866
+jalr's target comes from a register at run time. That covers returning to the address in ra, calling through a function pointer, and, with auipc, jumping far.
+
+7
+00:01:05,866 --> 00:01:16,566
+This episode's star is factorial, defined by factorial(1) = 1 and factorial(n) = n × factorial(n − 1).
+
+8
+00:01:16,566 --> 00:01:23,833
+What if we save nothing? Say main calls factorial(2): a0 = 2, and ra holds the way back to main.
+
+9
+00:01:23,833 --> 00:01:32,366
+factorial(2) puts the argument 1 in a0 and does a jal: now ra points back into factorial(2).
+
+10
+00:01:32,366 --> 00:01:44,900
+factorial(1) returns 1, but factorial(2)'s 2 was overwritten by the argument 1; and ra still points into factorial(2), so it can never get back to main.
+
+11
+00:01:44,900 --> 00:01:52,233
+The lazy fix: on every call, push all of x1 through x31, then load them all back afterward.
+
+12
+00:01:52,233 --> 00:01:58,233
+But memory is slow, and a call usually needs to protect only a few registers.
+
+13
+00:01:58,233 --> 00:02:09,966
+The fix is Episode 7's calling convention: callers can rely only on s registers and sp; a callee that uses an s register saves it first and restores it before returning.
+
+14
+00:02:09,966 --> 00:02:16,800
+A recursive function plays both roles: callee to the level above, caller to the level below.
+
+15
+00:02:16,800 --> 00:02:26,666
+Here is the notes' factorial, which follows the calling convention, starting at address 0x2000. First, spot the prologue and epilogue.
+
+16
+00:02:26,666 --> 00:02:38,066
+The prologue carves out 8 bytes on the stack: this call's stack frame. The jal further down will overwrite ra, and s0 is borrowed, so its old value is saved too.
+
+17
+00:02:38,066 --> 00:02:47,333
+mv s0 a0 copies n into s0. s registers survive calls, so n is still there when the recursive call returns.
+
+18
+00:02:47,333 --> 00:02:56,266
+bne compares two registers, so li first puts 1 in t0. If n ≠ 1, branch to recurse.
+
+19
+00:02:56,266 --> 00:03:07,300
+Otherwise it's the base case: a0 = 1. It can't just jr ra: s0 isn't restored and the frame isn't popped yet, so it jumps to the epilogue.
+
+20
+00:03:07,300 --> 00:03:19,600
+recurse: a0 = n − 1, and it calls itself. On return a0 = (n − 1)!, which is multiplied by n from s0.
+
+21
+00:03:19,600 --> 00:03:30,900
+The epilogue runs in the opposite order: load ra and s0 back from the stack, then add 8 to sp to pop the frame, and finally jr ra.
+
+22
+00:03:30,900 --> 00:03:41,766
+Let's trace factorial(3) all the way through. main has already allocated a 12-byte frame, so sp = 0xFFFFFFD4.
+
+23
+00:03:41,766 --> 00:03:52,366
+main puts 3 in a0 and executes the jal at 0x1004: ra = 0x1008, and control enters factorial.
+
+24
+00:03:52,366 --> 00:04:05,566
+factorial(3)'s prologue: sp drops by 8 to 0xFFFFFFCC, then it saves ra = 0x1008 and main's s0 = 42.
+
+25
+00:04:05,566 --> 00:04:19,900
+mv sets s0 = 3. Since 3 ≠ 1, it branches to recurse: a0 = 2, and the jal at 0x2024 sets ra = 0x2028.
+
+26
+00:04:19,900 --> 00:04:35,300
+factorial(2) pushes a frame the same way: sp = 0xFFFFFFC4, saving ra = 0x2028 and s0 = 3, then calls itself with a0 = 1.
+
+27
+00:04:35,300 --> 00:04:47,666
+factorial(1) pushes one too: sp = 0xFFFFFFBC, saving ra = 0x2028 and s0 = 2.
+
+28
+00:04:47,666 --> 00:04:59,700
+Each of the three frames holds its own ra and s0. factorial(3)'s ra leads back to main; the other two lead to the mul at 0x2028.
+
+29
+00:04:59,700 --> 00:05:06,166
+factorial(1) is the base case: a0 = 1, then j to the epilogue.
+
+30
+00:05:06,166 --> 00:05:18,966
+The epilogue restores ra = 0x2028 and s0 = 2, sp goes back to 0xFFFFFFC4, and jr ra returns to the mul.
+
+31
+00:05:18,966 --> 00:05:34,100
+a0 = s0 × a0 = 2 × 1 = 2. The 2 in s0 is factorial(2)'s own n: factorial(1) used s0, but restored it before returning.
+
+32
+00:05:34,100 --> 00:05:50,533
+factorial(2) runs its epilogue: ra = 0x2028, s0 = 3, sp = 0xFFFFFFCC. Back at the mul: a0 = 3 × 2 = 6.
+
+33
+00:05:50,533 --> 00:06:03,766
+factorial(3) restores ra = 0x1008 and main's s0 = 42, sp goes back to 0xFFFFFFD4, and it returns to main.
+
+34
+00:06:03,766 --> 00:06:15,000
+Back in main: a0 = 6, and sp and s0 are just as they were before the call. The popped frames are still in memory; nobody uses them anymore.
+
+35
+00:06:15,000 --> 00:06:25,300
+The notes' foo is recursive too: foo(i) = i + foo(i − 1). Put it next to factorial and the skeleton is identical.
+
+36
+00:06:25,300 --> 00:06:34,866
+Only three things differ: it compares against x0 directly, saving an li; the base case returns 0; and multiply becomes add.
+
+37
+00:06:34,866 --> 00:06:49,200
+The notes' main keeps foo(3) in s0, where it survives the call to foo(100). At its deepest, foo(100) has 101 frames on the stack: 808 bytes.
+
+38
+00:06:49,200 --> 00:06:56,633
+Not every function needs the stack. In the notes, sum_square calls mult twice, and mult calls nothing at all.
+
+39
+00:06:56,633 --> 00:07:09,800
+A function like mult is a leaf function: with no jal, ra is never overwritten, and if it uses only t and a registers, it needs no sw or lw at all.
+
+40
+00:07:09,800 --> 00:07:17,733
+Here's the full register convention table. gp and tp have special jobs outside the calling convention, so leave them alone.
+
+41
+00:07:17,733 --> 00:07:27,566
+s0 is also called fp, the frame pointer: sp may move partway through a function, but fp keeps pointing at the current frame.
+
+42
+00:07:27,566 --> 00:07:34,666
+The notes' func_a moves sp partway through: it calls func_b and needs t1 both before and after the call.
+
+43
+00:07:34,666 --> 00:07:43,900
+The prologue pushes 8 bytes and saves ra and s0. ra is caller-saved, but by convention it is saved in the prologue anyway.
+
+44
+00:07:43,900 --> 00:07:55,100
+t1 = 10, s0 = 20. t1 is caller-saved and func_b may change it, so before the call, func_a pushes 4 more bytes to save t1.
+
+45
+00:07:55,100 --> 00:08:05,033
+After func_b returns, t1 could hold anything. Luckily the stack has a copy: t1 = 10 comes back, and those 4 bytes are popped right away.
+
+46
+00:08:05,033 --> 00:08:13,966
+When sp moves, the offsets move with it: a moment ago 0(sp) was t1; only after the pop is it ra again.
+
+47
+00:08:13,966 --> 00:08:27,200
+Finally t1 = 15 and s0 = 25. The epilogue restores ra and the caller's s0 = 42, puts sp back, and ret returns.
+
+48
+00:08:27,200 --> 00:08:33,466
+Three true-or-false questions from the notes' exercises. Think them over first.
+
+49
+00:08:33,466 --> 00:08:41,633
+1 is false: a0 and a1 carry return values back. Like the t registers, the a registers are caller-saved.
+
+50
+00:08:41,633 --> 00:08:48,666
+2 is true: s registers are callee-saved, usually saved in the prologue and restored in the epilogue.
+
+51
+00:08:48,666 --> 00:08:57,266
+3 is false: func_a pushed t1 partway through. As long as every push has a matching pop, the stack can be used anywhere.
+
+52
+00:08:57,266 --> 00:09:09,266
+Finally, Episode 7's six steps once more. Steps 1 and 2 belong to the caller: save any t and a registers it still needs, set up the arguments, then jal.
+
+53
+00:09:09,266 --> 00:09:19,100
+Step 3, the prologue: lower sp once, making room for local arrays too; save the s registers it uses, and ra if it calls others.
+
+54
+00:09:19,100 --> 00:09:29,933
+Step 4 is the body. Steps 5 and 6 are the epilogue: return value in a0, restore registers, pop the frame, jr ra.
+
+55
+00:09:29,933 --> 00:09:39,333
+The notes' analogy: a call is like house-sitting for your parents. They're the caller, you're the callee; the table is the registers, the closet is memory.
+
+56
+00:09:39,333 --> 00:09:49,733
+The arguments are the essentials on the table. Stash the rest in the closet (prologue); before leaving, put it back and leave a gift: the return value (epilogue).
+

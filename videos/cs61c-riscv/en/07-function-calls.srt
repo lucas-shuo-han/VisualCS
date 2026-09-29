@@ -1,0 +1,140 @@
+1
+00:00:06,200 --> 00:00:09,233
+Calling a function takes six basic steps.
+
+2
+00:00:09,233 --> 00:00:13,633
+First, put the arguments where the function can find them, then jump there…
+
+3
+00:00:13,633 --> 00:00:17,733
+…the function sets up its own local storage and runs its body…
+
+4
+00:00:17,733 --> 00:00:23,500
+…puts the return value in place, and finally jumps back to where it was called.
+
+5
+00:00:23,500 --> 00:00:31,266
+Here's the simplest example: a = sum(a, b), with a in s0 and b in s1.
+
+6
+00:00:31,266 --> 00:00:38,800
+Step one: put the arguments in a0 and a1. The return value will come back in a0, too.
+
+7
+00:00:38,800 --> 00:00:48,066
+jal means jump and link: it saves the address of the next instruction, PC + 4, in ra, then jumps to sum.
+
+8
+00:00:48,066 --> 00:00:51,366
+The function computes its result into a0…
+
+9
+00:00:51,366 --> 00:00:59,133
+…then jr ra jumps back to the address saved in ra, 0x100C, and execution carries on.
+
+10
+00:00:59,133 --> 00:01:06,033
+Why not just j back? Because sum may be called from many places; only ra knows where to return this time.
+
+11
+00:01:06,033 --> 00:01:14,566
+jr ra is shorthand for jalr x0, 0(ra), and is often written as ret.
+
+12
+00:01:14,566 --> 00:01:20,466
+Here's the catch: there's only one set of registers, shared by the caller and the callee.
+
+13
+00:01:20,466 --> 00:01:27,366
+But f needs registers too. If it overwrites a value the caller still needs, that data is silently clobbered.
+
+14
+00:01:27,366 --> 00:01:32,266
+So everyone agrees on a set of rules, called the calling convention.
+
+15
+00:01:32,266 --> 00:01:41,133
+The t and a registers and ra are caller-saved: the callee may change them freely. If the caller needs them afterward, it must save them itself.
+
+16
+00:01:41,133 --> 00:01:49,866
+The s registers and sp are callee-saved: a function that uses one must save the old value first and restore it before returning.
+
+17
+00:01:49,866 --> 00:01:57,900
+In other words: across a function call, the s registers are guaranteed to keep their values; the t and a registers are not.
+
+18
+00:01:57,900 --> 00:02:03,700
+So where do these old values go? Into a region of memory called the stack.
+
+19
+00:02:03,700 --> 00:02:12,266
+A program's memory is split into a few regions: code, static data, the heap, and, up at the high addresses, the stack.
+
+20
+00:02:12,266 --> 00:02:23,033
+The stack grows down, from high addresses toward low ones. sp, the stack pointer, points to the top of the stack: the lowest address in use.
+
+21
+00:02:23,033 --> 00:02:29,366
+Let's zoom in. Suppose a function needs to save two registers, ra and s0.
+
+22
+00:02:29,366 --> 00:02:33,866
+To push, first subtract 8 from sp to make room for two words…
+
+23
+00:02:33,866 --> 00:02:41,300
+…then store the registers with sw: ra at sp + 4, s0 at sp + 0.
+
+24
+00:02:41,300 --> 00:02:45,366
+Now the function is free to change ra and s0.
+
+25
+00:02:45,366 --> 00:02:53,966
+Before returning, pop in reverse order: lw brings back the old values, then sp is moved back up.
+
+26
+00:02:53,966 --> 00:03:03,500
+sp is back where it started, and the registers hold their old values. The saved data isn't erased; it just no longer belongs to anyone.
+
+27
+00:03:03,500 --> 00:03:08,533
+Finally, a complete example: sumSquare calls another function, mult.
+
+28
+00:03:08,533 --> 00:03:17,000
+On entry, x = 3 is in a0, y = 5 is in a1, and ra holds the caller's return address.
+
+29
+00:03:17,000 --> 00:03:26,666
+sumSquare itself calls mult with jal, and jal overwrites ra. Without saving ra first, it could never get back to its caller.
+
+30
+00:03:26,666 --> 00:03:35,266
+y must go on the stack too: a1 is about to carry x, and since the a registers are caller-saved, mult may change a1 as well.
+
+31
+00:03:35,266 --> 00:03:40,733
+First comes the prologue: make room for two words, then save ra and y.
+
+32
+00:03:40,733 --> 00:03:52,100
+Set up the arguments for mult(3, 3), then jal: ra now holds the address of the instruction after the jal, here 0x2014.
+
+33
+00:03:52,100 --> 00:03:58,133
+After mult returns, there's no telling what's in a1. Luckily, y is safe on the stack.
+
+34
+00:03:58,133 --> 00:04:08,200
+That gives 9 + 5 = 14. Then the epilogue: restore ra, add 8 back to sp, and jr ra returns to the caller.
+
+35
+00:04:08,200 --> 00:04:15,466
+The prologue saves the state; the epilogue restores it. Almost every function that calls another has this shape.
+

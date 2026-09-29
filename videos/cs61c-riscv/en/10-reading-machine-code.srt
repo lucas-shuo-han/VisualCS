@@ -1,0 +1,220 @@
+1
+00:00:06,200 --> 00:00:15,000
+As Episode 2 showed, x86, ARM and RISC-V are three different ISAs. Hand the same line of C to three compilers…
+
+2
+00:00:15,000 --> 00:00:22,333
+…and the machine code comes out completely different. Most phones run ARM chips; most PCs run x86.
+
+3
+00:00:22,333 --> 00:00:29,266
+Even the lengths differ: x86 instructions vary in size, and this one is just 2 bytes.
+
+4
+00:00:29,266 --> 00:00:38,166
+RISC-V instructions are always 32 bits, as wide as a data word, so instructions and data can share memory hardware.
+
+5
+00:00:38,166 --> 00:00:46,900
+So a program binary is tied to its ISA: a RISC-V executable simply won't run on an Intel x86 machine.
+
+6
+00:00:46,900 --> 00:00:57,766
+ISAs are often backward compatible, though: today's x86 processors still run programs written for the Intel 8088 in 1981.
+
+7
+00:00:57,766 --> 00:01:05,966
+Last episode, assembly became machine code. Now the reverse: how do we read machine code back as assembly? That's disassembly.
+
+8
+00:01:05,966 --> 00:01:11,333
+Let's practice on this word: 0x01B342B3.
+
+9
+00:01:11,333 --> 00:01:16,800
+Step one: convert to binary. Each hex digit expands to exactly 4 bits.
+
+10
+00:01:16,800 --> 00:01:22,800
+Next, find the opcode: whatever the format, it always sits in the lowest 7 bits.
+
+11
+00:01:22,800 --> 00:01:29,900
+Each format has its own set of opcodes. Look it up: 0110011 means R-type.
+
+12
+00:01:29,900 --> 00:01:41,333
+Step two: only the format tells us how to cut the other 25 bits. For R-type: funct7, rs2, rs1, funct3, rd.
+
+13
+00:01:41,333 --> 00:01:52,066
+Step three: funct3 = 100 and funct7 = 0000000. Look them up in the R-type table: it's xor.
+
+14
+00:01:52,066 --> 00:02:00,533
+Note that the mnemonic xor isn't stored in any single field: opcode, funct3 and funct7 decide it together.
+
+15
+00:02:00,533 --> 00:02:17,433
+Step four: each register field is a 5-bit unsigned number. rd = 00101 = 5, rs1 = 00110 = 6, rs2 = 11011 = 27.
+
+16
+00:02:17,433 --> 00:02:25,866
+Then convert to register names: x5 is t0, x6 is t1, x27 is s11.
+
+17
+00:02:25,866 --> 00:02:30,533
+Put it together: xor t0, t1, s11.
+
+18
+00:02:30,533 --> 00:02:42,433
+Watch the order: assembly lists rd, rs1, rs2, but the fields run rs2, rs1, rd from left to right, exactly reversed.
+
+19
+00:02:42,433 --> 00:02:49,733
+That's all four steps. The first two work the same for every format; the last two depend on it.
+
+20
+00:02:49,733 --> 00:02:57,766
+Back to the full R-type table: all 10 instructions share one opcode, but there are only 8 funct3 values.
+
+21
+00:02:57,766 --> 00:03:06,400
+Two pairs share a funct3: add and sub are both 000; srl and sra are both 101.
+
+22
+00:03:06,400 --> 00:03:13,900
+It's funct7 that tells them apart. It takes only two values, and they differ in a single bit: bit 30.
+
+23
+00:03:13,900 --> 00:03:21,700
+That's 17 bits just to pick the operation, far more than needed. But keeping the fields aligned matters more than saving bits.
+
+24
+00:03:21,700 --> 00:03:31,200
+Take add t0, t1, s11: flip bit 30 from 0 to 1 and it becomes sub t0, t1, s11.
+
+25
+00:03:31,200 --> 00:03:41,166
+add and sub share one adder, and bit 30 is a flag: when it's 1, rs2 is negated (invert the bits, add one) before the addition.
+
+26
+00:03:41,166 --> 00:03:51,800
+With funct3 = 101 it's a right shift. Bit 30 = 0 gives srl, a logical shift: the vacated top bits fill with 0s.
+
+27
+00:03:51,800 --> 00:04:00,600
+Bit 30 = 1 gives sra, an arithmetic shift that fills with the sign bit. This time the flag controls sign extension.
+
+28
+00:04:00,600 --> 00:04:11,033
+Immediate shifts use a variant CS61C calls I*-type: shifts go up to 31, so only the low 5 immediate bits are used.
+
+29
+00:04:11,033 --> 00:04:21,800
+The upper 7 bits aren't part of the number; they act like funct7. For srai they're 0100000, and the flag is bit 30 once again.
+
+30
+00:04:21,800 --> 00:04:30,066
+Clear bit 30 and you get srli. Left shifts are always logical, so slli always has a 0 there.
+
+31
+00:04:30,066 --> 00:04:41,366
+I-type is more than addi. Next to R-type, the funct3 codes match: addi and add, xori and xor, slti and slt…
+
+32
+00:04:41,366 --> 00:04:46,833
+The one gap is subi: to subtract a constant, just addi a negative number.
+
+33
+00:04:46,833 --> 00:04:55,800
+A 3-bit funct3 has only 8 codes, and they're all used up here; srli and srai even need bit 30 to tell them apart.
+
+34
+00:04:55,800 --> 00:05:03,500
+The five loads need funct3 codes too, so they get an opcode of their own. All told, I-type has 4 opcodes.
+
+35
+00:05:03,500 --> 00:05:10,600
+ecall (environment call) asks the operating system for a service, such as printing text or ending the program.
+
+36
+00:05:10,600 --> 00:05:16,400
+ebreak hands control to the debugger; it's how debuggers implement breakpoints.
+
+37
+00:05:16,400 --> 00:05:26,033
+Neither takes operands: ecall is all 0s apart from the opcode, and ebreak just adds a 1 in the lowest bit of the immediate.
+
+38
+00:05:26,033 --> 00:05:38,900
+Loads and stores share funct3 codes too: lb and sb are 000, lh and sh are 001, lw and sw are 010.
+
+39
+00:05:38,900 --> 00:05:49,166
+lbu and lhu have no store versions: a store writes just the bytes it targets, with nothing to extend. RV32 has no lwu either.
+
+40
+00:05:49,166 --> 00:05:59,833
+Why are loads and jalr I-type? Both compute rs1 + immediate, an address or a jump target, so they reuse the same adder.
+
+41
+00:05:59,833 --> 00:06:12,933
+jalr rd, rs1, imm (also written jalr rd, imm(rs1)) saves PC + 4 in rd, then jumps to rs1 + imm.
+
+42
+00:06:12,933 --> 00:06:24,833
+The ret and jr ra from Episode 7 are pseudo-instructions with no opcode of their own: the assembler turns both into jalr x0, ra, 0.
+
+43
+00:06:24,833 --> 00:06:32,900
+rd is x0 because a return doesn't need to save a return address: anything written to x0 is discarded.
+
+44
+00:06:32,900 --> 00:06:46,933
+Encoding: immediate 0, rs1 = ra = x1, rd = x0. There's only one jalr, so funct3 selects nothing; it's just 000.
+
+45
+00:06:46,933 --> 00:06:59,833
+The opcode is 1100111, giving 0x00008067. Spot this word in a disassembly and you know a function is returning.
+
+46
+00:06:59,833 --> 00:07:06,300
+One more example, this time S-type: sw x14, 36(x2).
+
+47
+00:07:06,300 --> 00:07:25,266
+36 in 12 bits is 0000 0010 0100. The top 7 bits, 0000001, go in imm[11:5]; the low 5 bits, 00100, go in imm[4:0].
+
+48
+00:07:25,266 --> 00:07:35,966
+Why split it? The funct7 slot alone has 7 bits, only 128 values. With no rd, a store borrows rd's 5 bits to make 12.
+
+49
+00:07:35,966 --> 00:07:48,566
+The rest is routine: rs2 = x14, rs1 = x2, funct3 = 010 for sw, and opcode 0100011.
+
+50
+00:07:48,566 --> 00:08:02,766
+The result is 0x02E12223. Disassembling reverses this: glue the two pieces back together, and 0000001 00100 is 36.
+
+51
+00:08:02,766 --> 00:08:10,266
+To finish, two for you: translate these words into assembly. Pause the video and try them yourself.
+
+52
+00:08:10,266 --> 00:08:19,433
+Question 1: opcode 0110011 means R-type; funct3 and funct7 are all 0s, so it's add.
+
+53
+00:08:19,433 --> 00:08:32,666
+rd = 1, rs1 = 2, rs2 = 3: the answer is add x1, x2, x3, that is, add ra, sp, gp.
+
+54
+00:08:32,666 --> 00:08:46,666
+Question 2: opcode 0000011 is a load, and funct3 = 010 makes it lw; rd = 10 is a0, and rs1 = 2 is sp.
+
+55
+00:08:46,666 --> 00:09:00,933
+The immediate 1111 1111 1100 has its top bit set, so in two's complement it's −4. Answer: lw a0, -4(sp).
+

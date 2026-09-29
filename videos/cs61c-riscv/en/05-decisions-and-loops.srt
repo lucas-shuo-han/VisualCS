@@ -1,0 +1,128 @@
+1
+00:00:06,200 --> 00:00:15,600
+A program is a sequence of instructions in memory. A special register, the program counter (PC), holds the address of the current instruction.
+
+2
+00:00:15,600 --> 00:00:22,200
+Each instruction is 4 bytes long. After each one, the PC goes up by 4 to point at the next.
+
+3
+00:00:22,200 --> 00:00:30,666
+But if we could only run one instruction after another, we could never write an if or a loop. We need instructions that jump.
+
+4
+00:00:30,666 --> 00:00:40,400
+The conditional branch beq (branch if equal): if rs1 equals rs2, jump to Label; otherwise carry on with the next instruction.
+
+5
+00:00:40,400 --> 00:00:49,833
+RISC-V has six conditional branches: equal, not equal, less than, greater or equal, plus unsigned versions of the last two.
+
+6
+00:00:49,833 --> 00:01:01,566
+No bgt or ble? Swap the operands, since a > b means b < a. The assembler also provides them as pseudo-instructions.
+
+7
+00:01:01,566 --> 00:01:12,433
+There's also an unconditional jump, j Label: it always jumps. It's shorthand for jal x0, Label; Episode 7 covers jal.
+
+8
+00:01:12,433 --> 00:01:19,433
+A label is just a name for a place in the code; the assembler converts it into an address.
+
+9
+00:01:19,433 --> 00:01:27,633
+Let's translate an if-else. The variables f, g, h, i, j live in s0 through s4.
+
+10
+00:01:27,633 --> 00:01:38,333
+The key trick: negate the condition. C runs the then-part when i == j, so the assembly uses bne instead, skipping straight to Else when they differ.
+
+11
+00:01:38,333 --> 00:01:44,200
+Case 1: i equals j. bne doesn't branch, so we run the add…
+
+12
+00:01:44,200 --> 00:01:48,100
+…then j Exit skips over the else part.
+
+13
+00:01:48,100 --> 00:01:56,166
+Case 2: i doesn't equal j. bne jumps straight to Else, runs the sub, and simply falls through to Exit.
+
+14
+00:01:56,166 --> 00:02:04,366
+Don't leave out j Exit: without it, the program would finish the then-part and fall right through into the else part.
+
+15
+00:02:04,366 --> 00:02:11,033
+Before writing loops, let's meet a few bitwise instructions. They work on 32-bit values bit by bit.
+
+16
+00:02:11,033 --> 00:02:19,033
+and: a result bit is 1 only if both bits are 1. It's often used as a mask, keeping just the bits you want.
+
+17
+00:02:19,033 --> 00:02:22,666
+or: the result is 1 if either bit is 1…
+
+18
+00:02:22,666 --> 00:02:27,033
+…xor: the result is 1 only if the two bits differ.
+
+19
+00:02:27,033 --> 00:02:37,400
+Each has an immediate version: andi, ori, xori. For example, andi t0, t1, 0xFF extracts the lowest byte.
+
+20
+00:02:37,400 --> 00:02:48,166
+There's no real not instruction: -1 is all 1s, so xor with -1 flips every bit. The not pseudo-instruction does just that.
+
+21
+00:02:48,166 --> 00:02:56,133
+Shifts slide all the bits over together. sll is shift left logical: move left, filling the right with 0s.
+
+22
+00:02:56,133 --> 00:03:04,266
+Shifting left by k multiplies by 2^k: 22 shifted left by 2 becomes 88.
+
+23
+00:03:04,266 --> 00:03:10,166
+There are two right shifts. srl, shift right logical, fills the left with 0s.
+
+24
+00:03:10,166 --> 00:03:19,266
+sra, shift right arithmetic, fills the left with the sign bit, so a negative number divided by a power of 2 stays negative.
+
+25
+00:03:19,266 --> 00:03:24,566
+Now let's put it all together: add up the n elements of an array A.
+
+26
+00:03:24,566 --> 00:03:31,266
+A's address is in a0 and n is in a1; i lives in t0 and sum in s1.
+
+27
+00:03:31,266 --> 00:03:39,866
+The skeleton of a loop: at the top, test the condition and exit if it fails; at the end of the body, jump back to the top.
+
+28
+00:03:39,866 --> 00:03:48,800
+Once again the condition is negated: C keeps going while i < n, so the assembly exits when i >= n.
+
+29
+00:03:48,800 --> 00:03:56,500
+A[i] is at address A + 4i: slli by 2 computes 4i, then we add the base address.
+
+30
+00:03:56,500 --> 00:04:07,866
+First pass: i = 0. The bge isn't taken; we compute address 0x100, load A[0] = 3, and sum becomes 3.
+
+31
+00:04:07,866 --> 00:04:15,166
+Every pass after that is the same: compute A + 4i, load A[i] and add it to sum, then increment i…
+
+32
+00:04:15,166 --> 00:04:24,766
+When i reaches 4, the bge condition holds and we jump to Done. sum = 3 + 1 + 4 + 1 = 9.
+

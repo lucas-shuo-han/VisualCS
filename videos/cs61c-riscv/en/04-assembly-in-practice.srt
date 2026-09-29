@@ -1,0 +1,224 @@
+1
+00:00:06,200 --> 00:00:14,066
+This episode is practice: we'll translate real C code into RISC-V assembly by hand.
+
+2
+00:00:14,066 --> 00:00:21,766
+First, assembly vs. C. One: C variables have types; registers don't. They just hold 32 bits.
+
+3
+00:00:21,766 --> 00:00:29,600
+Two: in C, the type decides the operation. Assembly flips this: the instruction decides how to read the bits.
+
+4
+00:00:29,600 --> 00:00:41,733
+Say t0 is all ones: as a signed number it's −1, as unsigned it's 4294967295. It depends on the instruction.
+
+5
+00:00:41,733 --> 00:00:53,133
+Three: C operators have several meanings. On line 2, + is pointer arithmetic; on line 4 it's integer addition, and the two *s are multiplication and dereference.
+
+6
+00:00:53,133 --> 00:01:03,666
+In assembly, each op name means exactly one operation, and you count the bytes yourself: p + 2 moves 8 bytes, so addi adds 8.
+
+7
+00:01:03,666 --> 00:01:12,900
+Four: a C statement can hold many operations, but each assembly line is one instruction. This line takes about six.
+
+8
+00:01:12,900 --> 00:01:22,466
+Assembly has no variable names either, so comments matter: everything from # to the end of the line is a comment. There are no multi-line comments.
+
+9
+00:01:22,466 --> 00:01:33,500
+Warm-up: f = (g + h) - (i + j), with g through j in x20 through x23, and f in x19.
+
+10
+00:01:33,500 --> 00:01:44,300
+Approach A follows C: sum each parenthesis into a temporary, x5 or x6, then subtract to get 23. But their old values are lost.
+
+11
+00:01:44,300 --> 00:01:51,933
+Approach B starts from the same values and uses algebra: compute g + h, then subtract i and j in turn.
+
+12
+00:01:51,933 --> 00:02:04,533
+Also 23, and x5 and x6 are untouched. The price is algebraic rewriting: harder expressions (say, distributing a multiply) need a smarter compiler.
+
+13
+00:02:04,533 --> 00:02:11,533
+There are only 32 registers, but that doesn't limit your variables: whatever doesn't fit spills over to memory.
+
+14
+00:02:11,533 --> 00:02:21,100
+The processor reaches memory through addresses. Directions are processor-centric: reading in is load from, writing out is store to.
+
+15
+00:02:21,100 --> 00:02:30,033
+RISC-V is a load-store architecture that computes only on registers: data in memory is loaded first, and stored back afterward if needed.
+
+16
+00:02:30,033 --> 00:02:39,466
+x86 lets one operand come straight from memory, so a single add does it; RISC-V splits it into lw and add.
+
+17
+00:02:39,466 --> 00:02:49,500
+Base + offset is modeled on arrays and structs: the base points to the start, and the offset is a fixed byte distance, known at assembly time.
+
+18
+00:02:49,500 --> 00:03:00,500
+Today's big example: four local variables, two of them arrays. We may use only t0, t1, t2 and the stack pointer sp, plus any memory.
+
+19
+00:03:00,500 --> 00:03:10,066
+sp is x2, which by convention points to the stack of locals. Use x2 as a temporary, and every sp-based access breaks.
+
+20
+00:03:10,066 --> 00:03:18,466
+We, the human compiler, decide where variables go; we just have to be consistent. On the left: offsets from sp.
+
+21
+00:03:18,466 --> 00:03:27,066
+a goes at 0(sp); b is "string" plus its terminating \0, 7 bytes starting at 4(sp).
+
+22
+00:03:27,066 --> 00:03:36,866
+c is 10 ints, 40 bytes, from 12(sp) to 51(sp); d is a single byte at 52(sp).
+
+23
+00:03:36,866 --> 00:03:45,266
+c starts at 12(sp), not 11(sp), so every int is aligned to a multiple of 4.
+
+24
+00:03:45,266 --> 00:03:55,466
+Line 1, a = 5: sw can only store a register, so li first puts 5 into t0, then we store it at 0(sp).
+
+25
+00:03:55,466 --> 00:04:06,766
+Line 2 stores "string"; ASCII gives these 7 bytes. Simplest is li and sb per byte, with \0 straight from x0: 13 instructions.
+
+26
+00:04:06,766 --> 00:04:20,533
+Smarter: pack 4 characters into a word and store it with one sw. In little-endian the first character must be the lowest byte, so "stri" becomes 0x69727473.
+
+27
+00:04:20,533 --> 00:04:28,100
+After sw to 4(sp), reading from low to high addresses gives s, t, r, i.
+
+28
+00:04:28,100 --> 00:04:40,166
+The remaining n, g, \0 plus one zero byte make 0x0000676E, stored at 8(sp). Just 4 instructions in total.
+
+29
+00:04:40,166 --> 00:04:48,633
+A constant this big won't fit addi's 12-bit immediate, so li expands into lui + addi. More in Episode 12.
+
+30
+00:04:48,633 --> 00:04:56,700
+Line 3, int c[10], has no initializer, so no instructions. The layout itself generates none either.
+
+31
+00:04:56,700 --> 00:05:06,000
+Line 4, d = b[3]: b starts at 4(sp), and b[3] is 3 bytes further, at 7(sp).
+
+32
+00:05:06,000 --> 00:05:17,766
+lb reads 0x69, which is 'i'. Its top bit is 0, so sign extension fills in 0s. Then sb stores it at 52(sp): that's d.
+
+33
+00:05:17,766 --> 00:05:29,600
+Line 5, c[4] = a+d: both values must be loaded first. a is an int, so lw; d is an unsigned uint8_t, so lbu.
+
+34
+00:05:29,600 --> 00:05:40,300
+5 + 105 = 110. c starts at 12(sp) and c[4] is 4 × 4 bytes further, so we store at 28(sp).
+
+35
+00:05:40,300 --> 00:05:47,333
+The last line, c[a] = 20, is the hardest. Can we use a fixed offset, as for c[4]?
+
+36
+00:05:47,333 --> 00:05:56,833
+No: a is a variable, only known to be 5 at runtime, but the offset is fixed at assembly time. The address must be computed in a register.
+
+37
+00:05:56,833 --> 00:06:05,533
+The address of c[a] is sp + 12 + 4 × a. First put 20 in t0, then load a into t1.
+
+38
+00:06:05,533 --> 00:06:17,966
+Multiplying by 4 is a left shift by 2: slli turns 0b101 into 0b10100, which is 20. Shifts are covered in Episode 5.
+
+39
+00:06:17,966 --> 00:06:29,100
+Adding c's offset, 12, gives 32, or 0x20; adding sp's 0x1000 gives the full address 0x1020.
+
+40
+00:06:29,100 --> 00:06:38,000
+The address is complete, so the offset is 0: sw t0, 0(t1) writes 20 into c[5].
+
+41
+00:06:38,000 --> 00:06:45,300
+Quick check: what's in t1 now? Not the value of c[a], but its address, &c[a].
+
+42
+00:06:45,300 --> 00:06:53,833
+Two short exercises. First: x5 = 0x100. After these three instructions, what's in x12?
+
+43
+00:06:53,833 --> 00:07:06,700
+li sets x11 to 0x000093F5; sw stores it at 0x100 in little-endian order: F5 93 00 00.
+
+44
+00:07:06,700 --> 00:07:14,900
+lb x12, 1(x5) reads the byte at 0x101: 0x93, not 0xF5.
+
+45
+00:07:14,900 --> 00:07:25,200
+0x93 is 1001 0011, so its top bit is 1. lb sign-extends, filling the upper 24 bits with 1s.
+
+46
+00:07:25,200 --> 00:07:38,166
+So x12 = 0xFFFFFF93. Two traps: little-endian puts 0x93 at 1(x5), and lb extends it into a negative number.
+
+47
+00:07:38,166 --> 00:07:46,666
+Second: x and y are int pointers, held in x3 and x5. Which instructions implement *x = *y?
+
+48
+00:07:46,666 --> 00:07:54,733
+1 and 2 copy the pointers themselves; 3 and 4 use lw to overwrite a pointer register. None of them work.
+
+49
+00:07:54,733 --> 00:08:05,633
+The answer is 5 → 6: lw loads *y into the free x8, then sw writes it where x points. Memory to memory must go through a register.
+
+50
+00:08:05,633 --> 00:08:15,100
+Order matters: 6 → 5 would store x8's old value first. 7 and 8 treat x8 as an address, also wrong.
+
+51
+00:08:15,100 --> 00:08:21,733
+Two last details. First: there is lbu, so why no "sbu"? Look at what a store does.
+
+52
+00:08:21,733 --> 00:08:31,766
+sb takes only the lowest byte and puts it in memory as is; nothing to extend. A load, though, must fill all 32 bits of the register.
+
+53
+00:08:31,766 --> 00:08:42,600
+A register is just bits, and there's no telling how later instructions will use it, so the upper bits must be defined: sign-extend or fill with 0s.
+
+54
+00:08:42,600 --> 00:08:50,833
+Second, alignment: the spec guarantees that loads and stores at a multiple of the access size never raise a misaligned exception.
+
+55
+00:08:50,833 --> 00:08:59,433
+Misaligned access is up to the implementation: it may be slow, or fail. So treat "should be aligned" as "must be aligned".
+
+56
+00:08:59,433 --> 00:09:07,600
+Also, the spec allows both little-endian and big-endian implementations; CS61C uses little-endian.
+

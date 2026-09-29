@@ -1,0 +1,256 @@
+1
+00:00:06,200 --> 00:00:15,833
+We now have all six instruction formats. This time, a different angle: how does an instruction compute the address it accesses, or the target it jumps to?
+
+2
+00:00:15,833 --> 00:00:20,366
+These rules are called addressing modes. RISC-V mainly uses three.
+
+3
+00:00:20,366 --> 00:00:28,700
+First, base/displacement: address = register + immediate. That's how lw and sw find their data.
+
+4
+00:00:28,700 --> 00:00:39,600
+jalr belongs here too: it jumps to rs1 + immediate. The new PC depends only on a register, not on where the jalr itself sits.
+
+5
+00:00:39,600 --> 00:00:49,266
+Second, PC-relative addressing: an offset added to the PC. Conditional branches, jal and auipc all use it.
+
+6
+00:00:49,266 --> 00:01:01,100
+Third, absolute addressing: the full address is given directly. For example, lui loads the address's upper 20 bits, and jalr adds the lower 12 and jumps.
+
+7
+00:01:01,100 --> 00:01:14,200
+In fact, almost every instruction sets the new PC relative to the current one: PC + 4 for most, PC + offset for branches and jal. Only jalr is different.
+
+8
+00:01:14,200 --> 00:01:26,400
+The pseudo-instructions fit this map too: j is shorthand for jal x0, so it's PC-relative; jr and ret are shorthand for jalr.
+
+9
+00:01:26,400 --> 00:01:36,066
+Let's compute some real offsets. Here is the loop from the course notes, with a sample address on each instruction: beq is at 0x0C.
+
+10
+00:01:36,066 --> 00:01:44,500
+Labels aren't instructions: Loop and End don't exist in machine code at all. The assembler must turn them into PC-relative offsets.
+
+11
+00:01:44,500 --> 00:01:51,766
+Case 1: the beq isn't taken. The PC moves to the next instruction: offset +4.
+
+12
+00:01:51,766 --> 00:02:03,200
+Case 2: the beq is taken and jumps to End. 0x1C − 0x0C = 0x10: offset +16, four instructions ahead.
+
+13
+00:02:03,200 --> 00:02:15,866
+Case 3: j Loop goes from 0x18 back to 0x0C. 0x0C − 0x18 = −12, three instructions back: offsets can be negative.
+
+14
+00:02:15,866 --> 00:02:27,900
+Last episode mentioned position-independent code. Move the whole loop to 0x100C: every address changes, yet +16 and −12 stay exactly the same.
+
+15
+00:02:27,900 --> 00:02:36,233
+Had the instruction said "jump to 0x1C", the move would break it. Absolute addresses break when code moves.
+
+16
+00:02:36,233 --> 00:02:46,233
+Now to machine code. First beq x19, x10, End with offset +16: we did this last episode, so here's a quick replay.
+
+17
+00:02:46,233 --> 00:03:01,900
+Then fill in rs2 = x10, rs1 = x19, funct3 = 000 and opcode = 1100011, and we get 0x00A98863.
+
+18
+00:03:01,900 --> 00:03:12,100
+Next, j Loop. j is a pseudo-instruction for jal x0, Loop: the return address goes to x0, which simply discards it.
+
+19
+00:03:12,100 --> 00:03:24,866
+A J-type offset has 21 bits. −12 is negative, so in 21-bit two's complement the top 17 bits are all 1s and the last 4 bits are 0100.
+
+20
+00:03:24,866 --> 00:03:34,133
+As usual bit 0 isn't stored; the rest go to their slots in the order imm[20|10:1|11|19:12].
+
+21
+00:03:34,133 --> 00:03:42,466
+rd = x0 is 00000, and jal's opcode is 1101111.
+
+22
+00:03:42,466 --> 00:03:53,633
+The result is 0xFF5FF06F. The FF at the front and the FF in the middle both come from the negative offset's run of high 1s.
+
+23
+00:03:53,633 --> 00:03:59,933
+Line up S-type and B-type: both split the immediate into two pieces in the same places.
+
+24
+00:03:59,933 --> 00:04:11,200
+inst[30:25] is imm[10:5] in both, and inst[11:8] is imm[4:1] in both: identical meaning.
+
+25
+00:04:11,200 --> 00:04:21,500
+Only two bits change meaning. inst[31] is imm[11] in S-type but imm[12] in B-type, though it's always the sign bit;
+
+26
+00:04:21,500 --> 00:04:32,900
+inst[7] is imm[0] in S-type but imm[11] in B-type. When hardware builds the immediate, only these two bits need special handling.
+
+27
+00:04:32,900 --> 00:04:41,533
+Quick check: if a program has only 32-bit instructions, is inst[8] of every B-type instruction always 0?
+
+28
+00:04:41,533 --> 00:04:52,400
+Yes. Every offset is then a multiple of 4, so imm[1] is always 0, and imm[1] is exactly what inst[8] holds.
+
+29
+00:04:52,400 --> 00:05:04,400
+Offsets are in 2-byte units, so a branch can never move the PC by one byte. And with only 32-bit instructions, half of the encodable targets are unusable.
+
+30
+00:05:04,400 --> 00:05:17,400
+As we worked out last time, a B-type offset spans −4096 to +4094 bytes: about ±4 KiB, or 2^10 instructions either way.
+
+31
+00:05:17,400 --> 00:05:27,700
+If statements and loops are usually short, so that's plenty. But if far is more than 4 KiB away, beq x10, x0, far can't reach it.
+
+32
+00:05:27,700 --> 00:05:32,633
+The fix: negate the condition, and let the branch just hop over a j.
+
+33
+00:05:32,633 --> 00:05:39,333
+If x10 is 0, the bne isn't taken; j far runs and jumps far away.
+
+34
+00:05:39,333 --> 00:05:47,666
+If x10 isn't 0, the bne skips the j and carries on at next. Exactly what the original beq did.
+
+35
+00:05:47,666 --> 00:05:56,266
+j is J-type with a 21-bit offset: about ±1 MiB, or 2^18 instructions either way.
+
+36
+00:05:56,266 --> 00:06:11,866
+That's also why unconditional jumps use j rather than beq x0, x0: J-type drops rs1, rs2 and funct3, so its offset gets 8 more bits: 256 times the range.
+
+37
+00:06:11,866 --> 00:06:23,666
+Last episode we saw that auipc plus jalr can reach anywhere in the 32-bit address space. There's another pair too: lui plus jalr.
+
+38
+00:06:23,666 --> 00:06:34,266
+The absolute version first: lui loads the target's upper 20 bits, and jalr adds the lower 12 and jumps. The target is one fixed address.
+
+39
+00:06:34,266 --> 00:06:44,533
+jalr computes the target from the old ra while writing PC + 4 into ra, so one register serves as both the base and the return address.
+
+40
+00:06:44,533 --> 00:06:56,666
+The auipc version is PC-relative: ra = PC + (hi << 12). The target moves with the code, so it still works when the whole block moves.
+
+41
+00:06:56,666 --> 00:07:00,433
+This pair is exactly what the pseudo-instruction call expands to.
+
+42
+00:07:00,433 --> 00:07:10,233
+To jump without returning, set jalr's rd to x0, and hold the upper part in t1 so the return address in ra survives.
+
+43
+00:07:10,233 --> 00:07:20,066
+Careful: jalr's 12-bit immediate is sign-extended too. So how do we split hi and lo? It's the same question as for li.
+
+44
+00:07:20,066 --> 00:07:32,733
+Let's practice last episode's lui + addi on two examples from the notes. One thing first: for a constant between −2048 and 2047, li needs just one addi.
+
+45
+00:07:32,733 --> 00:07:48,400
+Example 1: li x10, 0x87654321. The upper 20 bits, 0x87654, go to lui; the lower 12 bits, 0x321, go to addi.
+
+46
+00:07:48,400 --> 00:08:02,766
+lui gives 0x87654000. The top bit of 0x321 is 0, so sign extension leaves it alone, and the sum is exactly 0x87654321.
+
+47
+00:08:02,766 --> 00:08:21,766
+While we're here, the machine code: lui is U-type with opcode 0110111 (auipc's is 0010111), giving 0x87654537; the addi is 0x32150513.
+
+48
+00:08:21,766 --> 00:08:35,866
+Example 2: li x10, 0xB0BACAFE. Same recipe: lui x10, 0xB0BAC, then addi x10, x10, 0xAFE?
+
+49
+00:08:35,866 --> 00:08:47,566
+The trouble is 0xAFE: its top bit is 1, so as a 12-bit two's complement number it's negative, and it's sign-extended to 0xFFFFFAFE.
+
+50
+00:08:47,566 --> 00:09:00,466
+0xB0BAC000 + 0xFFFFFAFE = 0xB0BABAFE: the upper 20 bits come out 1 short!
+
+51
+00:09:00,466 --> 00:09:16,233
+Because 0xFFFFFAFE equals 0xAFE − 0x1000. Adding it adds 0xAFE and subtracts 0x1000, which takes exactly 1 off the upper 20 bits.
+
+52
+00:09:16,233 --> 00:09:32,966
+So add 1 to the upper 20 bits in advance: lui x10, 0xB0BAD. 0xB0BAD000 + 0xFFFFFAFE = 0xB0BACAFE. Correct.
+
+53
+00:09:32,966 --> 00:09:45,866
+The rule: if the top bit of the lower 12 (bit 11) is 1, add 1 to the upper 20 bits. As a formula: hi = (x + 0x800) >> 12.
+
+54
+00:09:45,866 --> 00:09:59,266
+The same rule splits hi and lo for the previous section's lui or auipc plus jalr. With auipc, x is the distance from the PC to the target.
+
+55
+00:09:59,266 --> 00:10:07,033
+Quick check: how many bits does li x5, 0x44331416 take once encoded?
+
+56
+00:10:07,033 --> 00:10:16,266
+64 bits: li is a pseudo-instruction, and here it expands into two instructions, lui and addi.
+
+57
+00:10:16,266 --> 00:10:26,066
+Finally, two checklists for translating between assembly and machine code. First, assembly → binary; I* is the shift format from Episode 10.
+
+58
+00:10:26,066 --> 00:10:39,900
+In step 3, first turn ABI names into register numbers: s0 is x8, written 01000; t4 is x29, written 11101.
+
+59
+00:10:39,900 --> 00:10:47,733
+The reverse is Episode 10's disassembly, with its four steps on the right. Keep the 61C reference card handy.
+
+60
+00:10:47,733 --> 00:10:58,833
+Let's try it on a J-type: translate 0xFF5FF06F back. The opcode is 1101111: that's jal.
+
+61
+00:10:58,833 --> 00:11:14,233
+Split it as J-type: rd is 00000, so x0. Reassemble the immediate as imm[20|10:1|11|19:12], append the implicit 0, and get −12.
+
+62
+00:11:14,233 --> 00:11:21,833
+Put together: jal x0, −12. That's the j Loop we encoded earlier.
+
+63
+00:11:21,833 --> 00:11:33,400
+The notes also translate a whole file. The label main has no machine code, and the pseudo-instruction mv a0, a5 is really addi a0, a5, 0.
+
+64
+00:11:33,400 --> 00:11:46,133
+The last line, call printf, became a single jal: when the target is close enough, the toolchain shrinks auipc + jalr into one jal.
+

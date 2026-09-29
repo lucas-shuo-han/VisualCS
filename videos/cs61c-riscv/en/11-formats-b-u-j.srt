@@ -1,0 +1,124 @@
+1
+00:00:06,200 --> 00:00:15,366
+A conditional branch compares two registers, rs1 and rs2, and needs a target. It writes no register, so there's no rd.
+
+2
+00:00:15,366 --> 00:00:22,833
+But the target address alone is 32 bits; it can't possibly fit inside a 32-bit instruction. What now?
+
+3
+00:00:22,833 --> 00:00:30,533
+Observation: branches rarely go far. An if or a loop body is usually a few to a few dozen instructions.
+
+4
+00:00:30,533 --> 00:00:36,433
+So we encode only the offset from the current PC. This is called PC-relative addressing.
+
+5
+00:00:36,433 --> 00:00:47,366
+RISC-V leaves room for 16-bit compressed instructions, so instruction addresses are always even: an offset's lowest bit is always 0 and isn't stored.
+
+6
+00:00:47,366 --> 00:00:57,433
+So 12 bits encode a 13-bit offset: about ±4 KiB, or roughly 1024 instructions in either direction.
+
+7
+00:00:57,433 --> 00:01:06,166
+A bonus: move the whole block of code elsewhere in memory and not one branch offset changes. That's position-independent code.
+
+8
+00:01:06,166 --> 00:01:15,766
+B-type is laid out almost like S-type: rs1, rs2, funct3 and opcode stay put, and the immediate is split in two again.
+
+9
+00:01:15,766 --> 00:01:24,666
+But the immediate's bits are "scrambled": bit 12 goes in the instruction's top bit, and bit 11 moves to the end of the right-hand piece.
+
+10
+00:01:24,666 --> 00:01:35,400
+That reuses S-type's wiring: bits 10:5 and 4:1 sit exactly where they do in S-type, and the sign bit is still bit 31.
+
+11
+00:01:35,400 --> 00:01:44,066
+Encode beq x19, x10, End. End is 4 instructions ahead, so the offset is 16 bytes.
+
+12
+00:01:44,066 --> 00:01:54,833
+16 in 13-bit binary is 0 0000 0001 0000. Bit 0 is dropped; every other bit goes to its assigned seat.
+
+13
+00:01:54,833 --> 00:02:08,300
+Registers as usual: rs2 = x10, rs1 = x19. beq's funct3 is 000, and the branch opcode is 1100011.
+
+14
+00:02:08,300 --> 00:02:13,933
+The final machine code is 0x00A98863.
+
+15
+00:02:13,933 --> 00:02:23,466
+A 12-bit immediate only holds small constants. How do we get a 32-bit constant like 0xDEADBEEF into a register?
+
+16
+00:02:23,466 --> 00:02:30,266
+U-type has just rd and a 20-bit immediate. lui (load upper immediate) uses this format.
+
+17
+00:02:30,266 --> 00:02:40,433
+lui t0, 0xDEADB puts the 20-bit immediate into t0's upper 20 bits and clears the lower 12.
+
+18
+00:02:40,433 --> 00:02:46,300
+Then just addi the low 12 bits, 0xEEF? Careful: addi's immediate is signed.
+
+19
+00:02:46,300 --> 00:02:58,266
+0xEEF has its top bit set, so as 12-bit two's complement it means −273, and it gets sign-extended to 0xFFFFFEEF.
+
+20
+00:02:58,266 --> 00:03:05,033
+The sum is 0xDEADAEEF: a 1 was "borrowed" from the upper 20 bits.
+
+21
+00:03:05,033 --> 00:03:14,900
+The fix: when the top bit of the low 12 is set, add 1 to the upper 20 bits first: lui t0, 0xDEADC.
+
+22
+00:03:14,900 --> 00:03:26,566
+Luckily there's no need to do this by hand: the assembler expands the pseudo-instruction li t0, 0xDEADBEEF into these two.
+
+23
+00:03:26,566 --> 00:03:37,433
+The other U-type instruction, auipc, shifts its immediate left by 12 and adds it to the PC, to reach addresses far from the current one.
+
+24
+00:03:37,433 --> 00:03:44,933
+jal needs only rd and an offset, so J-type gives all 20 remaining bits to the immediate.
+
+25
+00:03:44,933 --> 00:03:55,966
+Again in 2-byte units with bit 0 not stored: a 21-bit offset, about ±1 MiB. That covers the vast majority of function calls.
+
+26
+00:03:55,966 --> 00:04:03,766
+The bits are scrambled too, lining up as many as possible with I-type and U-type; the sign bit stays at bit 31.
+
+27
+00:04:03,766 --> 00:04:12,200
+Need to go farther? jalr is I-type: it jumps to rs1 + immediate and saves PC + 4 in rd.
+
+28
+00:04:12,200 --> 00:04:21,633
+Pair it with auipc for the upper 20 bits and you can reach any 32-bit address. That's how the pseudo-instruction call expands.
+
+29
+00:04:21,633 --> 00:04:25,266
+Here are all six RV32I formats together.
+
+30
+00:04:25,266 --> 00:04:33,333
+rs1, rs2, rd and opcode never move; the only thing that changes is how the immediate is laid out.
+
+31
+00:04:33,333 --> 00:04:42,100
+And the immediate's sign bit is always bit 31, so sign extension can start before the instruction type is even known.
+

@@ -1,0 +1,232 @@
+1
+00:00:06,200 --> 00:00:15,733
+Before a program runs, it's loaded into the text segment of memory: each instruction is a 32-bit word, 4 bytes, one right after another.
+
+2
+00:00:15,733 --> 00:00:24,566
+The processor consists of a control unit and a datapath. The datapath holds the 32 registers, x0–x31.
+
+3
+00:00:24,566 --> 00:00:36,833
+The PC sits in the datapath too, holding the current instruction's address. It's a register, but not one of x0–x31, and instructions rarely read or write it explicitly.
+
+4
+00:00:36,833 --> 00:00:45,900
+The control unit repeats four steps forever: read the PC, fetch the instruction from memory, execute it, and update the PC.
+
+5
+00:00:45,900 --> 00:00:54,933
+Let's walk through the example from the course notes. Step 1: read the PC, which holds 0x00000008.
+
+6
+00:00:54,933 --> 00:01:04,800
+Step 2: fetch the instruction at that address. In memory it's just a 32-bit number: 0x01051613.
+
+7
+00:01:04,800 --> 00:01:17,233
+The control unit decodes it as slli x12 x10 0x10. Like the notes, this episode leaves out the commas between operands. Episode 9 covers the encoding.
+
+8
+00:01:17,233 --> 00:01:32,766
+Step 3: execute. x10 is 0x000034FF; shifted left by 0x10 (that is, 16) bits, it puts 0x34FF0000 in x12.
+
+9
+00:01:32,766 --> 00:01:44,133
+Step 4: update the PC. Every instruction is 4 bytes, so by default the PC goes up by 4, to 0x0000000C: the next instruction.
+
+10
+00:01:44,133 --> 00:01:51,733
+So this arithmetic instruction actually changes two registers: the destination register x12, and the PC.
+
+11
+00:01:51,733 --> 00:02:00,700
+Branches and jumps instead set the PC to a label's address in step 4 (a conditional branch only when its condition holds).
+
+12
+00:02:00,700 --> 00:02:07,500
+Those 5 words in memory are these 4 lines of assembly, which happen to be a practice problem from the notes.
+
+13
+00:02:07,500 --> 00:02:17,100
+0x34FF doesn't fit in a 12-bit immediate, so li expands into two instructions (more in Episode 12). That's why slli is at 0x08.
+
+14
+00:02:17,100 --> 00:02:25,133
+Question: after these 4 lines run, what's in x12? Pause and think it through.
+
+15
+00:02:25,133 --> 00:02:36,066
+After the first line, x10 = 0x000034FF. Here are all 32 bits; each group of 4 bits is one hex digit.
+
+16
+00:02:36,066 --> 00:02:47,900
+slli shifts left by 16, filling in 0s on the right: x12 = 0x34FF0000, just as the processor computed earlier.
+
+17
+00:02:47,900 --> 00:03:01,533
+srli shifts right by 8, filling in 0s on the left: x12 = 0x0034FF00. The top bit was 0, so srai would give the same result.
+
+18
+00:03:01,533 --> 00:03:07,600
+Finally, and works bit by bit: a result bit is 1 only where both inputs have a 1.
+
+19
+00:03:07,600 --> 00:03:17,500
+Only 3 columns have 1s in both rows, so x12 = 0x00003400. The answer is B.
+
+20
+00:03:17,500 --> 00:03:29,300
+A branch compares and then jumps. But sometimes we just want the result of the comparison, like lt = (a < b) in C: 1 if true, 0 if false.
+
+21
+00:03:29,300 --> 00:03:38,800
+The instruction for this is slt, set less than: it sets rd to 1 if rs1 < rs2, and to 0 otherwise.
+
+22
+00:03:38,800 --> 00:03:50,733
+With a and b in x5 and x6 and the result in x7: slt x7 x5 x6. 3 < 5 is true, so x7 = 1.
+
+23
+00:03:50,733 --> 00:03:58,166
+sltu is the unsigned version (u for unsigned). When do the two give different answers? Here's an example.
+
+24
+00:03:58,166 --> 00:04:12,233
+x5 = 0xFFFFFFFF: all 32 bits are 1. As a signed number it's −1; as an unsigned number it's 4294967295.
+
+25
+00:04:12,233 --> 00:04:25,833
+slt compares −1 < 1: true, so 1. sltu compares 4294967295 < 1: false, so 0.
+
+26
+00:04:25,833 --> 00:04:35,366
+In C, a variable's declaration determines its type. In assembly, bits have no type: the instruction decides whether they're signed or unsigned.
+
+27
+00:04:35,366 --> 00:04:49,900
+The immediate versions, slti and sltiu, compare a register with a constant. Same x5: slti x7 x5 10 gives 1, sltiu gives 0.
+
+28
+00:04:49,900 --> 00:04:58,466
+By the way, multiplication (mul) isn't in the RV32I base instruction set. It belongs to the M extension.
+
+29
+00:04:58,466 --> 00:05:10,400
+General multiplication needs far more complex circuitry than shifting, so the base set leaves it out. Division and remainder are in M too; floating point is in F.
+
+30
+00:05:10,400 --> 00:05:19,566
+Back to branches. First, an if-else, with the variables x, y, z, i, j in x10 through x14.
+
+31
+00:05:19,566 --> 00:05:26,666
+There are two ways to translate it. Choice B is what we did in Episode 5: negate the condition with bne.
+
+32
+00:05:26,666 --> 00:05:36,333
+Choice A keeps the condition: beq jumps to If when they're equal, so the else part comes first. Both are correct, and both take 4 instructions.
+
+33
+00:05:36,333 --> 00:05:38,600
+What if there's no else?
+
+34
+00:05:38,600 --> 00:05:47,400
+Choice A uses beq: if equal, jump to If and run the add; if not, it still needs j End to skip over the add.
+
+35
+00:05:47,400 --> 00:05:55,000
+Choice B uses bne: if not equal, jump straight to End; if equal, fall through to the add.
+
+36
+00:05:55,000 --> 00:06:04,366
+Both work. But B mirrors the structure of the C code and needs only 2 instructions, one fewer than A, so it performs better too.
+
+37
+00:06:04,366 --> 00:06:12,666
+Assembly has no while or for, only branches and jumps. They're like C's goto: execution continues at some label.
+
+38
+00:06:12,666 --> 00:06:24,766
+Don't use goto in real C code: it makes programs hard to read (xkcd 292 warns it attracts velociraptors). But it's a great intermediate step for translation.
+
+39
+00:06:24,766 --> 00:06:36,400
+The recipe: rewrite the control structure with goto, then turn it into instructions line by line. To get real instructions, let cond be x5 < x6.
+
+40
+00:06:36,400 --> 00:06:43,900
+The if we just saw works this way: if (!cond) goto AfterIf. When the condition fails, we skip the then-part.
+
+41
+00:06:43,900 --> 00:06:52,533
+while: test at the top and exit if the condition fails; goto Loop at the bottom jumps back. Episode 5's loop had exactly this shape.
+
+42
+00:06:52,533 --> 00:06:58,133
+A break is just a goto to the code after the loop, which becomes a single j.
+
+43
+00:06:58,133 --> 00:07:07,600
+Turn a for into a while first: move the initialization, startline, before the loop, and the increment, incline, to the end of the body…
+
+44
+00:07:07,600 --> 00:07:10,200
+…then translate it like any while loop.
+
+45
+00:07:10,200 --> 00:07:19,300
+do-while runs the body first and tests at the end, jumping back to Loop if the condition holds. No negation, and no j.
+
+46
+00:07:19,300 --> 00:07:24,766
+Finally, a complete example: add up the 20 elements of the int array arr.
+
+47
+00:07:24,766 --> 00:07:32,900
+First, the recipe: rewrite it with goto, negating the condition, so i >= 20 jumps to End.
+
+48
+00:07:32,900 --> 00:07:39,700
+Here's the assembly from the notes, without a single comment. What does each register stand for in the C code?
+
+49
+00:07:39,700 --> 00:07:50,766
+Match each register above with a C expression below. Hint: x8 holds the address of arr. Pause and give it a try.
+
+50
+00:07:50,766 --> 00:07:58,400
+x8 is &arr[0]: the address of the first element, which is also the address of arr.
+
+51
+00:07:58,400 --> 00:08:04,366
+x11 is i: zeroed before the loop, incremented at the end of each iteration.
+
+52
+00:08:04,366 --> 00:08:15,933
+x9 is &arr[i]: it starts at x8 and grows by 4, not 1, each iteration, since an int is 4 bytes. That's pointer arithmetic.
+
+53
+00:08:15,933 --> 00:08:24,800
+x12 is arr[i], the value, not the address: lw loads the current element from the address in x9.
+
+54
+00:08:24,800 --> 00:08:33,266
+x10 is sum: set to 0 first, and add x10 x10 x12 inside the loop is sum += arr[i].
+
+55
+00:08:33,266 --> 00:08:46,033
+x13 is the constant 20: bge can only compare two registers, so addi x13 x0 20 (that is, li x13 20) puts 20 in a register first.
+
+56
+00:08:46,033 --> 00:08:54,900
+Note that Loop and End aren't instructions, just names for addresses: Loop is the address of the bge instruction.
+
+57
+00:08:54,900 --> 00:09:07,166
+Compare with Episode 5: there, each iteration recomputed A + 4i with slli and add; here the pointer just moves 4 bytes, saving one instruction per iteration.
+
+58
+00:09:07,166 --> 00:09:16,233
+The notes also include a complete version you can run in the Venus simulator: arr holds 1 through 20, and the program prints 210.
+

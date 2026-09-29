@@ -1,0 +1,108 @@
+1
+00:00:06,200 --> 00:00:12,200
+Getting from a C file to a running program takes four steps.
+
+2
+00:00:12,200 --> 00:00:18,533
+Compiler, Assembler, Linker, Loader: put their first letters together and you get CALL.
+
+3
+00:00:18,533 --> 00:00:25,300
+The compiler translates C into assembly: exactly what we've been doing by hand in earlier episodes.
+
+4
+00:00:25,300 --> 00:00:32,900
+The compiler's output may use pseudo-instructions such as mv, li and j; the assembler expands them.
+
+5
+00:00:32,900 --> 00:00:41,333
+The assembler reads assembly code and produces an object file. Besides machine code, it holds information for linking and debugging.
+
+6
+00:00:41,333 --> 00:00:46,900
+Job one: expand pseudo-instructions into real instructions.
+
+7
+00:00:46,900 --> 00:00:52,733
+Job two: turn labels into offsets. But there's a snag: forward references.
+
+8
+00:00:52,733 --> 00:00:59,533
+When the assembler reaches bne, it hasn't seen Skip defined yet, so it can't tell how far to jump.
+
+9
+00:00:59,533 --> 00:01:08,033
+The fix: two passes. The first pass generates no machine code; it just records each label's address in the symbol table.
+
+10
+00:01:08,033 --> 00:01:18,100
+The second pass generates the machine code, now knowing where Skip is: offset = 0x08 − 0x00 = 8.
+
+11
+00:01:18,100 --> 00:01:26,666
+But some addresses can't be worked out in any number of passes: calling printf in another file, or taking the address of static data A.
+
+12
+00:01:26,666 --> 00:01:36,100
+Their final addresses aren't known until link time, so the assembler lists these holes in the relocation table: a to-do list for the linker.
+
+13
+00:01:36,100 --> 00:01:45,866
+So an object file holds a header, a text segment, a data segment, a relocation table, a symbol table and debugging information.
+
+14
+00:01:45,866 --> 00:01:50,433
+The linker combines several object files into one executable.
+
+15
+00:01:50,433 --> 00:01:55,500
+Step 1: concatenate the text segments, then append the data segments.
+
+16
+00:01:55,500 --> 00:02:06,800
+Step 2: with the segments laid out from 0x10000 up, every symbol has its final address. printf is at 0x10180.
+
+17
+00:02:06,800 --> 00:02:15,966
+Step 3: fill every hole in the relocation table. The jal at 0x10040 in foo must reach printf…
+
+18
+00:02:15,966 --> 00:02:27,100
+…and since jal is PC-relative, the offset filled in is 0x10180 − 0x10040 = 0x140.
+
+19
+00:02:27,100 --> 00:02:36,866
+Branches inside a file need no changes: PC-relative offsets stay correct when the whole block moves. That's the position independence from Episode 11.
+
+20
+00:02:36,866 --> 00:02:46,800
+By the way, modern systems often use dynamic linking, where libraries are linked in only when the program is loaded. What we've shown is static linking.
+
+21
+00:02:46,800 --> 00:02:51,366
+Finally, the operating system's loader actually gets the executable running.
+
+22
+00:02:51,366 --> 00:02:57,866
+It reads the header to learn how big the text and data segments are, then creates a new address space…
+
+23
+00:02:57,866 --> 00:03:01,266
+…copies the code and data into memory…
+
+24
+00:03:01,266 --> 00:03:08,100
+…puts the command-line arguments on the stack, initializes the registers, and points sp at the top of the stack…
+
+25
+00:03:08,100 --> 00:03:14,133
+…and finally jumps to a start-up routine, which calls main. The program is running!
+
+26
+00:03:14,133 --> 00:03:21,400
+We've now traveled the whole road: from C code to assembly, to machine code, to a program running in memory.
+
+27
+00:03:21,400 --> 00:03:32,800
+Registers, memory, branches, function calls, instruction encoding, compiling and linking: that's the big picture of RISC-V in CS61C.
+

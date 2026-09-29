@@ -1,0 +1,168 @@
+1
+00:00:06,200 --> 00:00:10,166
+Let's write one line of C: a = b + c;
+
+2
+00:00:10,166 --> 00:00:15,766
+But a CPU doesn't understand C. All it can run is strings of 0s and 1s.
+
+3
+00:00:15,766 --> 00:00:22,100
+Two translation steps sit in between. First the compiler turns C into assembly language...
+
+4
+00:00:22,100 --> 00:00:27,900
+...then the assembler turns each assembly instruction into a 32-bit machine instruction.
+
+5
+00:00:27,900 --> 00:00:35,533
+Assembly maps almost one-to-one onto machine code: it's machine instructions written out as text.
+
+6
+00:00:35,533 --> 00:00:43,933
+The specification of which instructions a CPU supports and which registers it has is called its instruction set architecture (ISA).
+
+7
+00:00:43,933 --> 00:00:53,800
+It's a contract between software and hardware: software uses only these instructions, and hardware guarantees to execute them correctly.
+
+8
+00:00:53,800 --> 00:01:03,533
+x86, ARM and RISC-V are all ISAs. CS61C uses RISC-V: open-source, simple and regular.
+
+9
+00:01:03,533 --> 00:01:10,766
+RISC means a reduced instruction set: few, regular instructions, so the hardware can be simple and fast.
+
+10
+00:01:10,766 --> 00:01:18,666
+The RV32I base instruction set has only about 40 instructions, and this series covers most of them.
+
+11
+00:01:18,666 --> 00:01:25,666
+RISC-V arithmetic works only on registers: a tiny amount of very fast storage inside the CPU.
+
+12
+00:01:25,666 --> 00:01:31,766
+RV32I has 32 integer registers: x0 through x31.
+
+13
+00:01:31,766 --> 00:01:40,133
+Each register is 32 bits wide. 32 bits, or 4 bytes, is called a word.
+
+14
+00:01:40,133 --> 00:01:43,633
+Why only 32? Because smaller is faster.
+
+15
+00:01:43,633 --> 00:01:53,600
+A register can be read or written within one clock cycle; a memory access is often 100 times slower or more.
+
+16
+00:01:53,600 --> 00:01:58,833
+One of them, x0, is special: its value is always 0.
+
+17
+00:01:58,833 --> 00:02:02,633
+Anything written to x0 is silently thrown away.
+
+18
+00:02:02,633 --> 00:02:07,133
+Sounds wasteful? You'll soon see how handy it is.
+
+19
+00:02:07,133 --> 00:02:12,266
+In assembly we usually call registers by their other names, the ABI names.
+
+20
+00:02:12,266 --> 00:02:15,333
+Names starting with t are temporary registers...
+
+21
+00:02:15,333 --> 00:02:18,133
+those starting with s are saved registers...
+
+22
+00:02:18,133 --> 00:02:21,766
+and the a registers pass arguments and return values.
+
+23
+00:02:21,766 --> 00:02:30,933
+ra, sp and a few others have special jobs. We'll cover the rules for all these registers with function calls in Episode 7.
+
+24
+00:02:30,933 --> 00:02:38,366
+Arithmetic instructions have a rigid format: operation name, destination register, then two source registers.
+
+25
+00:02:38,366 --> 00:02:45,933
+add rd, rs1, rs2 simply means rd = rs1 + rs2.
+
+26
+00:02:45,933 --> 00:02:50,233
+For example, say s1 holds 7 and s2 holds 5.
+
+27
+00:02:50,233 --> 00:02:55,733
+Run add s0, s1, s2: both values go into the adder...
+
+28
+00:02:55,733 --> 00:02:59,633
+...and the result, 12, is written to s0.
+
+29
+00:02:59,633 --> 00:03:09,300
+sub works the same way: rd = rs1 − rs2. Order matters: rs2 is subtracted from rs1.
+
+30
+00:03:09,300 --> 00:03:14,433
+Now let's compile something a bit bigger: a = b + c - d.
+
+31
+00:03:14,433 --> 00:03:22,500
+Suppose the compiler has put a, b, c and d in s0, s1, s2 and s3.
+
+32
+00:03:22,500 --> 00:03:30,833
+Each instruction does only one operation, so this takes two steps, with the intermediate result in the temporary register t0.
+
+33
+00:03:30,833 --> 00:03:39,533
+Let b = 10, c = 20, d = 5. Step one: t0 = 10 + 20 = 30.
+
+34
+00:03:39,533 --> 00:03:48,100
+Step two: s0 = t0 − d = 30 − 5 = 25. Done!
+
+35
+00:03:48,100 --> 00:03:52,200
+What if we're adding a constant, as in a = b + 5?
+
+36
+00:03:52,200 --> 00:03:58,200
+Use addi. The i stands for immediate: the constant is encoded right in the instruction.
+
+37
+00:03:58,200 --> 00:04:03,466
+RISC-V has no subi: subtracting a constant is just adding a negative one.
+
+38
+00:04:03,466 --> 00:04:14,300
+addi's immediate is only 12 bits, so it ranges from −2048 to 2047. Why 12 bits? Episode 9 explains.
+
+39
+00:04:14,300 --> 00:04:21,166
+Now for x0's trick. The assembler offers pseudoinstructions, which it replaces with real instructions.
+
+40
+00:04:21,166 --> 00:04:25,766
+mv adds 0; li starts from x0 and adds a constant...
+
+41
+00:04:25,766 --> 00:04:29,933
+...and nop writes its result to x0, so nothing changes.
+
+42
+00:04:29,933 --> 00:04:36,266
+One register that's always 0 saves several dedicated instructions. That's RISC thinking.
+
