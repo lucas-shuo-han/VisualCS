@@ -191,7 +191,11 @@ def mono(s, size=24, color=C_TEXT, **kw) -> Text:
 
 
 def zh(s, size=30, color=C_TEXT, **kw) -> Text:
-    return Text(s, font=CJK, font_size=size, color=color, **kw)
+    # Below ~26 Pango's hinting squeezes the Latin space to almost nothing
+    # ("Registers holdjust bits"): render larger and scale down instead.
+    k = math.ceil(26 / size) if size < 26 else 1
+    t = Text(s, font=CJK, font_size=size * k, color=color, **kw)
+    return t.scale(1 / k) if k > 1 else t
 
 
 # ---------------------------------------------------------------- syntax highlight
