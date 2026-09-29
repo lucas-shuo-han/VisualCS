@@ -72,9 +72,14 @@ if EN:
     # be looked up (the markup is generated), so it must arrive translated.
     _text_init = Text.__init__
     _markup_init = MarkupText.__init__
+    # the CJK font draws curly quotes full-width, which gapes in English
+    _STRAIGHT = str.maketrans({"“": '"', "”": '"', "‘": "'", "’": "'"})
 
     def _text_init_tr(self, text, *a, **kw):
-        _text_init(self, tr(text), *a, **kw)
+        text = tr(text)
+        if isinstance(text, str):
+            text = text.translate(_STRAIGHT)
+        _text_init(self, text, *a, **kw)
 
     def _markup_init_checked(self, text, *a, **kw):
         plain = re.sub(r"<[^>]*>", "", text)
