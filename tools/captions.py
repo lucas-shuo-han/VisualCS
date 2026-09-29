@@ -36,28 +36,30 @@ def narration(path, scene=None):
     cls = next((c for c in classes if c.name == scene), None) or next(
         c for c in classes if any(isinstance(f, ast.FunctionDef) and f.name == "construct" for f in c.body))
     methods = {f.name: f for f in cls.body if isinstance(f, ast.FunctionDef)}
-    order = []
-    for node in ast.walk(methods["construct"]):
-        if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
-                and isinstance(node.func.value, ast.Name) and node.func.value.id == "self"
-                and node.func.attr in methods):
-            order.append((node.lineno, node.func.attr))
-    # construct() itself only holds the title and end cards, so it goes last
-    order = [m for _, m in sorted(order)] + ["construct"]
-    out = []
-    for name in order:
-        calls = [n for n in ast.walk(methods[name]) if isinstance(n, ast.Call)
-                 and isinstance(n.func, ast.Attribute) and n.func.attr in ("say", "end_card")]
-        for c in sorted(calls, key=lambda c: (c.lineno, c.col_offset)):
-            if not c.args:
-                continue
-            a = c.args[0]
-            if c.func.attr == "say":
-                out.append(("say", ast.unparse(a) if not isinstance(a, ast.Constant) else a.value))
-            elif isinstance(a, ast.List):
-                for e in a.elts:
-                    if isinstance(e, ast.Constant):
-                        out.append(("end", e.value))
+    out, active = [], set()
+
+    def visit(name):
+        """say/end_card calls of a method, descending into the self.<method>()
+        calls it makes, all in source order."""
+        if name in active:
+            return
+        active.add(name)
+        calls = sorted((n for n in ast.walk(methods[name]) if isinstance(n, ast.Call)
+                        and isinstance(n.func, ast.Attribute)),
+                       key=lambda c: (c.lineno, c.col_offset))
+        for c in calls:
+            attr = c.func.attr
+            if (attr in methods and isinstance(c.func.value, ast.Name)
+                    and c.func.value.id == "self"):
+                visit(attr)
+            elif attr == "say" and c.args:
+                a = c.args[0]
+                out.append(("say", a.value if isinstance(a, ast.Constant) else ast.unparse(a)))
+            elif attr == "end_card" and c.args and isinstance(c.args[0], ast.List):
+                out.extend(("end", e.value) for e in c.args[0].elts if isinstance(e, ast.Constant))
+        active.discard(name)
+
+    visit("construct")
     return out
 
 
