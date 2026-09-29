@@ -122,6 +122,7 @@ def main():
     ap.add_argument("--skeleton", action="store_true")
     ap.add_argument("--widths", action="store_true")
     a = ap.parse_args()
+    sys.stdout.reconfigure(encoding="utf-8")   # the Windows console default (gbk) can't print everything
     eps = a.episodes or range(1, len(series.SERIES) + 1)
     ok = all([check(n, a.skeleton, a.widths) for n in eps])
     return 0 if ok else 1
