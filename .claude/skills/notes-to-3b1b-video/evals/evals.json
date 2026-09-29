@@ -29,6 +29,23 @@
         "The agent reviewed rendered frames (contact sheet / frame images saved in outputs)",
         "No overlapping text or content hidden under captions in the final frames (visual check)"
       ]
+    },
+    {
+      "id": 2,
+      "prompt": "这是我们课的笔记 two_complement_notes.md（补码、符号扩展、溢出）。做成两集 3b1b 风格的视频，中文和英文各一版，要有配音，尽量覆盖笔记里的所有内容。",
+      "expected_output": "Two episodes rendered in zh and en (480p is fine), each with an audio track, burned-in captions and .srt; a coverage table",
+      "files": [
+        "two_complement_notes.md"
+      ],
+      "assertions": [
+        "series.py lists 2 episodes with zh and en titles; SOURCE_LANG is zh",
+        "i18n_check.py reports ok for both episodes",
+        "Four videos exist (2 episodes x zh/en) and each has an audio stream",
+        "English videos contain no Chinese text in captions or labels (visual check of contact sheets)",
+        "A coverage table maps every item of the notes (two's complement, sign extension, overflow, and each worked example) to an episode/caption or states why it was omitted",
+        "Worked-example numbers are computed in Python (asserts present), e.g. -5 in 8-bit two's complement is 0b11111011",
+        "The agent looked at contact sheets for both languages"
+      ]
     }
   ]
 }

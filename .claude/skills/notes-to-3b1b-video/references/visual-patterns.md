@@ -44,8 +44,8 @@ Frame is 14.2 × 8 units, x ∈ [−7.1, 7.1], y ∈ [−4, 4].
 | Zone | y range | Use |
 |---|---|---|
 | heading | ≈ 3.5 | `self.heading("...")` top-left |
-| content | −2.9 … 3.3 | everything else |
-| caption | −3.9 … −2.9 | reserved; up to two lines |
+| content | −2.5 … 3.3 | everything else |
+| caption | −3.9 … −2.5 | reserved: two lines reach ≈ −2.9, three ≈ −2.6 |
 
 Rules that prevented most layout bugs:
 - Place big objects with `to_edge` / `to_corner` / `set_x` / `set_y`, and
@@ -55,13 +55,17 @@ Rules that prevented most layout bugs:
   is ≈ 7.6 units — shorten comments or drop the font size before it collides.
 - After `scale()`-ing a group, rebuild labels relative to the new size (or
   scale them with it); never mix pre- and post-scale coordinates.
-- Keep content above y = −2.9 so the caption band never covers it.
+- Keep content above y ≈ −2.5 so the caption band never covers it (−2.9 is enough
+  if every caption is ≤ 2 lines in every language).
+- Bilingual: the translation is usually wider. Design for the wider language, or
+  keep labels short enough for both.
 
 Pacing: `say()` waits for the previous caption's reading time
-(`reading_time()`: ~5 CJK chars/s or ~3 words/s, min 1.8 s) before swapping, so
-animations passed to `say()` or played after it overlap the reading time
-instead of adding to it. Use `self.hold()` when the viewer needs a beat to look
-at the result; use `extra=` on `say()` for a longer pause.
+(`reading_time()`: ~5 CJK chars/s or ~3.3 words/s, min 1.8 s) — and, with a
+voice-over, until its audio has finished — before swapping, so animations passed
+to `say()` or played after it overlap the reading time instead of adding to it.
+Use `self.hold()` when the viewer needs a beat to look at the result; use
+`extra=` on `say()` for a longer pause.
 
 ## 3. Code and step-through execution
 
