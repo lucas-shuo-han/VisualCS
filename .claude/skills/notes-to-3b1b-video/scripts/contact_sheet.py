@@ -46,10 +46,19 @@ def main():
     frames = []
     for i, t in enumerate(times):
         f = out / f"f{i:03d}.png"
-        subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-ss", f"{t:.2f}", "-i", a.video,
-                        "-frames:v", "1", "-vf",
-                        f"scale=854:-2,drawtext=text='{i}':x=10:y=10:fontsize=28:fontcolor=red",
-                        str(f)], check=True)
+        cmd = ["ffmpeg", "-loglevel", "error", "-y", "-ss", f"{t:.2f}", "-i", a.video, "-frames:v", "1", "-vf"]
+        rc = subprocess.run(cmd + [f"scale=854:-2,drawtext=text='{i}':x=10:y=10:fontsize=28:fontcolor=red", str(f)]).returncode
+        if rc != 0:  # e.g. Windows ffmpeg without fontconfig: extract, then number the frame with Pillow
+            subprocess.run(cmd + ["scale=854:-2", str(f)], check=True)
+            from PIL import Image, ImageDraw, ImageFont
+            im = Image.open(f).convert("RGB")
+            dr = ImageDraw.Draw(im)
+            try:
+                font = ImageFont.truetype("arial.ttf", 28)
+            except OSError:
+                font = ImageFont.load_default()
+            dr.text((10, 8), str(i), fill=(255, 60, 60), font=font)
+            im.save(f)
         frames.append(f)
 
     for s in range(0, len(frames), a.per_sheet):
