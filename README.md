@@ -39,6 +39,10 @@ python -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python tools/render.py --manim .venv/bin/manim --preview 3  # 第 3 集 480p 快速预览
 ```
 
+## 用 skill 做新课程
+
+`.claude/skills/notes-to-3b1b-video/` 是从这个系列提炼出来的 Claude skill：通用组件库 `manim_kit.py`、渲染和逐帧检查脚本、可视化模式参考、踩坑清单。在这个仓库里开 Claude Code 会话会自动加载；打包好的 `dist/notes-to-3b1b-video.skill` 可以装到任何地方。下一门课（CS182）的起始提示词在 [`prompts/cs182-kickoff.md`](prompts/cs182-kickoff.md)。
+
 ## 说明
 
 - 目前没有配音，旁白以字幕形式呈现；字幕停留时长按阅读速度自动计算。
