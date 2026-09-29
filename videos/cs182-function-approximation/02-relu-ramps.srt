@@ -1,0 +1,100 @@
+1
+00:00:06,200 --> 00:00:14,466
+The rectified linear unit is the simplest bend there is: zero for negative inputs, and the input itself for positive ones.
+
+2
+00:00:14,466 --> 00:00:23,366
+Put an affine function inside: multiply x by a weight w and add a bias b. That is one ramp, a single ReLU unit.
+
+3
+00:00:23,366 --> 00:00:29,866
+The bend, called the knot, sits where the inside is zero: x equals minus b over w.
+
+4
+00:00:29,866 --> 00:00:36,133
+A bigger weight makes the ramp steeper and, with the same bias, pulls the knot closer to zero.
+
+5
+00:00:36,133 --> 00:00:41,433
+A negative weight flips the ramp: it now switches on to the left of its knot.
+
+6
+00:00:41,433 --> 00:00:49,466
+Why ReLU, and not the sigmoid or tanh of older networks? Those flatten out for large inputs, so their gradients shrink.
+
+7
+00:00:49,466 --> 00:00:58,933
+Stack many of them and the gradient vanishes. ReLU has slope one wherever it is active, so gradients pass through intact.
+
+8
+00:00:58,933 --> 00:01:05,800
+The upgrade: a piecewise-linear function is an intercept, a starting slope, and a slope change at each knot.
+
+9
+00:01:05,800 --> 00:01:13,200
+Equation 1.6: a straight line plus one shifted ReLU per knot, each scaled by its slope change.
+
+10
+00:01:13,200 --> 00:01:21,966
+Start with the straight line c plus s zero times x. Here c is 0.5 and the first slope is 0.2.
+
+11
+00:01:21,966 --> 00:01:33,333
+At knot 1, x = 1, the slope goes from 0.2 to 1.4: a change of 1.2. Add 1.2 times ReLU(x − 1).
+
+12
+00:01:33,333 --> 00:01:47,300
+At knot 2, x = 2.5, the slope goes from 1.4 to -0.8: a change of −2.2. Add minus 2.2 times ReLU(x − 2.5).
+
+13
+00:01:47,300 --> 00:01:59,400
+At knot 3, x = 4, the slope goes from -0.8 to 0.6: a change of 1.4. Add 1.4 times ReLU(x − 4).
+
+14
+00:01:59,400 --> 00:02:07,700
+Before its knot a ramp is zero, so earlier pieces stay put. After it, the slope bends exactly as needed.
+
+15
+00:02:07,700 --> 00:02:14,133
+One loose end: that straight-line term s zero times x is not a ReLU. Or is it?
+
+16
+00:02:14,133 --> 00:02:24,100
+It is: x equals ReLU of x, minus ReLU of negative x. Positive x survives the first ramp, negative x survives the second.
+
+17
+00:02:24,100 --> 00:02:32,733
+Every term is a scaled ReLU of a weight times x plus a bias. That is Equation 1.7, a one-hidden-layer network.
+
+18
+00:02:32,733 --> 00:02:40,133
+5 hidden units suffice: two for the straight line, one per knot, all read off the slopes and knot locations.
+
+19
+00:02:40,133 --> 00:02:48,400
+Add up these five units and we recover the spline exactly: same curve, now written as a network.
+
+20
+00:02:48,400 --> 00:02:55,033
+Real targets are smooth. On a closed interval, a piecewise-linear curve with many knots can approximate one.
+
+21
+00:02:55,033 --> 00:02:59,133
+With 3 knots and 5 hidden units the fit is rough.
+
+22
+00:02:59,133 --> 00:03:03,233
+With 6 knots the curve already hugs the target much better.
+
+23
+00:03:03,233 --> 00:03:09,866
+With 12 knots the worst-case error is down to 0.03. More ramps, better fit.
+
+24
+00:03:09,866 --> 00:03:15,800
+A caution: this is a statement about existence. A wide enough network can represent the curve.
+
+25
+00:03:15,800 --> 00:03:24,733
+It does not say a given finite network fits every function equally well, or that gradient descent will find these weights.
+

@@ -3,10 +3,11 @@
 Copy this file next to your episode files and `from manim_kit import *`.
 
 Contents (search for the section banners):
+  language & series ..... LANG, tr(), EN, series.py / i18n tables (see below)
   fonts & palette ....... SANS / MONO picked from installed fonts, BG, semantic colors
   text helpers .......... txt(), mono(), box_label(), file_icon()
   captions .............. wrap_caption(), reading_time()
-  NarratedScene ......... say() / hold() / clear_stage() / heading() / title_card() / end_card()
+  NarratedScene ......... say() / hold() / voice() / clear_stage() / heading() / title_card() / end_card()
   code .................. CodeListing (asm / c / python highlighting), pc_arrow()
   bits .................. bit_row(), set_bit_row(), BitField, FormatScene helpers
   machine state ......... RegBox, reg_column(), RegisterFile, MemoryView, WordColumn, alu_shape()
@@ -14,6 +15,22 @@ Contents (search for the section banners):
 
 Every episode is one NarratedScene. Captions are burned in, timed so each one
 stays readable, and exported as an .srt next to the rendered video.
+
+Optional files next to this one (see the skill's references/bilingual-and-voice.md):
+  series.py ............. episode order, titles per language, SOURCE_LANG, LANGS.
+                          title_card() / end_card() then need no arguments and
+                          "next episode" / "the end" are automatic.
+  i18n/epNN.py .......... translation tables: a dict per target language
+                          (EN = {...}, ZH = {...}) keyed by the source string.
+  tts.py (+ say_as.py) .. voice-over (edge-tts) and course pronunciations.
+
+Environment (render.py sets these):
+  KIT_LANG=xx        render in language xx; every Text is looked up in the
+                     episode's table. With a CJK source language a missing
+                     entry is an error (nothing untranslated can slip through).
+  KIT_I18N_LAX=1     warn instead of failing on a missing translation.
+  KIT_TTS=1          voice-over: each caption is spoken, and stays up until
+                     its audio has finished.
 """
 
 from __future__ import annotations
@@ -21,8 +38,96 @@ from __future__ import annotations
 import math
 import os
 import re
+import sys
 
 from manim import *
+
+# ---------------------------------------------------------------- language & series
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+CJK_LANGS = {"zh", "ja", "ko"}
+_CJK_RE = re.compile(r"[　-〿㐀-鿿＀-￯぀-ヿ가-힯]")
+
+
+def _load_py(path) -> dict:
+    ns: dict = {}
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as fh:
+            exec(compile(fh.read(), path, "exec"), ns)
+    return ns
+
+
+_SERIES = _load_py(os.path.join(HERE, "series.py"))
+SOURCE_LANG = _SERIES.get("SOURCE_LANG") or os.environ.get("KIT_SOURCE_LANG", "en")
+LANG = (os.environ.get("KIT_LANG") or SOURCE_LANG).lower()
+TRANSLATING = LANG != SOURCE_LANG
+I18N_LAX = os.environ.get("KIT_I18N_LAX") == "1"
+TTS = os.environ.get("KIT_TTS") == "1"
+EPISODES = [dict(e, num=i + 1) for i, e in enumerate(_SERIES.get("EPISODES", []))]
+_BY_SCENE = {e["scene"]: e for e in EPISODES}
+EN = LANG == "en"   # handy for the rare `if EN:` layout branch in an episode
+
+_TABLE: dict[str, str] = {}
+
+
+class MissingTranslation(KeyError):
+    pass
+
+
+def load_table(n: int) -> dict:
+    """Make i18n/epNN.py's table for the current language the active one."""
+    _TABLE.clear()
+    if TRANSLATING:
+        _TABLE.update(_load_py(os.path.join(HERE, "i18n", f"ep{n:02d}.py")).get(LANG.upper(), {}))
+    return _TABLE
+
+
+def tr(s):
+    """The string to show for `s` in the current language."""
+    if not TRANSLATING or not isinstance(s, str) or not s.strip():
+        return s
+    if s in _TABLE:
+        return _TABLE[s]
+    if SOURCE_LANG in CJK_LANGS and _CJK_RE.search(s) and not I18N_LAX:
+        raise MissingTranslation(f"no {LANG} for {s!r}: add it to i18n/epNN.py "
+                                 f"(i18n_check.py --skeleton prints the missing entries)")
+    if SOURCE_LANG in CJK_LANGS and _CJK_RE.search(s):
+        print(f"i18n: missing translation: {s!r}", file=sys.stderr)
+    return s   # a Latin source can't tell labels ("sp", "0x10") from prose: pass through
+
+
+def S(key, **kw) -> str:
+    """A kit UI string (title/end cards) in the current language."""
+    return STRINGS.get(LANG, STRINGS["en"])[key].format(**kw)
+
+
+def series_name() -> str:
+    n = _SERIES.get("SERIES_NAME", "")
+    return n.get(LANG, n.get(SOURCE_LANG, "")) if isinstance(n, dict) else n
+
+
+if TRANSLATING:
+    # Route every Text through the table, whoever builds it. MarkupText can't be
+    # looked up (its markup is generated), so it must arrive translated.
+    _text_init = Text.__init__
+    _markup_init = MarkupText.__init__
+    # a CJK font draws curly quotes full-width, which gapes in Latin text
+    _STRAIGHT = str.maketrans({"“": '"', "”": '"', "‘": "'", "’": "'"})
+
+    def _text_init_tr(self, text, *a, **kw):
+        text = tr(text)
+        if isinstance(text, str) and LANG not in CJK_LANGS:
+            text = text.translate(_STRAIGHT)
+        _text_init(self, text, *a, **kw)
+
+    def _markup_init_checked(self, text, *a, **kw):
+        plain = re.sub(r"<[^>]*>", "", text)
+        if SOURCE_LANG in CJK_LANGS and _CJK_RE.search(plain) and not I18N_LAX:
+            raise MissingTranslation(f"untranslated MarkupText {plain!r}")
+        _markup_init(self, text, *a, **kw)
+
+    Text.__init__ = _text_init_tr
+    MarkupText.__init__ = _markup_init_checked
 
 # ---------------------------------------------------------------- fonts & palette
 
@@ -49,11 +154,42 @@ MONO = os.environ.get("MANIM_KIT_MONO") or _pick_font(
 CJK = SANS  # backward-compatible alias
 BG = "#0B0D12"
 
+
+def _register_user_fonts():
+    """Windows: fonts installed per user are invisible to Pango until the next
+    login. Register them for this process as a fallback -- slow (manimpango
+    re-adds every file on each text render), so prefer running win_fonts.py."""
+    if sys.platform != "win32":
+        return
+    import glob
+
+    import manimpango
+
+    if "Noto Sans CJK SC" in manimpango.list_fonts():
+        return
+    d = os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\Windows\Fonts")
+    files = [p for pat in ("NotoSansCJK*", "DejaVuSans*") for p in glob.glob(os.path.join(d, pat))]
+    if files:
+        print("warning: fonts not loaded in this Windows session; registering per process "
+              "(slow). Run win_fonts.py once to fix.", file=sys.stderr)
+        for p in files:
+            manimpango.register_font(p)
+
+
+_register_user_fonts()
+
 config.background_color = BG
 
+# UI strings of the title and end cards. Add a language by adding a row.
 STRINGS = {
-    "en": {"episode": "Episode {n}", "summary": "Recap", "next": "Next: {t}"},
-    "zh": {"episode": "第 {n} 集", "summary": "小结", "next": "下一集：{t}"},
+    "en": {"episode": "Episode {n}", "summary": "Recap", "next": "Next: {t}",
+           "end": "{s} · The End",
+           "say_episode": "Episode {n}: {t}.", "say_summary": "To sum up.",
+           "say_next": "Next time: {t}.", "say_end": "That's the end of {s}. Thanks for watching!"},
+    "zh": {"episode": "第 {n} 集", "summary": "小结", "next": "下一集：{t}",
+           "end": "{s} · 完",
+           "say_episode": "第 {n} 集：{t}。", "say_summary": "小结一下。",
+           "say_next": "下一集：{t}。", "say_end": "{s} 到这里就结束了，感谢观看！"},
 }
 
 # syntax colors
@@ -124,7 +260,17 @@ def crisp_text(s, font, size, color=C_TEXT, **kw) -> Text:
     return Text(s, font=font, font_size=size * _OVERSAMPLE, color=color, **kw).scale(1 / _OVERSAMPLE)
 
 
+# CJK runs (and the quotes/dashes CJK text uses) inside monospace text
+CJK_RUN = re.compile(r"[⺀-鿿＀-￯　-〿぀-ヿ가-힯“”‘’…—]+")
+
+
 def mono(s, size=24, color=C_TEXT, **kw) -> Text:
+    s = tr(s)
+    # Name the CJK font for CJK runs: Pango on Windows does not fall back from
+    # the monospace font the way fontconfig does on Linux (you'd get boxes).
+    t2f = {run: SANS for run in set(CJK_RUN.findall(s))}
+    if t2f:
+        kw["t2f"] = {**t2f, **kw.get("t2f", {})}
     return crisp_text(s, MONO, size, color, disable_ligatures=True, **kw)
 
 
@@ -167,10 +313,21 @@ def esc(s: str) -> str:
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
+def _cjk_spans(s: str) -> str:
+    """Escape `s` for Pango markup, wrapping CJK runs in the CJK font (see mono())."""
+    out, last = [], 0
+    for m in CJK_RUN.finditer(s):
+        out.append(esc(s[last:m.start()]))
+        out.append(f'<span font_family="{SANS}">{esc(m.group())}</span>')
+        last = m.end()
+    out.append(esc(s[last:]))
+    return "".join(out)
+
+
 def span(s: str, color) -> str:
     if color is None:
-        return esc(s)
-    return f'<span foreground="{hexc(color)}">{esc(s)}</span>'
+        return _cjk_spans(s)
+    return f'<span foreground="{hexc(color)}">{_cjk_spans(s)}</span>'
 
 
 def highlight(line: str, lang: str = "asm") -> str:
@@ -213,7 +370,9 @@ class CodeListing(VGroup):
 
     def __init__(self, lines, lang="asm", font_size=26, line_gap=0.5, **kw):
         super().__init__(**kw)
-        self.src = list(lines)
+        # lines are translated whole (MarkupText can't be looked up), so the
+        # table can keep the comment column aligned
+        self.src = [tr(s) for s in lines]
         self.lang = lang
         self.lines = VGroup()
         for s in self.src:
@@ -762,19 +921,19 @@ def wrap_caption(text: str, max_units: float = 30) -> str:
 def reading_time(text: str, cps: float = 5.2) -> float:
     cjk = sum(1 for c in text if ord(c) > 0x2E7F)
     other = len(re.findall(r"[A-Za-z0-9_]+", text))
-    return max(1.8, 0.5 + cjk / cps + other * 0.33)
+    if cjk == 0:
+        return max(1.8, 0.5 + other * 0.3)   # Latin: ~200 words per minute
+    return max(1.8, 0.5 + cjk / cps + other * 0.28)
 
 
 class NarratedScene(Scene):
-    """Scene with timed, burned-in captions (also exported as .srt)."""
+    """Scene with timed, burned-in captions (also exported as .srt), an
+    optional voice-over, and title / end cards."""
 
-    caption_size = 30
+    caption_size = 30 if LANG in CJK_LANGS else 28
+    caption_units = 30 if LANG in CJK_LANGS else 35   # line width in CJK-character units
     caption_y = -3.42
-    series = ""      # shown above the title on the title card
-    lang = "en"      # "en" or "zh": labels on title / end cards
-
-    def S(self, key, **kw):
-        return STRINGS.get(self.lang, STRINGS["en"])[key].format(**kw)
+    series = ""      # series tag on the title card when there is no series.py
 
     def setup(self):
         self.camera.background_color = BG
@@ -782,10 +941,16 @@ class NarratedScene(Scene):
         self._cap_text = None
         self._cap_t0 = 0.0
         self._cap_need = 0.0
+        name = type(self).__name__
+        self.episode = _BY_SCENE.get(name)
+        m = re.match(r"Ep(\d+)", name)
+        self.ep_no = self.episode["num"] if self.episode else (int(m[1]) if m else 0)
+        load_table(self.ep_no)
 
     # -- captions
     def _make_caption(self, text):
-        t = crisp_text(wrap_caption(text), SANS, self.caption_size, C_TEXT, line_spacing=0.9)
+        t = crisp_text(wrap_caption(text, self.caption_units), SANS, self.caption_size, C_TEXT,
+                       line_spacing=0.9)
         t.move_to([0, self.caption_y, 0])
         if t.get_bottom()[1] < -3.92:
             t.shift(UP * (-3.92 - t.get_bottom()[1]))
@@ -806,12 +971,24 @@ class NarratedScene(Scene):
                 self.add_subcaption(self._cap_text, duration=dur, offset=-dur)
             self._cap_text = None
 
-    def say(self, text, *anims, need=None, extra=0.0, run_time=None):
-        """Show caption `text` (after the previous one has been readable long
-        enough) while playing `anims`."""
+    def voice(self, text, speak=None, delay=0.15) -> float:
+        """Start speaking `text` now (no-op unless KIT_TTS=1) and return how
+        long the voice keeps talking. `speak` overrides the spoken wording; it
+        is translated like the caption, so give it a table entry too."""
+        if not TTS or not text:
+            return 0.0
+        import tts
+        path, dur = tts.synth(text, LANG, speak=tr(speak) if speak else None)
+        self.add_sound(str(path), time_offset=delay)
+        return delay + dur
+
+    def say(self, text, *anims, need=None, extra=0.0, run_time=None, speak=None):
+        """Show caption `text` (after the previous one has been readable, and
+        spoken, long enough) while playing `anims`."""
         if run_time is not None:
             for a in anims:
                 a.run_time = run_time
+        text = tr(text)
         self._flush()
         self._close_sub()
         new = self._make_caption(text)
@@ -819,12 +996,14 @@ class NarratedScene(Scene):
         if self._cap is not None:
             swap.append(FadeOut(self._cap, run_time=0.3))
         self._cap_t0 = self.time
+        talk = self.voice(text, speak)
         self.play(*swap, *anims)
         self._cap, self._cap_text = new, text
-        self._cap_need = (reading_time(text) if need is None else need) + extra
+        need = reading_time(text) if need is None else need
+        self._cap_need = max(need, talk + 0.35 if talk else 0.0) + extra
 
     def hold(self, extra=0.0):
-        """Wait until the current caption has been readable, plus `extra`."""
+        """Wait until the current caption has been read (and spoken), plus `extra`."""
         self._flush()
         if extra > 0:
             self.wait(extra)
@@ -852,30 +1031,47 @@ class NarratedScene(Scene):
         line.next_to(t, DOWN, buff=0.1)
         return VGroup(t, line)
 
-    def title_card(self, ep, title, subtitle=None):
-        """Series tag + "Episode n" + title (+ subtitle). Pass ep=None for a one-off video."""
+    def title_card(self, ep=None, title=None, subtitle=None):
+        """Series tag + "Episode n" + title (+ subtitle), spoken with a
+        voice-over. With series.py all three come from there; pass ep=None and
+        a title for a one-off video."""
+        e = self.episode
+        if e is not None:
+            ep = self.ep_no if ep is None else ep
+            title = title or e["title"].get(LANG) or e["title"][SOURCE_LANG]
+            subtitle = subtitle or (e.get("sub") or {}).get(LANG)
+        else:
+            title, subtitle = tr(title), tr(subtitle)
         head = []
-        if self.series:
-            head.append(txt(self.series, 28, GREY_B))
+        tag = series_name() or self.series
+        if tag:
+            head.append(txt(tag, 28, GREY_B))
         if ep is not None:
-            head.append(txt(self.S("episode", n=ep), 30, YELLOW_D))
+            head.append(txt(S("episode", n=ep), 30, YELLOW_D))
         t = crisp_text(title, SANS, 60, WHITE, weight=BOLD)
         if t.width > 12.5:
             t.scale_to_fit_width(12.5)
         sub = txt(subtitle, 30, GREY_A) if subtitle else None
+        if sub is not None and sub.width > 12.5:
+            sub.scale_to_fit_width(12.5)
         grp = VGroup(*head, t, *([sub] if sub else [])).arrange(DOWN, buff=0.4)
         if head:
             self.play(*[FadeIn(p, shift=DOWN * 0.3) for p in head])
+        t0 = self.time
+        talk = self.voice(S("say_episode", n=ep, t=title) if ep is not None else title)
         self.play(Write(t), run_time=1.6)
         if sub:
             self.play(FadeIn(sub, shift=UP * 0.2))
-        self.wait(1.6)
+        self.wait(max(1.6, talk + 0.5 - (self.time - t0)))
         self.play(FadeOut(grp, shift=UP * 0.3))
 
     def end_card(self, lines, next_title=None, footer=None):
+        """Recap bullets, then "Next: ..." -- or, on the last episode of
+        series.py, "The End". Also closes the last caption (for the .srt)."""
         self.uncaption()
         self.clear_stage()
-        head = txt(self.S("summary"), 40, YELLOW_D)
+        lines = [tr(s) for s in lines]
+        head = txt(S("summary"), 40, YELLOW_D)
         items = VGroup(*[
             VGroup(Dot(color=YELLOW_D, radius=0.06), txt(s, 30)).arrange(RIGHT, buff=0.25)
             for s in lines
@@ -883,18 +1079,36 @@ class NarratedScene(Scene):
         grp = VGroup(head, items).arrange(DOWN, buff=0.5)
         if grp.height > 6.4:
             grp.scale_to_fit_height(6.4)
-        if grp.width > 12.8:
-            grp.scale_to_fit_width(12.8)
+        if grp.width > 13.0:
+            grp.scale_to_fit_width(13.0)
         grp.move_to(UP * 0.35)
+        talk = self.voice(S("say_summary"))
         self.play(FadeIn(head, shift=DOWN * 0.2))
-        for it in items:
+        if talk > 1.05:
+            self.wait(talk - 1.0)
+        for it, s in zip(items, lines):
+            t0 = self.time
+            talk = self.voice(s)
             self.play(FadeIn(it, shift=RIGHT * 0.2), run_time=0.6)
-            self.wait(reading_time(it[1].text) * 0.8)
+            self.wait(max(reading_time(s) * 0.8, talk + 0.3) - (self.time - t0))
         self.wait(1.5)
-        if next_title or footer:
-            nxt = txt(footer or self.S("next", t=next_title), 30, GREY_A).to_edge(DOWN, buff=0.5)
+        spoken = None
+        if footer is None and next_title is None and self.episode is not None:
+            k = self.ep_no
+            if k < len(EPISODES):
+                e = EPISODES[k]
+                next_title = e["title"].get(LANG) or e["title"][SOURCE_LANG]
+            else:
+                footer = S("end", s=series_name())
+                spoken = S("say_end", s=series_name())
+        if next_title and not footer:
+            footer, spoken = S("next", t=tr(next_title)), S("say_next", t=tr(next_title))
+        if footer:
+            nxt = txt(footer, 30, GREY_A).to_edge(DOWN, buff=0.5)
+            t0 = self.time
+            talk = self.voice(spoken or footer)
             self.play(FadeIn(nxt, shift=UP * 0.2))
-            self.wait(2.2)
+            self.wait(max(2.2, talk + 0.8 - (self.time - t0)))
         self.play(*[FadeOut(m) for m in self.mobjects], run_time=1.0)
         self.wait(0.5)
 

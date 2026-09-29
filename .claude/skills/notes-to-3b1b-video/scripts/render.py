@@ -1,89 +1,107 @@
-"""Render every episode scene in a folder and collect the videos + subtitles.
+"""Render the episodes of a unit folder and collect videos + subtitles.
 
-Episode scenes are discovered by name: any `class EpNN...(...)` in a *.py file
-of SRC (manim_kit.py itself is skipped). The output video is named after the
-file, e.g. ep01_twos_complement.py -> OUT/ep01_twos_complement.mp4 (+ .srt).
+Episodes come from SRC/series.py (order, languages, file names) or, without
+it, from every `class EpNN...` in SRC/*.py.
 
 Usage:
-    python render.py SRC                      # all episodes, 1080p30
-    python render.py SRC --only 2 5           # episodes 2 and 5
-    python render.py SRC --preview            # 480p15 quick check (no copy to OUT)
-    python render.py SRC --manim .venv/bin/manim --jobs 3 --out videos
+    python render.py SRC                          # every episode, every language, 1080p30
+    python render.py SRC 2 5 --lang en            # episodes 2 and 5, English only
+    python render.py SRC 3 --preview              # 480p15 quick check (stays in the media dir)
+    python render.py SRC 3 --preview --voice      # ... with the voice-over
+    python render.py SRC 3 --preview --lang en --lax   # draft: tolerate missing translations
+    python render.py SRC --out videos/cs182-optim --jobs 4 --manim .venv/bin/manim
 
-Each episode renders in its own media directory, so parallel jobs never race
-on Manim's shared text/SVG cache.
+Full renders get the voice-over unless --no-voice (it needs network for
+edge-tts; clips are cached, so re-renders are offline); previews are silent
+unless --voice. Finished videos go to OUT/<lang>/NN-slug.mp4 (+ .srt), or
+OUT/<file stem>.mp4 for a single-language unit.
+
+Every (episode, language) renders in its own media dir, so parallel jobs never
+race on Manim's text/SVG cache. Logs: MEDIA/<lang>/epNN.log.
 """
 
 import argparse
 import os
-import re
 import shutil
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-SCENE_RE = re.compile(r"^class (Ep(\d+)\w*)\(", re.M)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from project import Unit, find_manim  # noqa: E402
 
 
-def discover(src: Path):
-    eps = []
-    for f in sorted(src.glob("*.py")):
-        if f.name == "manim_kit.py":
-            continue
-        for m in SCENE_RE.finditer(f.read_text(encoding="utf-8")):
-            eps.append((int(m.group(2)), f, m.group(1)))
-    return sorted(eps)
-
-
-def render(job, preview, media_root: Path, out: Path, manim: str):
-    num, file, scene = job
-    media = media_root / f"ep{num:02d}"
+def render(unit, ep, lang, a, voice):
+    n, scene = ep["num"], ep["scene"]
+    media_root = Path(a.media).resolve()
+    media = media_root / lang / f"ep{n:02d}"
     media.mkdir(parents=True, exist_ok=True)
-    quality = ["-ql"] if preview else ["-r", "1920,1080", "--fps", "30"]
-    log = media_root / f"ep{num:02d}.log"
-    with open(log, "w") as fh:
-        # MANIM_CWD: run from another directory (Windows: MiKTeX's dvisvgm fails when the
-        # cwd is on some drives, e.g. a D: folder; point this at a C: folder).
+    quality = ["-ql"] if a.preview else ["-r", "1920,1080", "--fps", "30"]
+    env = {**os.environ, "KIT_LANG": lang, "PYTHONIOENCODING": "utf-8",
+           "KIT_TTS": "1" if voice else "0",
+           "KIT_TTS_CACHE": os.environ.get("KIT_TTS_CACHE", str(media_root / "tts"))}
+    if a.lax:
+        env["KIT_I18N_LAX"] = "1"
+    log = media_root / lang / f"ep{n:02d}.log"
+    with open(log, "w", encoding="utf-8") as fh:
+        # MANIM_CWD: run from another directory (Windows: MiKTeX's dvisvgm fails when the cwd
+        # is on a D: drive; point it at a C: folder).
         cwd = os.environ.get("MANIM_CWD")
-        env = dict(os.environ, PYTHONPATH=os.pathsep.join(filter(None, [str(file.parent), os.environ.get("PYTHONPATH")])))
-        rc = subprocess.run([manim, *quality, "--media_dir", str(media), str(file) if cwd else file.name, scene],
-                            cwd=cwd or file.parent, env=env, stdout=fh, stderr=subprocess.STDOUT).returncode
+        if cwd:
+            env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(unit.src), os.environ.get("PYTHONPATH")]))
+        rc = subprocess.run([a.manim, *quality, "--media_dir", str(media),
+                             str(Path(unit.src) / ep["file"]) if cwd else ep["file"], scene],
+                            cwd=cwd or unit.src, stdout=fh, stderr=subprocess.STDOUT, env=env).returncode
     if rc != 0:
-        tail = log.read_text(errors="replace").strip().splitlines()[-3:]
-        return num, f"FAILED ({log}): " + " | ".join(tail)
-    mp4 = next((media / "videos").rglob(f"{scene}.mp4"))
+        tail = log.read_text(encoding="utf-8", errors="replace").strip().splitlines()[-3:]
+        return f"FAILED ({log}): " + " | ".join(tail)
+    qdir = "480p15" if a.preview else "1080p30"
+    mp4 = next((media / "videos").rglob(f"{qdir}/{scene}.mp4"))
     srt = mp4.with_suffix(".srt")
-    if preview:
-        return num, f"{mp4}  (subtitles: {srt if srt.exists() else 'none'})"
-    out.mkdir(parents=True, exist_ok=True)
-    shutil.copy(mp4, out / f"{file.stem}.mp4")
+    if a.preview:
+        return str(mp4)
+    out = Path(a.out).resolve()
+    dst = out / lang if len(unit.langs) > 1 else out
+    dst.mkdir(parents=True, exist_ok=True)
+    name = unit.slug(ep, lang)
+    shutil.copy(mp4, dst / f"{name}.mp4")
     if srt.exists():
-        shutil.copy(srt, out / f"{file.stem}.srt")
-    return num, str(out / f"{file.stem}.mp4")
+        shutil.copy(srt, dst / f"{name}.srt")
+    return str(dst / f"{name}.mp4")
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("src", help="folder with manim_kit.py and the episode files")
-    ap.add_argument("--only", nargs="*", type=int, default=None, help="episode numbers")
-    ap.add_argument("--preview", action="store_true", help="480p15, leave output in media dir")
+    ap.add_argument("src", help="unit folder: manim_kit.py, series.py, epNN_*.py")
+    ap.add_argument("episodes", nargs="*", type=int)
+    ap.add_argument("--lang", default="all", help="a language code, or 'all' (series.py LANGS)")
+    ap.add_argument("--preview", action="store_true", help="480p15, output stays in the media dir")
+    ap.add_argument("--voice", action=argparse.BooleanOptionalAction, default=None,
+                    help="voice-over (default: on for full renders, off for previews)")
+    ap.add_argument("--lax", action="store_true", help="warn instead of failing on missing translations")
     ap.add_argument("--out", default="videos", help="where finished mp4/srt are collected")
     ap.add_argument("--media", default="media", help="scratch media root")
-    ap.add_argument("--jobs", type=int, default=3)
-    ap.add_argument("--manim", default=shutil.which("manim") or "manim")
+    ap.add_argument("--jobs", type=int, default=3, help="parallel renders (~ CPU cores / 2)")
+    ap.add_argument("--manim", default=None, help="manim executable (default: .venv, then PATH)")
     a = ap.parse_args()
+    a.manim = a.manim or find_manim()
 
-    jobs = discover(Path(a.src).resolve())
-    if a.only:
-        jobs = [j for j in jobs if j[0] in a.only]
-    if not jobs:
-        sys.exit(f"no `class EpNN...` scenes found in {a.src}")
-    media, out = Path(a.media).resolve(), Path(a.out).resolve()
+    unit = Unit(a.src)
+    eps = unit.select(a.episodes)
+    if not eps:
+        sys.exit(f"no episodes found in {unit.src}")
+    langs = unit.langs if a.lang == "all" else [a.lang]
+    voice = not a.preview if a.voice is None else a.voice
+    jobs = [(e, lang) for e in eps for lang in langs]
+    failed = False
     with ThreadPoolExecutor(a.jobs) as ex:
-        for num, result in ex.map(lambda j: render(j, a.preview, media, out, a.manim), jobs):
-            print(f"episode {num}: {result}", flush=True)
+        results = ex.map(lambda j: (j, render(unit, j[0], j[1], a, voice)), jobs)
+        for (ep, lang), result in results:
+            failed |= result.startswith("FAILED")
+            print(f"episode {ep['num']} [{lang}]: {result}", flush=True)
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

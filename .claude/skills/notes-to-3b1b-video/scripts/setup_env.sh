@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Install Manim and its system dependencies, then create a virtualenv.
+# Install Manim (+ edge-tts for the voice-over) and its system dependencies,
+# then create a virtualenv. On Windows use setup_env.ps1 instead.
 #
 #   bash setup_env.sh [VENV_DIR] [--latex]
 #
@@ -39,6 +40,6 @@ fi
 
 python3 -m venv "$VENV"
 "$VENV/bin/pip" install -q --upgrade pip setuptools wheel
-"$VENV/bin/pip" install -q manim
+"$VENV/bin/pip" install -q manim edge-tts "audioop-lts; python_version>='3.13'"
 "$VENV/bin/python" -c "import manim, manimpango; print('manim', manim.__version__, '| fonts:', len(manimpango.list_fonts()))"
 echo "manim binary: $VENV/bin/manim"

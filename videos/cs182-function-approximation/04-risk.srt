@@ -1,0 +1,96 @@
+1
+00:00:06,200 --> 00:00:12,833
+Keep four things apart: the outcome we want, the metric, the training surrogate, and the update estimator.
+
+2
+00:00:12,833 --> 00:00:21,400
+For a classifier: good decisions, measured by accuracy, trained with cross-entropy and mini-batch gradients.
+
+3
+00:00:21,400 --> 00:00:33,966
+The true class gets probability 0.45, 0.49, 0.51, then 0.90. Accuracy only sees which side of 0.5 we are on.
+
+4
+00:00:33,966 --> 00:00:45,066
+0.45 to 0.49: accuracy is stuck, but cross-entropy falls from 0.80 to 0.71. That is a usable signal.
+
+5
+00:00:45,066 --> 00:00:53,433
+A useful surrogate expresses what we care about, gives local information, is stable, and is cheap to optimize.
+
+6
+00:00:53,433 --> 00:00:59,766
+With a loss chosen, training minimizes the empirical risk: the average loss over the training pairs.
+
+7
+00:00:59,766 --> 00:01:06,433
+Take squared error and four points. This line, y = x, misses them by these red gaps.
+
+8
+00:01:06,433 --> 00:01:13,133
+Square each gap, average them, and this line scores an empirical risk of 0.045.
+
+9
+00:01:13,133 --> 00:01:24,300
+Another line, y = 0.5x + 1, scores 0.270. Empirical risk minimization prefers the first line.
+
+10
+00:01:24,300 --> 00:01:32,533
+The real target is population risk: expected loss on fresh data. Ten noisy samples; dashed is the unseen truth.
+
+11
+00:01:32,533 --> 00:01:41,966
+A degree-nine polynomial can hit all ten points: training error is essentially zero, but on fresh data it is 3.2.
+
+12
+00:01:41,966 --> 00:01:49,500
+Training error only ever falls as models get more flexible: a richer family can always fit the samples at least as well.
+
+13
+00:01:49,500 --> 00:01:55,800
+Error on new data bottoms out near degree 3, then climbs. That turnaround is overfitting.
+
+14
+00:01:55,800 --> 00:02:03,866
+Empirical risk can be optimized; population performance cannot be seen. We are looking where the light is.
+
+15
+00:02:03,866 --> 00:02:10,766
+One remedy is a second pressure: ridge regression balances fit against weight size, with strength lambda.
+
+16
+00:02:10,766 --> 00:02:15,333
+A small lambda already tames the wild swings between the points.
+
+17
+00:02:15,333 --> 00:02:23,166
+At lambda = 0.1 the curve follows the trend, misses some points on purpose, and generalizes far better.
+
+18
+00:02:23,166 --> 00:02:30,300
+Too much lambda squeezes the weights until the model underfits. Regularization is a dial, not a cure.
+
+19
+00:02:30,300 --> 00:02:37,566
+So fit the data, but not too tightly. Even then, generalization is never guaranteed.
+
+20
+00:02:37,566 --> 00:02:44,733
+Training data sets the weights; validation data sets hyperparameters like lambda, learning rate, and hidden units.
+
+21
+00:02:44,733 --> 00:02:51,566
+Sweep the hyperparameter over orders of magnitude. Each point is a full training run scored on validation.
+
+22
+00:02:51,566 --> 00:02:59,633
+Validation picks lambda = 0.1. Careful: every look at the validation set spends a little of its honesty.
+
+23
+00:02:59,633 --> 00:03:07,200
+Only now do we open the test set, once, after every choice is made. It assumes test data resemble deployment.
+
+24
+00:03:07,200 --> 00:03:16,766
+A cats-and-dogs model shown dinosaurs: test scores mislead when deployment differs. Detecting shift is only partial.
+

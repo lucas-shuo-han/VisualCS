@@ -92,7 +92,7 @@ class Ep04Risk(NarratedScene):
     series = SERIES
 
     def construct(self):
-        self.title_card(4, "Looking Where the Light Is", "training loss is a proxy, not the goal")
+        self.title_card()
         self.four_objects()
         self.empirical_risk()
         self.overfit()
@@ -101,9 +101,8 @@ class Ep04Risk(NarratedScene):
         self.end_card(
             ["Metric, surrogate and update estimator are different objects",
              "Empirical risk is what we can optimize; population risk is what we want",
-             "More flexibility always lowers training error, not test error",
+             "More flexibility lowers training error, not necessarily test error",
              "Regularization and validation keep the proxy honest"],
-            next_title="Hold out what will be new",
         )
 
     # ---------------------------------------------------------------- 1. four objects
@@ -158,7 +157,7 @@ class Ep04Risk(NarratedScene):
         d = dots(ax, PX, PY, C_DATA)
         lineA = ax.plot(lambda x: LINE_A[0] * x + LINE_A[1], x_range=[0, 5], color=C_MODEL, stroke_width=4)
         segs = VGroup(*[Line(ax.c2p(x, y), ax.c2p(x, LINE_A[0] * x + LINE_A[1]), color=C_LOSS, stroke_width=4) for x, y in PTS])
-        self.say("Training minimizes the empirical risk: the average loss over the training pairs.",
+        self.say("With a loss chosen, training minimizes the empirical risk: the average loss over the training pairs.",
                  Write(head), Write(eq), Create(ax), FadeIn(d))
         self.say("Take squared error and four points. This line, y = x, misses them by these red gaps.",
                  Create(lineA), LaggedStart(*[Create(s) for s in segs], lag_ratio=0.2))
@@ -174,7 +173,7 @@ class Ep04Risk(NarratedScene):
         calcB = VGroup(txt("mean of squared gaps", 24, GREY_B),
                        txt(f"({sqB}) / 4", 28, C_LOSS),
                        txt(f"= {RISK_B:.3f}", 32, C_LOSS)).arrange(DOWN, aligned_edge=LEFT, buff=0.22).move_to(calc)
-        self.say(f"Another line, y = 0.5x + 1, scores {RISK_B:.3f}. The argmin prefers the first one.",
+        self.say(f"Another line, y = 0.5x + 1, scores {RISK_B:.3f}. Empirical risk minimization prefers the first line.",
                  Transform(lineA, lineB), Transform(segs, segsB), Transform(calc, calcB))
         self.hold(0.5)
         self.clear_stage()
@@ -185,14 +184,14 @@ class Ep04Risk(NarratedScene):
         ax = make_axes([0, 6, 1], [-1, 4, 1], 7.6, 3.3).move_to([-2.0, -0.15, 0])
         tgt = DashedVMobject(plot(ax, f, C_TARGET, [0, 6], width=3), num_dashes=60)
         d = dots(ax, XT, YT, C_TRAIN)
-        self.say("The real target is population risk: the expected loss on fresh data. Here are ten noisy samples.",
+        self.say("The real target is population risk: expected loss on fresh data. Ten noisy samples; dashed is the unseen truth.",
                  Write(head), Create(ax), Create(tgt), FadeIn(d))
         curve = poly_curve(ax, W0)
         info = VGroup(txt("degree 9, ten points", 24, C_TEXT),
                       txt(f"train RMSE {TR[-1]:.2f}", 26, C_TRAIN),
                       txt(f"test RMSE {TE[-1]:.1f}", 26, C_TEST)).arrange(DOWN, aligned_edge=LEFT, buff=0.22).move_to([4.6, 1.0, 0])
         assert info.get_right()[0] < 7.0
-        self.say(f"A degree-nine polynomial can hit all ten points exactly: training error {TR[-1]:.2f}, but {TE[-1]:.1f} on fresh data.",
+        self.say(f"A degree-nine polynomial can hit all ten points: training error is essentially zero, but on fresh data it is {TE[-1]:.1f}.",
                  Create(curve, run_time=2.0), FadeIn(info))
         self.hold(0.4)
         self.clear_stage()
@@ -207,7 +206,7 @@ class Ep04Risk(NarratedScene):
         cte = polyline(ax, DEGS, np.minimum(TE, 3.5), C_TEST, 4)
         ltr = txt("training error", 24, C_TRAIN).move_to([4.4, 1.2, 0])
         lte = txt("error on new data", 24, C_TEST).move_to([4.4, 0.6, 0])
-        self.say("Training error only ever falls as models get more flexible: a richer family can always match the samples.",
+        self.say("Training error only ever falls as models get more flexible: a richer family can always fit the samples at least as well.",
                  Write(head), Create(ax), FadeIn(ticks), FadeIn(xl), Create(floor), FadeIn(fl), Create(ctr), FadeIn(ltr))
         self.say(f"Error on new data bottoms out near degree {D_STAR}, then climbs. That turnaround is overfitting.",
                  Create(cte), FadeIn(lte), Flash(ax.c2p(D_STAR, TE[D_STAR - 1]), color=YELLOW_D, flash_radius=0.35))
@@ -245,7 +244,7 @@ class Ep04Risk(NarratedScene):
         for lam in STAGES[1:]:
             self.say(caps[lam], Transform(cur, poly_curve(ax, W_S[lam])), Transform(pan, panel(lam)))
             self.hold(0.3)
-        self.say("Love the training data, but not that much. Even so, generalization is never guaranteed.",
+        self.say("So fit the data, but not too tightly. Even then, generalization is never guaranteed.",
                  Indicate(eq[1], color=C_LAM))
         self.hold(0.5)
         self.clear_stage()
@@ -260,7 +259,7 @@ class Ep04Risk(NarratedScene):
         vc = polyline(ax, [k + 7 for k in ks], np.minimum(VAL, 3.5), C_VAL, 4)
         vd = VGroup(*[Dot(ax.c2p(k + 7, min(v, 3.5)), radius=0.07, color=C_VAL) for k, v in zip(ks, VAL)])
         lv = txt("validation error", 24, C_VAL).move_to([5.0, 1.3, 0])
-        self.say("Weights are learned from training data; hyperparameters like lambda are chosen with held-out validation data.",
+        self.say("Training data sets the weights; validation data sets hyperparameters like lambda, learning rate, and hidden units.",
                  Write(head), Create(ax), FadeIn(ticks), FadeIn(xl))
         self.say("Sweep the hyperparameter over orders of magnitude. Each point is a full training run scored on validation.",
                  LaggedStart(*[GrowFromCenter(p) for p in vd], lag_ratio=0.15), Create(vc, run_time=2.0), FadeIn(lv))
@@ -273,5 +272,7 @@ class Ep04Risk(NarratedScene):
         assert tst.get_right()[0] < 7.0
         self.say("Only now do we open the test set, once, after every choice is made. It assumes test data resemble deployment.",
                  FadeIn(tst))
+        self.say("A cats-and-dogs model shown dinosaurs: test scores mislead when deployment differs. Detecting shift is only partial.",
+                 Indicate(tst[1], color=C_TEST))
         self.hold(0.6)
         self.clear_stage()

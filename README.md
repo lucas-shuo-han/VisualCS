@@ -47,3 +47,17 @@ python -m venv .venv && .venv/bin/pip install -r requirements.txt
 
 - 目前没有配音，旁白以字幕形式呈现；字幕停留时长按阅读速度自动计算。
 - 内容按 CS61C 中 RISC-V 部分的知识点和 RISC-V 规范整理；各集示例里的机器码都在代码里用断言核对过。
+
+## CS182 · Function Approximation 系列
+
+依据 CS182 Note 1（Function Approximation）制作，5 集，英文字幕 + 英文配音（edge-tts）。成片和 `.srt` 在 [`videos/cs182-function-approximation/`](videos/cs182-function-approximation/)，旁白全文见 [`cs182/function-approximation/SCRIPT.md`](cs182/function-approximation/SCRIPT.md)，资料覆盖清单见 [`COVERAGE.md`](cs182/function-approximation/COVERAGE.md)，术语表见 [`GLOSSARY.md`](cs182/function-approximation/GLOSSARY.md)。
+
+| # | 标题 | 内容 |
+|---|---|---|
+| 1 | Learning a Function from Samples | 只有样本点时要学什么；分段常数逼近；为什么 0/1 阶跃函数没有梯度、ReLU 斜坡才有 |
+| 2 | ReLU Ramps Are a Spline Basis | 一组 ReLU 斜坡叠加恰好画出任意分段线性曲线（5 个隐藏单元的算例）；存在性 ≠ 训练得到 |
+| 3 | From Ramps to a Layer | 一个单元怎么算；affine → ReLU → affine 的一层网络；去掉 ReLU 两层塌缩成一条直线 |
+| 4 | Looking Where the Light Is | 指标、代理损失；经验风险与总体风险；过拟合；ridge 正则；用验证集选 λ，测试集只看一次 |
+| 5 | Hold Out What Will Be New | 按行划分 vs 按患者划分（1-NN 记忆器 ≈100% vs ≈50%）；医院捷径与 Zech 等人的胸片结果；问题是否自洽的四问；术语地图 |
+
+重新渲染：`source cs182/env.sh`（Windows 路径与环境变量），然后 `python .claude/skills/notes-to-3b1b-video/scripts/render.py cs182/function-approximation --out videos/cs182-function-approximation`。

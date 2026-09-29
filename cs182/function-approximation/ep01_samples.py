@@ -79,7 +79,7 @@ class Ep01Samples(NarratedScene):
     series = SERIES
 
     def construct(self):
-        self.title_card(1, "Learning a Function from Samples", "what are we trying to learn, and what makes it hard?")
+        self.title_card()
         self.samples()
         self.steps()
         self.gradients()
@@ -89,7 +89,6 @@ class Ep01Samples(NarratedScene):
              "Constant steps improve with finer intervals, but give zero gradient",
              "A ramp is a step with a slope: something to learn from",
              "Fitting the samples is not enough. Smoothness is a bet."],
-            next_title="ReLU ramps are a spline basis",
         )
 
     # ---------------------------------------------------------------- helpers
@@ -143,7 +142,7 @@ class Ep01Samples(NarratedScene):
             new_err = txt(f"{n} intervals   max error = {e:.2f}", 26, C_LOSS).move_to(err, aligned_edge=RIGHT)
             cap = ("Refine to six intervals and the steps hug the curve much better."
                    if n == 6 else
-                   "Twelve intervals shrink the worst-case error again. Finer intervals always help.")
+                   "Twelve intervals shrink the worst-case error again. Refining the intervals keeps improving the fit.")
             self.say(cap, Transform(cur, polyline(ax, px, py, C_MODEL, 4)), Transform(err, new_err))
             self.hold(0.4)
         self.clear_stage()
@@ -162,24 +161,28 @@ class Ep01Samples(NarratedScene):
             lab.shift(RIGHT * 0.5)
         cL = polyline(axL, TAUS, L_STEP, C_LOSS, 4)
         cR = polyline(axR, TAUS, L_RAMP, C_LOSS, 4)
-        self.say("Now the catch. Take one step of fixed height, and ask how the loss on the samples changes as we slide the step's location tau.",
+        self.say("Now the catch. Slide a step of fixed height along x: how does the loss change with its location tau?",
                  Write(head), Create(axL), Create(axR), FadeIn(tl), FadeIn(tr), FadeIn(xl), FadeIn(yl))
-        self.say("For a hard step the loss is a staircase: perfectly flat between neighbouring samples, with sudden jumps.",
+        self.say("For a hard step the loss is a staircase: perfectly flat between neighboring samples, with sudden jumps.",
                  Create(cL, run_time=2.0))
-        self.say("Its derivative is zero almost everywhere, so gradient descent gets no signal about which way to move the step.",
+        self.say("Its derivative is zero almost everywhere, so backpropagation gives no signal about which way to move the step.",
+                 Indicate(cL, color=YELLOW_D, scale_factor=1.0))
+        self.say("A final linear layer over fixed steps can still learn their heights, but it cannot learn the locations at the same time.",
+                 Indicate(tl, color=YELLOW_D))
+        self.say("Now swap the step for a ramp: one ReLU unit, ReLU of x minus tau. The same loss becomes a curve with a slope.",
                  Create(cR, run_time=2.0))
         tau = ValueTracker(2.1)
         dotL = always_redraw(lambda: Dot(axL.c2p(tau.get_value(), best_loss(hard_step, tau.get_value())), color=YELLOW_D, radius=0.1))
         dotR = always_redraw(lambda: Dot(axR.c2p(tau.get_value(), best_loss(relu, tau.get_value())), color=YELLOW_D, radius=0.1))
         self.play(FadeIn(dotL), FadeIn(dotR))
-        self.say("Slide tau across a gap between two samples: the step's loss does not move at all, while the ramp's loss changes smoothly.",
+        self.say("Slide tau across the gap between two samples. The step's loss does not move at all, while the ramp's loss keeps changing.",
                  tau.animate.set_value(2.7), run_time=2.5)
         gl = txt(f"slope = {slope_step:.2f}", 26, WHITE).next_to(axL, DOWN, buff=0.7)
         gr = txt(f"slope = {slope_ramp:.2f}", 26, C_RAMP).next_to(axR, DOWN, buff=0.7)
         self.say(f"At tau = {T0} the step's slope is exactly zero. The ramp's slope is {slope_ramp:.2f}: a direction to follow.",
                  FadeIn(gl), FadeIn(gr))
         self.hold(0.6)
-        self.say("A ramp is a step with a slope. That one change is what makes learning the locations possible.",
+        self.say("A ramp is a step with a slope. That makes the locations learnable, and it seeds piecewise-linear models.",
                  Indicate(tr, color=C_RAMP), Indicate(gr, color=C_RAMP))
         self.hold(0.6)
         self.clear_stage()
@@ -191,18 +194,18 @@ class Ep01Samples(NarratedScene):
         d = dots(ax, XS, YS)
         smooth = polyline(ax, XS, YS, C_MODEL, 4)
         zig = polyline(ax, ZX, ZY, C_RAMP, 4)
-        self.say("Even before learning anything, there is a second catch: many curves pass through exactly the same samples.",
+        self.say("There is a second catch: many different curves pass through exactly the same samples.",
                  Write(head), Create(ax), FadeIn(labels), FadeIn(d))
-        self.say("Here is a plain piecewise-linear curve connecting the dots.", Create(smooth, run_time=1.8))
+        self.say("Here is a plain piecewise-linear curve that simply connects the dots.", Create(smooth, run_time=1.8))
         self.say("And here is a very different piecewise-linear curve that detours between the dots but still hits every one.",
                  Create(zig, run_time=2.2))
-        self.say("Both have zero error on the training set. The samples alone cannot tell us which one is right.")
+        self.say("Both have zero error on the training set, so the samples alone cannot tell us which one is right.")
         self.hold(0.4)
         target = DashedVMobject(plot(ax, f, C_TARGET, [XS[0], XS[-1]], width=3), num_dashes=50)
         e1 = txt(f"plain: mean error {ERR_SMOOTH:.2f}", 24, C_MODEL)
         e2 = txt(f"detour: mean error {ERR_ZIG:.2f}", 24, C_RAMP)
         VGroup(e1, e2).arrange(DOWN, aligned_edge=LEFT, buff=0.15).to_corner(UR, buff=0.5).shift(DOWN * 0.1)
-        self.say("The hidden f, drawn dashed, was smooth. Preferring smoothness is an inductive bias: a bet, which we must test on unseen data.",
+        self.say("The hidden f, drawn dashed, was smooth. Preferring smoothness is an inductive bias: a bet, which we must test on fresh data.",
                  Create(target, run_time=1.6), FadeIn(e1), FadeIn(e2))
         self.hold(0.6)
         self.clear_stage()

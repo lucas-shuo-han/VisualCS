@@ -1,0 +1,72 @@
+1
+00:00:06,200 --> 00:00:16,533
+Last time, every ramp was ReLU of a weight times x plus a bias. As a computation graph: multiply, add, then take the max with zero.
+
+2
+00:00:16,533 --> 00:00:28,333
+Feed in x = 1.5: 2 × 1.5 = 3, then 3 − 1 = 2, and the max with zero keeps it: h = 2.
+
+3
+00:00:28,333 --> 00:00:42,833
+Feed in x = 0.2: 2 × 0.2 = 0.4, then 0.4 − 1 = −0.6, and the max with zero clips it: h = 0.
+
+4
+00:00:42,833 --> 00:00:51,633
+Three cheap operations; only the last is nonlinear. Multiply-accumulate hardware runs many units at once.
+
+5
+00:00:51,633 --> 00:01:00,800
+Run d units side by side, each one a ramp; here d = 4. Each has its own weight and bias, and all see the same x.
+
+6
+00:01:00,800 --> 00:01:09,600
+A linear readout adds the units up with output weights plus one more bias: exactly the sum in Equation 1.7.
+
+7
+00:01:09,600 --> 00:01:17,400
+Feed in x = 1.5. Each unit forms its pre-activation z: weight times x, plus bias.
+
+8
+00:01:17,400 --> 00:01:27,066
+ReLU keeps 3 of the four and clips the second to zero, so the activations are 1.5, 0, 2, 0.25.
+
+9
+00:01:27,066 --> 00:01:34,633
+The readout multiplies each activation by its output weight, adds them, and adds the bias.
+
+10
+00:01:34,633 --> 00:01:42,866
+Stack the weights into a matrix and the biases into a vector: one matrix multiply gives all d pre-activations.
+
+11
+00:01:42,866 --> 00:01:48,400
+Here W one has d rows and one column, because the input is a single number.
+
+12
+00:01:48,400 --> 00:01:57,166
+ReLU acts entrywise. Then W two, a row vector with d columns, reads the activations out into one number.
+
+13
+00:01:57,166 --> 00:02:06,133
+Every step is a multiply-accumulate, and this layer needs only 8. Vector inputs and outputs work the same way.
+
+14
+00:02:06,133 --> 00:02:14,233
+Here is the whole layer as a function of x. Its bends sit at the units' elbows: x = 0, 0.5, 1.
+
+15
+00:02:14,233 --> 00:02:23,833
+Now delete every ReLU. Two affine maps in a row multiply out into one: a single matrix times x, plus a single vector.
+
+16
+00:02:23,833 --> 00:02:31,666
+With our numbers the weights multiply to 4 and the biases combine to −2: just the line 4x − 2.
+
+17
+00:02:31,666 --> 00:02:39,433
+Four units, two layers, and all we can draw is a line. Without the nonlinearity, extra depth adds nothing.
+
+18
+00:02:39,433 --> 00:02:48,500
+Deeper networks repeat affine, ReLU, affine, ReLU; the ReLUs keep the layers from merging.
+

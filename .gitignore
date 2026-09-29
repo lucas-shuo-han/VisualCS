@@ -1,3 +1,6 @@
 __pycache__/
 media/
 *.pyc
+media/
+.tts_cache/
+__pycache__/

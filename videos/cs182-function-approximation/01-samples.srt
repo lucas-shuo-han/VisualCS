@@ -1,0 +1,84 @@
+1
+00:00:06,200 --> 00:00:12,700
+Somewhere there is a function f that turns inputs x into outputs y. We are never given its formula.
+
+2
+00:00:12,700 --> 00:00:17,433
+All we get are sample pairs: a handful of inputs with their noisy outputs.
+
+3
+00:00:17,433 --> 00:00:24,666
+We want a parameterized function N of theta that fits these pairs, and behaves sensibly in between and beyond them.
+
+4
+00:00:24,666 --> 00:00:31,800
+Between the samples we interpolate. Beyond them we extrapolate, and that is where the real test lies.
+
+5
+00:00:31,800 --> 00:00:39,266
+From calculus we know one way to approximate a function: chop the input into intervals and hold a constant value on each.
+
+6
+00:00:39,266 --> 00:00:44,933
+With three intervals the fit is crude. The error can be large anywhere inside a step.
+
+7
+00:00:44,933 --> 00:00:49,433
+Refine to six intervals and the steps hug the curve much better.
+
+8
+00:00:49,433 --> 00:00:56,800
+Twelve intervals shrink the worst-case error again. Refining the intervals keeps improving the fit.
+
+9
+00:00:56,800 --> 00:01:03,533
+Now the catch. Slide a step of fixed height along x: how does the loss change with its location tau?
+
+10
+00:01:03,533 --> 00:01:10,500
+For a hard step the loss is a staircase: perfectly flat between neighboring samples, with sudden jumps.
+
+11
+00:01:10,500 --> 00:01:17,633
+Its derivative is zero almost everywhere, so backpropagation gives no signal about which way to move the step.
+
+12
+00:01:17,633 --> 00:01:24,733
+A final linear layer over fixed steps can still learn their heights, but it cannot learn the locations at the same time.
+
+13
+00:01:24,733 --> 00:01:33,233
+Now swap the step for a ramp: one ReLU unit, ReLU of x minus tau. The same loss becomes a curve with a slope.
+
+14
+00:01:33,233 --> 00:01:40,933
+Slide tau across the gap between two samples. The step's loss does not move at all, while the ramp's loss keeps changing.
+
+15
+00:01:40,933 --> 00:01:50,400
+At tau = 2.4 the step's slope is exactly zero. The ramp's slope is -1.39: a direction to follow.
+
+16
+00:01:50,400 --> 00:01:58,500
+A ramp is a step with a slope. That makes the locations learnable, and it seeds piecewise-linear models.
+
+17
+00:01:58,500 --> 00:02:03,600
+There is a second catch: many different curves pass through exactly the same samples.
+
+18
+00:02:03,600 --> 00:02:07,766
+Here is a plain piecewise-linear curve that simply connects the dots.
+
+19
+00:02:07,766 --> 00:02:14,533
+And here is a very different piecewise-linear curve that detours between the dots but still hits every one.
+
+20
+00:02:14,533 --> 00:02:21,133
+Both have zero error on the training set, so the samples alone cannot tell us which one is right.
+
+21
+00:02:21,133 --> 00:02:31,400
+The hidden f, drawn dashed, was smooth. Preferring smoothness is an inductive bias: a bet, which we must test on fresh data.
+
