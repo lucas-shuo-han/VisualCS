@@ -15,6 +15,7 @@ on Manim's shared text/SVG cache.
 """
 
 import argparse
+import os
 import re
 import shutil
 import subprocess
@@ -42,8 +43,12 @@ def render(job, preview, media_root: Path, out: Path, manim: str):
     quality = ["-ql"] if preview else ["-r", "1920,1080", "--fps", "30"]
     log = media_root / f"ep{num:02d}.log"
     with open(log, "w") as fh:
-        rc = subprocess.run([manim, *quality, "--media_dir", str(media), file.name, scene],
-                            cwd=file.parent, stdout=fh, stderr=subprocess.STDOUT).returncode
+        # MANIM_CWD: run from another directory (Windows: MiKTeX's dvisvgm fails when the
+        # cwd is on some drives, e.g. a D: folder; point this at a C: folder).
+        cwd = os.environ.get("MANIM_CWD")
+        env = dict(os.environ, PYTHONPATH=os.pathsep.join(filter(None, [str(file.parent), os.environ.get("PYTHONPATH")])))
+        rc = subprocess.run([manim, *quality, "--media_dir", str(media), str(file) if cwd else file.name, scene],
+                            cwd=cwd or file.parent, env=env, stdout=fh, stderr=subprocess.STDOUT).returncode
     if rc != 0:
         tail = log.read_text(errors="replace").strip().splitlines()[-3:]
         return num, f"FAILED ({log}): " + " | ".join(tail)
