@@ -61,3 +61,15 @@ python -m venv .venv && .venv/bin/pip install -r requirements.txt
 | 5 | Hold Out What Will Be New | 按行划分 vs 按患者划分（1-NN 记忆器 ≈100% vs ≈50%）；医院捷径与 Zech 等人的胸片结果；问题是否自洽的四问；术语地图 |
 
 重新渲染：`source cs182/env.sh`（Windows 路径与环境变量），然后 `python .claude/skills/notes-to-3b1b-video/scripts/render.py cs182/function-approximation --out videos/cs182-function-approximation`。
+
+## CS182 其余单元（课程网站公开的 notes 和 iPad notes）
+
+来源：<https://berkeley-cs182.github.io/fa26/schedule/> 上已经公开的全部 notes / iPad notes（讲座 6 只有 Google Drive 幻灯片，第 4、5、9–12 讲尚无 notes，未做）。英文字幕 + 英文配音，每个单元都有 `COVERAGE.md`（资料覆盖清单）、`GLOSSARY.md`、`SCRIPT.md`（旁白全文）。
+
+| 单元 | 视频 | 代码 | 资料 | 集数 |
+|---|---|---|---|---|
+| Introduction | [`videos/cs182-introduction/`](videos/cs182-introduction/) | [`cs182/introduction/`](cs182/introduction/) | Lecture 0 notes | 2：What Is Deep Learning? · Engineering or Alchemy? |
+| Optimization | [`videos/cs182-optimization/`](videos/cs182-optimization/) | [`cs182/optimization/`](cs182/optimization/) | Least Squares/Ridge、GD/SGD、Momentum/Adam notes + Lecture 2、3 iPad notes | 9：梯度下降与最小二乘 → 零空间 → Ridge → 早停 → SGD → Momentum → 阻尼与稳定性 → Adam/AdamW → 标准化与初始化 |
+| Scaling and μP | [`videos/cs182-scaling/`](videos/cs182-scaling/) | [`cs182/scaling/`](cs182/scaling/) | Lecture 7、8 iPad notes | 6：Steepest Descent Under a Norm → Spectral Norm → RMS Norm → Muon → Transfer → μP |
+
+重新渲染某个单元：`source cs182/env.sh`，然后 `python .claude/skills/notes-to-3b1b-video/scripts/render.py cs182/<单元> --out videos/cs182-<单元>`。

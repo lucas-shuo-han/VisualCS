@@ -1,0 +1,96 @@
+1
+00:00:06,200 --> 00:00:12,700
+In the Hessian's eigenbasis a quadratic decouples, so study one scalar mode with curvature lambda.
+
+2
+00:00:12,700 --> 00:00:18,300
+Plugging in its gradient couples the weight and the average into a two-by-two linear system.
+
+3
+00:00:18,300 --> 00:00:26,600
+Eliminating the average gives a second-order recurrence with one number: s, eta times one minus beta times lambda.
+
+4
+00:00:26,600 --> 00:00:34,566
+Its polynomial has two roots. The mode mixes their powers, so both must lie inside the unit circle.
+
+5
+00:00:34,566 --> 00:00:41,933
+The Schur test needs three checks: no root at plus one, none at minus one, and a root product below one.
+
+6
+00:00:41,933 --> 00:00:50,533
+So it is stable exactly for s between zero and two times one plus beta. At beta zero, eta lambda is below two.
+
+7
+00:00:50,533 --> 00:01:00,100
+With beta of 0.9, the stable learning-rate range is nineteen times wider. The real gain is speed, not range.
+
+8
+00:01:00,100 --> 00:01:06,633
+Fix beta at one half and slide s up from zero. The larger root's size sets the convergence rate.
+
+9
+00:01:06,633 --> 00:01:13,566
+Small s: both roots are real and positive, and the slow one sits near one. Smooth, but slow.
+
+10
+00:01:13,566 --> 00:01:21,166
+The roots meet and merge at s equal to one minus root beta, squared: the fastest non-oscillating decay.
+
+11
+00:01:21,166 --> 00:01:28,566
+Beyond that the roots split into a complex pair, both of size root beta. The rate stays flat: a plateau.
+
+12
+00:01:28,566 --> 00:01:37,600
+Near the far end both roots turn real and negative. At s equal to three one reaches minus one: unstable.
+
+13
+00:01:37,600 --> 00:01:44,633
+Start the mode at one and watch. Overdamped creeps toward zero; critical gets there quickly without crossing.
+
+14
+00:01:44,633 --> 00:01:51,933
+Underdamped overshoots and rings, but inside an envelope shrinking like root beta to the t. Still fast.
+
+15
+00:01:51,933 --> 00:02:00,866
+So oscillation is not the enemy; only the size of the roots counts. With beta zero, the regimes coincide.
+
+16
+00:02:00,866 --> 00:02:08,733
+A single eta must serve every eigenvalue. Each mode lands at its own s, the same curve scaled by its curvature.
+
+17
+00:02:08,733 --> 00:02:16,266
+A soft mode wants a big step to leave the overdamped zone; a stiff one nears the edge. Their s differ by kappa.
+
+18
+00:02:16,266 --> 00:02:23,266
+Tuning is a minimax problem: make the worst rate over all modes as small as possible, using the plateau.
+
+19
+00:02:23,266 --> 00:02:31,166
+This works below a kappa bound set by beta. At the limit, the rate is root kappa minus one over root kappa plus one.
+
+20
+00:02:31,166 --> 00:02:38,533
+Plain gradient descent pays kappa minus one over kappa plus one. This is the standard tuned heavy-ball result.
+
+21
+00:02:38,533 --> 00:02:48,766
+To shrink the error a hundredfold: kappa 20 takes 46 steps against 10; kappa 100, 230 against 23.
+
+22
+00:02:48,766 --> 00:02:55,133
+Nesterov evaluates the gradient where the momentum is about to carry the iterate, then steps from here.
+
+23
+00:02:55,133 --> 00:03:01,100
+Look ahead, then measure the slope there. Tuned Nesterov provably needs about root kappa steps.
+
+24
+00:03:01,100 --> 00:03:09,400
+Conventions differ between books and libraries. Never mix one line from one convention with another's update.
+

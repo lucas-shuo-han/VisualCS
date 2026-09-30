@@ -1,0 +1,92 @@
+1
+00:00:06,200 --> 00:00:13,400
+Least squares is a lamppost: the geometry is explicit, so we can watch exactly what optimization does.
+
+2
+00:00:13,400 --> 00:00:19,866
+The loss is the squared length of the residual, and its gradient is two X transpose times the residual.
+
+3
+00:00:19,866 --> 00:00:25,333
+A gradient step with learning rate eta subtracts eta times that gradient.
+
+4
+00:00:25,333 --> 00:00:32,266
+Expand it and the step is a fixed linear map applied to the weights, plus a constant.
+
+5
+00:00:32,266 --> 00:00:39,400
+Subtract the minimizer and the constant vanishes: the error is multiplied by the same matrix at every step.
+
+6
+00:00:39,400 --> 00:00:47,200
+Optimizing a quadratic is therefore a linear dynamical system, and its eigenvalues decide everything.
+
+7
+00:00:47,200 --> 00:00:55,800
+In the eigenbasis of X transpose X, a problem splits into scalar ones. Start with one, sigma times w equals y.
+
+8
+00:00:55,800 --> 00:01:02,833
+Each gradient step multiplies the error by the same number, r equals one minus two eta sigma squared.
+
+9
+00:01:02,833 --> 00:01:09,166
+A small learning rate gives r between zero and one: the error shrinks smoothly, but slowly.
+
+10
+00:01:09,166 --> 00:01:16,933
+At eta equal to one over two sigma squared, r is zero, and a single step lands exactly on the answer.
+
+11
+00:01:16,933 --> 00:01:25,200
+Push eta higher and r turns negative: the iterate overshoots, bounces across the answer, and still settles.
+
+12
+00:01:25,200 --> 00:01:33,300
+Past eta equal to one over sigma squared, r falls below minus one, and every bounce is bigger than the last.
+
+13
+00:01:33,300 --> 00:01:41,700
+So the scalar rule is simple: the iteration is stable exactly when the absolute value of r is below one.
+
+14
+00:01:41,700 --> 00:01:48,500
+Now two directions: a ravine, steep where sigma is 2 and shallow where sigma is one half.
+
+15
+00:01:48,500 --> 00:01:57,900
+Take eta equal to 0.2. Each step multiplies the steep coordinate by minus 0.6 and the shallow one by 0.9.
+
+16
+00:01:57,900 --> 00:02:03,866
+The path bounces across the ravine while creeping along it: the shallow direction sets the pace.
+
+17
+00:02:03,866 --> 00:02:11,566
+The steepest direction forbids a bigger step: eta must stay below one over lambda max, not lambda min.
+
+18
+00:02:11,566 --> 00:02:19,900
+The best constant rate balances the two extremes, equal and opposite. Now both modes shrink by 0.88 per step.
+
+19
+00:02:19,900 --> 00:02:26,600
+Even the best constant learning rate is still slow. The ravine itself is the problem.
+
+20
+00:02:26,600 --> 00:02:33,200
+The ratio of the largest to the smallest eigenvalue is the condition number, kappa. Here it is 16.
+
+21
+00:02:33,200 --> 00:02:40,833
+At the best rate the error shrinks by kappa minus one over kappa plus one per step: 15 over 17 here.
+
+22
+00:02:40,833 --> 00:02:48,833
+Iterations grow with kappa: one for a round bowl, over two hundred at kappa 100, over two thousand at 1000.
+
+23
+00:02:48,833 --> 00:02:57,600
+Large condition number means slow convergence even when stable. Momentum and Adam will attack exactly this.
+

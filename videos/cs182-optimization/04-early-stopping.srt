@@ -1,0 +1,84 @@
+1
+00:00:06,200 --> 00:00:13,066
+Rotate gradient descent into the SVD basis, with the weights and the targets rotated the same way.
+
+2
+00:00:13,066 --> 00:00:20,433
+Each singular direction obeys its own scalar recurrence, with factor one minus two eta sigma squared.
+
+3
+00:00:20,433 --> 00:00:29,866
+Start at zero and solve it. Direction i reaches the fraction q t of the converged answer, y tilde over sigma.
+
+4
+00:00:29,866 --> 00:00:37,466
+Plot q t against sigma. After a few steps only large singular values are fit; small ones have barely started.
+
+5
+00:00:37,466 --> 00:00:44,933
+Keep stepping and the curve rises from the right: large singular values converge first, small ones far later.
+
+6
+00:00:44,933 --> 00:00:51,533
+Compare with ridge. Both hold back weak directions, so stopping early regularizes without a penalty.
+
+7
+00:00:51,533 --> 00:00:59,100
+The curves need not coincide. What they share is the ordering: weak singular directions enter last.
+
+8
+00:00:59,100 --> 00:01:08,766
+This ordering is guaranteed only for eta up to one over two sigma max squared: here sigma is 1.5, eta 0.1.
+
+9
+00:01:08,766 --> 00:01:17,833
+Up to one over sigma max squared, the largest directions overshoot: q t goes above one, then settles.
+
+10
+00:01:17,833 --> 00:01:27,433
+Now watch four directions, with singular values 3, 1, 0.3 and 0.1, noisy data, and a fixed step size.
+
+11
+00:01:27,433 --> 00:01:35,066
+Training loss only ever falls: given enough steps, gradient descent fits every direction, noise included.
+
+12
+00:01:35,066 --> 00:01:42,066
+The distance falls, then climbs as noisy weak directions are fit. Best stopping is near 36 steps.
+
+13
+00:01:42,066 --> 00:01:49,500
+Run to convergence and the error is many times larger. Stopping early trades a little bias for much less noise.
+
+14
+00:01:49,500 --> 00:01:57,566
+In practice, save checkpoints and keep the one with the best validation score, not an arbitrary step count.
+
+15
+00:01:57,566 --> 00:02:04,333
+Regularization strength, learning rate and stopping time are hyperparameters spanning orders of magnitude.
+
+16
+00:02:04,333 --> 00:02:13,233
+So sweep on a log scale. Evenly spaced values bunch into one decade; one value per power of ten spans it all.
+
+17
+00:02:13,233 --> 00:02:19,766
+Each candidate is trained, then scored on validation data. The test set is kept for the final procedure.
+
+18
+00:02:19,766 --> 00:02:29,566
+A grid grows exponentially: five values per knob is 5, 25, 125 runs, and over fifteen thousand for six knobs.
+
+19
+00:02:29,566 --> 00:02:36,500
+Random search tries new values of every knob on every run, usually a better use of the same budget.
+
+20
+00:02:36,500 --> 00:02:43,700
+With no budget for broad search, borrow settings from a closely related paper: an engineering prior, not proof.
+
+21
+00:02:43,700 --> 00:02:51,900
+Could another learner tune the knobs? Meta-learning can, but it is an outer loop with its own data and cost.
+

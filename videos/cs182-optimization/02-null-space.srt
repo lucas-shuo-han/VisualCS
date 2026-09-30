@@ -1,0 +1,64 @@
+1
+00:00:06,200 --> 00:00:12,600
+Usually more data than parameters gives one answer. Not here: one equation, two unknowns.
+
+2
+00:00:12,600 --> 00:00:18,466
+Every point on this line fits perfectly, with loss zero. Which one will gradient descent pick?
+
+3
+00:00:18,466 --> 00:00:26,466
+The row of X is (1, 2). Moving along the null direction, (2, minus 1), changes no prediction.
+
+4
+00:00:26,466 --> 00:00:33,800
+The two are perpendicular and span the whole space: the fundamental theorem of linear algebra.
+
+5
+00:00:33,800 --> 00:00:40,233
+The gradient step is X transpose times the residual, so every update lies in the row space.
+
+6
+00:00:40,233 --> 00:00:45,966
+So the null-space part of the starting point is preserved forever; only the row space changes.
+
+7
+00:00:45,966 --> 00:00:52,666
+Start at zero: the iterates walk along (1, 2) and stop where they meet the solution line.
+
+8
+00:00:52,666 --> 00:01:00,800
+That is the minimum-norm solution, X transpose (X X transpose) inverse y. Here it is (1, 2).
+
+9
+00:01:00,800 --> 00:01:13,466
+Why closest? Any other solution is w min plus a perpendicular null vector: at (5, 0), 25 = 5 + 20.
+
+10
+00:01:13,466 --> 00:01:22,100
+Start elsewhere, at (3, minus 2). The path is still parallel to (1, 2) but lands on another solution.
+
+11
+00:01:22,100 --> 00:01:30,000
+The null part of the start, (3.2, minus 1.6), stayed frozen. The limit is w min plus that part.
+
+12
+00:01:30,000 --> 00:01:37,000
+So gradient descent finds the solution closest to where it began. Only a zero start gives minimum norm.
+
+13
+00:01:37,000 --> 00:01:44,633
+Here initialization matters: the loss cannot tell the solutions apart, so the start decides.
+
+14
+00:01:44,633 --> 00:01:51,200
+In higher dimensions it is the same. In the SVD basis, each weight coordinate evolves on its own.
+
+15
+00:01:51,200 --> 00:01:59,033
+Two coordinates converge to their targets, at rates 0.4 and 0.8. The null coordinate never moves.
+
+16
+00:01:59,033 --> 00:02:06,433
+Real networks have far more parameters than data: the optimizer and its start pick the solution.
+

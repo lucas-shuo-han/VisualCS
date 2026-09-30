@@ -1,0 +1,76 @@
+1
+00:00:06,200 --> 00:00:12,633
+Poor conditioning forces a trade-off. A step small enough for the stiff direction crawls along the soft one.
+
+2
+00:00:12,633 --> 00:00:19,266
+A larger step makes the stiff direction overshoot and bounce. Averaging recent gradients could calm it.
+
+3
+00:00:19,266 --> 00:00:25,500
+Keep a running average: shrink the old average by beta, and add a small dose of the newest gradient.
+
+4
+00:00:25,500 --> 00:00:32,466
+Unrolled, that is a weighted sum of all past gradients, weights falling by a factor beta each step back.
+
+5
+00:00:32,466 --> 00:00:42,333
+For beta of 0.9, the newest gradient gets weight 0.1, the one before 0.09, and so on. One vector holds it all.
+
+6
+00:00:42,333 --> 00:00:50,600
+Why not average everything equally? A stale, huge gradient would linger for ages; exponential weights forget.
+
+7
+00:00:50,600 --> 00:00:58,100
+An electrical low-pass filter, a resistor and a capacitor, stores one state. A sudden step charges it smoothly.
+
+8
+00:00:58,100 --> 00:01:05,366
+Momentum is the discrete version. If the gradient jumps to one, the average becomes one minus beta to the t.
+
+9
+00:01:05,366 --> 00:01:13,366
+With beta of 0.9 the memory is about 9 steps: the average needs around ten steps to catch up.
+
+10
+00:01:13,366 --> 00:01:20,500
+Feed in a gradient with a steady part, one, plus a bounce that flips sign each step, like a stiff direction.
+
+11
+00:01:20,500 --> 00:01:27,166
+The average rises to the steady value and the bounce nearly disappears. That is a low-pass filter at work.
+
+12
+00:01:27,166 --> 00:01:34,533
+A persistent gradient passes with gain one. An alternating one is cut to one minus beta over one plus beta.
+
+13
+00:01:34,533 --> 00:01:43,633
+For beta of 0.9, that is five percent. The trial form A times minus one to the t confirms the ratio.
+
+14
+00:01:43,633 --> 00:01:50,366
+Many libraries omit the one minus beta factor and accumulate an unnormalized velocity instead.
+
+15
+00:01:50,366 --> 00:01:58,100
+That velocity is bigger by exactly one over one minus beta, so its learning rate must shrink by the same factor.
+
+16
+00:01:58,100 --> 00:02:08,366
+With beta of 0.9, a rate of 0.1 in one form matches 0.01 in the other. Match before comparing rates.
+
+17
+00:02:08,366 --> 00:02:15,833
+Here is a ravine: steep across, shallow along. Plain gradient descent with a stable step zigzags across.
+
+18
+00:02:15,833 --> 00:02:22,700
+With the averaged gradient, the bounces across the ravine cancel while the steady push along it accumulates.
+
+19
+00:02:22,700 --> 00:02:32,100
+Caution: this shows filtering. A square-root-of-kappa guarantee needs tuning and a smooth, strongly convex loss.
+

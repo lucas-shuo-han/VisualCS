@@ -1,0 +1,88 @@
+1
+00:00:06,633 --> 00:00:14,066
+Why standardize? First, features should have similar sizes; else one in the thousands dominates one near one.
+
+2
+00:00:14,066 --> 00:00:20,400
+Second, there are numerical issues: mixing huge and tiny values wastes floating-point precision.
+
+3
+00:00:20,400 --> 00:00:27,833
+Take a feature that runs from 100 to 200, plus an intercept column. The two columns nearly point the same way.
+
+4
+00:00:27,833 --> 00:00:36,333
+The condition number is about six hundred thousand. Subtract the mean, divide by the deviation: exactly one.
+
+5
+00:00:36,333 --> 00:00:45,300
+A ReLU unit bends at x equal to minus b over w. With standard normal w and b, that kink is a Cauchy variable.
+
+6
+00:00:45,300 --> 00:00:52,466
+Its variance is infinite, yet half its mass lies within one of zero, and ninety percent within seven.
+
+7
+00:00:52,466 --> 00:01:00,033
+Now suppose the data live between 100 and 200. A kink lands there with chance about 0.16 percent per unit.
+
+8
+00:01:00,033 --> 00:01:07,566
+Among a thousand hidden units, only one or two bend inside the data. The rest are zero or straight lines.
+
+9
+00:01:07,566 --> 00:01:16,033
+Non-standardized data thus wastes the nonlinearity's expressive power. The same holds for tanh and sigmoid.
+
+10
+00:01:16,033 --> 00:01:23,733
+A unit with no kink in the data is zero or a straight line there. All thousand stack into a few rank-one pieces.
+
+11
+00:01:23,733 --> 00:01:31,566
+Take 50 data points. The raw feature matrix has only three singular values above zero; standardized, all fifty.
+
+12
+00:01:31,566 --> 00:01:38,766
+That gives a cheap debugging check: when a model seems weak, look at the rank of its features.
+
+13
+00:01:38,766 --> 00:01:46,566
+How to initialize? All zeros fails: everything is multiplied by zero, gradients vanish, nothing moves.
+
+14
+00:01:46,566 --> 00:01:52,900
+Key observation: one layer's outputs feed the next, so every layer's inputs should look standardized.
+
+15
+00:01:52,900 --> 00:02:00,333
+For d independent, zero-mean, unit-variance inputs, the output variance is d times the weight variance.
+
+16
+00:02:00,333 --> 00:02:09,533
+Choose weight variance one over d, the fan-in, and the output is unit-variance too: Xavier initialization.
+
+17
+00:02:09,533 --> 00:02:17,400
+Push standardized inputs through ten ReLU layers of width 256, with three weight choices, tracking size.
+
+18
+00:02:17,400 --> 00:02:22,966
+Standard normal weights make the signal explode by two orders of magnitude every layer.
+
+19
+00:02:22,966 --> 00:02:30,533
+Xavier suits a linear layer, but a ReLU zeroes half its outputs, so the signal halves each layer and fades.
+
+20
+00:02:30,533 --> 00:02:38,233
+He initialization compensates: half the inputs are alive, so use variance two over d. The signal stays level.
+
+21
+00:02:38,233 --> 00:02:46,300
+Glorot uses two over fan-in plus fan-out, balancing forward and backward passes. For equal widths it is Xavier.
+
+22
+00:02:46,300 --> 00:02:55,900
+Biases are simple: start at zero, use a small constant such as 0.01, or treat the bias as one more weight.
+
