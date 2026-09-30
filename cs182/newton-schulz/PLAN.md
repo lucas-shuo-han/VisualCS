@@ -19,18 +19,22 @@ a factor 6 toward √5 because p′(√5) = −6.
 1. Motivation: W turns the unit circle into an ellipse with half-axes σ1, σ2. Orthogonal
    means every stretch is 1 (Muon wants this per update). SVD is slow; Newton–Schulz
    uses matrix products only. Watch (1.3, 0.5) become a circle in 5 steps.
-2. Why it works: SVD, W_{k+1} = U p(Σ) Vᵀ, so each σ follows p on its own. Part (e).
-3. Just try numbers: 0.5, 1.3, 0.1 all go to 1. p(1) = 1 → fixed points −1, 0, 1.
-4. Graph and cobweb (0.3 and 1.2); fixed points are where the curve meets y = x.
-5. Slopes: p′(0) = 1.5 pushes away, p′(±1) = 0 squares the error.
-6. "How big can σ be?" 1.5 works, 1.8 goes to −1. Factoring finds √3; proof that
-   (0, √3) → +1; √3 → 0.
-7. "What about 3?" It explodes. The ratio |p(x)|/|x| finds √5; √5 is period 2; 2.3 diverges.
-8. The gap (√3, √5): flips while shrinking, so it falls below √3 eventually. Test 2.0,
-   2.2, 2.23: −1, +1, −1. Odd flips → −1, even → +1.
+2. Why it works: SVD, W_{k+1} = U p(Σ) Vᵀ, so each σ follows p on its own.
+   You could have invented p: matrix products give only odd powers of σ; the cheapest
+   recipe aσ + bσ³ with wishes p(1) = 1 and p′(1) = 0 forces a = 3/2, b = −1/2.
+3. Just try numbers: 0.5, 1.3, 0.1 all go to 1 (as designed); fixed points −1, 0, 1.
+4. Graph and cobweb (0.3 and 1.2).
+5. Slopes: p′(0) = 1.5 pushes away, p′(±1) = 0 (wish two) squares the error.
+6. "How big can σ be?" 1.5 works; predict 1.8 (pause); it goes to −1. The hump crosses the
+   axis at √3; (0, √3) → +1 shown by the region between curve and diagonal; √3 → 0.
+7. "Try 3": it explodes. Draw y = −x: flipped values shrink while the curve is above it,
+   they meet at √5. √5 is a period-2 square; 2.3 diverges.
+8. The gap (√3, √5): color every start in [0, 2.4] by its fate; zoom shows stripes
+   squeezed against √5. Follow 2.0, 2.2, 2.23: stripes are flip counts.
 9. b1 with p(b1) = −√3; (√3, b1) → (−√3, 0) → −1; 1.8 and 2 live here, p(2) = −1.
-10. b_n with b_n³ − 3b_n = 2b_(n−1); mirror mapping; alternating basins; zoom toward √5.
-11. Boundary points reach ±√3 exactly, then 0.
+10. b_n (stripe edges), b_n³ − 3b_n = 2b_(n−1); piece 2 travels onto piece 1's mirror;
+    p odd → flipped fate; zoom toward √5, ratio 6 from p′(√5) = −6.
+11. Stripe edges reach ±√3 exactly, then 0.
 12. The full answer table.
 13. Back to the matrix: normalize by the Frobenius norm, all σ → 1, the ellipse is a circle.
 

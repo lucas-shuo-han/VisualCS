@@ -22,6 +22,7 @@ REWRITES = [
     # p(x), p(σ), p(W)
     (r"\|p\(x\)\|", {"en": "the size of p of x", "zh": "p x 的绝对值"}),
     (r"\bp\(([^()|]+)\)", {"en": r"p of \1", "zh": r"p \1"}),
+    (r"[−-]x\b", {"en": "negative x", "zh": "负 x"}),
     (r"\|x\|", {"en": "the size of x", "zh": "x 的绝对值"}),
     (r"σ(\d)", {"en": r"sigma \1", "zh": r"sigma \1"}),
     (r"σ", {"en": "sigma", "zh": "sigma"}),
