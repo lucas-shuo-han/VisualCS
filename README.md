@@ -31,16 +31,18 @@
 
 ## CS182 · Newton–Schulz 迭代（第五次讨论课）
 
-| 集 | 标题 | Title | 内容 |
-|---|---|---|---|
-| 1 | Newton–Schulz 迭代：一个奇异值去哪儿 | Newton–Schulz: Where Does a Singular Value Go? | p(W) = U p(Σ) Vᵀ；蛛网图；不动点与稳定性；√3 管翻号、√5 管大小；(√3, √5) 里交替通向 −1、+1 的无穷多个吸引区及分界点 bn；√5 周期为 2；迭代前先按 Frobenius 范数缩放 |
+| 集 | Title | 内容 |
+|---|---|---|
+| 1 | Newton–Schulz: Where Does a Singular Value Go? | 从“椭圆变圆”讲起：为什么要把奇异值推到 1；p(W) = U p(Σ) Vᵀ；先试简单的数，再看蛛网图、不动点与斜率；追问“σ 能多大”发现 √3，追问“更大会怎样”发现 √5；(√3, √5) 里按翻号次数交替通向 −1、+1 的吸引区及分界点 bn；√5 周期为 2；迭代前先按 Frobenius 范数缩放 |
 
-成片在 [`videos/cs182-newton-schulz/zh/`](videos/cs182-newton-schulz/zh/) 与 [`videos/cs182-newton-schulz/en/`](videos/cs182-newton-schulz/en/)（1080p30，烧录字幕 + `.srt`，暂无配音）。
-代码在 `cs182/newton-schulz/`（基于 skill 的 `manim_kit.py`），剧情与覆盖清单见 [`cs182/newton-schulz/PLAN.md`](cs182/newton-schulz/PLAN.md)，旁白脚本见 `SCRIPT.md` / `SCRIPT.en.md`。
+这一集只做英文版（英文撰写，英文配音）。成片在 [`videos/cs182-newton-schulz/`](videos/cs182-newton-schulz/)（1080p30，烧录字幕 + `.srt`）。
+代码在 `cs182/newton-schulz/`（基于 skill 的 `manim_kit.py`），剧情与覆盖清单见 [`cs182/newton-schulz/PLAN.md`](cs182/newton-schulz/PLAN.md)，旁白脚本见 `SCRIPT.md`。
+
+配音：`tts.py` 默认用 edge-tts（需能访问 `speech.platform.bing.com`）；设 `KIT_TTS_ENGINE=pico` 改用离线的 SVOX Pico（`apt install libttspico-utils`）。现有成片用的是 Pico。
 
 ```bash
-.venv/bin/python .claude/skills/notes-to-3b1b-video/scripts/render.py cs182/newton-schulz --out videos/cs182-newton-schulz          # 带配音（需能访问 edge-tts）
-.venv/bin/python .claude/skills/notes-to-3b1b-video/scripts/render.py cs182/newton-schulz --out videos/cs182-newton-schulz --no-voice
+KIT_TTS_ENGINE=pico .venv/bin/python .claude/skills/notes-to-3b1b-video/scripts/render.py cs182/newton-schulz --out videos/cs182-newton-schulz   # 离线配音
+.venv/bin/python .claude/skills/notes-to-3b1b-video/scripts/render.py cs182/newton-schulz --out videos/cs182-newton-schulz                       # edge-tts 神经网络语音
 ```
 
 ## 目录结构

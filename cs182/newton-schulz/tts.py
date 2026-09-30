@@ -35,6 +35,9 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 CACHE = Path(os.environ.get("KIT_TTS_CACHE") or HERE / ".tts_cache")
 RATE = os.environ.get("KIT_TTS_RATE", "+0%")
+# "edge" (neural voices, needs network) or "pico" (offline SVOX Pico, pico2wave)
+ENGINE = os.environ.get("KIT_TTS_ENGINE", "edge")
+PICO_LANG = {"en": "en-US", "de": "de-DE", "fr": "fr-FR", "es": "es-ES", "it": "it-IT"}
 
 VOICES = {
     "en": "en-US-AndrewNeural", "zh": "zh-CN-YunxiNeural", "ja": "ja-JP-KeitaNeural",
@@ -150,7 +153,8 @@ def spoken(text: str, lang: str) -> str:
 
 
 def _key(text: str, lang: str) -> str:
-    return hashlib.sha1(f"{voice_for(lang)}|{RATE}|{text}".encode()).hexdigest()[:16]
+    voice = "pico" if ENGINE == "pico" else voice_for(lang)
+    return hashlib.sha1(f"{voice}|{RATE}|{text}".encode()).hexdigest()[:16]
 
 
 def _duration(path: Path) -> float:
@@ -179,7 +183,12 @@ def synth(caption: str, lang: str, speak: str | None = None) -> tuple[Path, floa
         return wav, _duration(wav)
     d.mkdir(parents=True, exist_ok=True)
     mp3 = wav.with_suffix(f".{os.getpid()}.mp3")
-    for attempt in range(5):
+    if ENGINE == "pico":
+        # offline: SVOX Pico (apt install libttspico-utils), writes wav directly
+        import subprocess
+        mp3 = mp3.with_suffix(".pico.wav")
+        subprocess.run(["pico2wave", "-l", PICO_LANG.get(lang, "en-US"), "-w", str(mp3), text], check=True)
+    for attempt in range(0 if ENGINE == "pico" else 5):
         try:
             asyncio.run(_edge(text, voice_for(lang), mp3))
             break
