@@ -1,0 +1,80 @@
+1
+00:00:06,200 --> 00:00:13,566
+Recall Xavier initialization. A neuron with d_in standard normal inputs should output a standard normal too.
+
+2
+00:00:13,566 --> 00:00:20,566
+With independent zero-mean weights, the expected square of h is the weight variance times the sum of squared inputs.
+
+3
+00:00:20,566 --> 00:00:28,633
+If each squared input is about one, the sum is d_in, so the weight variance should be one over d_in.
+
+4
+00:00:28,633 --> 00:00:35,300
+Feed random inputs through a layer. With unit-variance weights, outputs grow like the root of the fan-in.
+
+5
+00:00:35,300 --> 00:00:45,600
+At d_in of 4096 that is about 64 times too large. With variance one over d_in, the size stays near one.
+
+6
+00:00:45,600 --> 00:00:52,966
+Xavier quietly preserves a norm: the length divided by root d, the root-mean-square or RMS norm.
+
+7
+00:00:52,966 --> 00:01:00,333
+Four entries of plus or minus one have length 2, sixteen have length 4. The RMS is one for both.
+
+8
+00:01:00,333 --> 00:01:05,200
+RMS one means every entry is about size one.
+
+9
+00:01:05,200 --> 00:01:11,600
+That is what the plot showed: with Xavier scaling, output RMS size matches input RMS size.
+
+10
+00:01:11,600 --> 00:01:18,966
+Is there a matrix version of the RMS norm, measuring how much a weight matrix changes RMS size?
+
+11
+00:01:18,966 --> 00:01:27,366
+Recall the induced matrix norm: the largest output size, measured in one norm, over inputs of size one in another.
+
+12
+00:01:27,366 --> 00:01:32,733
+Use RMS on both sides: how much can A grow an input of RMS size one?
+
+13
+00:01:32,733 --> 00:01:39,500
+An input of RMS one has length root d_in. An output's RMS is its length over root d_out.
+
+14
+00:01:39,500 --> 00:01:45,400
+So the RMS to RMS norm is the spectral norm times root of d_in over d_out.
+
+15
+00:01:45,400 --> 00:01:55,966
+Check: a 64 by 256 matrix has spectral norm 1.49, so its RMS norm is twice that, 2.98.
+
+16
+00:01:55,966 --> 00:02:03,700
+Now put this norm into the optimizer recipe from episode one: steps of RMS to RMS size at most eta.
+
+17
+00:02:03,700 --> 00:02:11,800
+The spectral size allowed is eta times root of d_out over d_in, so the best step is that factor times U V transpose.
+
+18
+00:02:11,800 --> 00:02:20,866
+Try eta equal to 0.1 on three shapes. Wide-to-narrow layers get a smaller spectral step, narrow-to-wide a larger one.
+
+19
+00:02:20,866 --> 00:02:29,400
+Yet each layer's output changes by exactly eta in RMS size. One number eta behaves like a layer-specific learning rate.
+
+20
+00:02:29,400 --> 00:02:38,600
+Fan-in and fan-out do the adjusting. Making this precise for growing width is the idea behind maximal update parametrization.
+

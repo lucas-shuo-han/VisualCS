@@ -1,0 +1,116 @@
+1
+00:00:06,200 --> 00:00:15,066
+Last time the RMS ball gave the step minus eta, root d_out over d_in, times U V transpose. Muon's first key idea.
+
+2
+00:00:15,066 --> 00:00:22,100
+The catch: computing U V transpose needs an SVD of the gradient at every step, and that is expensive.
+
+3
+00:00:22,100 --> 00:00:29,233
+Two observations: an approximate direction is good enough, and Newton-Schulz can produce it cheaply.
+
+4
+00:00:29,233 --> 00:00:38,933
+We want a cheap function f that turns U sigma V transpose into U V transpose: every singular value replaced by one.
+
+5
+00:00:38,933 --> 00:00:49,233
+Take odd matrix polynomials: X, X X transpose X, and so on. Example: three halves X minus a half X X transpose X.
+
+6
+00:00:49,233 --> 00:00:56,966
+Plug in the SVD. The V transposes and U's in the middle cancel, because U and V have orthonormal columns.
+
+7
+00:00:56,966 --> 00:01:04,466
+What is left is U times p applied to the singular values, times V transpose. The singular vectors are untouched.
+
+8
+00:01:04,466 --> 00:01:12,233
+So p can be applied to a whole matrix while changing only its singular values, with no SVD needed.
+
+9
+00:01:12,233 --> 00:01:19,433
+Can we find p so that repeatedly applying it sends every positive singular value to one? Try this cubic.
+
+10
+00:01:19,433 --> 00:01:29,533
+Start at 0.3 and bounce between the curve and the diagonal: 0.44, 0.61, 0.80, and on toward one.
+
+11
+00:01:29,533 --> 00:01:39,666
+The point one is a fixed point that attracts everything nearby. Iterating p, singular values in the interval zero to one climb to one.
+
+12
+00:01:39,666 --> 00:01:46,933
+Zoom out. Start at 2.5 and the iteration jumps to minus four, then twenty-seven, and diverges.
+
+13
+00:01:46,933 --> 00:01:54,633
+So singular values must start inside zero to one. Dividing by the Frobenius norm guarantees it.
+
+14
+00:01:54,633 --> 00:02:03,966
+Take a random 5 by 3 gradient, normalized. Its singular values are 0.84, 0.51 and 0.18.
+
+15
+00:02:03,966 --> 00:02:07,466
+One iteration of p lifts the small ones the most.
+
+16
+00:02:07,466 --> 00:02:10,666
+Another one, and the spread between them is shrinking.
+
+17
+00:02:10,666 --> 00:02:15,666
+After three iterations, all three are within about one tenth of one.
+
+18
+00:02:15,666 --> 00:02:24,033
+By iteration six the smallest is 0.990. Almost the same as replacing the singular values by exactly one.
+
+19
+00:02:24,033 --> 00:02:33,266
+A tiny singular value grows only about one and a half times per step, so from 0.01 it takes 14 iterations.
+
+20
+00:02:33,266 --> 00:02:39,333
+We may choose the coefficients. Higher orders may converge faster, but each step costs more.
+
+21
+00:02:39,333 --> 00:02:49,433
+The NanoGPT speedrun uses these three coefficients. Notice f of one is 0.70, not one. So it does not converge to one.
+
+22
+00:02:49,433 --> 00:02:59,433
+Five iterations send every input from 0.01 up to between 0.68 and 1.13. Noisy, but far from tiny.
+
+23
+00:02:59,433 --> 00:03:07,600
+Must it converge? No. Singular values roughly one are good enough, and much faster than the plain cubic.
+
+24
+00:03:07,600 --> 00:03:12,766
+Put it together: Muon stands for momentum orthogonalized by Newton-Schulz.
+
+25
+00:03:12,766 --> 00:03:19,900
+Keep a momentum buffer, orthogonalize it with a few Newton-Schulz steps, and step the weights against it.
+
+26
+00:03:19,900 --> 00:03:27,633
+On the NanoGPT speedrun, Muon costs about the same time per step as Adam, and far less than Shampoo or SOAP.
+
+27
+00:03:27,633 --> 00:03:35,533
+Per step it also gets the validation loss down faster, so it reaches a given loss in less wall-clock time.
+
+28
+00:03:35,533 --> 00:03:44,466
+The task took about 45 minutes at the May 2024 baseline. Muon was a big step down, and by December the record was a few minutes.
+
+29
+00:03:44,466 --> 00:03:52,533
+In February 2025, Moonshot AI and UCLA showed that Muon scales to large language model training.
+

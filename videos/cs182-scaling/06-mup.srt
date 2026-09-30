@@ -1,0 +1,104 @@
+1
+00:00:06,200 --> 00:00:13,500
+Consider one hidden layer: a weight matrix, a bias and a nonlinearity. What happens as the width grows?
+
+2
+00:00:13,500 --> 00:00:20,466
+Xavier thinking: we want the RMS size of the activations to be about one, so the typical entry is.
+
+3
+00:00:20,466 --> 00:00:26,033
+Second, each update should change the activations by a size that does not vanish with width.
+
+4
+00:00:26,033 --> 00:00:32,066
+Theta of one means bounded above and below by constants, whatever the width.
+
+5
+00:00:32,066 --> 00:00:39,033
+Ignoring bias and nonlinearity, the output length is at most the spectral norm times the input length.
+
+6
+00:00:39,033 --> 00:00:45,166
+So lengths root d_out and root d_in force a spectral norm of order root d_out over d_in.
+
+7
+00:00:45,166 --> 00:00:53,466
+Random matrices: unit variance grows the norm to 64 by width 1024. Xavier variance keeps it near 2.
+
+8
+00:00:53,466 --> 00:01:01,933
+So condition one holds when the weights have RMS to RMS norm of order one: the norm behind the optimizer.
+
+9
+00:01:01,933 --> 00:01:09,233
+Now the update. The output change has two parts: new weights on the old input, and old weights on the input change.
+
+10
+00:01:09,233 --> 00:01:15,166
+Take lengths and use the triangle inequality: each part is a spectral norm times a length.
+
+11
+00:01:15,166 --> 00:01:22,766
+The second term is fine by condition one. For the first, the update needs spectral norm of order root d_out over d_in.
+
+12
+00:01:22,766 --> 00:01:29,600
+Then both terms are of order root d_out, and the output's RMS change is order one, as desired.
+
+13
+00:01:29,600 --> 00:01:37,366
+Two conditions, then: the weights and the updates should both have RMS to RMS norm of order one.
+
+14
+00:01:37,366 --> 00:01:45,066
+Take sign SGD, a stand-in for Adam: eta times the sign of the gradient. How should eta depend on the layer?
+
+15
+00:01:45,066 --> 00:01:52,166
+With one sample the gradient has rank one, and so does its sign matrix: an outer product of sign vectors.
+
+16
+00:01:52,166 --> 00:01:58,933
+For rank one the spectral and Frobenius norms agree, so the norm is root of d_in times d_out.
+
+17
+00:01:58,933 --> 00:02:06,866
+Bound the RMS to RMS size of the step by gamma. The roots cancel, so eta scales as gamma over d_in.
+
+18
+00:02:06,866 --> 00:02:13,766
+So Adam's learning rate should scale as one over d_in. This captures an essence of muP.
+
+19
+00:02:13,766 --> 00:02:22,233
+Test the sign step in layers of width 64 to 1024. With a fixed learning rate, the update grows in proportion to width.
+
+20
+00:02:22,233 --> 00:02:27,833
+With gamma over d it stays constant, and so does the change in the layer's output.
+
+21
+00:02:27,833 --> 00:02:35,533
+A caveat: with a larger batch the gradient is no longer rank one, so the rule is conservative.
+
+22
+00:02:35,533 --> 00:02:44,100
+Rerun the earlier experiment at widths 32 to 512. On the left, standard scaling: the best rate keeps moving.
+
+23
+00:02:44,100 --> 00:02:51,800
+On the right, layers whose fan-in is the width get their rate times 32 over width. The first layer is untouched.
+
+24
+00:02:51,800 --> 00:02:58,633
+Now every width is best at 2 to the -6. Tune on the narrow network and the wide one inherits it.
+
+25
+00:02:58,633 --> 00:03:06,933
+Yang and coauthors, 2022, report this for Transformers too: a stable optimum, and wider networks do better.
+
+26
+00:03:06,933 --> 00:03:14,000
+That is muP: the largest updates that keep activations and their changes order one at every width.
+
