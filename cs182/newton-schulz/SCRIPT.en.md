@@ -1,0 +1,77 @@
+# Newton–Schulz: Where Does a Singular Value Go?
+
+Generated from the episode subtitles (.srt).
+
+
+## 01-newton-schulz-where-does-a-singular-value-go
+
+- `00:06` Take a number and plug it into the same cubic polynomial, again and again.
+- `00:10` Start from three numbers that sit very close together: 2.00, 2.20 and 2.23.
+- `00:16` With every step they jump back and forth between positive and negative...
+- `00:21` In the end, 2.00 settles at −1, 2.20 at +1, and 2.23 back at −1.
+- `00:27` Nearly identical starts, alternating ends. Why? That is the puzzle this video solves.
+- `00:33` It comes from the Newton–Schulz iteration of CS182 Discussion 5, which keeps rewriting a matrix W.
+- `00:38` Take the SVD of W: U and V only rotate, and all the stretching lives in Σ in the middle.
+- `00:45` Plug it in: U and V stay untouched on the outside, and p acts only on the Σ in the middle.
+- `00:52` Σ is diagonal, so each singular value independently becomes p(σ), without touching the others.
+- `00:56` If every singular value reaches 1, W becomes U times V transpose, an orthogonal matrix: "orthogonalization".
+- `01:03` So forget the matrix for now. Follow one number x, and watch where repeated p takes it.
+- `01:08` Part (e) asks exactly this: starting from a positive σ, does it end at +1, −1, 0, or blow up?
+- `01:16` Draw y = p(x), and the diagonal y = x.
+- `01:19` This is a cobweb diagram. Go straight up to the curve: the height you reach is the next value, p(x);
+- `01:26` then across to the diagonal, which moves that height back over to the x position, as the new x.
+- `01:32` The discussion's example starts at 0.3: repeat the two moves and the staircase climbs toward 1.
+- `01:38` From 1.2, it first drops just below 1, then hugs 1 as well.
+- `01:43` Where the curve meets the diagonal, p(x) = x. These are fixed points: land on one and you never move again.
+- `01:50` Solving it reduces to x cubed equals x, so the fixed points are −1, 0 and 1.
+- `01:56` But fixed points come in two kinds, attracting and repelling. The slope of p there tells them apart.
+- `02:02` At 0 the slope is 1.5: any offset grows 1.5 times per step. Start at 0.05 and you get pushed away fast.
+- `02:10` At ±1 the slope is 0: the error roughly squares each step. From 1.2 it goes 0.2, 0.064, 0.006...
+- `02:17` So 0 is an unstable fixed point, like a hilltop, and ±1 are stable, like valley floors.
+- `02:24` Now for part (e). First factor p: p(x) is x times 3 minus x squared, over 2.
+- `02:30` When 0 < x < √3, both factors are positive, so p(x) is positive too: the sign never flips.
+- `02:35` And on this stretch p peaks at exactly 1, at x = 1. So after one step, x lies between 0 and 1.
+- `02:43` Between 0 and 1, p(x) − x is positive: each step goes up, never past 1, so x converges to 1.
+- `02:49` From 1.6, say: it drops to 0.35, then climbs back up to 1. Every 0 < σ < √3 goes to +1.
+- `02:56` Exactly at σ = √3, p(√3) = 0: one step lands on 0, and it sits on that unstable fixed point forever.
+- `03:04` Past √3, the factor 3 − x squared turns negative: p(x) and x have opposite signs. Each step flips the sign.
+- `03:10` What about the size? Compare |p(x)| with |x|: their ratio is |3 − x squared| over 2.
+- `03:16` For |x| > √3 this ratio is below 1 exactly when x squared is below 5, that is, when |x| < √5.
+- `03:24` So √5 is the second key number: √3 decides whether the sign flips, √5 whether each flip shrinks or grows.
+- `03:32` First the edge. p(√5) = −√5 and p(−√5) = √5: the cobweb becomes a square that loops forever.
+- `03:37` So σ = √5 neither converges nor diverges. It bounces between ±√5: a period-2 orbit, not a fixed point.
+- `03:44` A bit larger, like 2.3: the sign flips and the size grows, −2.63, 5.18, −61.8... it diverges.
+- `03:52` That leaves √3 to √5. The discussion solution says this part either converges to −1 or diverges.
+- `03:58` But at the start, 2.2 clearly went to +1. So what really happens in here?
+- `04:04` In here each step flips the sign and shrinks the size. Plot the size, color the sign, count the flips.
+- `04:11` Step by step: the size keeps moving left, and the color alternates.
+- `04:16` 2.00 drops below √3 after one flip; 2.20 needs two flips, and 2.23 needs three.
+- `04:22` The size keeps shrinking and can't stall right of √3, since only √5 could stop it. So it must drop below √3.
+- `04:29` Once inside, the sign stops flipping, and the ±1 of the same sign pulls it in.
+- `04:35` Starting positive: an odd number of flips ends at −1, an even number ends at +1.
+- `04:42` Where is the border between one flip and two? Exactly where p(x) equals −√3. Call that point b1.
+- `04:48` p is decreasing here, so points between √3 and b1 land between −√3 and 0: one flip, then on to −1.
+- `04:55` 2 lives in this piece: p(2) is exactly −1, done in one step.
+- `05:01` Keep going: p(b2) = −b1, p(b3) = −b2, and so on. Each b is pinned down uniquely by the one before.
+- `05:08` Numerically: b1 ≈ 2.1478, b2 ≈ 2.2212, b3 ≈ 2.2336, creeping closer and closer to √5.
+- `05:13` Cut √3 to √5 at these points. The key: p maps each piece onto the mirror image of the piece before it.
+- `05:20` The first piece lands inside √3 on the negative side in one step, so it goes to −1.
+- `05:26` p is odd, so a mirror image has the opposite fate: piece two lands on piece one's mirror, so it goes to +1.
+- `05:34` The third piece becomes the second one's mirror, so back to −1. And so it alternates, piece after piece.
+- `05:40` Conclusion: points in piece n flip exactly n times. Odd n goes to −1, even n goes to +1.
+- `05:46` The boundaries crowd toward √5. Zoom in, and the same pattern repeats over and over.
+- `05:53` Each piece is about a sixth of the last: p has slope −6 at √5, so distances from √5 grow 6 times per step.
+- `06:01` So between √3 and √5 there are infinitely many basins, leading in turn to −1, +1, −1, +1...
+- `06:08` And the boundary points themselves? b1 goes to −√3 in one step, then to 0.
+- `06:13` b2 → −b1 → √3 → 0, and b3 → −b2 → b1 → −√3 → 0.
+- `06:19` Every boundary point hits ±√3 exactly after finitely many steps, then sits on the unstable fixed point 0.
+- `06:25` But they are isolated points: nudge one slightly and it falls into a basin on one side.
+- `06:32` Here is the full answer to part (e).
+- `06:35` Between 0 and √3: +1. √3 itself: 0 in one step.
+- `06:38` Between √3 and √5: −1 or +1, alternating with the number of flips; the boundaries bn fall to 0.
+- `06:44` √5 bounces between ±√5; anything larger flips and diverges.
+- `06:49` Back to the matrix. A −1 is still orthogonal, with one direction flipped; a value above √5 blows up.
+- `06:55` So shrink W first, e.g. divide by its Frobenius norm, which is at least the largest singular value.
+- `07:02` After scaling, every singular value lies between 0 and 1, safely below √3.
+- `07:06` Now every singular value heads to +1. Small ones take longer, and W tends to U times V transpose.
+- `07:12` A matrix problem became a 1-D dynamical system: fixed points, two key numbers, and alternating basins.

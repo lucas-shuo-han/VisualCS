@@ -29,6 +29,20 @@
 成片在 [`videos/cs61c-riscv/zh/`](videos/cs61c-riscv/zh/) 与 [`videos/cs61c-riscv/en/`](videos/cs61c-riscv/en/)（1080p30）。
 全部旁白文字见 [`cs61c/riscv/SCRIPT.md`](cs61c/riscv/SCRIPT.md)（中文）与 [`cs61c/riscv/SCRIPT.en.md`](cs61c/riscv/SCRIPT.en.md)（English）。
 
+## CS182 · Newton–Schulz 迭代（第五次讨论课）
+
+| 集 | 标题 | Title | 内容 |
+|---|---|---|---|
+| 1 | Newton–Schulz 迭代：一个奇异值去哪儿 | Newton–Schulz: Where Does a Singular Value Go? | p(W) = U p(Σ) Vᵀ；蛛网图；不动点与稳定性；√3 管翻号、√5 管大小；(√3, √5) 里交替通向 −1、+1 的无穷多个吸引区及分界点 bn；√5 周期为 2；迭代前先按 Frobenius 范数缩放 |
+
+成片在 [`videos/cs182-newton-schulz/zh/`](videos/cs182-newton-schulz/zh/) 与 [`videos/cs182-newton-schulz/en/`](videos/cs182-newton-schulz/en/)（1080p30，烧录字幕 + `.srt`，暂无配音）。
+代码在 `cs182/newton-schulz/`（基于 skill 的 `manim_kit.py`），剧情与覆盖清单见 [`cs182/newton-schulz/PLAN.md`](cs182/newton-schulz/PLAN.md)，旁白脚本见 `SCRIPT.md` / `SCRIPT.en.md`。
+
+```bash
+.venv/bin/python .claude/skills/notes-to-3b1b-video/scripts/render.py cs182/newton-schulz --out videos/cs182-newton-schulz          # 带配音（需能访问 edge-tts）
+.venv/bin/python .claude/skills/notes-to-3b1b-video/scripts/render.py cs182/newton-schulz --out videos/cs182-newton-schulz --no-voice
+```
+
 ## 目录结构
 
 ```
