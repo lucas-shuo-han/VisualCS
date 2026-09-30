@@ -96,6 +96,54 @@ _WORDS = {
 }
 
 
+# Greek letters by name (a voice may skip them or read "alpha" in another language).
+GREEK = {"α": "alpha", "β": "beta", "γ": "gamma", "δ": "delta", "ε": "epsilon", "ζ": "zeta",
+         "η": "eta", "θ": "theta", "λ": "lambda", "μ": "mu", "π": "pi", "ρ": "rho",
+         "σ": "sigma", "τ": "tau", "φ": "phi", "χ": "chi", "ψ": "psi", "ω": "omega",
+         "Δ": "delta", "Σ": "sigma", "Π": "pi", "Ω": "omega", "∇": "the gradient of ",
+         "∂": "partial ", "∑": "the sum of ", "∈": " in ", "∞": "infinity", "√": "root "}
+
+# A lone letter used as a math variable is read as a *word* by neural voices:
+# "scalar a times vector v" comes out as the article "uh", "I" as the pronoun,
+# Chinese voices read a lone "a" as the interjection 啊. Spell such letters out.
+LETTER_NAMES = {"en": {"a": "ay", "A": "ay", "e": "ee", "o": "oh", "u": "you", "y": "why"},
+                "zh": {c: c.upper() for c in "abcdefghijklmnopqrstuvwxyz"}}
+MATH_NOUNS = {"en": r"scalar|vector|matrix|variable|constant|element|entry|point|set|node|"
+                    r"vertex|function|parameter|coefficient|register|array|value|number|"
+                    r"integer|input|output|weight|bias|term|letter|index|basis",
+              "zh": r"标量|向量|矩阵|变量|常数|元素|点|集合|节点|函数|参数|系数|寄存器|数组|值|数|下标"}
+_OPS = set("=+×·*/^<>≤≥≈∈−-") | {"times", "plus", "minus", "over", "equals", "by",
+                                  "乘", "加", "减", "除以", "等于"}
+_TOK = re.compile(r"[A-Za-z]+|\d+|[一-鿿]+|[^\sA-Za-z\d一-鿿]")
+
+
+def math_letters(s: str, lang: str) -> str:
+    """Spell out single-letter variables in a math context: after a math noun
+    ("vector a", "向量 a"), next to an operator ("a · v", "a = 3", "v times a"),
+    after a digit ("2a") or in a list of letters ("a, b and c"). Ordinary
+    words ("a dog") are left alone."""
+    names = LETTER_NAMES.get(lang[:2])
+    if not names:
+        return s
+    nouns = re.compile(rf"(?:{MATH_NOUNS.get(lang[:2], MATH_NOUNS['en'])})$", re.I)
+    toks = [(m.start(), m.end(), m[0]) for m in _TOK.finditer(s)]
+    single = lambda t: len(t) == 1 and t.isalpha() and t.isascii()
+    out, last = [], 0
+    for i, (a, b, t) in enumerate(toks):
+        if t not in names:
+            continue
+        prev = toks[i - 1][2] if i else ""
+        nxt = toks[i + 1][2] if i + 1 < len(toks) else ""
+        glued_digit = i and toks[i - 1][1] == a and prev.isdigit()
+        if nxt in ("'", "’"):
+            continue
+        listy = (prev == "," and i > 1 and single(toks[i - 2][2])) or                 (nxt == "," and i + 2 < len(toks) and single(toks[i + 2][2]))
+        if nouns.search(prev) or prev in _OPS or nxt in _OPS or glued_digit or listy:
+            out += [s[last:a], names[t]]
+            last = b
+    return "".join(out) + s[last:]
+
+
 def spoken(text: str, lang: str) -> str:
     """What the voice should say for caption `text`."""
     w = _WORDS.get(lang, _WORDS["en"])
@@ -112,6 +160,9 @@ def spoken(text: str, lang: str) -> str:
     s = sub(r"^[…\s]+", "", s)
     s = sub(r"[…]+|——|—", w["pause"], s)
     s = s.replace("“", "").replace("”", "").replace('"', "")
+    if lang[:2] == "en":
+        for g, name in GREEK.items():
+            s = s.replace(g, f" {name} ")
     # hex constants, digit by digit; long 0/1 strings (bit patterns) likewise
     s = sub(r"\b0x([0-9A-Fa-f]+)\b", lambda m: w["hex"] + " ".join(m[1].upper()), s)
     s = sub(r"\b(0[01]{3,}|[01]{5,})\b", lambda m: " ".join(m[1]), s)
@@ -126,6 +177,9 @@ def spoken(text: str, lang: str) -> str:
     # course vocabulary
     if _SAY_RE is not None:
         s = _SAY_RE.sub(lambda m: _say_as(m[0], lang), s)
+    # "a · v", "2 · x": a spaced dot between single letters/numbers is a product
+    s = sub(r"(?<![\w.])([A-Za-z]|\d+) · (?=(?:[A-Za-z]|\d+)(?![\w.]))", r"\1 × ", s)
+    s = math_letters(s, lang)
     s = sub(r"\b([01])s\b", lambda m: w[m[0]], s)          # "0s" -> zeros
     s = sub(r"\b(\d)([a-rt-z])\b", r"\1 \2", s)            # 4i
     # a chain of arrows is a sequence of steps; a single one is "to"
