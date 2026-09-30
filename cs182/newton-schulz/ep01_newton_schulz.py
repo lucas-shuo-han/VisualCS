@@ -215,7 +215,8 @@ class Ep01NewtonSchulz(NarratedScene):
 
     def start_mark(self, x0, color, label=None):
         d = Dot(self.ax.c2p(x0, 0), radius=0.06, color=color)
-        lab = mt(label or num(x0, 1), 26, color).next_to(d, DOWN, buff=0.42)
+        side = UP if p(x0) < 0 else DOWN   # keep clear of a curve that dips below the axis
+        lab = mt(label or num(x0, 1), 26, color).next_to(d, side, buff=0.7)
         return VGroup(d, lab)
 
     def panel(self, *mobs, y=2.4, buff=0.35):
@@ -233,7 +234,32 @@ class Ep01NewtonSchulz(NarratedScene):
         wlab = mt(r"W", 40).next_to(circ, UP, buff=0.25)
         self.say("Take a matrix W. It turns the unit circle into an ellipse.", Create(circ), FadeIn(wlab))
 
-        s1, s2 = ValueTracker(1.0), ValueTracker(1.0)
+        # the SVD as three moves: rotate, stretch along the axes, rotate
+        def arm(v, c):
+            return Line(C0, C0 + R * v, color=c, stroke_width=5)
+
+        phi = 75 * DEGREES
+        v1 = np.array([np.cos(phi), np.sin(phi), 0])
+        v2 = np.array([-np.sin(phi), np.cos(phi), 0])
+        demo = VGroup(Circle(radius=R, color=C_SIG, stroke_width=4).move_to(C0),
+                      arm(v1, C_PLUS), arm(v2, C_MINUS))
+        svd = MathTex(r"W", r"=", r"U", r"\,\Sigma\,", r"V^{\top}", font_size=48).move_to([PANEL_X, 1.4, 0])
+        steps = VGroup(txt("1. rotate", 26, GREY_A), txt("2. stretch the axes", 26, C_SIG),
+                       txt("3. rotate again", 26, GREY_A)).arrange(DOWN, buff=0.25, aligned_edge=LEFT)
+        steps.next_to(svd, DOWN, buff=0.5)
+        self.say("How? Every matrix does it in three moves. Follow two perpendicular arms on the circle.",
+                 FadeIn(demo), Write(svd))
+        self.say("First, a rotation turns the arms onto the axes. That is V transpose.",
+                 Rotate(demo, -phi, about_point=C0), FadeIn(steps[0]), Indicate(svd[4]), run_time=2.0)
+        self.say("Next, Σ stretches each axis by its own amount, here 1.3 and 0.5. The circle becomes an ellipse.",
+                 demo.animate.apply_matrix(np.diag([1.3, 0.5, 1]), about_point=C0), FadeIn(steps[1]),
+                 Indicate(svd[3], color=C_SIG), run_time=2.0)
+        self.say("Finally U rotates the ellipse into place. Rotations never change lengths, "
+                 "so all the stretching lives in Σ.",
+                 Rotate(demo, th, about_point=C0), FadeIn(steps[2]), Indicate(svd[2]), run_time=2.0)
+        self.hold()
+
+        s1, s2 = ValueTracker(1.3), ValueTracker(0.5)
 
         def shape():
             a, b = s1.get_value(), s2.get_value()
@@ -246,9 +272,10 @@ class Ep01NewtonSchulz(NarratedScene):
             return VGroup(e, l1, l2, t1, t2)
 
         ell = always_redraw(shape)
-        self.play(circ.animate.set_stroke(opacity=0.35), FadeIn(ell), run_time=0.6)
-        self.say("It stretches one direction by σ1 and another by σ2: those are its singular values.",
-                 s1.animate.set_value(1.3), s2.animate.set_value(0.5), run_time=1.8)
+        self.play(circ.animate.set_stroke(opacity=0.35), FadeOut(demo), FadeIn(ell), FadeOut(steps),
+                  FadeOut(svd), run_time=0.8)
+        self.say("The two stretch factors, σ1 and σ2, are the half-axes of the ellipse: W's singular values.",
+                 Indicate(ell[3], color=C_SIG), Indicate(ell[4], color=C_SIG))
 
         def readout(tr, name):
             d = DecimalNumber(tr.get_value(), num_decimal_places=3, font_size=36, color=C_SIG)
@@ -259,7 +286,7 @@ class Ep01NewtonSchulz(NarratedScene):
         rd = VGroup(r1, r2).arrange(DOWN, buff=0.3, aligned_edge=LEFT).move_to([PANEL_X, 0.1, 0])
         self.play(FadeIn(rd))
         ortho = txt("all σ = 1  ⇔  W is orthogonal", 28, C_PLUS).move_to([PANEL_X, -1.3, 0])
-        self.say("If every stretch were exactly 1, the circle would stay a circle, and W would be orthogonal.",
+        self.say("If every stretch were exactly 1, only the rotations would remain: W would be orthogonal.",
                  FadeIn(ortho))
         self.hold()
         muon = txt("Muon: orthogonalize each update", 26, GREY_A).move_to([PANEL_X, -2.1, 0])
@@ -381,18 +408,34 @@ class Ep01NewtonSchulz(NarratedScene):
         lines.arrange(DOWN, buff=0.5, aligned_edge=LEFT).move_to(UP * 1.0).to_edge(LEFT, buff=0.8)
         if lines.width > 12.4:
             lines.scale_to_fit_width(12.4)
-        self.say("No theory yet. Let's just try numbers. Start at 0.5: 0.69, 0.87, 0.98, then 1.",
-                 Write(lines[0]), run_time=2.0)
+        calc = mt(r"p(0.5)=\tfrac32(0.5)-\tfrac12(0.5)^3=0.75-0.0625=0.6875", 38).move_to(DOWN * 1.2)
+        self.say("No theory yet. Let's just try numbers, starting at 0.5.", FadeIn(lines[0][0][:3]))
+        self.say("One step: three halves of 0.5 is 0.75. Half of 0.5 cubed is 0.0625. Subtract: 0.6875.",
+                 Write(calc), run_time=2.5,
+                 speak="One step: three halves of 0.5 is 0.75. Half of 0.5 cubed is 0.0625. "
+                       "Subtract, and we get 0.6875.")
+        self.hold()
+        self.say("Keep going: 0.69 becomes 0.87, then 0.98, then 1.", FadeOut(calc), Write(lines[0]), run_time=2.0)
         self.say("1.3 drops to 0.85, then climbs back up to 1.", Write(lines[1]))
         self.say("Even a tiny 0.1 creeps up, slowly at first, and also reaches 1.", Write(lines[2]))
         self.hold()
         p1 = mt(r"p(1)=\tfrac32-\tfrac12=1", 38, C_PLUS).move_to(DOWN * 1.0)
         self.say("Everything lands on 1, just as designed: p(1) = 1, so once a value reaches 1, it stays.",
                  FadeIn(p1))
-        eqs = mt(r"p(x)=x\iff \tfrac12x-\tfrac12x^3=0\iff x^3=x\iff x\in\{-1,\,0,\,1\}", 36)
-        eqs.move_to(DOWN * 2.0)
-        self.say("A point with p(x) = x is called a fixed point. But 1 is not the only one: −1 and 0 "
-                 "stay put too.", Write(eqs))
+        self.hold()
+        self.play(FadeOut(VGroup(lines, p1)))
+        der = VGroup(mt(r"p(x)=x", 40),
+                     mt(r"\tfrac32x-\tfrac12x^3=x", 40),
+                     mt(r"\tfrac12x-\tfrac12x^3=0", 40),
+                     mt(r"\tfrac12\,x\,(1-x)(1+x)=0", 40),
+                     mt(r"x=0,\ \ x=1,\ \ x=-1", 40, C_PLUS)).arrange(DOWN, buff=0.35).move_to(UP * 0.3)
+        self.say("A point with p(x) = x is called a fixed point: once there, you never move. Is 1 the only one?",
+                 FadeIn(der[0]))
+        self.say("Write it out, and subtract x from both sides.", FadeIn(der[1]))
+        self.play(FadeIn(der[2]))
+        self.say("Now factor: one half, times x, times 1 minus x, times 1 plus x.", FadeIn(der[3]))
+        self.say("A product is zero only if one factor is zero. So there are three fixed points: 0, 1 and −1.",
+                 FadeIn(der[4]))
         self.hold()
         self.say("So why does 0.1 walk away from 0 and toward 1? A picture makes it clear.")
         self.clear_stage(self.corner)
@@ -416,8 +459,19 @@ class Ep01NewtonSchulz(NarratedScene):
         m = self.start_mark(0.3, WHITE)
         self.say("To iterate on the picture, go from x up to the curve: that height is p(x).",
                  FadeIn(m), FadeIn(rule[0]), Create(w[0]))
+        y1 = p(0.3)
+        pt1 = Dot(ax.c2p(0.3, y1), radius=0.06, color=WHITE)
+        pl1 = mt(f"\\text{{on the curve: }}(0.3,\\ {y1:.2f})", 30).next_to(rule, DOWN, buff=0.5)
+        self.play(GrowFromCenter(pt1), FadeIn(pl1))
         self.say("Then go across to the diagonal. That moves p(x) back onto the x axis as the new x.",
                  FadeIn(rule[1]), Create(w[1]))
+        pt2 = Dot(ax.c2p(y1, y1), radius=0.06, color=WHITE)
+        pl2 = mt(f"\\text{{on the diagonal: }}({y1:.2f},\\ {y1:.2f})", 30).next_to(pl1, DOWN, buff=0.3)
+        drop = DashedLine(ax.c2p(y1, y1), ax.c2p(y1, 0), color=GREY_B, dash_length=0.05)
+        self.say(f"Why the diagonal? On it, height equals position. So we arrive above x = {y1:.2f}, "
+                 f"ready for the next step.", GrowFromCenter(pt2), FadeIn(pl2), Create(drop))
+        self.hold()
+        self.play(FadeOut(VGroup(pt1, pl1, pt2, pl2, drop)))
         self.say("Repeat. Starting at 0.3, the path climbs a staircase up to 1.",
                  FadeIn(rule[2]), self.draw(w[2:], 0.3))
         self.hold()
@@ -438,6 +492,13 @@ class Ep01NewtonSchulz(NarratedScene):
         der = mt(r"p'(x)=\tfrac32-\tfrac32x^2", 38).move_to([PANEL_X, 2.2, 0])
         self.say("Why is 1 a magnet while 0 pushes things away? Look at the slope of p at each one.",
                  Write(der))
+        lin = mt(r"p(x^*+e)\approx x^*+p'(x^*)\,e", 36).next_to(der, DOWN, buff=0.35)
+        self.say("Zoom in on a fixed point and the curve looks like a straight line with slope p'.",
+                 FadeIn(lin))
+        self.say("So a small offset e gets multiplied by the slope each step. Slope above 1: it grows. "
+                 "Below 1: it shrinks.", Indicate(lin))
+        self.hold()
+        self.play(FadeOut(lin))
         tan0 = ax.plot(lambda x: 1.5 * x, x_range=[-0.9, 0.9], color=C_ZERO, stroke_width=3)
         near0 = orbit(0.05, 4)
         s0 = mt(r"p'(0)=\tfrac32>1", 36, C_ZERO)
@@ -501,8 +562,15 @@ class Ep01NewtonSchulz(NarratedScene):
         fac.move_to([PANEL_X, 2.2, 0])
         tick = Line(ax.c2p(S3, -0.08), ax.c2p(S3, 0.08), color=C_ZERO, stroke_width=4)
         lab = mt(r"\sqrt3", 30, C_ZERO).move_to(ax.c2p(S3 - 0.3, 0.25))
-        self.say(f"Factoring p shows where: the crossing is at x = √3, about {S3:.2f}. And 1.8 is just past it.",
-                 Write(fac), FadeIn(lab), Flash(cross, color=C_ZERO))
+        sgn = VGroup(mt(r"\frac{x}{2}>0", 36), mt(r"3-x^2<0\iff x>\sqrt3", 36, C_ZERO))
+        sgn.arrange(DOWN, buff=0.3).next_to(fac, DOWN, buff=0.45)
+        self.say("Where exactly? Pull out a factor: p(x) is x over 2, times 3 minus x squared.", Write(fac))
+        self.say("For positive x, the first factor x over 2 is positive. So the sign comes from the second one.",
+                 FadeIn(sgn[0]), Indicate(fac[2]))
+        self.say(f"3 minus x squared turns negative once x squared passes 3: at x = √3, about {S3:.2f}.",
+                 FadeIn(sgn[1]), Indicate(fac[3]), FadeIn(lab), Flash(cross, color=C_ZERO))
+        self.say("And 1.8 is just past √3. That is why it flipped.", Indicate(m2))
+        self.play(FadeOut(sgn))
         self.hold()
         top = DashedLine(ax.c2p(0, 1), ax.c2p(S3, 1), color=GREY_B, dash_length=0.08)
         self.say("Below √3, the hump stays above the axis but never above 1. So one step lands between 0 and 1.",
@@ -534,13 +602,22 @@ class Ep01NewtonSchulz(NarratedScene):
                  FadeIn(blow[0][0]))
         self.say("p(3) = −9, and then 351. Flipping and growing: it explodes.", FadeIn(blow))
         self.hold()
+        chk = VGroup(mt(r"x=2.0:\ \ |p(x)|=" + num(abs(p(2.0))) + r"<2.0", 34, C_ZERO),
+                     mt(r"x=2.3:\ \ |p(x)|=" + num(abs(p(2.3))) + r">2.3", 34, C_S5)).arrange(DOWN, buff=0.3)
+        chk.next_to(self.fac, DOWN, buff=0.45)
+        self.say("Both 1.8 and 3 flip. The difference is size. Compare two starts: 2.0 lands at size 1, smaller.",
+                 FadeOut(blow), FadeIn(chk[0]))
+        self.say(f"But 2.3 lands at size {abs(p(2.3)):.2f}, bigger than its start. Somewhere between, "
+                 f"shrinking turns into growing.", FadeIn(chk[1]))
+        self.hold()
+        self.play(FadeOut(chk))
         anti = DashedLine(ax.c2p(-2.5, 2.5), ax.c2p(2.5, -2.5), color=C_S5, stroke_width=2.5,
                           dash_length=0.1)
-        anti_l = mt(r"y=-x", 30, C_S5).move_to(ax.c2p(1.0, -1.5))
+        anti_l = mt(r"y=-x", 30, C_S5).move_to(ax.c2p(0.55, -1.45))
         xc = _root(-2.5, 1.0, 2.5)
         shrink = ax.plot(p, x_range=[S3, S5], color=C_ZERO, stroke_width=7)
         grow = ax.plot(p, x_range=[S5, xc], color=C_S5, stroke_width=7)
-        self.say("When does it shrink? Draw y = −x: a flipped value has shrunk if the curve lies above that line.", FadeOut(blow), Create(anti), FadeIn(anti_l))
+        self.say("To find where, draw y = −x. A flipped value has shrunk exactly when the curve lies above that line.", Create(anti), FadeIn(anti_l))
         self.say("Just past √3, the curve is above that line: flip and shrink. Further out it dives below: "
                  "flip and grow.", Create(shrink), Create(grow))
         meet = Dot(ax.c2p(S5, -S5), radius=0.09, color=C_S5)
@@ -588,7 +665,8 @@ class Ep01NewtonSchulz(NarratedScene):
                      mt(r"0", 28, GREY_B).next_to(ov.n2p(0), DOWN, buff=0.35))
         self.say("That leaves the gap between √3 and √5: flip and shrink. Shrinking, it must fall below √3 "
                  "at some point.", Create(ov), FadeIn(ovl), FadeIn(gap))
-        self.say("From there, no more flips: it settles at +1 or −1. 1.8 went to −1. Does the whole gap?")
+        self.say("Could it shrink forever and stall inside the gap? No: sizes could only stop shrinking at √5 itself.")
+        self.say("So it drops below √3, the flips stop, and it settles at +1 or −1. 1.8 went to −1. Does the whole gap?")
         self.hold()
 
         # color every start by its fate
@@ -742,6 +820,12 @@ class Ep01NewtonSchulz(NarratedScene):
         self.hold()
         two = Dot(ax.c2p(2, -1), radius=0.08, color=C_MINUS)
         twol = mt(r"p(2)=-1", 36, C_MINUS).next_to(mapto, DOWN, buff=0.4)
+        solve = mt(r"b_1^3-3b_1=2\sqrt3\ \Rightarrow\ b_1\approx" + num(b1, 3), 32, C_ZERO)
+        solve.next_to(mapto, DOWN, buff=0.4)
+        self.say(f"To pin b1 down, solve b cubed minus 3b = 2√3. Trying values until it fits gives about {b1:.3f}.",
+                 FadeIn(solve))
+        self.hold()
+        self.play(FadeOut(solve))
         self.say("Both 1.8 and 2 are in this piece. In fact p(2) is exactly −1.", GrowFromCenter(two),
                  FadeIn(twol), Flash(two, color=C_MINUS))
         self.hold(0.5)
@@ -829,6 +913,16 @@ class Ep01NewtonSchulz(NarratedScene):
         self.say("p is odd, so a flipped start has a flipped fate. The first piece's −1 becomes +1.",
                  FadeOut(ghost), bar.rects[1].animate.set_fill(colors[1], 0.75))
         self.hold(0.8)
+        y22 = p(2.2)
+        assert S3 < -y22 < B[1]
+        ex = mt(r"2.2\ \to\ " + num(y22) + r"\quad(\text{size }" + num(-y22) + r"\in(\sqrt3,\,b_1))", 32)
+        ex.move_to([0, -2.45, 0])
+        self.say(f"Check with 2.2, in the second piece. One step gives {neg(num(y22))}. Its size, {-y22:.2f}, "
+                 f"is in the first piece.", FadeIn(ex))
+        self.say(f"A positive {-y22:.2f} would end at −1. This one is negative, so the mirror image: "
+                 f"2.2 ends at +1.", Indicate(bar.rects[1], color=C_PLUS))
+        self.hold()
+        self.play(FadeOut(ex))
         f2 = mt("+1", 30, BLACK).move_to(bar.rects[1])
         self.play(FadeIn(f2))
         self.say("The third maps onto the mirror of the second: −1 again. And so on, alternating.",
@@ -969,6 +1063,9 @@ class Ep01NewtonSchulz(NarratedScene):
                        font_size=38).to_edge(UP, buff=0.8)
         self.say("A common choice: divide by the Frobenius norm. It is never smaller than the largest singular value.",
                  FadeOut(VGroup(bad, blow)), Write(norm))
+        fro_eq = mt(r"\|W\|_F=\sqrt{2.9^2+1.6^2+0.9^2+0.35^2}\approx" + num(fro), 34).next_to(norm, DOWN, buff=0.35)
+        self.say(f"Here that norm is the square root of the sum of squares, about {fro:.2f}. "
+                 f"Divide every σ by it.", FadeIn(fro_eq))
         self.say("After scaling, every singular value sits between 0 and 1, safely below √3.",
                  *[d.animate.move_to(nl.n2p(s)) for d, s in zip(dots, sig1)], run_time=1.6)
         steps = 8

@@ -1,6 +1,6 @@
 # CS182 Discussion 5 · Newton–Schulz: where does a singular value go?
 
-One episode (~11 min), written and voiced in English (Kokoro-82M neural voice, offline;
+One episode (~14.5 min), written and voiced in English (Kokoro-82M neural voice, offline;
 edge-tts when its host is reachable). Source: EECS 182 Fall 2026
 Discussion 5, problem 1 (solutions), plus a scene/correctness brief for part (e).
 

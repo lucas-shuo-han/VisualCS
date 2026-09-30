@@ -145,10 +145,14 @@ def _pick_font(candidates):
     return candidates[-1]
 
 
-# A CJK-capable sans first: it also covers Latin, so mixed captions never fall back mid-line.
+# A CJK-capable sans first when any CJK text can appear: it also covers Latin, so mixed
+# captions never fall back mid-line. Latin-only videos use a Latin sans: CJK fonts draw
+# math symbols badly (Noto Sans CJK's √ has a detached overbar, "√‾3").
+_CJK_SANS = ["Noto Sans CJK SC", "Source Han Sans SC", "PingFang SC"]
+_LATIN_SANS = ["Helvetica Neue", "Noto Sans", "Arial", "FreeSans", "DejaVu Sans"]
 SANS = os.environ.get("MANIM_KIT_SANS") or _pick_font(
-    ["Noto Sans CJK SC", "Source Han Sans SC", "PingFang SC", "Noto Sans", "Helvetica Neue",
-     "DejaVu Sans", "Sans"])
+    (_CJK_SANS + _LATIN_SANS if CJK_LANGS & {LANG, SOURCE_LANG} else _LATIN_SANS + _CJK_SANS)
+    + ["Sans"])
 MONO = os.environ.get("MANIM_KIT_MONO") or _pick_font(
     ["DejaVu Sans Mono", "JetBrains Mono", "Menlo", "Noto Sans Mono", "Monospace"])
 CJK = SANS  # backward-compatible alias
