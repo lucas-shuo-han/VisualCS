@@ -1,0 +1,96 @@
+1
+00:00:06,200 --> 00:00:12,666
+The idea is old. In 1950, Turing describes learning as a path to machine intelligence.
+
+2
+00:00:12,666 --> 00:00:21,066
+In 1957 Rosenblatt proposes the perceptron. In the same years, L M S appears in adaptive signal processing.
+
+3
+00:00:21,066 --> 00:00:27,933
+In 1969, Minsky and Papert publish a book on the fundamental limitations of neural networks.
+
+4
+00:00:27,933 --> 00:00:35,966
+In 1986, backpropagation becomes a practical way to train deep networks, and in 1989 LeNet reads handwriting.
+
+5
+00:00:35,966 --> 00:00:42,600
+Then attention shifted to probabilistic methods and convex optimization, mostly on shallow models.
+
+6
+00:00:42,600 --> 00:00:50,900
+Around 2006 deep networks regain attention; in 2012 Krizhevsky's AlexNet beats all methods on ImageNet.
+
+7
+00:00:50,900 --> 00:01:00,466
+From the perceptron to AlexNet is 55 years. The idea of a learned circuit is old; the breakthrough is recent.
+
+8
+00:01:00,466 --> 00:01:08,966
+What limit was 1969 about? Take four points labeled exclusive or: plus one when exactly one input is on.
+
+9
+00:01:08,966 --> 00:01:16,700
+One element draws one line. Try every line: some get three points right, none gets all four.
+
+10
+00:01:16,700 --> 00:01:24,366
+Stack two ramps on x1 plus x2, the second bending at 1, and read out first minus twice the second.
+
+11
+00:01:24,366 --> 00:01:33,833
+Compute the four rows: y comes out 0, 0, 1, 1. That is exclusive or, exactly, with no line in sight.
+
+12
+00:01:33,833 --> 00:01:42,200
+One element cannot, a stack can. Making stacks trainable is what backpropagation did in 1986.
+
+13
+00:01:42,200 --> 00:01:49,200
+Is deep learning engineering, or alchemy? The lecture puts that question next to a famous xkcd comic.
+
+14
+00:01:49,200 --> 00:01:56,766
+The comic's machine learning system: pour the data into a big pile of linear algebra, collect the answers on the other side.
+
+15
+00:01:56,766 --> 00:02:04,766
+What if the answers are wrong? Just stir the pile until they start looking right. That is the alchemist's method.
+
+16
+00:02:04,766 --> 00:02:10,566
+The learning rate decides whether training works. Try a bowl, starting from w equals 1.
+
+17
+00:02:10,566 --> 00:02:19,533
+Try four learning rates. 0.1 and 0.4 settle to zero, 0.5 bounces forever, and 0.6 blows up.
+
+18
+00:02:19,533 --> 00:02:30,666
+No magic: each step multiplies w by one minus four eta. It shrinks only while eta stays below two over four, which is 0.5.
+
+19
+00:02:30,666 --> 00:02:37,800
+That is engineering: a knob with a reason, which predicts where it works and where it fails.
+
+20
+00:02:37,800 --> 00:02:42,200
+Three earlier courses feed this one, and they line up with the definition.
+
+21
+00:02:42,200 --> 00:02:49,766
+Machine learning brings the patterns, optimization the circuits and knobs, probability the new data.
+
+22
+00:02:49,766 --> 00:02:57,300
+So the course is about designing, visualizing and understanding deep networks, and knowing why they work.
+
+23
+00:02:57,300 --> 00:03:02,300
+A companion reading: Terence Tao's essay, Mathematics in the Age of AI.
+
+24
+00:03:02,300 --> 00:03:11,500
+It sets aside what AI tools can do and asks what the goals and values of a field are. We can ask the same of deep learning.
+

@@ -1,0 +1,76 @@
+1
+00:00:06,200 --> 00:00:13,533
+Here is the definition this course is built on. Deep learning uses simulated analog circuits to process information.
+
+2
+00:00:13,533 --> 00:00:20,466
+The parameters of those circuits, their settings, are chosen by an optimization algorithm that is driven by data.
+
+3
+00:00:20,466 --> 00:00:28,933
+The goal: the learned circuit has captured the relevant pattern in its training data, so it can solve problems on new data.
+
+4
+00:00:28,933 --> 00:00:36,800
+Start with the smallest circuit, Rosenblatt's adaptive neuron. Each input passes a knob, a weight, that scales it.
+
+5
+00:00:36,800 --> 00:00:48,200
+Add the scaled inputs and a bias. With these settings, the input 2 and 1 gives 0.8 times 2, minus 0.5 times 1, plus 0.2.
+
+6
+00:00:48,200 --> 00:00:55,100
+A threshold turns the sum into an answer: 1.3 is positive, so the circuit says plus one.
+
+7
+00:00:55,100 --> 00:01:02,266
+Turn the knobs and the same circuit says minus one instead. The parameters are the program.
+
+8
+00:01:02,266 --> 00:01:09,100
+Deep means that information flows through several such elements, one after another, before it reaches the output.
+
+9
+00:01:09,100 --> 00:01:18,466
+Each element still just multiplies, adds, and takes a max: the earlier unit's pattern, repeated in sequence.
+
+10
+00:01:18,466 --> 00:01:24,133
+Who sets the knobs? Data does. Twenty labeled points and a line from a random start.
+
+11
+00:01:24,133 --> 00:01:30,333
+The line is where the sum is zero. Points on its wrong side are circled in red: ten mistakes.
+
+12
+00:01:30,333 --> 00:01:37,566
+The perceptron update: take a mistake, add its label times its input to the weights, and its label to the bias.
+
+13
+00:01:37,566 --> 00:01:42,566
+The line swings toward that point, and the mistakes drop from ten to four.
+
+14
+00:01:42,566 --> 00:01:50,666
+Repeat. Now two mistakes. A step can also make things worse, and here the count jumps to six, but the updates keep correcting.
+
+15
+00:01:50,666 --> 00:01:58,800
+After four updates, no point is misclassified. The knob settings came from the data, not from a person.
+
+16
+00:01:58,800 --> 00:02:06,800
+But the goal was never these twenty points. Draw a hundred fresh points from the same source, and the circuit gets most of them right.
+
+17
+00:02:06,800 --> 00:02:13,300
+The few mistakes sit near the boundary: the learned line is close to the true rule, not identical to it.
+
+18
+00:02:13,300 --> 00:02:21,033
+Now let the labels follow a different pattern. The same circuit is right about half the time: it captured one pattern, not every pattern.
+
+19
+00:02:21,033 --> 00:02:28,133
+That is why the definition says a relevant pattern: learning is only as good as the match to new data.
+
