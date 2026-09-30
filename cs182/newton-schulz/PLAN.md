@@ -1,7 +1,7 @@
 # CS182 Discussion 5 · Newton–Schulz: where does a singular value go?
 
-One episode (~10 min), written and voiced in English (offline SVOX Pico voice by default
-here; edge-tts neural voice when the network allows it). Source: EECS 182 Fall 2026
+One episode (~11 min), written and voiced in English (Kokoro-82M neural voice, offline;
+edge-tts when its host is reachable). Source: EECS 182 Fall 2026
 Discussion 5, problem 1 (solutions), plus a scene/correctness brief for part (e).
 
 **Question it answers:** a singular value starts at +σ and is repeatedly replaced by

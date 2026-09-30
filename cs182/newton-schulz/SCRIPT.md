@@ -5,83 +5,83 @@ Generated from the episode subtitles (.srt).
 
 ## 01-newton-schulz-where-does-a-singular-value-go
 
-- `00:07` Take a matrix W. It turns the unit circle into an ellipse.
-- `00:11` It stretches one direction by σ1 and another by σ2: those are its singular values.
-- `00:17` If every stretch were exactly 1, the circle would stay a circle, and W would be orthogonal.
-- `00:24` Optimizers like Muon want this for every weight update: same directions, every stretch 1.
-- `00:30` An SVD could do it, but it is slow on a GPU. The Newton–Schulz iteration uses only matrix products.
-- `00:38` Let's apply it a few times and watch the ellipse.
-- `00:45` After a handful of steps, the ellipse is a circle. Why does this work? And can it fail?
-- `00:53` To see why, write W with its SVD. U and V only rotate; all the stretching sits in Σ.
-- `01:00` Plug it into the iteration. U and V pass through untouched; only the middle Σ changes.
-- `01:08` Σ is diagonal, so each singular value is updated on its own: σ becomes p(σ).
-- `01:16` And p is just this cubic. So the whole matrix question is about a single number.
-- `01:21` Start at some positive σ, apply p over and over. Where does it end up? That is part (e).
-- `01:31` No theory yet. Let's just try numbers. Start at 0.5: 0.69, 0.87, 0.98, then 1.
-- `01:42` 1.3 drops to 0.85, then climbs back up to 1.
-- `01:48` Even a tiny 0.1 creeps up, slowly at first, and also reaches 1.
-- `01:54` Everything lands on 1. That's no accident: p(1) = 1, so once a value is at 1, it stays.
-- `02:02` A point with p(x) = x is a fixed point. Solving gives x cubed = x: the fixed points are −1, 0 and 1.
-- `02:12` So why does 0.1 walk away from 0 and toward 1? A picture makes it clear.
-- `02:18` Draw the curve y = p(x), and the diagonal y = x.
-- `02:24` To iterate on the picture, go from x up to the curve: that height is p(x).
-- `02:29` Then go across to the diagonal. That moves p(x) back onto the x axis as the new x.
-- `02:36` Repeat. Starting at 0.3, the path climbs a staircase up to 1.
-- `02:42` From 1.2, it drops just below 1, then settles on 1 as well.
-- `02:47` The fixed points −1, 0 and 1 are exactly where the curve meets the diagonal.
-- `02:53` Why is 1 a magnet while 0 pushes things away? Look at the slope of p at each one.
-- `02:59` At 0 the slope is 1.5, so a small offset grows by half each step. From 0.05 it drifts away.
-- `03:08` At ±1 the slope is 0, so the error roughly squares each step. From 1.2: 0.2, then 0.064, then 0.006.
-- `03:22` So 0 is unstable, like a hilltop, and ±1 are stable, like the bottoms of two valleys.
-- `03:30` So far every start went to 1. But we don't get to choose σ. How large can it be?
-- `03:37` Try 1.5. p(1.5) = 0.56, and from there it climbs to 1. Still fine.
-- `03:45` Now try 1.8. p(1.8) = −0.216. It turned negative, and then slides down to −1!
-- `03:55` Where does the sign change? Factor p: p(x) is half of x times (3 minus x squared).
-- `04:02` The second factor turns negative once x passes √3, about 1.73. And 1.8 is just past it.
-- `04:11` Below √3 the curve stays positive, and it never rises above 1: its peak is p(1) = 1.
-- `04:18` So one step lands between 0 and 1. There p(x) − x is half of x(1 − x squared), which is positive.
-- `04:27` Each step goes up but never past 1. So every σ between 0 and √3 ends at +1.
-- `04:35` Exactly at √3, p(√3) = 0. One step lands on 0, the unstable fixed point, and stays forever.
-- `04:45` What about a much bigger start, like 3? p(3) = −9, and p(−9) = 351. It explodes.
-- `04:56` Past √3 the sign flips every step. But does the size shrink or grow? Compare |p(x)| to |x|.
-- `05:05` For x past √3, the ratio is below 1 exactly when x squared is below 5, that is |x| < √5.
-- `05:14` So √5, about 2.24, is the second key number. √3 decides flip or not; √5 decides shrink or grow.
-- `05:26` Right at the edge, p(√5) = −√5 and p(−√5) = √5. The cobweb becomes a square.
-- `05:35` So √5 neither settles nor explodes. It bounces between ±√5 forever: a period-2 orbit.
-- `05:44` Just past it, at 2.3, every step flips and grows: −2.63, 5.18, −61.8. It diverges.
-- `05:57` That leaves the gap between √3 and √5. There, each step flips the sign and shrinks the size.
-- `06:04` Shrinking, it must drop below √3 sooner or later. Then the flips stop, and it goes to ±1.
-- `06:12` 1.8 went to −1. Is the whole gap like that? Let's test three close starts: 2.0, 2.2 and 2.23.
-- `06:23` We plot only the size of each value, show its sign by color, and count the flips.
-- `06:29` Step by step: the sizes move left, and the colors alternate.
-- `06:34` 2.0 flips once before dropping below √3. 2.2 flips twice, and 2.23 three times.
-- `06:43` So 2.0 ends at −1, but 2.2 ends at +1, and 2.23 at −1 again!
-- `06:51` From a positive start, an odd number of flips ends at −1, and an even number at +1.
-- `06:57` Tiny changes in the start, alternating answers. So where exactly does the count change?
-- `07:06` One flip or two? One step must land inside √3. The cutoff is where p(x) is exactly −√3. Call it b1.
-- `07:16` p is decreasing here, so every x between √3 and b1 lands between −√3 and 0: one flip, then −1.
-- `07:25` Both 1.8 and 2 are in this piece. In fact p(2) is exactly −1.
-- `07:33` Keep going the same way: pick b2 with p(b2) = −b1, then b3 with p(b3) = −b2, and so on.
-- `07:43` Numerically b1 ≈ 2.1478, b2 ≈ 2.2212, b3 ≈ 2.2336. They creep up toward √5.
-- `07:55` Cut the gap at these points. Key fact: p maps each piece onto the mirror image of the one before.
-- `08:02` The first piece lands inside √3 on the negative side, so it goes to −1.
-- `08:07` p is odd, so mirror images have opposite fates. The second piece maps onto the mirror of the first: +1.
-- `08:16` The third maps onto the mirror of the second: −1 again. And so on, alternating.
-- `08:22` So a start in the n-th piece flips exactly n times: odd n ends at −1, even n at +1.
-- `08:29` The pieces pile up against √5. Zoom in, and the same pattern repeats again and again.
-- `08:36` Each piece is about a sixth of the one before, because the slope of p at √5 is −6.
-- `08:43` So between √3 and √5 there are infinitely many basins, alternating −1, +1, −1, +1, and so on.
-- `08:55` And the cut points themselves? b1 goes to −√3 in one step, and then to 0.
-- `09:01` b2 → −b1 → √3 → 0, and b3 → −b2 → b1 → −√3 → 0.
-- `09:13` Every cut point hits ±√3 exactly after a few steps, then sits on 0, the unstable fixed point.
-- `09:21` But they are single points: nudge one slightly, and it falls into a basin on either side.
-- `09:29` Here is the full answer to part (e).
-- `09:32` Below √3, σ goes to +1. Exactly at √3, it lands on 0.
-- `09:39` Between √3 and √5, −1 and +1 alternate with the number of flips; the cut points go to 0.
-- `09:46` At √5 it bounces forever, and beyond √5 it diverges.
-- `09:53` Back to the matrix. A real W can have singular values anywhere, some far above √5.
-- `10:00` This one at 2.9 would blow up. So before iterating, W must be scaled down.
-- `10:07` A common choice: divide by the Frobenius norm. It is never smaller than the largest singular value.
-- `10:14` After scaling, every singular value sits between 0 and 1, safely below √3.
-- `10:21` Now each one walks to +1. Small ones take longer, but all arrive, and W becomes U V transpose.
-- `10:29` The ellipse became a circle. And a matrix question turned into a puzzle about one number.
+- `00:06` Take a matrix W. It turns the unit circle into an ellipse.
+- `00:10` It stretches one direction by σ1 and another by σ2: those are its singular values.
+- `00:16` If every stretch were exactly 1, the circle would stay a circle, and W would be orthogonal.
+- `00:22` Optimizers like Muon want this for every weight update: same directions, every stretch 1.
+- `00:29` An SVD could do it, but it is slow on a GPU. The Newton–Schulz iteration uses only matrix products.
+- `00:36` Let's apply it a few times and watch the ellipse.
+- `00:43` After a handful of steps, the ellipse is a circle. Why does this work? And can it fail?
+- `00:50` To see why, write W with its SVD. U and V only rotate; all the stretching sits in Σ.
+- `00:58` Plug it into the iteration. U and V pass through untouched; only the middle Σ changes.
+- `01:05` Σ is diagonal, so each singular value is updated on its own: σ becomes p(σ).
+- `01:13` And p is just this cubic. So the whole matrix question is about a single number.
+- `01:18` Start at some positive σ, apply p over and over. Where does it end up? That is part (e).
+- `01:25` No theory yet. Let's just try numbers. Start at 0.5: 0.69, 0.87, 0.98, then 1.
+- `01:36` 1.3 drops to 0.85, then climbs back up to 1.
+- `01:41` Even a tiny 0.1 creeps up, slowly at first, and also reaches 1.
+- `01:46` Everything lands on 1. That's no accident: p(1) = 1, so once a value is at 1, it stays.
+- `01:53` A point with p(x) = x is a fixed point. Solving gives x cubed = x: the fixed points are −1, 0 and 1.
+- `02:03` So why does 0.1 walk away from 0 and toward 1? A picture makes it clear.
+- `02:08` Draw the curve y = p(x), and the diagonal y = x.
+- `02:13` To iterate on the picture, go from x up to the curve: that height is p(x).
+- `02:19` Then go across to the diagonal. That moves p(x) back onto the x axis as the new x.
+- `02:25` Repeat. Starting at 0.3, the path climbs a staircase up to 1.
+- `02:30` From 1.2, it drops just below 1, then settles on 1 as well.
+- `02:35` The fixed points −1, 0 and 1 are exactly where the curve meets the diagonal.
+- `02:41` Why is 1 a magnet while 0 pushes things away? Look at the slope of p at each one.
+- `02:47` At 0 the slope is 1.5, so a small offset grows by half each step. From 0.05 it drifts away.
+- `02:55` At ±1 the slope is 0, so the error roughly squares each step. From 1.2: 0.2, then 0.064, then 0.006.
+- `03:08` So 0 is unstable, like a hilltop, and ±1 are stable, like the bottoms of two valleys.
+- `03:16` So far every start went to 1. But we don't get to choose σ. How large can it be?
+- `03:22` Try 1.5. p(1.5) = 0.56, and from there it climbs to 1. Still fine.
+- `03:30` Now try 1.8. p(1.8) = −0.216. It turned negative, and then slides down to −1!
+- `03:41` Where does the sign change? Factor p: p(x) is half of x times (3 minus x squared).
+- `03:47` The second factor turns negative once x passes √3, about 1.73. And 1.8 is just past it.
+- `03:55` Below √3 the curve stays positive, and it never rises above 1: its peak is p(1) = 1.
+- `04:02` So one step lands between 0 and 1. There p(x) − x is half of x(1 − x squared), which is positive.
+- `04:11` Each step goes up but never past 1. So every σ between 0 and √3 ends at +1.
+- `04:18` Exactly at √3, p(√3) = 0. One step lands on 0, the unstable fixed point, and stays forever.
+- `04:27` What about a much bigger start, like 3? p(3) = −9, and p(−9) = 351. It explodes.
+- `04:37` Past √3 the sign flips every step. But does the size shrink or grow? Compare |p(x)| to |x|.
+- `04:46` For x past √3, the ratio is below 1 exactly when x squared is below 5, that is |x| < √5.
+- `04:56` So √5, about 2.24, is the second key number. √3 decides flip or not; √5 decides shrink or grow.
+- `05:06` Right at the edge, p(√5) = −√5 and p(−√5) = √5. The cobweb becomes a square.
+- `05:15` So √5 neither settles nor explodes. It bounces between ±√5 forever: a period-2 orbit.
+- `05:23` Just past it, at 2.3, every step flips and grows: −2.63, 5.18, −61.8. It diverges.
+- `05:35` That leaves the gap between √3 and √5. There, each step flips the sign and shrinks the size.
+- `05:42` Shrinking, it must drop below √3 sooner or later. Then the flips stop, and it goes to ±1.
+- `05:50` 1.8 went to −1. Is the whole gap like that? Let's test three close starts: 2.0, 2.2 and 2.23.
+- `05:59` We plot only the size of each value, show its sign by color, and count the flips.
+- `06:05` Step by step: the sizes move left, and the colors alternate.
+- `06:10` 2.0 flips once before dropping below √3. 2.2 flips twice, and 2.23 three times.
+- `06:18` So 2.0 ends at −1, but 2.2 ends at +1, and 2.23 at −1 again!
+- `06:25` From a positive start, an odd number of flips ends at −1, and an even number at +1.
+- `06:32` Tiny changes in the start, alternating answers. So where exactly does the count change?
+- `06:40` One flip or two? One step must land inside √3. The cutoff is where p(x) is exactly −√3. Call it b1.
+- `06:49` p is decreasing here, so every x between √3 and b1 lands between −√3 and 0: one flip, then −1.
+- `06:58` Both 1.8 and 2 are in this piece. In fact p(2) is exactly −1.
+- `07:06` Keep going the same way: pick b2 with p(b2) = −b1, then b3 with p(b3) = −b2, and so on.
+- `07:16` Numerically b1 ≈ 2.1478, b2 ≈ 2.2212, b3 ≈ 2.2336. They creep up toward √5.
+- `07:28` Cut the gap at these points. Key fact: p maps each piece onto the mirror image of the one before.
+- `07:34` The first piece lands inside √3 on the negative side, so it goes to −1.
+- `07:40` p is odd, so mirror images have opposite fates. The second piece maps onto the mirror of the first: +1.
+- `07:47` The third maps onto the mirror of the second: −1 again. And so on, alternating.
+- `07:53` So a start in the n-th piece flips exactly n times: odd n ends at −1, even n at +1.
+- `08:01` The pieces pile up against √5. Zoom in, and the same pattern repeats again and again.
+- `08:08` Each piece is about a sixth of the one before, because the slope of p at √5 is −6.
+- `08:15` So between √3 and √5 there are infinitely many basins, alternating −1, +1, −1, +1, and so on.
+- `08:25` And the cut points themselves? b1 goes to −√3 in one step, and then to 0.
+- `08:32` b2 → −b1 → √3 → 0, and b3 → −b2 → b1 → −√3 → 0.
+- `08:41` Every cut point hits ±√3 exactly after a few steps, then sits on 0, the unstable fixed point.
+- `08:49` But they are single points: nudge one slightly, and it falls into a basin on either side.
+- `08:56` Here is the full answer to part (e).
+- `08:59` Below √3, σ goes to +1. Exactly at √3, it lands on 0.
+- `09:05` Between √3 and √5, −1 and +1 alternate with the number of flips; the cut points go to 0.
+- `09:13` At √5 it bounces forever, and beyond √5 it diverges.
+- `09:19` Back to the matrix. A real W can have singular values anywhere, some far above √5.
+- `09:26` This one at 2.9 would blow up. So before iterating, W must be scaled down.
+- `09:32` A common choice: divide by the Frobenius norm. It is never smaller than the largest singular value.
+- `09:38` After scaling, every singular value sits between 0 and 1, safely below √3.
+- `09:44` Now each one walks to +1. Small ones take longer, but all arrive, and W becomes U V transpose.
+- `09:52` The ellipse became a circle. And a matrix question turned into a puzzle about one number.
