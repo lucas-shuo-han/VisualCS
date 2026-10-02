@@ -992,6 +992,11 @@ class NarratedScene(Scene):
         if run_time is not None:
             for a in anims:
                 a.run_time = run_time
+        try:  # optional: wording from narration.md (see narration.py)
+            import narration
+            text, speak = narration.apply(sys._getframe(1), text, speak)
+        except ImportError:
+            pass
         text = tr(text)
         self._flush()
         self._close_sub()

@@ -56,3 +56,8 @@ The Frobenius-norm scaling in §13 is standard practice, not stated in the solut
 
 All numbers on screen are computed in `ep01_newton_schulz.py`; the b_n values, flip
 counts, basin fates, the easy starts and the ratio 6 are asserted at import time.
+
+## Editing the narration
+
+All caption/voice text lives in `narration.md` (body vs `>` notes; see its header). `narration.py check`
+validates it; `narration.py sync` merges new code lines into it without touching edited wording.

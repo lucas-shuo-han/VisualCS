@@ -45,6 +45,20 @@ KIT_TTS_ENGINE=kokoro .venv/bin/python .claude/skills/notes-to-3b1b-video/script
 .venv/bin/python .claude/skills/notes-to-3b1b-video/scripts/render.py cs182/newton-schulz --out videos/cs182-newton-schulz                       # edge-tts 神经网络语音
 ```
 
+**改旁白和叙事逻辑（不用碰动画代码）**：所有字幕/配音文字都在 [`cs182/newton-schulz/narration.md`](cs182/newton-schulz/narration.md)。
+- 正文 = `###` 标题下的普通行，就是屏幕字幕和配音。`speak:` 行是只给配音用的读法。
+- 注释 = 以 `>` 或 `//` 开头的行和 `<!-- -->`，渲染时忽略，可以随便写想法。
+- 每个场景开头有叙事逻辑注释（目的、节拍、语气、待定选择），文件开头有“观众每一幕知道什么、想问什么”的表格。
+- 不要改 `### 场景 编号 <!-- #哈希 -->` 这种标题行。
+- 改完先检查，再出预览（只有改过的句子会重新配音）：
+
+```bash
+.venv/bin/python cs182/newton-schulz/narration.py check
+KIT_TTS_ENGINE=kokoro .venv/bin/python .claude/skills/notes-to-3b1b-video/scripts/render.py cs182/newton-schulz 1 --preview --voice
+```
+
+调整场景顺序、增删一个节拍要改动画代码：把想法写在该场景的注释里，让 Claude 来改，改完 Claude 会运行 `narration.py sync` 把新句子合并进 narration.md，不会覆盖你已改的文字。
+
 ## 目录结构
 
 ```
