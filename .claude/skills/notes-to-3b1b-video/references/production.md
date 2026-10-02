@@ -85,9 +85,13 @@ Run it per episode (or per pair) after the episode renders cleanly:
    sections, repetition, captions over ~50 CJK characters / ~30 words, punctuation style.
 3. **Writing, translation.** Idiomatic, concise, course terminology, the meaning not the
    words, about the same reading time as the source line.
-4. **Voice.** `captions.py SRC N --spoken`: anything a listener would stumble on (symbols,
-   code fragments, long hex runs, list punctuation read as nothing). Reword the caption,
-   add a pronunciation to `say_as.py`, or pass `speak=` for that one line.
+4. **Voice.** `narration_lint.py SRC N` first. It flags split sentences, runs of short
+   captions, tiny sentences and risky terms. Fix them following
+   `references/narration-writing.md`. Then `captions.py SRC N --spoken` for anything a
+   listener would stumble on (symbols, code fragments, long hex runs, list punctuation
+   read as nothing). Reword the caption, add a pronunciation to `say_as.py`, or pass
+   `speak=` for that one line. Finally, **listen** to one voiced preview per language
+   end to end. Reading the spoken text doesn't catch prosody.
 5. **Frames.** Re-render changed episodes and look at the end + mid sheets again.
 
 ## 5. Keeping the user in the loop

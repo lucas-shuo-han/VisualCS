@@ -39,8 +39,8 @@ def _spell(s: str) -> str:
 
 # instruction names and assembler jargon that a voice would otherwise mangle
 _SAY_AS = {
-    "addi": "add I", "subi": "sub I", "andi": "and I", "ori": "or I",
-    "xori": "X or I", "xor": "X or", "mv": "move", "ret": "return", "nop": "no-op",
+    "addi": "add immediate", "subi": "sub immediate", "andi": "and immediate", "ori": "or immediate",
+    "xori": "ex-or immediate", "xor": "ex-or", "mv": "move", "ret": "return", "nop": "no-op",
     "ecall": "E call", "ebreak": "E break", "printf": "print F",
     "funct3": "funct 3", "funct7": "funct 7", "opcode": "op code",
     "RISC-V": "risk five", "RISC": "risk", "CS61C": "CS 61 C", "61C": "61 C",

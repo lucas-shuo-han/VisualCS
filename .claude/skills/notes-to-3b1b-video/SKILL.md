@@ -20,6 +20,7 @@ series; they save most of the trial and error.
 | `scripts/render.py` | Renders a unit's episodes × languages in parallel, collects `mp4` + `srt`. `--preview` 480p, `--voice`, `--lang`. |
 | `scripts/contact_sheet.py` | One frame per caption tiled into numbered PNG sheets. This is how you *see* the video. |
 | `scripts/captions.py` | Dumps an episode's narration in order, all languages side by side, `--spoken` shows what the voice will say. For proofreading without rendering. |
+| `scripts/narration_lint.py` | Lints the script before rendering: split sentences, choppy runs, terms the voice will misread; `--audition` synthesizes them to listen to. |
 | `scripts/i18n_check.py` | Checks the translation tables are complete (`--skeleton`, `--widths`). |
 | `scripts/srt_to_script.py` | Collects subtitles into a Markdown narration script. |
 | `scripts/setup_env.sh` / `setup_env.ps1` / `win_fonts.py` | Environment for Linux/macOS / Windows (fonts included). |
@@ -30,7 +31,8 @@ series; they save most of the trial and error.
 | `assets/agent_brief_template.md` | Brief for per-episode agents when working in parallel. |
 | `references/visual-patterns.md` | Design principles, layout budget, snippets for code, bits, math, deep learning. |
 | `references/production.md` | Coverage map, planning, parallel agents, the review pass, keeping the user in the loop, delivery. |
-| `references/bilingual-and-voice.md` | Translation tables, layout across languages, voice-over, pronunciation, timing. |
+| `references/narration-writing.md` | Writing a script that sounds spoken, not read: sentence rules, `speak=`, before/after, what other Manim skills do. **Read before writing captions.** |
+| `references/bilingual-and-voice.md` | Translation tables, layout across languages, voice-over, pronunciation of math and technical terms, TTS engines, timing. |
 | `references/pitfalls.md` | Every bug hit in production (incl. Windows) and how to avoid it. Read before rendering. |
 
 ## Workflow
@@ -97,7 +99,12 @@ What made the difference in quality (details in `references/visual-patterns.md`)
   hand. Recompute the notes' examples too: notes contain errors.
 - One color per concept across the series; one term per concept (GLOSSARY.md).
 - Keep content above y ≈ −2.5 (the caption band) and anchor labels with `next_to`.
-- Captions are read aloud: avoid symbol soup; check with `captions.py --spoken`.
+- Captions are *heard*: one or two complete sentences each, linked with connectives,
+  never a sentence split across two captions (each caption is a separate voice clip),
+  no runs of "Done!" / "Why?" fragments. Notation goes on screen; the voice says the
+  idea (`speak=`). Single-letter variables, Greek, mnemonics and acronyms get misread
+  ("scalar a" → the article "uh"): run `narration_lint.py` and fix `say_as.py`.
+  See `references/narration-writing.md` and `bilingual-and-voice.md` §5.
 
 With many episodes, write the first one or two yourself (they set the house style),
 then hand episodes to parallel agents with the brief — `references/production.md` §3.
@@ -117,8 +124,9 @@ still running.
 
 ### 6. Review the writing and the coverage
 Per episode, after it renders cleanly: coverage against the checklist, the source
-captions read in order as a viewer, the translation, the spoken form
-(`captions.py <unit> N --spoken`). Checklist in `references/production.md` §4. A fresh
+captions read in order as a viewer, the translation, the script lint
+(`narration_lint.py <unit> N`), the spoken form (`captions.py <unit> N --spoken`), and
+one voiced preview *listened to* end to end. Checklist in `references/production.md` §4. A fresh
 reviewer agent per two episodes catches what authors miss.
 
 ### 7. Final render and delivery

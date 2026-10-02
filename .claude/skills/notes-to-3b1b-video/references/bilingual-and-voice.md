@@ -111,6 +111,49 @@ language, applied first: e.g. `8(sp)` → "S P plus 8"). Things learned the hard
   `speak` is translated through the table too.
 - Review spoken forms in bulk: `captions.py SRC N --spoken`, before rendering.
 
+### Math and technical terms: the "scalar a" problem
+
+A neural voice reads *words*. It has no way to know that a letter in a sentence is a
+variable. The CS61C run and later lessons turned up these failures:
+
+| Written | Heard | Fix |
+|---|---|---|
+| scalar a times vector v | "scalar uh times..." (the article) | `tts.math_letters` spells out `a` → "ay" in a math context |
+| 标量 a 乘以向量 v | 啊 (interjection) | math_letters uppercases lone letters in Chinese; better to write A in the caption |
+| xor, xori | "X or", "X or I" | `SAY_AS`: "ex-or", "ex-or immediate" |
+| andi, ori, addi | "and I", "or I" | `SAY_AS`: "and immediate", ... |
+| η∇L | skipped or read as a random character | `tts.GREEK`: "eta the gradient of L" |
+| I (identity matrix), e (Euler), O(n) | the pronoun "I", "eh", "oh of n" | `SAY_AS` / `REWRITES` per course, e.g. `(r"\bO\((\w+)\)", "big O of \\1")` |
+| CUDA, SIMD, GPU, SQL, RISC | read as a word when it should be spelled, or the reverse | `SAY_AS` or `SPELL`, decided per term by ear (GPU spelled, CUDA a word) |
+
+`math_letters` uses a heuristic. It spells out a lone letter when it follows a math noun
+(scalar, vector, matrix, variable, register...), sits next to an operator (`a · v`,
+`a = 3`, `v times a`), follows a digit (`2a`), or appears in a letter list (`a, b and c`).
+Ordinary words ("a dog") are left alone. For anything it misses, use `speak=` or a
+`REWRITES` rule. Add course nouns to `MATH_NOUNS` in the copied tts.py.
+
+**Workflow per course:**
+1. Run `python narration_lint.py <unit> --audition <scratch>/audition`. It lists every
+   risky term (spelled letters that fuse with a word, unknown ALL-CAPS, letter+digit
+   codes, leftover symbols, lone a/e/o in Chinese) and synthesizes each one in a carrier
+   sentence.
+2. Listen to the clips. Put what sounds wrong in `say_as.py`. Decide ALL-CAPS terms one
+   by one, the way the lecturer says them.
+3. Re-run until clean. Then listen to one full episode per language before the final
+   render: the linter finds candidates, but your ear decides.
+
+**Engines and control.** edge-tts is free and good, but Microsoft blocks custom SSML
+there, so `<phoneme>`, `<say-as>` and `<break>` are unavailable: text rewriting is the
+only lever. If a course needs exact phonemes, switch the backend in `tts.synth`:
+- **Azure Speech** (same voices, needs a key): full SSML, `<phoneme alphabet="ipa">`
+  and custom lexicons.
+- **Kokoro** (local, open weights): inline IPA with Markdown syntax,
+  `[Kokoro](/kˈOkəɹO/)`.
+- **ElevenLabs / OpenAI**: pronunciation dictionaries or aliases.
+
+Keep `spoken()` in front of any engine. Operators, hex and identifiers still need
+rewriting.
+
 ## 6. Timing
 
 With a voice, a caption stays up for max(reading time, audio + 0.35 s) plus `extra`, and
