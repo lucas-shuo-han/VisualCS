@@ -29,6 +29,36 @@
 成片在 [`videos/cs61c-riscv/zh/`](videos/cs61c-riscv/zh/) 与 [`videos/cs61c-riscv/en/`](videos/cs61c-riscv/en/)（1080p30）。
 全部旁白文字见 [`cs61c/riscv/SCRIPT.md`](cs61c/riscv/SCRIPT.md)（中文）与 [`cs61c/riscv/SCRIPT.en.md`](cs61c/riscv/SCRIPT.en.md)（English）。
 
+## CS182 · Newton–Schulz 迭代（第五次讨论课）
+
+| 集 | Title | 内容 |
+|---|---|---|
+| 1 | Newton–Schulz: Where Does a Singular Value Go? | 从“椭圆变圆”讲起：为什么要把奇异值推到 1；p(W) = U p(Σ) Vᵀ；先试简单的数，再看蛛网图、不动点与斜率；追问“σ 能多大”发现 √3，追问“更大会怎样”发现 √5；(√3, √5) 里按翻号次数交替通向 −1、+1 的吸引区及分界点 bn；√5 周期为 2；迭代前先按 Frobenius 范数缩放 |
+
+这一集只做英文版（英文撰写，英文配音）。成片在 [`videos/cs182-newton-schulz/`](videos/cs182-newton-schulz/)（1080p30，烧录字幕 + `.srt`）。
+代码在 `cs182/newton-schulz/`（基于 skill 的 `manim_kit.py`），剧情与覆盖清单见 [`cs182/newton-schulz/PLAN.md`](cs182/newton-schulz/PLAN.md)，旁白脚本见 `SCRIPT.md`。
+
+配音：`tts.py` 默认用 edge-tts（需能访问 `speech.platform.bing.com`）；设 `KIT_TTS_ENGINE=pico` 改用离线的 SVOX Pico（`apt install libttspico-utils`）。设 `KIT_TTS_ENGINE=kokoro` 用离线神经网络语音 Kokoro-82M（见 skill 的 bilingual-and-voice.md §4）。现有成片用的是 Kokoro（af_heart）。
+
+```bash
+KIT_TTS_ENGINE=kokoro .venv/bin/python .claude/skills/notes-to-3b1b-video/scripts/render.py cs182/newton-schulz --out videos/cs182-newton-schulz # 离线神经网络配音
+.venv/bin/python .claude/skills/notes-to-3b1b-video/scripts/render.py cs182/newton-schulz --out videos/cs182-newton-schulz                       # edge-tts 神经网络语音
+```
+
+**改旁白和叙事逻辑（不用碰动画代码）**：所有字幕/配音文字都在 [`cs182/newton-schulz/narration.md`](cs182/newton-schulz/narration.md)。
+- 正文 = `###` 标题下的普通行，就是屏幕字幕和配音。`speak:` 行是只给配音用的读法。
+- 注释 = 以 `>` 或 `//` 开头的行和 `<!-- -->`，渲染时忽略，可以随便写想法。
+- 每个场景开头有叙事逻辑注释（目的、节拍、语气、待定选择），文件开头有“观众每一幕知道什么、想问什么”的表格。
+- 不要改 `### 场景 编号 <!-- #哈希 -->` 这种标题行。
+- 改完先检查，再出预览（只有改过的句子会重新配音）：
+
+```bash
+.venv/bin/python cs182/newton-schulz/narration.py check
+KIT_TTS_ENGINE=kokoro .venv/bin/python .claude/skills/notes-to-3b1b-video/scripts/render.py cs182/newton-schulz 1 --preview --voice
+```
+
+调整场景顺序、增删一个节拍要改动画代码：把想法写在该场景的注释里，让 Claude 来改，改完 Claude 会运行 `narration.py sync` 把新句子合并进 narration.md，不会覆盖你已改的文字。
+
 ## 目录结构
 
 ```

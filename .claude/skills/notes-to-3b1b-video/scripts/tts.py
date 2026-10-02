@@ -1,5 +1,8 @@
-"""Voice-over for the captions: Microsoft's neural voices via the `edge-tts`
-package (needs network access, no API key), cached as trimmed .wav files.
+"""Voice-over for the captions, cached as trimmed .wav files. Engines
+(KIT_TTS_ENGINE): "edge" = Microsoft's neural voices via the `edge-tts` package
+(default; needs network access to speech.platform.bing.com, no API key);
+"kokoro" = Kokoro-82M, a local neural model (near edge quality, fully offline);
+"pico" = SVOX Pico, robotic, only when nothing else is available.
 
 Copy this file next to manim_kit.py; the kit calls `synth()` for every caption
 when KIT_TTS=1. Check what the voice will say with the skill's captions.py
@@ -35,6 +38,16 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 CACHE = Path(os.environ.get("KIT_TTS_CACHE") or HERE / ".tts_cache")
 RATE = os.environ.get("KIT_TTS_RATE", "+0%")
+# "edge": Microsoft neural voices, online (speech.platform.bing.com).
+# "kokoro": Kokoro-82M neural voices, offline once the model files are downloaded
+#   (pip install kokoro-onnx; kokoro-v1.0.onnx + voices-v1.0.bin from
+#   github.com/thewh1teagle/kokoro-onnx/releases, in KIT_KOKORO_DIR).
+# "pico": SVOX Pico (apt install libttspico-utils): offline, robotic, last resort.
+ENGINE = os.environ.get("KIT_TTS_ENGINE", "edge")
+KOKORO_DIR = Path(os.environ.get("KIT_KOKORO_DIR") or Path.home() / ".cache" / "kokoro")
+KOKORO_VOICES = {"en": ("af_heart", "en-us"), "zh": ("zf_xiaoxiao", "cmn"), "ja": ("jf_alpha", "ja"),
+                 "es": ("ef_dora", "es"), "fr": ("ff_siwis", "fr-fr")}
+PICO_LANG = {"en": "en-US", "de": "de-DE", "fr": "fr-FR", "es": "es-ES", "it": "it-IT"}
 
 VOICES = {
     "en": "en-US-AndrewNeural", "zh": "zh-CN-YunxiNeural", "ja": "ja-JP-KeitaNeural",
@@ -204,7 +217,32 @@ def spoken(text: str, lang: str) -> str:
 
 
 def _key(text: str, lang: str) -> str:
-    return hashlib.sha1(f"{voice_for(lang)}|{RATE}|{text}".encode()).hexdigest()[:16]
+    voice = {"pico": "pico", "kokoro": f"kokoro:{_kokoro_voice(lang)[0]}"}.get(ENGINE) or voice_for(lang)
+    return hashlib.sha1(f"{voice}|{RATE}|{text}".encode()).hexdigest()[:16]
+
+
+def _kokoro_voice(lang: str):
+    v, code = KOKORO_VOICES.get(lang, KOKORO_VOICES["en"])
+    return os.environ.get(f"KIT_VOICE_{lang.upper()}") or v, code
+
+
+_KOKORO = None
+
+
+def _kokoro(text: str, lang: str, out: Path):
+    global _KOKORO
+    import numpy as np
+    from kokoro_onnx import Kokoro
+    if _KOKORO is None:
+        _KOKORO = Kokoro(str(KOKORO_DIR / "kokoro-v1.0.onnx"), str(KOKORO_DIR / "voices-v1.0.bin"))
+    voice, code = _kokoro_voice(lang)
+    m = re.match(r"([+-]\d+)%", RATE)
+    samples, sr = _KOKORO.create(text, voice=voice, lang=code, speed=1 + int(m[1]) / 100 if m else 1.0)
+    with wave.open(str(out), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(sr)
+        w.writeframes((np.clip(samples, -1, 1) * 32767).astype("<i2").tobytes())
 
 
 def _duration(path: Path) -> float:
@@ -214,6 +252,13 @@ def _duration(path: Path) -> float:
 
 async def _edge(text: str, voice: str, out: Path):
     import edge_tts
+    import edge_tts.communicate as _comm
+    # edge-tts pins certifi's CA list; behind a TLS-inspecting proxy, also trust
+    # the CA named by SSL_CERT_FILE (a no-op everywhere else)
+    ca = os.environ.get("SSL_CERT_FILE")
+    if ca and os.path.exists(ca) and not getattr(_comm, "_kit_ca", False):
+        _comm._SSL_CTX.load_verify_locations(ca)
+        _comm._kit_ca = True
     await edge_tts.Communicate(text, voice, rate=RATE).save(str(out))
 
 
@@ -226,7 +271,14 @@ def synth(caption: str, lang: str, speak: str | None = None) -> tuple[Path, floa
         return wav, _duration(wav)
     d.mkdir(parents=True, exist_ok=True)
     mp3 = wav.with_suffix(f".{os.getpid()}.mp3")
-    for attempt in range(5):
+    if ENGINE == "kokoro":
+        mp3 = mp3.with_suffix(".kokoro.wav")
+        _kokoro(text, lang, mp3)
+    elif ENGINE == "pico":
+        import subprocess
+        mp3 = mp3.with_suffix(".pico.wav")
+        subprocess.run(["pico2wave", "-l", PICO_LANG.get(lang, "en-US"), "-w", str(mp3), text], check=True)
+    for attempt in range(5 if ENGINE == "edge" else 0):
         try:
             asyncio.run(_edge(text, voice_for(lang), mp3))
             break

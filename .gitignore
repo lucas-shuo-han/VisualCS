@@ -3,3 +3,4 @@ media/
 *.pyc
 .venv/
 videos/preview-en/
+.tts_cache/

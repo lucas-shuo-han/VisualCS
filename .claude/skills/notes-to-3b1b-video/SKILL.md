@@ -16,7 +16,7 @@ series; they save most of the trial and error.
 | Path | What it is |
 |---|---|
 | `scripts/manim_kit.py` | Component library: `NarratedScene` (timed captions + .srt, voice-over, title/end cards), translation layer, code listings (asm/C/Python), registers, memory, bit fields, network diagram, heatmap. Read its docstring first. |
-| `scripts/tts.py` | Voice-over: caption → spoken form → edge-tts neural voice, cached. Copied next to the kit. |
+| `scripts/tts.py` | Voice-over: caption → spoken form → neural voice (edge-tts, or offline Kokoro), cached. Copied next to the kit. |
 | `scripts/render.py` | Renders a unit's episodes × languages in parallel, collects `mp4` + `srt`. `--preview` 480p, `--voice`, `--lang`. |
 | `scripts/contact_sheet.py` | One frame per caption tiled into numbered PNG sheets. This is how you *see* the video. |
 | `scripts/captions.py` | Dumps an episode's narration in order, all languages side by side, `--spoken` shows what the voice will say. For proofreading without rendering. |
@@ -46,8 +46,10 @@ Decide from the request (ask only if it is truly ambiguous):
 - **Languages.** Default: English captions. For two languages, write the episodes in one
   (prefer the CJK one: the kit can then prove the translation complete) and translate
   through tables — see `references/bilingual-and-voice.md`.
-- **Voice-over.** On by default for final renders when the network allows edge-tts;
-  captions stay burned in either way.
+- **Voice-over.** On by default for final renders; captions stay burned in either way.
+  Use a neural voice: edge-tts when its host is reachable, else the offline Kokoro model
+  (`KIT_TTS_ENGINE=kokoro`). SVOX Pico is a last resort. See
+  `references/bilingual-and-voice.md` §4.
 - **Coverage.** "Make videos for these notes" means cover them: build the coverage
   checklist now (`references/production.md` §1).
 

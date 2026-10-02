@@ -64,8 +64,8 @@ Always look at the contact sheets of *every* language: most translation bugs are
 
 ## 4. Voice-over
 
-`tts.py` (copy next to the kit) synthesizes each caption with Microsoft's neural voices
-through the `edge-tts` package: good quality, many languages, no API key, but it needs
+`tts.py` (copy next to the kit) synthesizes each caption, by default with Microsoft's
+neural voices through the `edge-tts` package: good quality, many languages, no API key, but it needs
 network access. Clips are cached (`KIT_TTS_CACHE`, render.py puts it in the media dir),
 trimmed of leading/trailing silence, and reused across renders, so only new or changed
 lines need the network.
@@ -76,8 +76,20 @@ lines need the network.
   (`--voice` / `--no-voice` override).
 - `title_card()` speaks "Episode n: title", `end_card()` speaks "To sum up", each bullet,
   and "Next time: ..." or the series-end line.
-- No network? Render without voice (`--no-voice`) and ship captions + .srt; the voice can
-  be added by re-rendering later since the clips are generated from the same captions.
+- Engines, in order of preference (`KIT_TTS_ENGINE`):
+  1. `edge` (default): the neural voices above. Needs `speech.platform.bing.com`.
+  2. `kokoro`: Kokoro-82M, a local neural model, close to edge quality and fully
+     offline. `pip install kokoro-onnx`, then put `kokoro-v1.0.onnx` and
+     `voices-v1.0.bin` from github.com/thewh1teagle/kokoro-onnx/releases in
+     `KIT_KOKORO_DIR` (default `~/.cache/kokoro`). Default voice `af_heart` (en);
+     override with `KIT_VOICE_EN=am_michael` etc. About 4x faster than real time on CPU.
+  3. `pico`: SVOX Pico (`apt install libttspico-utils`). Works anywhere but sounds
+     robotic; users notice. Use only when neither of the above is reachable, and say so.
+- Check which hosts are reachable before choosing (a proxy may block the edge host but
+  allow GitHub); try a sample line with `python tts.py --say "..." --synth`.
+- Behind a TLS-inspecting proxy, tts.py adds `SSL_CERT_FILE` to edge-tts's CA list.
+- No engine at all? Render without voice (`--no-voice`) and ship captions + .srt; the voice
+  can be added by re-rendering later since the clips are generated from the same captions.
 
 ## 5. Pronunciation
 
