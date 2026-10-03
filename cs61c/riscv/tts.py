@@ -127,8 +127,12 @@ LETTER_NAMES = {"en": {"a": A_NAME, "A": A_NAME, "e": "ee", "o": "oh", "u": "you
                 "zh": {c: c.upper() for c in "abcdefghijklmnopqrstuvwxyz"}}
 MATH_NOUNS = {"en": r"scalar|vector|matrix|variable|constant|element|entry|point|set|node|"
                     r"vertex|function|parameter|coefficient|register|array|value|number|"
-                    r"integer|input|output|weight|bias|term|letter|index|basis",
+                    r"integer|input|output|weight|bias|term|letter|index|basis|version|option",
               "zh": r"标量|向量|矩阵|变量|常数|元素|点|集合|节点|函数|参数|系数|寄存器|数组|值|数|下标"}
+# words (and punctuation) that never follow the article "a": "sets a to five", "load a into t1"
+_NOT_AFTER_ARTICLE = {",", ".", ";", "?", "!", ":", "is", "are", "was", "were", "to", "into", "of",
+                      "and", "or", "but", "with", "from", "has", "have", "goes", "starts", "becomes",
+                      "holds", "gets"}
 _OPS = set("=+×·*/^<>≤≥≈∈−-") | {"times", "plus", "minus", "over", "equals", "by",
                                   "乘", "加", "减", "除以", "等于"}
 _TOK = re.compile(r"[A-Za-z]+|\d+|[一-鿿]+|[^\sA-Za-z\d一-鿿]")
@@ -155,7 +159,9 @@ def math_letters(s: str, lang: str) -> str:
         if nxt in ("'", "’"):
             continue
         listy = (prev == "," and i > 1 and single(toks[i - 2][2])) or                 (nxt == "," and i + 2 < len(toks) and single(toks[i + 2][2]))
-        if nouns.search(prev) or prev in _OPS or nxt in _OPS or glued_digit or listy:
+        after = lang[:2] == "en" and t in ("a", "A") and nxt in _NOT_AFTER_ARTICLE and not (
+            nxt == "to" and i + 2 < len(toks) and toks[i + 2][2] == "-")
+        if nouns.search(prev) or prev in _OPS or nxt in _OPS or glued_digit or listy or after:
             out += [s[last:a], names[t]]
             last = b
     return "".join(out) + s[last:]
@@ -184,7 +190,8 @@ def spoken(text: str, lang: str) -> str:
     s = sub(r"\b0x([0-9A-Fa-f]+)\b", lambda m: w["hex"] + " ".join(m[1].upper()), s)
     s = sub(r"\b(0[01]{3,}|[01]{5,})\b", lambda m: " ".join(m[1]), s)
     # A[i] -> "A of i";  2^k;  (n - 1)!;  *p
-    s = sub(r"\b([A-Za-z]\w*)\[(\w+)\]", lambda m: w["of"].format(a=m[1], i=m[2]), s)
+    s = sub(r"\b([A-Za-z]\w*)\[(\w+)\]",
+            lambda m: w["of"].format(a=A_NAME if m[1] in ("a", "A") and lang[:2] == "en" else m[1], i=m[2]), s)
     s = sub(r"(\w+)\^(\w+)", lambda m: w["pow"].format(a=m[1], b=m[2]), s)
     s = sub(r"\)!", ")" + w["fact"], s)
     s = sub(r"(?<![\w)])\*(?=\w)|(?<=\s)\*(?=\s)|(?<=\w)\*", w["star"], s)

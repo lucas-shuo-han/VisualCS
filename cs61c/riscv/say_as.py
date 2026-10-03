@@ -58,6 +58,9 @@ SAY_AS = {
     "ebreak": "E break", "printf": "print F", "funct3": "funct 3", "funct7": "funct 7",
     "opcode": "op code", "RISC-V": "risk five", "RISC": "risk", "ARM": "arm",
     "RV32I": "R V 32 I", "RV32": "R V 32", "CS61C": "C S 61 C", "CS": "C S", "61C": "61 C",
+    "ASCII": "ask ee", "F5": "F 5",
+    "XOR": "ex or", "AND": "and", "DRAM": "dee ram", "CISC": "sisk", "MIPS": "mips",
+    "Neumann": "Noyman", "Cocke": "Coke", "Krste": "Kerstay", "Asanovic": "Ah sah no vich",
     "KiB": {"en": "kibibytes", "zh": "KB"}, "MiB": {"en": "mebibytes", "zh": "MB"},
     # spelled out, "jal ra" sounds like "jalr a"
     "jal": "jump and link", "jalr": "jump and link register",
@@ -65,4 +68,4 @@ SAY_AS = {
 
 SPELL = """lw sw lb lbu lh lhu lwu sb sh sbu beq bne blt bge bltu bgeu bgt ble sll srl sra
     slli srli srai slt slti sltu sltiu jr lui auipc li la ISA ABI PC pc sp ra fp gp tp
-    rd rs rs1 rs2 lt CPU ALU""".split()
+    rd rs rs1 rs2 lt CPU ALU DDR HBM IBM UC""".split()

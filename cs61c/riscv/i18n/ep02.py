@@ -8,9 +8,12 @@ L(zh, en), are substrings of these English beats.
 EN = {
     # end card
     "ISA 是软件与硬件之间的契约": "The ISA is the contract between software and hardware",
-    "RV32I 有 32 个 32 位寄存器，x0 恒为 0": "RV32I has 32 registers of 32 bits; x0 is always 0",
-    "算术指令：add / sub rd, rs1, rs2": "Arithmetic: add / sub rd, rs1, rs2",
-    "addi 带 12 位立即数；mv、li、nop 是伪指令": "addi: 12-bit immediate; mv, li, nop are pseudoinstructions",
+    "RV32I 有 32 个 32 位寄存器，x0 恒为 0":
+        "RV32I has thirty-two registers of thirty-two bits each, and x0 is always zero",
+    "算术指令：add / sub rd, rs1, rs2":
+        "The add and sub instructions take a destination register and two source registers",
+    "addi 带 12 位立即数；mv、li、nop 是伪指令":
+        "addi takes a twelve-bit immediate, and mv, li, and nop are pseudo-instructions",
 
     # ---- labels
     "编译器 Compiler": "Compiler",
