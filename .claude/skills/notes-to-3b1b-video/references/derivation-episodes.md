@@ -87,9 +87,9 @@ full; the animation adapts.**
   objects on `self`, and let a later scene be rendered alone by running the earlier
   ones through `self.fast_forward(...)`, which jumps every animation to its end state
   with no frames, voice or time.
-- Subtitles: the final video has none on the frame (`BURN_CAPTIONS = False` in
-  series.py); the `.srt` sits next to the mp4, split into sentences. Review previews
-  draw them on the frame.
+- Subtitles appear one sentence at a time, on the frame and in the `.srt`. That
+  project shipped a clean frame (`BURN_CAPTIONS = False` in series.py) with the `.srt`
+  beside it; review previews always draw them on the frame.
 
 ## 4. The script as an editable document
 
@@ -115,29 +115,22 @@ The user reviews by watching and listening. What they asked for, in order of wei
 
 1. **Voice and visible subtitles in every preview.** A silent clip with a separate
    subtitle file was unusable. Say exactly where the files are.
-2. **Short waits.** One scene per process, in parallel (`scripts/preview.py 9 10 11`,
-   or `all --join`), 480p. A change to one scene costs one short render.
+2. **Short waits.** One scene per process, in parallel (`scripts/preview.py 9 10 11
+   --unit <unit>`, or `all --join`), 480p. A change to one scene costs one short render.
 3. **A task list first, then step by step** when the job is large; report progress
    against the list.
 4. Decide open details yourself (label positions, timing) and list them in the report;
    keep questions for things only the user can decide (total length, what to cut).
 
 Each scene must render alone. preview.py sets `KIT_ONLY=<scene>`; the episode needs a
-`SCENES` list and a branch in `construct` that puts up whatever earlier scenes leave
-on stage:
+`SCENES` list and one line in `construct` naming the scenes that draw on a shared stage
+(the earlier ones are fast-forwarded: end states only, no frames, voice or time):
 
 ```python
 SCENES = ["motivation", "design", "graph", "slopes", "summary"]
 
 def construct(self):
-    only = [s for s in os.environ.get("KIT_ONLY", "").split(",") if s]
-    if only:                                    # preview: no title or end card
-        chain = ["graph", "slopes"]             # scenes that draw on one shared graph
-        if only[0] in chain[1:]:
-            self.fast_forward(*[getattr(self, s) for s in chain[:chain.index(only[0])]])
-        for s in only:
-            getattr(self, s)()
-        self.uncaption()                        # closes the last subtitle
+    if self.preview_only(["graph", "slopes"]):  # preview: no title or end card
         return
     self.title_card()
     for s in self.SCENES:

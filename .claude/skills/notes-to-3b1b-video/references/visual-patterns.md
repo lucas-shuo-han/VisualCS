@@ -6,7 +6,7 @@ the LaTeX toolchain (`setup_env.sh --latex`); everything else only needs `Text`.
 
 ## Contents
 1. Design principles (what makes it read as 3b1b)
-2. Layout budget and caption pacing
+2. Layout budget and pacing
 3. Code and step-through execution
 4. Bits, words and memory
 5. Math: equations, plots, matrices (LaTeX)
@@ -17,11 +17,12 @@ the LaTeX toolchain (`setup_env.sh --latex`); everything else only needs `Text`.
 
 ## 1. Design principles
 
-- **One idea per caption.** A caption is one sentence of narration plus the
-  animation that makes that sentence true. If you need "and then", split it.
+- **One picture per beat, one step per thing said.** A beat is a few sentences of
+  narration (`say`) about one picture; every thing those sentences mention happens on
+  screen as it is said (`cue`). A sentence the picture does not act out is a frozen frame.
 - **Show the mechanism, not a slide.** Don't put a bullet list on screen and
   read it. Build the object (array, register, network) and change it while the
-  caption explains why. Text on screen should label things, not narrate.
+  narration explains why. Text on screen should label things, not narrate.
 - **Concrete first, then general.** Walk one example with real numbers (compute
   them in Python, see §3) before stating the rule. The rule lands because the
   viewer just watched it happen.
@@ -31,21 +32,23 @@ the LaTeX toolchain (`setup_env.sh --latex`); everything else only needs `Text`.
 - **Continuity over cuts.** Transform the old picture into the new one
   (`ReplacementTransform`, `TransformFromCopy`, `.animate`) instead of fading
   everything out and drawing from scratch — the viewer's eye keeps its place.
+- **Teaching order.** Intuition before formalism, why before what, the question
+  before its answer. Name a thing after the viewer has seen it.
 - **Reveal a surprise, then resolve it.** The best moments in the RISC-V series
   were "wait, why is this immediate split in two?" → aligned-fields picture.
   Plan one such beat per episode.
 - **Dark background, few colors, generous space.** `BG` + the Manim palette
   (BLUE_*, TEAL_*, GREEN_*, YELLOW_D, GOLD_*, RED_*, GREY_*). Leave margins.
 
-## 2. Layout budget and caption pacing
+## 2. Layout budget and pacing
 
 Frame is 14.2 × 8 units, x ∈ [−7.1, 7.1], y ∈ [−4, 4].
 
 | Zone | y range | Use |
 |---|---|---|
 | heading | ≈ 3.5 | `self.heading("...")` top-left |
-| content | −2.5 … 3.3 | everything else |
-| caption | −3.9 … −2.5 | reserved: two lines reach ≈ −2.9, three ≈ −2.6 |
+| content | −2.9 … 3.3 | everything else |
+| subtitle | −3.9 … −2.9 | reserved: one sentence at a time, at most two lines |
 
 Rules that prevented most layout bugs:
 - Place big objects with `to_edge` / `to_corner` / `set_x` / `set_y`, and
@@ -55,17 +58,19 @@ Rules that prevented most layout bugs:
   is ≈ 7.6 units — shorten comments or drop the font size before it collides.
 - After `scale()`-ing a group, rebuild labels relative to the new size (or
   scale them with it); never mix pre- and post-scale coordinates.
-- Keep content above y ≈ −2.5 so the caption band never covers it (−2.9 is enough
-  if every caption is ≤ 2 lines in every language).
+- Keep content above y ≈ −2.9 so the subtitle band never covers it. A sentence too
+  long for two lines is shown in parts, so the band never grows.
 - Bilingual: the translation is usually wider. Design for the wider language, or
   keep labels short enough for both.
 
-Pacing: `say()` waits for the previous caption's reading time
-(`reading_time()`: ~5 CJK chars/s or ~3.3 words/s, min 1.8 s) — and, with a
-voice-over, until its audio has finished — before swapping, so animations passed
-to `say()` or played after it overlap the reading time instead of adding to it.
-Use `self.hold()` when the viewer needs a beat to look at the result; use
-`extra=` on `say()` for a longer pause.
+Pacing: the voice sets it. `say()` first waits until the previous beat has been
+spoken (silent renders: its reading time, ~5 CJK chars/s or ~3.3 words/s), then
+starts the new one; animations passed to `say()`, `cue()`s and plain `self.play()`
+calls after it run while it is spoken. `cue()` waits until the voice reaches its
+phrase. Use `self.hold()` when the viewer needs a moment to look at the result and
+`extra=` on `say()` for a longer pause. Add up the `run_time` of what follows a
+`say()`: if it is longer than the beat, the next beat starts late (shorten the
+animations); if much shorter, the picture stands still (add cues).
 
 ## 3. Code and step-through execution
 

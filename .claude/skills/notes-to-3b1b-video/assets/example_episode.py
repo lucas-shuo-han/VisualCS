@@ -2,6 +2,8 @@
 
 Render a quick preview from the folder that holds manim_kit.py:
     manim -ql example_episode.py Ep01BinarySearch
+or, saved as ep01_binary_search.py in a unit, one scene at a time with the voice:
+    python preview.py walkthrough --unit <unit>
 """
 
 import os
@@ -31,15 +33,18 @@ def trace(arr, target):
 
 class Ep01BinarySearch(NarratedScene):
     series = "Algorithms, Visually"
+    SCENES = ["idea", "walkthrough"]      # scene methods, in order (preview.py reads this)
 
     def construct(self):
+        if self.preview_only(self.SCENES):    # walkthrough continues on idea's stage
+            return
         self.title_card(1, "Binary Search", "halving the problem, one comparison at a time")
         self.idea()
         self.walkthrough()
         self.end_card(
-            ["Keep a window [lo, hi] that must contain the target",
+            ["Keep a window from lo to hi that must contain the target",
              "Compare with the middle element, then discard half",
-             "n items take about log2(n) comparisons"],
+             "A list of n items takes about log base two of n comparisons"],
             next_title="Sorting with merges",
         )
 
@@ -55,9 +60,13 @@ class Ep01BinarySearch(NarratedScene):
     def idea(self):
         head = self.heading("The idea")
         row = self.cells()
-        self.say("Here is a sorted list of ten numbers. Is 23 in it?",
+        # One beat = a few sentences spoken as one clip. say() starts it with the first
+        # animation; cue() plays each further step when the voice reaches those words.
+        self.say("Here is a sorted list of ten numbers, and we want to know whether twenty-three "
+                 "is in it. Checking them one by one could take ten comparisons. "
+                 "But the list is sorted, and that lets us do much better.",
                  Write(head), LaggedStart(*[FadeIn(c, shift=UP * 0.2) for c in row], lag_ratio=0.08))
-        self.say("Checking one by one could take ten comparisons. Sorting lets us do much better.",
+        self.cue("Checking them one by one",
                  LaggedStart(*[Indicate(c[0], color=GREY_B) for c in row], lag_ratio=0.1))
         self.hold()
         self.row = row
@@ -83,24 +92,29 @@ class Ep01BinarySearch(NarratedScene):
 
         for step, (lo, hi, mid) in enumerate(trace(ARR, TARGET)):
             span = VGroup(*row[lo:hi + 1])
-            verdict = ("found it" if ARR[mid] == TARGET else
-                       "too small, drop the left half" if ARR[mid] < TARGET else
-                       "too big, drop the right half")
-            self.say(f"Step {step + 1}: the middle of {lo}..{hi} is index {mid}, holding {ARR[mid]} — {verdict}.",
+            found = ARR[mid] == TARGET
+            small = ARR[mid] < TARGET
+            verdict = ("That is the number we are looking for." if found else
+                       "That is too small, so the whole left half can go." if small else
+                       "That is too big, so the whole right half can go.")
+            # numbers stay on screen; the voice says the idea in plain words
+            self.say(f"{'First' if step == 0 else 'Next'}, look at the middle of the window, "
+                     f"which is index {mid}. {verdict}",
                      window.animate.become(SurroundingRectangle(span, color=YELLOW_D, buff=0.08)),
                      FadeIn(box) if step == 0 else box.animate.become(code.line_box(1)),
                      arrow.animate.next_to(row[mid], UP, buff=0.1),
                      regs[0].set(lo), regs[1].set(hi), regs[2].set(mid))
-            if ARR[mid] == TARGET:
-                self.play(box.animate.become(code.line_box(2)),
-                          row[mid][0].animate.set_fill(GREEN_C, 0.45))
+            if found:
+                self.cue("That is", box.animate.become(code.line_box(2)),
+                         row[mid][0].animate.set_fill(GREEN_C, 0.45))
             else:
-                line = 3 if ARR[mid] < TARGET else 4
-                gone = VGroup(*row[lo:mid + 1]) if ARR[mid] < TARGET else VGroup(*row[mid:hi + 1])
-                self.play(box.animate.become(code.line_box(line)), gone.animate.set_opacity(0.25))
+                gone = VGroup(*row[lo:mid + 1]) if small else VGroup(*row[mid:hi + 1])
+                self.cue("That is", box.animate.become(code.line_box(3 if small else 4)),
+                         gone.animate.set_opacity(0.25))
             self.hold()
 
         n = len(trace(ARR, TARGET))
-        self.say(f"{n} comparisons instead of up to ten. Each one halves the window, "
-                 f"so a million items need only about twenty.")
+        assert n == 3
+        self.say("That took three comparisons instead of up to ten. Every comparison halves the "
+                 "window, so even a million items need only about twenty.")
         self.hold(0.5)

@@ -56,9 +56,25 @@
         "Rendered episode.mp4 has an audio stream and is at least 90 seconds long",
         "tts.spoken() of every caption containing the variable a reads it as 'ay' (never the bare article before an operator or after 'scalar'), checked with captions.py --spoken",
         "narration_lint.py reports no 'split' findings and no choppy runs",
-        "Captions are mostly complete sentences of 10-25 words; no run of three captions under 9 words",
+        "Sentences are mostly complete,  of 10-25 words; no run of three say() beats under 9 words",
         "The worked example's numbers (e.g. 2*(1,0) + 3*(0,1) = (2,3)) are computed in Python",
-        "The agent looked at a contact sheet"
+        "The agent looked at a contact sheet",
+        "Narration is written in beats: most say() calls hold two or more sentences, and cue() is used to time animations to phrases",
+        "The .srt shows one sentence per cue (no cue longer than two subtitle lines)"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Make one voiced 3b1b-style video that derives, step by step, why gradient descent on f(x) = x^2 converges only when the learning rate is below 1. Don't just state the result. It will be long, so set it up so I can review it scene by scene.",
+      "expected_output": "A reworked episode with a SCENES list, per-scene voiced 480p previews with subtitles on the frame, and a narration.md the user can edit",
+      "files": [],
+      "assertions": [
+        "The episode has a SCENES list and construct() uses preview_only (or a KIT_ONLY branch) so each scene renders alone",
+        "preview.py produced one mp4 per scene, each with an audio stream and subtitles on the frame",
+        "The script derives the condition by trying learning rates (e.g. 0.4, 0.9, 1.1) before stating |1 - 2*lr| < 1, rather than announcing it",
+        "narration_lint.py reports no split, choppy, colon or cue findings",
+        "Every number spoken or shown is computed in Python",
+        "The final report says exactly where the preview files are and which scenes were inspected"
       ]
     }
   ]

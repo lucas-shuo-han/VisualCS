@@ -1,7 +1,8 @@
 # Production: planning, coverage, review, parallel work, delivery
 
 What turned a pile of scenes into a finished series (a 14-episode, two-language,
-voiced CS61C RISC-V series was made this way).
+voiced CS61C RISC-V series was made this way). For one long derivation, or polishing a
+video with the user over several rounds, read `derivation-episodes.md` as well.
 
 ## Contents
 1. Coverage map (do this before planning)
@@ -22,7 +23,7 @@ checklist first, then plan around it:
 2. List every substantive item: concept, definition, rule, table, worked example, quick
    check / exercise, footnote. Keep the notes' own examples (with their numbers): viewers
    will meet them again in homework.
-3. After planning, map item → episode. After writing, map item → caption. Anything
+3. After planning, map item → episode. After writing, map item → beat. Anything
    substantive that no episode covers is a bug; trivia and tangents may be omitted but
    the omission is written down with its reason ("anecdote", "image not reproducible",
    "beyond scope", "covered in episode N").
@@ -39,8 +40,12 @@ in the final report.
 - **Episode length follows content.** One idea with one worked example: 3–4 minutes.
   Covering a notes chapter fully: 6–8 minutes. Above ~8 minutes, split into two episodes.
   A short episode next to 7-minute ones reads as "thin"; if the notes have more, add it.
-- Per episode, write down: the question it answers, the worked example (real numbers),
-  the aha beat, the notes items it covers, 4–5 recap bullets.
+- Per episode, fill the block in `assets/plan_template.md`: the question it answers, the
+  worked example (real numbers), the aha moment, a scene list (picture, what the
+  narration must get across, notes items covered), 4–5 recap bullets.
+- Order within an episode: a concrete case, then the rule; the reason, then the
+  definition; the question, then its answer. If a scene's plan reads "state X", ask what
+  the viewer would have to see to say X themselves.
 - Put the order and titles in `series.py` (assets/series_template.py): numbers, "next
   episode" lines, the series-end card and file names then stay consistent through any
   reordering. Episode 1 introduces the whole series; the last one ends with a recap of it.
@@ -77,19 +82,19 @@ episodes yourself: the first episodes define the house style the agents copy.
 
 Run it per episode (or per pair) after the episode renders cleanly:
 
-1. **Coverage audit** against the checklist from §1. Add what's missing (a caption or a
-   few, with a visual), keeping the episode ≤ ~8 minutes.
-2. **Writing, source language.** Read every caption in order (`captions.py SRC N`), as a
+1. **Coverage audit** against the checklist from §1. Add what's missing (a beat, with
+   its picture), keeping the episode ≤ ~8 minutes.
+2. **Writing, source language.** Read every beat in order (`captions.py SRC N`), as a
    viewer. Fix: translated-sounding phrasing, vague or wrong statements, inconsistent
-   terms, captions that don't match the screen at that moment, missing transitions between
-   sections, repetition, captions over ~50 CJK characters / ~30 words, punctuation style.
+   terms, sentences that don't match the screen at that moment, missing transitions between
+   sections, repetition, sentences over ~60 CJK characters / ~30 words, colons.
 3. **Writing, translation.** Idiomatic, concise, course terminology, the meaning not the
    words, about the same reading time as the source line.
 4. **Voice.** `narration_lint.py SRC N` first. It flags split sentences, runs of short
-   captions, tiny sentences and risky terms. Fix them following
+   beats, tiny and over-long sentences, colons, numerals and risky terms. Fix them following
    `references/narration-writing.md`. Then `captions.py SRC N --spoken` for anything a
    listener would stumble on (symbols, code fragments, long hex runs, list punctuation
-   read as nothing). Reword the caption, add a pronunciation to `say_as.py`, or pass
+   read as nothing). Reword the sentence, add a pronunciation to `say_as.py`, or pass
    `speak=` for that one line. Finally, **listen** to one voiced preview per language
    end to end. Reading the spoken text doesn't catch prosody.
 5. **Frames.** Re-render changed episodes and look at the end + mid sheets again.
