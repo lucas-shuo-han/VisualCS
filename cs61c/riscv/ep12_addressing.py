@@ -175,7 +175,8 @@ class Ep12Addressing(FormatScene):
 
     def modes(self):
         head = self.heading("三种寻址方式")
-        self.say("6 种指令格式已经凑齐。这一集换个角度：指令要访问的地址、要跳去的目标，是怎么算出来的？",
+        self.say("6 种指令格式已经凑齐。这一集换个角度：指令要访问的地址、要跳去的目标，是怎么算出来的？"
+                 "这些计算规则叫寻址方式（addressing mode）。RISC-V 主要用到三种。",
                  Write(head))
         c1 = self._card(-4.5, "基址 + 偏移", C_T, "R[rs1] + imm",
                         ["lw   x10, 8(x2)", "sw   x10, 8(x2)", "jalr x0, 0(ra)"])
@@ -183,26 +184,29 @@ class Ep12Addressing(FormatScene):
                         ["beq  x19, x10, End", "jal  ra, func", "auipc t0, 0x12345"])
         c3 = self._card(4.5, "绝对", RED_B, "直接给出完整地址",
                         ["lui  ra, hi", "jalr ra, lo(ra)"])
-        self.say("这些计算规则叫寻址方式（addressing mode）。RISC-V 主要用到三种。",
+        self.cue(tr("这些计算规则叫寻址方式"),
                  LaggedStart(*[FadeIn(VGroup(c[0], c[1]), shift=UP * 0.15) for c in (c1, c2, c3)],
                              lag_ratio=0.25))
-        self.say("第一种：基址 + 偏移（base/displacement），地址 = 寄存器 + 立即数。lw 和 sw 就是这样找到数据的。",
+        self.say("第一种：基址 + 偏移（base/displacement），地址 = 寄存器 + 立即数。lw 和 sw 就是这样找到数据的。"
+                 "jalr 也属于这一类：跳到 rs1 + 立即数。新 PC 只取决于寄存器，与 jalr 自己在哪儿无关。",
                  FadeIn(c1[2]), Create(c1[3]), FadeIn(c1[4][0]), FadeIn(c1[4][1]))
-        self.say("jalr 也属于这一类：跳到 rs1 + 立即数。新 PC 只取决于寄存器，与 jalr 自己在哪儿无关。",
-                 FadeIn(c1[4][2], shift=UP * 0.1))
-        self.say("第二种：PC 相对寻址，以 PC 为基准加上偏移。条件分支、jal 和 auipc 都用它。",
+        self.cue(tr("jalr 也属于这一类"), FadeIn(c1[4][2], shift=UP * 0.1))
+        self.say("第二种：PC 相对寻址，以 PC 为基准加上偏移。条件分支、jal 和 auipc 都用它。"
+                 "第三种：绝对寻址，直接给出完整地址。比如 lui 装入地址的高 20 位，jalr 补上低 12 位并跳过去。",
                  FadeIn(c2[2]), Create(c2[3]), LaggedStart(*[FadeIn(l) for l in c2[4]], lag_ratio=0.3))
-        self.say("第三种：绝对寻址，直接给出完整地址。比如 lui 装入地址的高 20 位，jalr 补上低 12 位并跳过去。",
-                 FadeIn(c3[2]), Create(c3[3]), LaggedStart(*[FadeIn(l) for l in c3[4]], lag_ratio=0.3))
+        self.cue(tr("第三种：绝对寻址"),
+                 FadeIn(c3[2]),
+                 Create(c3[3]),
+                 LaggedStart(*[FadeIn(l) for l in c3[4]], lag_ratio=0.3))
         rest = zh("其余指令：PC + 4", 24, YELLOW_D).next_to(c2[0], DOWN, buff=0.18)
         jbox = SurroundingRectangle(c1[4][2], color=RED_B, buff=0.08)
-        self.say("其实几乎每条指令都以 PC 相对的方式更新 PC：普通指令 PC + 4，分支和 jal 是 PC + 偏移。只有 jalr 例外。",
+        self.say("其实几乎每条指令都以 PC 相对的方式更新 PC：普通指令 PC + 4，分支和 jal 是 PC + 偏移。只有 jalr 例外。"
+                 "伪指令也各有归属：j 是 jal x0 的简写，属于 PC 相对；jr 和 ret 则是 jalr 的简写。",
                  FadeIn(rest, shift=UP * 0.1), Indicate(c2[0], color=YELLOW_D, scale_factor=1.03))
-        self.play(Create(jbox))
+        self.cue(tr("只有 jalr 例外"), Create(jbox))
         pseudo = mono("j L = jal x0, L     jr rs = jalr x0, 0(rs)     ret = jalr x0, 0(ra)", 22, GREY_A)
         pseudo.move_to(DOWN * 1.95)
-        self.say("伪指令也各有归属：j 是 jal x0 的简写，属于 PC 相对；jr 和 ret 则是 jalr 的简写。",
-                 FadeIn(pseudo, shift=UP * 0.1))
+        self.cue(tr("伪指令也各有归属"), FadeIn(pseudo, shift=UP * 0.1))
         self.hold()
         self.clear_stage()
 
@@ -223,38 +227,39 @@ class Ep12Addressing(FormatScene):
 
         addrs = addr_texts(ADDRS)
         moved = addr_texts(MOVED)
-        self.say("来算几个具体的偏移。这是课程笔记里的循环，每条指令都标了示例地址：beq 在 0x0C。",
+        self.say("来算几个具体的偏移。这是课程笔记里的循环，每条指令都标了示例地址：beq 在 0x0C。"
+                 "标签不是指令，机器码里根本没有 Loop 和 End。汇编器得把它们换算成相对 PC 的偏移。",
                  Write(head), FadeIn(code, shift=UP * 0.2), FadeIn(addrs))
-        self.say("标签不是指令，机器码里根本没有 Loop 和 End。汇编器得把它们换算成相对 PC 的偏移。",
+        self.cue(tr("标签不是指令"),
                  Circumscribe(code.glyphs(0, "Loop:"), color=C_LABEL),
                  Circumscribe(code.glyphs(4, "End:"), color=C_LABEL))
         calc_y = -1.25
         p4 = CurvedArrow(code.right_of(0, 0.25), code.right_of(1, 0.25), angle=-TAU / 3, color=GREEN_B)
         p4_l = mono("+4", 28, GREEN_B).next_to(p4, RIGHT, buff=0.12)
         calc = mono("0x10 − 0x0C = +4", 30, GREEN_B).move_to([0.3, calc_y, 0])
-        self.say("情况一：beq 不跳。PC 走到下一条，偏移是 +4。", Create(p4), FadeIn(p4_l), FadeIn(calc))
+        self.say("情况一：beq 不跳。PC 走到下一条，偏移是 +4。"
+                 "情况二：beq 跳到 End。0x1C − 0x0C = 0x10，偏移 +16，也就是往后 4 条指令。"
+                 "情况三：j Loop 从 0x18 跳回 0x0C。0x0C − 0x18 = −12，往回 3 条指令：偏移可以是负数。", Create(p4), FadeIn(p4_l), FadeIn(calc))
         p16 = CurvedArrow(code.right_of(0, 0.25), code.right_of(4, 0.25), angle=-TAU / 4, color=YELLOW_D)
         p16_l = mono("+16", 30, YELLOW_D).next_to(p16, RIGHT, buff=0.15)
         calc2 = mono("0x1C − 0x0C = 0x10 = +16", 30, YELLOW_D).move_to(calc)
-        self.say("情况二：beq 跳到 End。0x1C − 0x0C = 0x10，偏移 +16，也就是往后 4 条指令。",
-                 Create(p16), FadeIn(p16_l), Transform(calc, calc2))
+        self.cue(tr("情况二"), Create(p16), FadeIn(p16_l), Transform(calc, calc2))
         xl = moved.get_left()[0] - 0.2
         m12 = CurvedArrow([xl, code[3].get_center()[1], 0], [xl, code[0].get_center()[1], 0],
                           angle=-TAU / 4, color=RED_B)
         m12_l = mono("−12", 30, RED_B).next_to(m12, LEFT, buff=0.15)
         calc3 = mono("0x0C − 0x18 = −12", 30, RED_B).move_to(calc)
-        self.say("情况三：j Loop 从 0x18 跳回 0x0C。0x0C − 0x18 = −12，往回 3 条指令：偏移可以是负数。",
-                 Create(m12), FadeIn(m12_l), Transform(calc, calc3))
+        self.cue(tr("情况三"), Create(m12), FadeIn(m12_l), Transform(calc, calc3))
         self.hold()
         calc4 = mono("0x101C − 0x100C = +16     0x100C − 0x1018 = −12", 26, WHITE).move_to(calc)
-        self.say("上一集提过位置无关代码。把整个循环搬到 0x100C：地址全变了，+16 和 −12 却一个都不用改。",
+        self.say("上一集提过位置无关代码。把整个循环搬到 0x100C：地址全变了，+16 和 −12 却一个都不用改。"
+                 "反过来，要是指令里写死“跳到 0x1C”，一搬家就跳错了：绝对地址经不起代码搬家。",
                  *[Transform(a, b) for a, b in zip(addrs, moved)], Transform(calc, calc4), run_time=1.5)
-        self.play(Indicate(p16_l, color=YELLOW_D), Indicate(m12_l, color=RED_B))
+        self.cue(tr("一个都不用改"), Indicate(p16_l, color=YELLOW_D), Indicate(m12_l, color=RED_B))
         bad = zh("写死“跳到 0x1C”？搬家后 End 在 0x101C，跳错了！", 28, RED_B).move_to(calc)
         if bad.width > 11.5:
             bad.scale_to_fit_width(11.5)
-        self.say("反过来，要是指令里写死“跳到 0x1C”，一搬家就跳错了：绝对地址经不起代码搬家。",
-                 FadeOut(calc, shift=UP * 0.15), FadeIn(bad, shift=UP * 0.15))
+        self.cue(tr("反过来"), FadeOut(calc, shift=UP * 0.15), FadeIn(bad, shift=UP * 0.15))
         self.hold()
         self.clear_stage()
 
@@ -266,13 +271,14 @@ class Ep12Addressing(FormatScene):
         row = bit_row(B13, YELLOW_D, box=0.42, font_size=24).move_to(UP * 1.45)
         idx = VGroup(*[mono(str(12 - k), 16, GREY).next_to(row[k], UP, buff=0.08) for k in range(13)])
         lab = mono("+16 =", 28, YELLOW_D).next_to(row, LEFT, buff=0.3)
-        self.say("现在编成机器码。先是 beq x19, x10, End，偏移 +16：上一集算过，快速过一遍。",
+        self.say("现在编成机器码。先是 beq x19, x10, End，偏移 +16：上一集算过，快速过一遍。"
+                 "接着填上 rs2 = x10、rs1 = x19、funct3 = 000、opcode = 1100011，得到 0x00A98863。",
                  Write(head), FadeIn(asm, shift=DOWN * 0.2), FadeIn(VGroup(bbf.frames, bbf.labels, bbf.ranges)),
                  FadeIn(row), FadeIn(idx), FadeIn(lab))
         cross = Cross(row[12], stroke_color=RED_C, stroke_width=4)
         self.play(Create(cross), run_time=0.5)
         self.fly_bits(row, bbf, B_ROUTES, run_time=1.3)
-        self.say("接着填上 rs2 = x10、rs1 = x19、funct3 = 000、opcode = 1100011，得到 0x00A98863。")
+        self.cue(tr("接着填上"))
         notes = self.encode(bbf, [(2, "01010", "x10"), (3, "10011", "x19"), (4, "000", "beq"),
                                   (7, "1100011", "branch")], rt=0.45)
         hx = self.hex_of(bbf, -2.0)
@@ -282,19 +288,21 @@ class Ep12Addressing(FormatScene):
 
         asm2 = CodeListing(["jal x0, Loop     # Loop = PC - 12"], font_size=32).move_to(asm)
         jbf = BitField(fmt_fields("J")).move_to(DOWN * 0.35)
-        self.say("再编码 j Loop。j 是伪指令，实际是 jal x0, Loop：返回地址写进 x0，也就是直接丢掉。",
+        self.say("再编码 j Loop。j 是伪指令，实际是 jal x0, Loop：返回地址写进 x0，也就是直接丢掉。"
+                 "J 型的偏移有 21 位。−12 是负数，写成 21 位补码：高 17 位全是 1，最后 4 位是 0100。",
                  Transform(asm, asm2), FadeIn(VGroup(jbf.frames, jbf.labels, jbf.ranges)))
         row = bit_row(J21, YELLOW_D, box=0.4, font_size=22).move_to(UP * 1.45 + RIGHT * 0.55)
         idx = VGroup(*[mono(str(20 - k), 14, GREY).next_to(row[k], UP, buff=0.08) for k in range(21)])
         lab = mono("−12 =", 28, YELLOW_D).next_to(row, LEFT, buff=0.3)
-        self.say("J 型的偏移有 21 位。−12 是负数，写成 21 位补码：高 17 位全是 1，最后 4 位是 0100。",
-                 FadeIn(row), FadeIn(idx), FadeIn(lab))
+        self.cue(tr("J 型的偏移有 21 位"), FadeIn(row), FadeIn(idx), FadeIn(lab))
         cross = Cross(row[20], stroke_color=RED_C, stroke_width=4)
-        self.say("最低位照例不存，其余各位按 imm[20|10:1|11|19:12] 的顺序对号入座。", Create(cross))
+        self.say("最低位照例不存，其余各位按 imm[20|10:1|11|19:12] 的顺序对号入座。"
+                 "rd = x0，写成 00000；jal 的 opcode 是 1101111。"
+                 "结果是 0xFF5FF06F。开头的 FF 和中间的 FF，都来自负偏移高位的那一串 1。", Create(cross))
         self.fly_bits(row, jbf, J_ROUTES, run_time=2.0)
-        self.say("rd = x0，写成 00000；jal 的 opcode 是 1101111。")
+        self.cue(tr("rd = x0，写成"))
         notes = self.encode(jbf, [(4, "00000", "x0"), (5, "1101111", "jal")], rt=0.6)
-        self.say("结果是 0xFF5FF06F。开头的 FF 和中间的 FF，都来自负偏移高位的那一串 1。")
+        self.cue(tr("结果是 0xFF5FF06F"))
         hx = self.hex_of(jbf, -2.0)
         assert hx.text == f"0x{JLOOP:08X}"
         self.hold()
@@ -312,7 +320,8 @@ class Ep12Addressing(FormatScene):
         stack = VGroup(sbf, bbf).arrange(DOWN, buff=0.55).move_to(UP * 0.6)
         tags = VGroup(mono("S", 32, WHITE).next_to(sbf.frames, LEFT, buff=0.35),
                       mono("B", 32, WHITE).next_to(bbf.frames, LEFT, buff=0.35))
-        self.say("把 S 型和 B 型上下对齐：两者的立即数都分成两段，占着同样的位置。",
+        self.say("把 S 型和 B 型上下对齐：两者的立即数都分成两段，占着同样的位置。"
+                 "inst[30:25] 在两者中都是 imm[10:5]，inst[11:8] 都是 imm[4:1]：含义完全相同。",
                  Write(head), FadeIn(stack, shift=UP * 0.1), FadeIn(tags))
         left = sbf.frames.get_left()[0]
         bw = sbf.box_w
@@ -326,28 +335,27 @@ class Ep12Addressing(FormatScene):
                              fill_color=color, fill_opacity=0.08).move_to([(xl + xr) / 2, (top + bot) / 2, 0])
 
         same = VGroup(band(30, 25, GREEN_B), band(11, 8, GREEN_B))
-        self.say("inst[30:25] 在两者中都是 imm[10:5]，inst[11:8] 都是 imm[4:1]：含义完全相同。",
-                 *[Create(b) for b in same])
+        self.cue(tr("inst[30:25] 在两者中"), *[Create(b) for b in same])
         diff31 = band(31, 31, RED_B)
         leg1 = mono("inst[31]:  S imm[11] → B imm[12]", 22, RED_B)
         leg2 = mono("inst[7]:  S imm[0] → B imm[11]", 22, RED_B)
         legs = VGroup(leg1, leg2).arrange(RIGHT, buff=0.9).move_to(DOWN * 1.65)
-        self.say("真正换了含义的只有两位。inst[31] 在 S 型是 imm[11]，在 B 型是 imm[12]，但始终是符号位；",
+        self.say("真正换了含义的只有两位。inst[31] 在 S 型是 imm[11]，在 B 型是 imm[12]，但始终是符号位；"
+                 "inst[7] 在 S 型是 imm[0]，在 B 型是 imm[11]。硬件拼立即数时，只有这两位要分情况处理。",
                  Create(diff31), FadeIn(leg1, shift=UP * 0.1))
         diff7 = band(7, 7, RED_B)
-        self.say("inst[7] 在 S 型是 imm[0]，在 B 型是 imm[11]。硬件拼立即数时，只有这两位要分情况处理。",
-                 Create(diff7), FadeIn(leg2, shift=UP * 0.1))
+        self.cue(tr("inst[7] 在 S 型"), Create(diff7), FadeIn(leg2, shift=UP * 0.1))
         self.hold()
         slot = bbf.field_digits[5][3]
         q_box = Rectangle(width=bw, height=bbf.box_h, stroke_color=YELLOW_D, stroke_width=4).move_to(slot)
         q = mono("?", 24, YELLOW_D).move_to(slot)
-        self.say("小测验：如果程序里只有 32 位指令，B 型指令的 inst[8] 是不是一定为 0？",
+        self.say("小测验：如果程序里只有 32 位指令，B 型指令的 inst[8] 是不是一定为 0？"
+                 "是的。这时偏移都是 4 的倍数，imm[1] 恒为 0，而它正好存在 inst[8]。"
+                 "偏移以 2 字节为单位，分支不可能只挪 1 个字节；而只有 32 位指令时，能编码的目标里还有一半用不上。",
                  FadeOut(same), FadeOut(diff31), FadeOut(diff7), FadeOut(legs), Create(q_box), FadeIn(q))
         zero = mono("0", 24, GREEN_B).move_to(slot)
         ans = mono("inst[8] = imm[1] = 0", 24, GREEN_B).move_to(DOWN * 1.65)
-        self.say("是的。这时偏移都是 4 的倍数，imm[1] 恒为 0，而它正好存在 inst[8]。",
-                 Transform(q, zero), q_box.animate.set_stroke(GREEN_B), FadeIn(ans, shift=UP * 0.1))
-        self.say("偏移以 2 字节为单位，分支不可能只挪 1 个字节；而只有 32 位指令时，能编码的目标里还有一半用不上。")
+        self.cue(tr("是的"), Transform(q, zero), q_box.animate.set_stroke(GREEN_B), FadeIn(ans, shift=UP * 0.1))
         self.hold()
         self.clear_stage()
 
@@ -369,46 +377,47 @@ class Ep12Addressing(FormatScene):
         scale = zh("示意图，未按比例", 20, GREY).to_corner(UR, buff=0.45)
         b_br = bracket(-1.6, 1.6, y + 0.35, YELLOW_D, up=True)
         b_lab = self._range_label("B 型：±4 KiB（", "±2¹⁰", YELLOW_D).next_to(b_br, UP, buff=0.12)
-        self.say("上一集算过：B 型偏移的范围是 −4096 到 +4094 字节，约 ±4 KiB，也就是前后各 2 的 10 次方条指令。",
+        self.say("上一集算过：B 型偏移的范围是 −4096 到 +4094 字节，约 ±4 KiB，也就是前后各 2 的 10 次方条指令。"
+                 "if 和循环通常很短，这个范围绰绰有余。可要是目标 far 远在 4 KiB 之外，beq x10, x0, far 就够不着了。",
                  Write(head), Create(nl), Create(tick), FadeIn(pc), FadeIn(scale),
                  Create(b_br), FadeIn(b_lab, shift=DOWN * 0.1))
         far = Dot([4.8, y, 0], radius=0.09, color=RED_B)
         far_l = mono("far", 24, C_LABEL).next_to(far, UP, buff=0.12)
         orig = left_at(CodeListing(["      beq x10, x0, far"], font_size=28), -5.6, 0.25)
         nope = zh("够不着！", 26, RED_B).next_to(orig, RIGHT, buff=0.5)
-        self.say("if 和循环通常很短，这个范围绰绰有余。可要是目标 far 远在 4 KiB 之外，beq x10, x0, far 就够不着了。",
-                 FadeIn(far), FadeIn(far_l), FadeIn(orig, shift=UP * 0.1))
-        self.play(FadeIn(nope, shift=LEFT * 0.1), Indicate(far, color=RED_B, scale_factor=1.6))
+        self.cue(tr("if 和循环通常很短"), FadeIn(far), FadeIn(far_l), FadeIn(orig, shift=UP * 0.1))
+        self.cue(tr("beq x10, x0, far 就够不着了"),
+                 FadeIn(nope, shift=LEFT * 0.1),
+                 Indicate(far, color=RED_B, scale_factor=1.6))
         new = left_at(CodeListing(["      bne x10, x0, next", "      j   far", "next: ..."],
                                   font_size=28, line_gap=0.55), -5.6, 0.25)
-        self.say("办法：把条件取反，让分支只负责跳过一条 j。",
+        self.say("办法：把条件取反，让分支只负责跳过一条 j。"
+                 "x10 等于 0 时，bne 不跳，执行 j far，跳到远处。"
+                 "x10 不等于 0 时，bne 跳过 j，直接到 next 继续。效果和原来的 beq 完全一样。",
                  FadeOut(nope), ReplacementTransform(orig, new[0]), FadeIn(new[1:], shift=DOWN * 0.1))
-        self.hold()
 
         box = new.line_box(0)
         case1 = mono("x10 = 0", 26, YELLOW_D).move_to([-3.2, -1.55, 0])
-        self.say("x10 等于 0 时，bne 不跳，执行 j far，跳到远处。", FadeIn(box), FadeIn(case1))
-        self.play(box.animate.become(new.line_box(1)))
+        self.cue(tr("x10 等于 0 时"), FadeIn(box), FadeIn(case1))
+        self.cue(tr("执行 j far"), box.animate.become(new.line_box(1)))
         p0 = new.glyphs(1, "far").get_right() + RIGHT * 0.15
         p1 = np.array([far.get_center()[0], p0[1], 0])
         path = VGroup(Line(p0, p1, stroke_color=YELLOW_D, stroke_width=4),
                       Arrow(p1, far.get_center() + DOWN * 0.12, buff=0, color=YELLOW_D, stroke_width=4))
-        self.play(Create(path[0]), run_time=0.6)
+        self.cue(tr("跳到远处"), Create(path[0]), run_time=0.6)
         self.play(GrowArrow(path[1]), run_time=0.6)
-        self.hold()
         case2 = mono("x10 ≠ 0", 26, TEAL_C).move_to(case1)
         box2 = new.line_box(0, color=TEAL_C)
         skip = CurvedArrow(new.right_of(0, 0.3), new.right_of(2, 0.3), angle=-TAU / 4, color=TEAL_C)
-        self.say("x10 不等于 0 时，bne 跳过 j，直接到 next 继续。效果和原来的 beq 完全一样。",
-                 FadeOut(path), Transform(case1, case2), Transform(box, box2))
-        self.play(Create(skip), box.animate.become(new.line_box(2, color=TEAL_C)))
+        self.cue(tr("x10 不等于 0 时"), FadeOut(path), Transform(case1, case2), Transform(box, box2))
+        self.cue(tr("直接到 next 继续"), Create(skip), box.animate.become(new.line_box(2, color=TEAL_C)))
         self.hold()
         j_br = bracket(-6.2, 6.2, y - 0.6, BLUE_B, up=False)
         j_lab = self._range_label("J 型：±1 MiB（", "±2¹⁸", BLUE_B).next_to(j_br, DOWN, buff=0.12)
-        self.say("j 是 J 型，偏移有 21 位，能到约 ±1 MiB，即前后各 2 的 18 次方条指令。",
+        self.say("j 是 J 型，偏移有 21 位，能到约 ±1 MiB，即前后各 2 的 18 次方条指令。"
+                 "这也是无条件跳转用 j、不用 beq x0, x0 的原因：J 型没有 rs1、rs2 和 funct3，省下的位让偏移多出 8 位，范围大 256 倍。",
                  FadeOut(box), FadeOut(case1), FadeOut(skip), Create(j_br), FadeIn(j_lab, shift=UP * 0.1))
-        self.say("这也是无条件跳转用 j、不用 beq x0, x0 的原因：J 型没有 rs1、rs2 和 funct3，省下的位让偏移多出 8 位，范围大 256 倍。",
-                 Indicate(j_lab, color=BLUE_B), Indicate(b_lab, color=YELLOW_D))
+        self.cue(tr("这也是无条件跳转"), Indicate(j_lab, color=BLUE_B), Indicate(b_lab, color=YELLOW_D))
         self.hold()
         self.clear_stage()
 
@@ -429,27 +438,29 @@ class Ep12Addressing(FormatScene):
         for t, c, yt in ((a_t, a_c, 1.9), (b_t, b_c, -0.3)):
             t.move_to([0, yt, 0]).align_to([x0, 0, 0], LEFT)
             left_at(c, x0 + 0.3, yt - 0.62)
-        self.say("上一集说过，auipc 配 jalr 能跳到 32 位地址空间的任何位置。其实还有一种组合：lui 配 jalr。",
+        self.say("上一集说过，auipc 配 jalr 能跳到 32 位地址空间的任何位置。其实还有一种组合：lui 配 jalr。"
+                 "先看绝对版本：lui 装入目标地址的高 20 位，jalr 加上低 12 位并跳过去。目标是一个固定的地址。",
                  Write(head), FadeIn(b_t, shift=RIGHT * 0.1), FadeIn(b_c, shift=RIGHT * 0.1))
-        self.say("先看绝对版本：lui 装入目标地址的高 20 位，jalr 加上低 12 位并跳过去。目标是一个固定的地址。",
-                 FadeIn(a_t, shift=RIGHT * 0.1), FadeIn(a_c, shift=RIGHT * 0.1))
-        self.say("jalr 用旧的 ra 算目标，同时把 PC + 4 写进 ra：同一个 ra 既当基址，又存返回地址。",
+        self.cue(tr("先看绝对版本"), FadeIn(a_t, shift=RIGHT * 0.1), FadeIn(a_c, shift=RIGHT * 0.1))
+        self.say("jalr 用旧的 ra 算目标，同时把 PC + 4 写进 ra：同一个 ra 既当基址，又存返回地址。"
+                 "auipc 版本则是 PC 相对的：ra = PC + (hi << 12)。目标跟着代码一起走，整段搬家也照样正确。",
                  Circumscribe(a_c.glyphs(1, "lo(ra)"), color=C_RA),
                  Circumscribe(a_c.glyphs(1, "ra = PC + 4"), color=C_RA))
-        self.say("auipc 版本则是 PC 相对的：ra = PC + (hi << 12)。目标跟着代码一起走，整段搬家也照样正确。",
-                 Indicate(b_t, color=YELLOW_D), Circumscribe(b_c.glyphs(0, "PC + (hi << 12)"), color=YELLOW_D))
+        self.cue(tr("auipc 版本则是 PC 相对的"),
+                 Indicate(b_t, color=YELLOW_D),
+                 Circumscribe(b_c.glyphs(0, "PC + (hi << 12)"), color=YELLOW_D))
         b2 = CodeListing([
             "auipc t1, hi         # t1 = PC + (hi << 12)",
             "jalr  x0, lo(t1)     # PC = t1 + lo，不保存返回地址",
         ], font_size=26, line_gap=0.52)
         b2.shift(b_c[0].get_left() - b2[0].get_left())
-        self.say("伪指令 call 展开的正是这一对。", Circumscribe(VGroup(b_t, b_c), color=YELLOW_D))
-        self.say("只想跳走、不必返回时，jalr 的 rd 改成 x0；中转寄存器也换成 t1，免得冲掉 ra 里的返回地址。",
-                 Transform(b_c[0], b2[0]), Transform(b_c[1], b2[1]))
+        self.say("伪指令 call 展开的正是这一对。"
+                 "只想跳走、不必返回时，jalr 的 rd 改成 x0；中转寄存器也换成 t1，免得冲掉 ra 里的返回地址。"
+                 "注意：jalr 的 12 位立即数也会符号扩展。hi 和 lo 该怎么拆？这和 li 是同一个问题。", Circumscribe(VGroup(b_t, b_c), color=YELLOW_D))
+        self.cue(tr("只想跳走"), Transform(b_c[0], b2[0]), Transform(b_c[1], b2[1]))
         lo_boxes = VGroup(SurroundingRectangle(a_c.glyphs(1, "lo"), color=YELLOW_D, buff=0.06),
                           SurroundingRectangle(b2.glyphs(1, "lo"), color=YELLOW_D, buff=0.06))
-        self.say("注意：jalr 的 12 位立即数也会符号扩展。hi 和 lo 该怎么拆？这和 li 是同一个问题。",
-                 *[Create(b) for b in lo_boxes])
+        self.cue(tr("注意：jalr"), *[Create(b) for b in lo_boxes])
         self.hold()
         self.clear_stage()
 
@@ -479,36 +490,40 @@ class Ep12Addressing(FormatScene):
     def big_constants(self):
         head = self.heading("练习：li 与大常数")
         li = CodeListing(["li x10, 0x87654321"], font_size=34).move_to(UP * 2.4)
-        self.say("用笔记里的两道题，练练上一集的 lui + addi。先交代一句：常数在 −2048 到 2047 之间时，li 只需一条 addi。",
+        self.say("用笔记里的两道题，练练上一集的 lui + addi。先交代一句：常数在 −2048 到 2047 之间时，li 只需一条 addi。"
+                 "练习一：li x10, 0x87654321。高 20 位 0x87654 交给 lui，低 12 位 0x321 交给 addi。",
                  Write(head), FadeIn(li, shift=DOWN * 0.15))
         sp = self._split("87654", "321")
-        self.say("练习一：li x10, 0x87654321。高 20 位 0x87654 交给 lui，低 12 位 0x321 交给 addi。",
-                 FadeIn(sp[0]), Create(sp[1]), FadeIn(sp[2:], shift=UP * 0.1))
+        self.cue(tr("练习一"), FadeIn(sp[0]), Create(sp[1]), FadeIn(sp[2:], shift=UP * 0.1))
         code = self._code2(["lui  x10, 0x87654        # x10 = 0x87654000",
                             "addi x10, x10, 0x321     # x10 = 0x87654321"])
         g, row, hl = self._imm12(0x321, GREEN_B)
         self.play(FadeIn(code[0], shift=RIGHT * 0.1))
-        self.say("lui 先得到 0x87654000。0x321 的最高位是 0，符号扩展后不变，一加正好是 0x87654321。",
+        self.say("lui 先得到 0x87654000。0x321 的最高位是 0，符号扩展后不变，一加正好是 0x87654321。"
+                 "顺手汇编成机器码：lui 是 U 型，opcode 为 0110111（auipc 是 0010111），得到 0x87654537；addi 则是 0x32150513。",
                  FadeIn(g), Create(hl[0]), FadeIn(hl[1]), FadeIn(code[1], shift=RIGHT * 0.1))
         mc = VGroup(mono("→ 0x87654537", 28, C_NUM), mono("→ 0x32150513", 28, C_NUM))
         for k in range(2):
             mc[k].move_to(code.glyphs(k, "#").get_left(), aligned_edge=LEFT).set_y(code[k].get_center()[1])
         ops = mono("opcode:  lui 0110111   auipc 0010111", 22, GREY_A).move_to(DOWN * 1.8)
-        self.say("顺手汇编成机器码：lui 是 U 型，opcode 为 0110111（auipc 是 0010111），得到 0x87654537；addi 则是 0x32150513。",
-                 FadeOut(g), FadeOut(hl),
+        self.cue(tr("顺手汇编成机器码"),
+                 FadeOut(g),
+                 FadeOut(hl),
                  *[FadeOut(code.glyphs(k, c)) for k, c in ((0, "# x10 = 0x87654000"), (1, "# x10 = 0x87654321"))],
-                 FadeIn(mc, shift=LEFT * 0.1), FadeIn(ops))
+                 FadeIn(mc, shift=LEFT * 0.1),
+                 FadeIn(ops))
         self.hold()
 
         li2 = CodeListing(["li x10, 0xB0BACAFE"], font_size=34).move_to(li)
         sp2 = self._split("B0BAC", "AFE")
         code2 = self._code2(["lui  x10, 0xB0BAC", "addi x10, x10, 0xAFE"])
-        self.say("练习二：li x10, 0xB0BACAFE。照葫芦画瓢，写成 lui x10, 0xB0BAC 和 addi x10, x10, 0xAFE？",
+        self.say("练习二：li x10, 0xB0BACAFE。照葫芦画瓢，写成 lui x10, 0xB0BAC 和 addi x10, x10, 0xAFE？"
+                 "问题出在 0xAFE：它的最高位是 1，作为 12 位补码是负数，会被符号扩展成 0xFFFFFAFE。"
+                 "0xB0BAC000 + 0xFFFFFAFE = 0xB0BABAFE：高 20 位少了 1！",
                  FadeOut(VGroup(code, mc, ops)), Transform(li, li2), ReplacementTransform(sp, sp2),
                  FadeIn(code2, shift=RIGHT * 0.1))
         g, row, hl = self._imm12(0xAFE, RED_B)
-        self.say("问题出在 0xAFE：它的最高位是 1，作为 12 位补码是负数，会被符号扩展成 0xFFFFFAFE。",
-                 FadeIn(g), Create(hl[0]), FadeIn(hl[1]))
+        self.cue(tr("问题出在 0xAFE"), FadeIn(g), Create(hl[0]), FadeIn(hl[1]))
         calc = VGroup(
             mono("  0xB0BAC000", 30, WHITE),
             mono("+ 0xFFFFFAFE", 30, WHITE),
@@ -516,12 +531,11 @@ class Ep12Addressing(FormatScene):
         ).arrange(DOWN, buff=0.16, aligned_edge=RIGHT).move_to([3.4, -0.75, 0])
         bar = Line(LEFT, RIGHT, stroke_color=GREY_B).match_width(calc).next_to(calc[1], DOWN, buff=0.08)
         wrong = zh("高 20 位少了 1！", 24, RED_B).next_to(calc, UP, buff=0.2)
-        self.say("0xB0BAC000 + 0xFFFFFAFE = 0xB0BABAFE：高 20 位少了 1！",
-                 FadeIn(calc[:2]), Create(bar), FadeIn(calc[2]), FadeIn(wrong))
+        self.cue(tr("0xB0BAC000 + 0xFFFFFAFE"), FadeIn(calc[:2]), Create(bar), FadeIn(calc[2]), FadeIn(wrong))
         why = mono("0xFFFFFAFE = 0xAFE − 0x1000", 28, GREY_A).move_to([0, -1.8, 0])
-        self.say("因为 0xFFFFFAFE 等于 0xAFE − 0x1000：加上它，就是加 0xAFE 再减 0x1000，正好从高 20 位扣掉 1。",
+        self.say("因为 0xFFFFFAFE 等于 0xAFE − 0x1000：加上它，就是加 0xAFE 再减 0x1000，正好从高 20 位扣掉 1。"
+                 "所以要预先给高 20 位加 1：lui x10, 0xB0BAD。0xB0BAD000 + 0xFFFFFAFE = 0xB0BACAFE，对了。",
                  FadeOut(g), FadeOut(hl), FadeIn(why, shift=UP * 0.1))
-        self.hold()
         fix = self._code2(["lui  x10, 0xB0BAD", "addi x10, x10, 0xAFE"])
         calc2 = VGroup(
             mono("  0xB0BAD000", 30, WHITE),
@@ -529,9 +543,12 @@ class Ep12Addressing(FormatScene):
             mono("= 0xB0BACAFE", 30, GREEN_B),
         ).arrange(DOWN, buff=0.16, aligned_edge=RIGHT).move_to(calc)
         ok = zh("正确！", 24, GREEN_B).move_to(wrong)
-        self.say("所以要预先给高 20 位加 1：lui x10, 0xB0BAD。0xB0BAD000 + 0xFFFFFAFE = 0xB0BACAFE，对了。",
-                 FadeOut(why), Transform(code2[0], fix[0]), Transform(calc, calc2), Transform(wrong, ok))
-        self.play(Circumscribe(fix.glyphs(0, "0xB0BAD"), color=GREEN_B))
+        self.cue(tr("所以要预先给高 20 位加 1"),
+                 FadeOut(why),
+                 Transform(code2[0], fix[0]),
+                 Transform(calc, calc2),
+                 Transform(wrong, ok))
+        self.cue(tr("对了"), Circumscribe(fix.glyphs(0, "0xB0BAD"), color=GREEN_B))
         self.hold()
         rule = VGroup(
             zh("低 12 位的最高位（第 11 位）是 1 → 高 20 位加 1", 28, YELLOW_D),
@@ -539,18 +556,19 @@ class Ep12Addressing(FormatScene):
         ).arrange(DOWN, buff=0.22)
         frame = SurroundingRectangle(rule, color=YELLOW_D, buff=0.22, corner_radius=0.1)
         rule_g = VGroup(frame, rule).move_to([0, 1.25, 0])
-        self.say("规则：低 12 位的最高位（第 11 位）是 1，高 20 位就先加 1。写成公式：hi = (x + 0x800) >> 12。",
+        self.say("规则：低 12 位的最高位（第 11 位）是 1，高 20 位就先加 1。写成公式：hi = (x + 0x800) >> 12。"
+                 "上一节 lui 或 auipc 配 jalr，也照这条规则拆 hi 和 lo；用 auipc 时，x 是目标地址与 PC 之差。",
                  FadeOut(sp2), FadeIn(rule_g, shift=UP * 0.1))
-        self.say("上一节 lui 或 auipc 配 jalr，也照这条规则拆 hi 和 lo；用 auipc 时，x 是目标地址与 PC 之差。", Indicate(rule[1], color=YELLOW_D))
+        self.cue(tr("上一节 lui 或 auipc 配 jalr"), Indicate(rule[1], color=YELLOW_D))
         self.hold()
         self.play(FadeOut(VGroup(code2, calc, bar, wrong, rule_g)), FadeOut(li))
         q = CodeListing(["li   x5, 0x44331416"], font_size=34).move_to(UP * 1.6)
         ans = CodeListing(["lui  x5, 0x44331", "addi x5, x5, 0x416"], font_size=30, line_gap=0.55)
         ans.next_to(q, DOWN, buff=0.6).align_to(q, LEFT)
         bits = zh("2 × 32 = 64 位", 32, YELLOW_D).next_to(ans, DOWN, buff=0.55)
-        self.say("小测验：li x5, 0x44331416 编码后占多少位？", FadeIn(q, shift=UP * 0.1))
-        self.say("答案是 64 位：li 是伪指令，这里要展开成 lui 和 addi 两条指令。",
-                 FadeIn(ans, shift=DOWN * 0.1), FadeIn(bits))
+        self.say("小测验：li x5, 0x44331416 编码后占多少位？"
+                 "答案是 64 位：li 是伪指令，这里要展开成 lui 和 addi 两条指令。", FadeIn(q, shift=UP * 0.1))
+        self.cue(tr("答案是 64 位"), FadeIn(ans, shift=DOWN * 0.1), FadeIn(bits))
         self.hold()
         self.clear_stage()
 
@@ -575,13 +593,13 @@ class Ep12Addressing(FormatScene):
             "③ 翻译寄存器和立即数",
             "④ 拼出完整的汇编指令",
         ], TEAL_C, 0.35)
-        self.say("最后把汇编与机器码的互译整理成两份清单。先看汇编 → 二进制；其中的 I* 就是第 10 集讲的移位格式。",
+        self.say("最后把汇编与机器码的互译整理成两份清单。先看汇编 → 二进制；其中的 I* 就是第 10 集讲的移位格式。"
+                 "第 ③ 步转寄存器时，先把 ABI 名换成编号：s0 是 x8，写作 01000；t4 是 x29，写作 11101。",
                  FadeIn(left[0]), LaggedStart(*[FadeIn(r, shift=RIGHT * 0.1) for r in left[1]], lag_ratio=0.25))
         regs = VGroup(*[mono(t, 24, C_REG) for t in (
             "s0 = x8  → 01000", "sp = x2  → 00010", "x9       → 01001", "t4 = x29 → 11101")])
         regs.arrange_in_grid(2, 2, buff=(1.2, 0.25), col_alignments="ll").move_to(DOWN * 0.35)
-        self.say("第 ③ 步转寄存器时，先把 ABI 名换成编号：s0 是 x8，写作 01000；t4 是 x29，写作 11101。",
-                 Indicate(left[1][2], color=YELLOW_D), FadeIn(regs, shift=UP * 0.1))
+        self.cue(tr("第 ③ 步转寄存器时"), Indicate(left[1][2], color=YELLOW_D), FadeIn(regs, shift=UP * 0.1))
         self.say("反方向就是第 10 集的反汇编，四步列在右边。手边备一张 61C 参考卡最方便。",
                  FadeIn(right[0]), LaggedStart(*[FadeIn(r, shift=RIGHT * 0.1) for r in right[1]], lag_ratio=0.25))
         self.hold()
@@ -590,20 +608,23 @@ class Ep12Addressing(FormatScene):
         word = mono(f"0x{JLOOP:08X}", 30, YELLOW_D).next_to(jbf.labels, UP, buff=0.12)
         word.align_to(jbf.frames, LEFT)
         mark = SurroundingRectangle(right[1][0], color=TEAL_C, buff=0.07)
-        self.say("拿 J 型练一次：把 0xFF5FF06F 翻译回来。opcode 是 1101111，这是 jal。",
+        self.say("拿 J 型练一次：把 0xFF5FF06F 翻译回来。opcode 是 1101111，这是 jal。"
+                 "按 J 型切开：rd 是 00000，即 x0；立即数按 imm[20|10:1|11|19:12] 拼回去，补上最低位的 0，得 −12。"
+                 "拼起来就是 jal x0, −12：正是前面编码的 j Loop。",
                  FadeOut(regs), FadeIn(word), FadeIn(jbf), Create(mark))
-        self.play(Indicate(jbf.frames[5], color=FIELD_COLORS["opcode"], scale_factor=1.08))
+        self.cue(tr("opcode 是 1101111"),
+                 Indicate(jbf.frames[5], color=FIELD_COLORS["opcode"], scale_factor=1.08))
         imm = mono("imm = −12", 28, YELLOW_D)
         rd = mono("rd = x0", 28, FIELD_COLORS["rd"])
         res = VGroup(rd, imm).arrange(RIGHT, buff=1.2).next_to(jbf, DOWN, buff=0.2)
-        self.say("按 J 型切开：rd 是 00000，即 x0；立即数按 imm[20|10:1|11|19:12] 拼回去，补上最低位的 0，得 −12。",
+        self.cue(tr("按 J 型切开"),
                  mark.animate.become(SurroundingRectangle(VGroup(right[1][1], right[1][2]), color=TEAL_C, buff=0.07)),
                  Indicate(jbf.frames[4], color=FIELD_COLORS["rd"], scale_factor=1.08))
-        self.play(FadeIn(rd, shift=UP * 0.1))
-        self.play(*[Indicate(jbf.frames[k], color=YELLOW_D, scale_factor=1.06) for k in range(4)])
-        self.play(FadeIn(imm, shift=UP * 0.1))
+        self.cue(tr("rd 是 00000"), FadeIn(rd, shift=UP * 0.1))
+        self.cue(tr("立即数按"), *[Indicate(jbf.frames[k], color=YELLOW_D, scale_factor=1.06) for k in range(4)])
+        self.cue(tr("得 −12"), FadeIn(imm, shift=UP * 0.1))
         final = CodeListing(["jal x0, -12     # = j Loop"], font_size=30).move_to(res)
-        self.say("拼起来就是 jal x0, −12：正是前面编码的 j Loop。",
+        self.cue(tr("拼起来就是"),
                  mark.animate.become(SurroundingRectangle(right[1][3], color=TEAL_C, buff=0.07)),
                  ReplacementTransform(res, final))
         self.hold()
@@ -622,16 +643,15 @@ class Ep12Addressing(FormatScene):
         rule.set_y((head_l.get_bottom()[1] + asm_col.get_top()[1]) / 2)
         table = VGroup(head_l, head_r, rule, asm_col, bin_col)
         table.shift(UP * (0.55 - table.get_center()[1]))
-        self.say("笔记里还有一份整文件的对照。标签 main 没有对应的机器码；伪指令 mv a0, a5 其实是 addi a0, a5, 0。",
+        self.say("笔记里还有一份整文件的对照。标签 main 没有对应的机器码；伪指令 mv a0, a5 其实是 addi a0, a5, 0。"
+                 "最后一行 call printf 只编成了一条 jal：目标够近时，工具链会把 auipc + jalr 缩成一条 jal。",
                  FadeIn(table, shift=UP * 0.1))
-        self.play(Circumscribe(VGroup(asm_col[0], bin_col[0]), color=C_LABEL))
+        self.cue(tr("标签 main 没有对应的机器码"), Circumscribe(VGroup(asm_col[0], bin_col[0]), color=C_LABEL))
         mv = CodeListing(["addi a0, a5, 0"], font_size=26)
         mv.shift(asm_col[4].get_left() - mv[0].get_left())
-        self.play(Transform(asm_col[4], mv[0]), Circumscribe(bin_col[4], color=C_NUM))
-        self.hold()
+        self.cue(tr("伪指令 mv a0, a5"), Transform(asm_col[4], mv[0]), Circumscribe(bin_col[4], color=C_NUM))
         call_a = CodeListing(["jal  ra, printf"], font_size=26)
         call_a.shift(asm_col[5].get_left() - call_a[0].get_left())
-        self.say("最后一行 call printf 只编成了一条 jal：目标够近时，工具链会把 auipc + jalr 缩成一条 jal。",
-                 Circumscribe(VGroup(asm_col[5], bin_col[5]), color=YELLOW_D))
+        self.cue(tr("最后一行 call printf"), Circumscribe(VGroup(asm_col[5], bin_col[5]), color=YELLOW_D))
         self.play(Transform(asm_col[5], call_a[0]), Circumscribe(bin_col[5][-12:], color=C_NUM))
         self.hold(0.5)

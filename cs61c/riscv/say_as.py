@@ -61,7 +61,7 @@ SAY_AS = {
     "opcode": "op code", "RISC-V": "risk five", "RISC": "risk", "ARM": "arm",
     "RV32I": "R V 32 I", "RV32": "R V 32", "CS61C": "C S 61 C", "CS": "C S", "61C": "61 C",
     "ASCII": "ask ee", "F5": "F 5",
-    "XOR": "ex or", "AND": "and", "arr": "array", "DRAM": "dee ram", "CISC": "sisk", "MIPS": "mips",
+    "XOR": "ex or", "AND": "and", "FF": "F F", "arr": "array", "DRAM": "dee ram", "CISC": "sisk", "MIPS": "mips",
     "Neumann": "Noyman", "Cocke": "Coke", "Krste": "Kerstay", "Asanovic": "Ah sah no vich",
     "KiB": {"en": "kibibytes", "zh": "KB"}, "MiB": {"en": "mebibytes", "zh": "MB"},
     # spelled out, "jal ra" sounds like "jalr a"
