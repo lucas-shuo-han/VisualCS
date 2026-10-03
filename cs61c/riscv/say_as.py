@@ -7,9 +7,16 @@ listening to earlier renders. Check the result with
 
 import re
 
+try:
+    LETTER_A
+except NameError:   # run outside tts.py
+    LETTER_A = "A"
+
 
 def _reg(m):
-    return f"{m[1].upper()} {m[2]}"
+    # LETTER_A is provided by tts.py: "eigh" for Kokoro, which would read a bare "A 1" as "uh one"
+    letter = LETTER_A if m[1] in "aA" else m[1].upper()
+    return f"{letter} {m[2]}"
 
 
 def _offset(lang):
@@ -49,8 +56,8 @@ SAY_AS = {
     "ori": "or immediate", "xori": "ex-or immediate",
     "xor": "ex-or", "mv": "move", "ret": "return", "nop": "no-op", "ecall": "E call",
     "ebreak": "E break", "printf": "print F", "funct3": "funct 3", "funct7": "funct 7",
-    "opcode": "op code", "RISC-V": "risk five", "RISC": "risk",
-    "RV32I": "R V 32 I", "RV32": "R V 32", "CS61C": "CS 61 C", "61C": "61 C",
+    "opcode": "op code", "RISC-V": "risk five", "RISC": "risk", "ARM": "arm",
+    "RV32I": "R V 32 I", "RV32": "R V 32", "CS61C": "C S 61 C", "CS": "C S", "61C": "61 C",
     "KiB": {"en": "kibibytes", "zh": "KB"}, "MiB": {"en": "mebibytes", "zh": "MB"},
     # spelled out, "jal ra" sounds like "jalr a"
     "jal": "jump and link", "jalr": "jump and link register",
@@ -58,4 +65,4 @@ SAY_AS = {
 
 SPELL = """lw sw lb lbu lh lhu lwu sb sh sbu beq bne blt bge bltu bgeu bgt ble sll srl sra
     slli srli srai slt slti sltu sltiu jr lui auipc li la ISA ABI PC pc sp ra fp gp tp
-    rd rs rs1 rs2 lt""".split()
+    rd rs rs1 rs2 lt CPU ALU""".split()

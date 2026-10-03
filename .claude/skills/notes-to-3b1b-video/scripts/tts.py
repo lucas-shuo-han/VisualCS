@@ -45,6 +45,9 @@ RATE = os.environ.get("KIT_TTS_RATE", "+0%")
 # "pico": SVOX Pico (apt install libttspico-utils): offline, robotic, last resort.
 ENGINE = os.environ.get("KIT_TTS_ENGINE", "edge")
 KOKORO_DIR = Path(os.environ.get("KIT_KOKORO_DIR") or Path.home() / ".cache" / "kokoro")
+# How to write the letter A so the voice says its name. Kokoro (espeak) reads "ay" as "eye"
+# and a bare capital A as the article ("uh"); "eigh" gives /eI/ in any context. edge is fine with "ay".
+A_NAME = "eigh" if ENGINE == "kokoro" else "ay"
 KOKORO_VOICES = {"en": ("af_heart", "en-us"), "zh": ("zf_xiaoxiao", "cmn"), "ja": ("jf_alpha", "ja"),
                  "es": ("ef_dora", "es"), "fr": ("ff_siwis", "fr-fr")}
 PICO_LANG = {"en": "en-US", "de": "de-DE", "fr": "fr-FR", "es": "es-ES", "it": "it-IT"}
@@ -63,14 +66,15 @@ def voice_for(lang: str) -> str:
 # ---------------------------------------------------------------- course vocabulary
 
 def _load_say_as():
-    ns: dict = {}
+    ns: dict = {"LETTER_A": A_NAME}   # say_as.py: use LETTER_A where it spells a register like a0
     p = HERE / "say_as.py"
     if p.exists():
         exec(compile(p.read_text(encoding="utf-8"), str(p), "exec"), ns)
     say = dict(ns.get("SAY_AS", {}))
     for w in ns.get("SPELL", []):
         head, digits = re.match(r"(.*?)(\d*)$", w).groups()
-        say.setdefault(w, " ".join(head.upper()) + (f" {digits}" if digits else ""))
+        letters = " ".join(A_NAME if c in "aA" else c.upper() for c in head)
+        say.setdefault(w, letters + (f" {digits}" if digits else ""))
     return say, list(ns.get("REWRITES", []))
 
 
@@ -119,7 +123,7 @@ GREEK = {"α": "alpha", "β": "beta", "γ": "gamma", "δ": "delta", "ε": "epsil
 # A lone letter used as a math variable is read as a *word* by neural voices:
 # "scalar a times vector v" comes out as the article "uh", "I" as the pronoun,
 # Chinese voices read a lone "a" as the interjection 啊. Spell such letters out.
-LETTER_NAMES = {"en": {"a": "ay", "A": "ay", "e": "ee", "o": "oh", "u": "you", "y": "why"},
+LETTER_NAMES = {"en": {"a": A_NAME, "A": A_NAME, "e": "ee", "o": "oh", "u": "you", "y": "why"},
                 "zh": {c: c.upper() for c in "abcdefghijklmnopqrstuvwxyz"}}
 MATH_NOUNS = {"en": r"scalar|vector|matrix|variable|constant|element|entry|point|set|node|"
                     r"vertex|function|parameter|coefficient|register|array|value|number|"
