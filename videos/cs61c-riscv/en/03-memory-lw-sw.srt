@@ -1,120 +1,180 @@
 1
-00:00:06,200 --> 00:00:15,500
-There are only 32 registers, but programs have arrays, structs, thousands of variables. Whatever doesn't fit in registers goes in memory.
+00:00:06,200 --> 00:00:10,985
+A processor has only thirty-two registers, but a real program has arrays,
 
 2
-00:00:15,500 --> 00:00:24,600
-RISC-V is a load-store architecture: arithmetic works only on registers, and memory is accessed only through dedicated instructions.
+00:00:10,985 --> 00:00:14,459
+structures and thousands upon thousands of variables.
 
 3
-00:00:24,600 --> 00:00:31,433
-A load copies data from memory into a register; a store writes a register's value to memory.
+00:00:14,459 --> 00:00:18,766
+Whatever doesn't fit in the registers has to live in memory.
 
 4
-00:00:31,433 --> 00:00:37,933
-Think of memory as one huge array of bytes: every byte has its own number, its address.
+00:00:18,766 --> 00:00:25,939
+RISC-V is what we call a load-store architecture, which means arithmetic instructions work only on registers,
 
 5
-00:00:37,933 --> 00:00:47,933
-To keep it readable we draw 4 bytes per row: the first row is 0x100 to 0x103, and the next starts at 0x104.
+00:00:25,939 --> 00:00:29,032
+and reaching memory takes special instructions.
 
 6
-00:00:47,933 --> 00:00:53,733
-A word takes 4 bytes, so the addresses of neighboring words differ by 4, not 1.
+00:00:29,032 --> 00:00:37,100
+A load copies data from memory into a register, and a store writes a register's value back out to memory.
 
 7
-00:00:53,733 --> 00:01:03,066
-Word addresses are usually multiples of 4; we say they're aligned. A misaligned access may be slower, or even fail outright.
+00:00:37,100 --> 00:00:45,198
+You can picture memory as one enormous array of bytes, where every byte has its own number, called its address.
 
 8
-00:01:03,066 --> 00:01:10,366
-How does a 32-bit number fit into 4 bytes? Take 0x12345678.
+00:00:45,198 --> 00:00:52,422
+To keep the picture readable we draw four bytes per row, so the first row runs from 0x100 to 0x103,
 
 9
-00:01:10,366 --> 00:01:16,466
-RISC-V is normally little-endian: the least significant byte goes at the lowest address.
+00:00:52,422 --> 00:00:55,200
+and the next row starts at 0x104.
 
 10
-00:01:16,466 --> 00:01:25,233
-So reading up from 0x100, the bytes are 78, 56, 34, 12, as if stored backwards.
+00:00:55,200 --> 00:01:01,008
+A word takes four bytes, so the addresses of neighboring words differ by four, not by one.
 
 11
-00:01:25,233 --> 00:01:35,133
-Luckily, when you load or store a whole word, the hardware puts the number back together, so most of the time you needn't worry about byte order.
+00:01:01,008 --> 00:01:05,718
+Word addresses are normally multiples of four, which is called alignment,
 
 12
-00:01:35,133 --> 00:01:42,333
-Now suppose memory holds an int array A, starting at address 0x100, one word per element.
+00:01:05,718 --> 00:01:10,966
+and a misaligned access can be slower or even fail outright.
 
 13
-00:01:42,333 --> 00:01:47,000
-The array's starting address, its base address, is in s0.
+00:01:10,966 --> 00:01:16,354
+How do we fit a thirty-two bit number, such as 0x12345678, into four bytes?
 
 14
-00:01:47,000 --> 00:01:56,866
-lw means load word. lw t0, 8(s0) loads the word at address s0 + 8 into t0.
+00:01:16,354 --> 00:01:24,566
+RISC-V uses what's called little-endian order, which puts the least significant byte at the smallest address.
 
 15
-00:01:56,866 --> 00:02:04,600
-The offset 8 plus the base address gives 0x108: exactly where A[2] lives.
+00:01:24,566 --> 00:01:30,298
+So reading upward from 0x100, the bytes are seven eight, five six, three four and one two,
 
 16
-00:02:04,600 --> 00:02:08,400
-So A[i] in C is at byte offset 4 × i.
+00:01:30,298 --> 00:01:33,419
+which looks like the number was stored backwards.
 
 17
-00:02:08,400 --> 00:02:15,733
-For A[3] the offset is 12, not 3. This is one of the most common mistakes in assembly.
+00:01:33,419 --> 00:01:38,833
+The good news is that loading or storing a whole word reassembles the number for you,
 
 18
-00:02:15,733 --> 00:02:23,433
-sw means store word and goes the other way: it writes a register's value to memory. Let's work through a full example.
+00:01:38,833 --> 00:01:43,066
+so you rarely need to think about byte order.
 
 19
-00:02:23,433 --> 00:02:30,066
-A[3] = h + A[1], with h in s1. First, load A[1]...
+00:01:43,066 --> 00:01:50,488
+Now suppose memory holds the integer array A, which starts at address 0x100 and uses one word per element.
 
 20
-00:02:30,066 --> 00:02:35,266
-...then add h: t0 = 10 + 12 = 22...
+00:01:50,488 --> 00:01:57,866
+The address where the array begins is called the base address, and we'll keep it in the register s0.
 
 21
-00:02:35,266 --> 00:02:43,100
-...and finally sw stores it to A[3]. Note that sw puts the source register first and the memory address second.
+00:01:57,866 --> 00:02:01,423
+The instruction lw stands for load word.
 
 22
-00:02:43,100 --> 00:02:52,700
-22 is 0x16 in hex; stored little-endian at 0x10C, that's 16 00 00 00.
+00:02:01,423 --> 00:02:09,160
+Take lw t0, 8(s0), which reads one word from the address s0 plus 8 and puts it into t0.
 
 23
-00:02:52,700 --> 00:02:59,600
-Besides whole words, you can also load or store a single byte: lb, lbu and sb.
+00:02:09,160 --> 00:02:18,266
+The offset, 8, plus the base address gives 0x108, and that is exactly where A[2] lives.
 
 24
-00:02:59,600 --> 00:03:05,700
-lb loads this byte into a 32-bit register. So what goes in the other 24 bits?
+00:02:18,266 --> 00:02:22,976
+So in C, the element A[i] sits at a byte offset of four times i.
 
 25
-00:03:05,700 --> 00:03:14,433
-lb sign-extends: it copies the top bit, the sign bit, into all the upper bits. The top bit of 0xF3 is 1...
+00:02:22,976 --> 00:02:32,666
+For example, A[3] is at offset 12, not 3, and mixing those two up is one of the most common mistakes in assembly.
 
 26
-00:03:14,433 --> 00:03:27,800
-...so the upper 24 bits are all 1s, giving 0xFFFFFFF3. As a signed byte, 0xF3 is −13, and after extension it's still −13.
+00:02:32,666 --> 00:02:38,609
+The store instruction sw goes the other way and writes a register's value into memory.
 
 27
-00:03:27,800 --> 00:03:34,700
-lbu is the unsigned version: it always fills the upper bits with 0, giving 243.
+00:02:38,609 --> 00:02:45,727
+Let's work through a complete example, where element three of the array A is set to h plus element one,
 
 28
-00:03:34,700 --> 00:03:42,400
-sb stores just the register's lowest 8 bits to memory; the upper 24 bits are simply ignored.
+00:02:45,727 --> 00:02:47,110
+and h is kept in s1.
 
 29
-00:03:42,400 --> 00:03:48,833
-Half-words (16 bits) follow the same rules: lh, lhu, sh.
+00:02:47,110 --> 00:02:50,866
+First we load element one into a register.
 
 30
-00:03:48,833 --> 00:03:57,666
-In RV32, lw already fills all 32 bits, so there's nothing to extend, and no lwu.
+00:02:50,866 --> 00:02:55,553
+Next we add h, so t0 becomes ten plus twelve, which is twenty-two.
+
+31
+00:02:55,553 --> 00:02:59,175
+Finally sw writes that value back to element three,
+
+32
+00:02:59,175 --> 00:03:05,300
+and notice that sw lists the source register first and the memory address second.
+
+33
+00:03:05,300 --> 00:03:13,723
+In hexadecimal, twenty-two is 0x16, so with little-endian order the lowest address, 0x10C, holds the byte 0x16,
+
+34
+00:03:13,723 --> 00:03:17,833
+and the three bytes after it hold zero.
+
+35
+00:03:17,833 --> 00:03:24,963
+Besides whole words, RISC-V can also read and write a single byte, using the instructions lb, lbu, and sb.
+
+36
+00:03:24,963 --> 00:03:31,017
+When lb loads a byte into a thirty-two bit register, twenty-four extra bits are left over,
+
+37
+00:03:31,017 --> 00:03:33,733
+so what should they be filled with?
+
+38
+00:03:33,733 --> 00:03:40,315
+The answer is sign extension, which copies the top bit, the sign bit, into all the higher bits.
+
+39
+00:03:40,315 --> 00:03:46,619
+The top bit of 0xF3 is a one, so all twenty-four upper bits become ones, giving 0xFFFFFFF3.
+
+40
+00:03:46,619 --> 00:03:53,300
+As a signed number, 0xF3 is minus thirteen, and after extension it is still minus thirteen.
+
+41
+00:03:53,300 --> 00:03:59,569
+The unsigned version, lbu, always fills the upper bits with zeros, so the result is 243.
+
+42
+00:03:59,569 --> 00:04:01,421
+And sb goes the other way,
+
+43
+00:04:01,421 --> 00:04:09,300
+writing only the lowest eight bits of a register to memory and ignoring the other twenty-four.
+
+44
+00:04:09,300 --> 00:04:15,864
+Halfwords, which are sixteen bits, follow the same rules with lh, lhu, and sh.
+
+45
+00:04:15,864 --> 00:04:25,400
+And since lw already reads a full thirty-two bits, it needs no extension, which is why RV32 has no lwu.
 

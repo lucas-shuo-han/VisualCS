@@ -52,6 +52,13 @@
 - **Manim flattens a group's family when an animation starts.** Swapping a group's
   children during a `play` leaves the old children drawn. Keep all children and toggle
   their opacity instead (the subtitle reel does).
+- **A `FadeIn(caption)` keeps re-applying its end state until the play it belongs to is
+  over.** A sentence switch that happens inside that first play (the first sentence of a
+  beat is shorter than the animation that starts it) was undone on the next frame: the
+  reel showed sentence 1 for seconds, skipped sentences 2 and 3, and left a ghost of 1
+  under later ones. The reel's updater now says the current state again each frame
+  after the first 0.45 s; check the `mid` contact sheet of a beat whose first sentence
+  is short and whose first `play` is long.
 - The wrapper never breaks inside an English word or an arrow route, but it can split a
   CJK word (洛/杉矶). Read the contact sheets; reword or shorten when it happens.
 - `captions.py` finds captions by walking `construct()` and the `self.<method>()` calls

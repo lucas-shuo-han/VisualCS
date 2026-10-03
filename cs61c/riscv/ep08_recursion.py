@@ -3,7 +3,7 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import *  # noqa: E402,F403
+from manim_kit import *  # noqa: E402,F403
 
 
 # ---------------------------------------------------------------- the notes' code
@@ -279,11 +279,11 @@ class Ep08Recursion(NarratedScene):
             c.move_to([x0, y, 0], aligned_edge=LEFT)
             m.move_to([x1, y, 0], aligned_edge=LEFT)
         alt = mono("也写作 jalr rd, imm(rs1)", 20, GREY).next_to(r2, DOWN, buff=0.14).align_to(r2, LEFT)
-        self.say("第 7 集用过 jal 和 jr ra。其实 RISC-V 真正的无条件跳转指令只有两条。",
+        self.say("第 7 集用过 jal 和 jr ra。其实 RISC-V 真正的无条件跳转指令只有两条。"
+                 "jal rd, label 意为“跳转并链接”，其实先链接：把 PC + 4 写进 rd，再跳到 label。",
                  Write(head), FadeIn(real_l))
-        self.say("jal rd, label 意为“跳转并链接”，其实先链接：把 PC + 4 写进 rd，再跳到 label。",
-                 FadeIn(r1, shift=RIGHT * 0.2), FadeIn(m1, shift=RIGHT * 0.2))
-        self.play(Circumscribe(m1[:8], color=C_RA))
+        self.cue(tr("jal rd, label 意为"), FadeIn(r1, shift=RIGHT * 0.2), FadeIn(m1, shift=RIGHT * 0.2))
+        self.cue(tr("把 PC + 4 写进 rd"), Circumscribe(m1[:8], color=C_RA))
         self.say("jalr rd, rs1, imm 同样先链接，但跳到 rs1 + imm：地址来自寄存器。",
                  FadeIn(r2, shift=RIGHT * 0.2), FadeIn(m2, shift=RIGHT * 0.2), FadeIn(alt))
         self.hold()
@@ -305,7 +305,7 @@ class Ep08Recursion(NarratedScene):
             prow.add(VGroup(a, eq, b, t))
         self.say("其余跳转都是伪指令。j、jr、ret 把返回地址写进 x0，等于丢掉；省略 rd 的 jal 则链接到 ra。",
                  FadeIn(pseudo_l), LaggedStart(*[FadeIn(r, shift=UP * 0.15) for r in prow], lag_ratio=0.3))
-        self.play(*[Indicate(prow[k][2].glyphs(0, "x0"), color=RED_B) for k in (0, 2, 3)])
+        self.cue(tr("写进 x0"), *[Indicate(prow[k][2].glyphs(0, "x0"), color=RED_B) for k in (0, 2, 3)])
         self.hold()
 
         self.play(FadeOut(VGroup(pseudo_l, prow)))
@@ -322,11 +322,13 @@ class Ep08Recursion(NarratedScene):
         ).arrange(DOWN, buff=0.3, aligned_edge=LEFT)
         why_a.move_to([x0, -0.35, 0], aligned_edge=LEFT)
         why_b.move_to([x0, -0.55, 0], aligned_edge=LEFT)
-        self.say("为什么要两条？jal 的目标在汇编时就定了，正适合调用有名字的函数。",
+        self.say("为什么要两条？jal 的目标在汇编时就定了，正适合调用有名字的函数。"
+                 "jalr 的目标由寄存器在运行时给出：返回 ra 里的地址、调用函数指针，配合 auipc 还能跳得很远。",
                  FadeIn(why_a, shift=UP * 0.15), Circumscribe(VGroup(r1, m1), color=C_MNEM))
-        self.hold()
-        self.say("jalr 的目标由寄存器在运行时给出：返回 ra 里的地址、调用函数指针，配合 auipc 还能跳得很远。",
-                 FadeOut(why_a), FadeIn(why_b, shift=UP * 0.15), Circumscribe(VGroup(r2, m2), color=C_MNEM))
+        self.cue(tr("jalr 的目标由寄存器"),
+                 FadeOut(why_a),
+                 FadeIn(why_b, shift=UP * 0.15),
+                 Circumscribe(VGroup(r2, m2), color=C_MNEM))
         self.hold()
         self.clear_stage()
 
@@ -356,12 +358,12 @@ class Ep08Recursion(NarratedScene):
         a0 = RegBox("a0", 2, width=3.2, font_size=24)
         ra = RegBox("ra", "→ main", width=3.2, font_size=24)
         regs = VGroup(a0, ra).arrange(DOWN, buff=0.3).next_to(c, DOWN, buff=0.6).align_to(c, LEFT).shift(RIGHT * 0.5)
-        self.say("如果什么都不保存，会怎样？设 main 调用 factorial(2)：a0 = 2，ra 记着回 main 的地址。",
+        self.say("如果什么都不保存，会怎样？设 main 调用 factorial(2)：a0 = 2，ra 记着回 main 的地址。"
+                 "factorial(2) 把参数 1 放进 a0，再 jal：ra 被改成回 factorial(2) 的地址。",
                  FadeIn(chain[:2]), GrowArrow(calls[0]), FadeIn(call_l[0]), FadeIn(regs))
-        self.say("factorial(2) 把参数 1 放进 a0，再 jal：ra 被改成回 factorial(2) 的地址。",
-                 FadeIn(chain[2]), GrowArrow(calls[1]), FadeIn(call_l[1]))
-        self.play(a0.set(1))
-        self.play(ra.set("→ factorial(2)"))
+        self.cue(tr("factorial(2) 把参数 1"), FadeIn(chain[2]), GrowArrow(calls[1]), FadeIn(call_l[1]))
+        self.cue(tr("放进 a0"), a0.set(1))
+        self.cue(tr("ra 被改成"), ra.set("→ factorial(2)"))
         self.hold()
         back = Arrow(chain[2].get_top(), chain[1].get_bottom(), buff=0.08, color=GOLD_B).shift(RIGHT * 0.5)
         back_l = mono("a0 = 1", 22, C_A).next_to(back, RIGHT, buff=0.12)
@@ -369,10 +371,10 @@ class Ep08Recursion(NarratedScene):
         lost = mono("? × 1", 26, RED_B).move_to(want, aligned_edge=LEFT)
         self.say("factorial(1) 返回 1，可 factorial(2) 的 2 早被参数 1 覆盖了；ra 也还指着 factorial(2) 自己，再也回不到 main。",
                  GrowArrow(back), FadeIn(back_l))
-        self.play(FadeIn(want))
-        self.play(Transform(want, lost), Indicate(a0, color=RED_B))
+        self.cue(tr("factorial(2) 的 2 早被"), FadeIn(want))
+        self.cue(tr("早被参数 1 覆盖了"), Transform(want, lost), Indicate(a0, color=RED_B))
         cross = Cross(calls[0], stroke_color=RED_C, stroke_width=5).scale(0.7)
-        self.play(Indicate(ra, color=RED_B), Create(cross))
+        self.cue(tr("ra 也还指着"), Indicate(ra, color=RED_B), Create(cross))
         self.hold()
         self.clear_stage()
 
@@ -386,11 +388,12 @@ class Ep08Recursion(NarratedScene):
             cells.add(VGroup(sq, t))
         cells.arrange_in_grid(4, 8, buff=(0.18, 0.2)).move_to(UP * 1.0)
         cost = zh("每次调用：31 次 sw，再加 31 次 lw", 30, YELLOW_D).next_to(cells, DOWN, buff=0.55)
-        self.say("最省事的办法：每次调用都把 x1 到 x31 全部压栈，返回后再全部取回。",
+        self.say("最省事的办法：每次调用都把 x1 到 x31 全部压栈，返回后再全部取回。"
+                 "可访问内存很慢，而一次调用真正要保护的，往往只有几个寄存器。",
                  LaggedStart(*[FadeIn(k, shift=DOWN * 0.1) for k in cells], lag_ratio=0.02, run_time=1.6))
-        self.play(FadeIn(cost, shift=UP * 0.15))
+        self.cue(tr("返回后再全部取回"), FadeIn(cost, shift=UP * 0.15))
         keep = [0, 7]   # ra (x1), s0 (x8)
-        self.say("可访问内存很慢，而一次调用真正要保护的，往往只有几个寄存器。",
+        self.cue(tr("可访问内存很慢"),
                  *[cells[k].animate.set_opacity(0.18) for k in range(31) if k not in keep],
                  *[Indicate(cells[k], color=YELLOW_D) for k in keep])
         self.hold()
@@ -421,8 +424,8 @@ class Ep08Recursion(NarratedScene):
         VGroup(left, right).arrange(RIGHT, buff=0.4).move_to(UP * 1.7)
         self.say("解决办法是第 7 集的调用约定：调用者只能指望 s 寄存器和 sp 不变；被调用者要用 s 寄存器，得先存旧值、返回前恢复。",
                  FadeIn(left[0]), FadeIn(left[1][0]), FadeIn(right[0]), FadeIn(right[1][0]))
-        self.play(FadeIn(left[1][1], shift=UP * 0.1))
-        self.play(FadeIn(right[1][1], shift=UP * 0.1))
+        self.cue(tr("调用者只能指望"), FadeIn(left[1][1], shift=UP * 0.1))
+        self.cue(tr("被调用者要用"), FadeIn(right[1][1], shift=UP * 0.1))
         self.hold()
 
         def fbox(name, color):
@@ -436,8 +439,8 @@ class Ep08Recursion(NarratedScene):
         dn_t = zh("对 factorial(2)：调用者", 22, BLUE_C).next_to(chain[1], DOWN, buff=0.18)
         self.say("递归函数身兼两职：对上一层它是被调用者，对下一层它又是调用者。",
                  FadeIn(chain), GrowArrow(arrows[0]), GrowArrow(arrows[1]))
-        self.play(FadeIn(up_t, shift=DOWN * 0.1))
-        self.play(FadeIn(dn_t, shift=UP * 0.1))
+        self.cue(tr("对上一层"), FadeIn(up_t, shift=DOWN * 0.1))
+        self.cue(tr("对下一层"), FadeIn(dn_t, shift=UP * 0.1))
         self.hold()
         self.clear_stage()
 
@@ -462,7 +465,11 @@ class Ep08Recursion(NarratedScene):
         epi = side_brace(lst, 14, 17, "尾声")
         self.say("这是笔记里遵守调用约定的阶乘，从地址 0x2000 开始。先认出序言和尾声。",
                  FadeIn(lst, shift=RIGHT * 0.2), FadeIn(addrs), FadeIn(c))
-        self.play(GrowFromCenter(pro[0]), FadeIn(pro[1]), GrowFromCenter(epi[0]), FadeIn(epi[1]))
+        self.cue(tr("先认出序言和尾声"),
+                 GrowFromCenter(pro[0]),
+                 FadeIn(pro[1]),
+                 GrowFromCenter(epi[0]),
+                 FadeIn(epi[1]))
         self.hold()
 
         def hl(i, j=None):
@@ -481,24 +488,21 @@ class Ep08Recursion(NarratedScene):
             mini.add(VGroup(r, lab, mono(what, 20, col).move_to(r)))
         mini.move_to([0.4 if EN else -0.2, 2.4, 0])     # clear of the wider "prologue" label
         mini_t = zh("8 字节的栈帧", 20, GREY_A).next_to(mini, DOWN, buff=0.15)
-        self.say("序言在栈上划出 8 字节，这就是本次调用的栈帧：后面的 jal 会覆盖 ra，要借用的 s0 也得先存旧值。",
+        self.say("序言在栈上划出 8 字节，这就是本次调用的栈帧：后面的 jal 会覆盖 ra，要借用的 s0 也得先存旧值。"
+                 "mv s0 a0 把 n 放进 s0：s 寄存器跨调用不变，递归调用回来，n 还在。",
                  FadeIn(box), FadeIn(mini), FadeIn(mini_t))
-        self.hold()
-        self.say("mv s0 a0 把 n 放进 s0：s 寄存器跨调用不变，递归调用回来，n 还在。",
-                 box.animate.become(hl(4)), Circumscribe(c.glyphs(0, "int n"), color=C_S))
-        self.say("bne 只能比较两个寄存器，所以先用 li 把 1 放进 t0；n ≠ 1 就跳到 recurse。",
+        self.cue(tr("mv s0 a0"), box.animate.become(hl(4)), Circumscribe(c.glyphs(0, "int n"), color=C_S))
+        self.say("bne 只能比较两个寄存器，所以先用 li 把 1 放进 t0；n ≠ 1 就跳到 recurse。"
+                 "否则是基本情况：a0 = 1。这里不能直接 jr ra：s0 还没恢复，栈帧也没弹，所以 j 到尾声。",
                  box.animate.become(hl(5, 6)))
-        self.hold()
         jump = CurvedArrow(lst.right_of(8, 0.15), lst.right_of(13, 0.15), angle=-TAU / 4, color=YELLOW_D)
-        self.say("否则是基本情况：a0 = 1。这里不能直接 jr ra：s0 还没恢复，栈帧也没弹，所以 j 到尾声。",
-                 box.animate.become(hl(7, 8)), Circumscribe(c[1], color=YELLOW_D))
-        self.play(Create(jump))
+        self.cue(tr("否则是基本情况"), box.animate.become(hl(7, 8)), Circumscribe(c[1], color=YELLOW_D))
+        self.cue(tr("所以 j 到尾声"), Create(jump))
         self.hold()
-        self.say("recurse：a0 = n − 1，调用自己；回来时 a0 = (n − 1)!，再乘上 s0 里的 n。",
+        self.say("recurse：a0 = n − 1，调用自己；回来时 a0 = (n − 1)!，再乘上 s0 里的 n。"
+                 "尾声的顺序和序言相反：先从栈上取回 ra 和 s0，再把 sp 加 8 弹掉栈帧，最后 jr ra。",
                  FadeOut(jump), box.animate.become(hl(10, 12)), Circumscribe(c[2], color=YELLOW_D))
-        self.hold()
-        self.say("尾声的顺序和序言相反：先从栈上取回 ra 和 s0，再把 sp 加 8 弹掉栈帧，最后 jr ra。",
-                 box.animate.become(hl(14, 17)))
+        self.cue(tr("尾声的顺序"), box.animate.become(hl(14, 17)))
         self.hold()
         self.play(FadeOut(VGroup(box, c, pro, epi, mini, mini_t)))
 
@@ -541,7 +545,7 @@ class Ep08Recursion(NarratedScene):
             self.play(FadeOut(v), col.set(addr, s, color), run_time=0.4)
 
         self.say("main 把 3 放进 a0，在 0x1004 执行 jal：ra = 0x1008，跳进 factorial。", FadeIn(box))
-        self.play(R["a0"].set(3))
+        self.cue(tr("把 3 放进 a0"), R["a0"].set(3))
         at(main, 2, R["ra"].set("0x1008"))
         at(lst, 1)
         self.hold()
@@ -593,7 +597,7 @@ class Ep08Recursion(NarratedScene):
         self.say("三个栈帧各存一份 ra 和 s0：factorial(3) 存的 ra 回 main，另两份都回 0x2028 的 mul。",
                  *[Indicate(t, color=C_RA) for t in saved_ra])
         mul_addr = addrs[sum(a is not None for a in FACT_ADDR[:12])]   # the label of line 12
-        self.play(Indicate(mul_addr, color=C_RA), Indicate(lst[12], color=C_RA))
+        self.cue(tr("另两份都回"), Indicate(mul_addr, color=C_RA), Indicate(lst[12], color=C_RA))
         self.hold()
 
         def pop(n, s0_back, ret_val, dest, rt=0.4):
@@ -609,11 +613,12 @@ class Ep08Recursion(NarratedScene):
             at(lst, 17, rt=rt)
             at(*dest, rt=rt)
 
-        self.say("factorial(1) 是基本情况：a0 = 1，然后 j 到尾声。")
+        self.say("factorial(1) 是基本情况：a0 = 1，然后 j 到尾声。"
+                 "尾声取回 ra = 0x2028 和 s0 = 2，sp 回到 0xFFFFFFC4，jr ra 回到 mul。")
         at(lst, 7, R["a0"].set(1))
         at(lst, 8)
         at(lst, 14)
-        self.say("尾声取回 ra = 0x2028 和 s0 = 2，sp 回到 0xFFFFFFC4，jr ra 回到 mul。")
+        self.cue(tr("尾声取回"))
         pop(1, 2, 1, (lst, 12), rt=0.5)
         self.hold()
         # right after the mul line's own text, clear of the frame labels on the right
@@ -624,11 +629,11 @@ class Ep08Recursion(NarratedScene):
         self.play(Indicate(R["s0"], color=C_S))
         self.hold()
         f2 = mono("3 × 2 = 6", 20, C_A).move_to(f1, aligned_edge=LEFT)
-        self.say("factorial(2) 走完尾声：ra = 0x2028，s0 = 3，sp = 0xFFFFFFCC。回到 mul：a0 = 3 × 2 = 6。")
+        self.say("factorial(2) 走完尾声：ra = 0x2028，s0 = 3，sp = 0xFFFFFFCC。回到 mul：a0 = 3 × 2 = 6。"
+                 "factorial(3) 取回 ra = 0x1008 和 main 的 s0 = 42，sp 回到 0xFFFFFFD4，返回 main。")
         pop(2, 3, 2, (lst, 12), rt=0.45)
-        self.play(R["a0"].set(6), Transform(f1, f2))
-        self.hold()
-        self.say("factorial(3) 取回 ra = 0x1008 和 main 的 s0 = 42，sp 回到 0xFFFFFFD4，返回 main。")
+        self.cue(tr("a0 = 3 × 2 = 6"), R["a0"].set(6), Transform(f1, f2))
+        self.cue(tr("factorial(3) 取回"))
         pop(3, 42, 6, (main, 3), rt=0.5)
         self.hold()
         self.say("回到 main：a0 = 6，sp 和 s0 都和调用前一样。弹出的栈帧还留在内存里，只是没人再用了。",
@@ -650,15 +655,14 @@ class Ep08Recursion(NarratedScene):
             "}",
         ], lang="c", font_size=20, line_gap=0.36)
         c.move_to([6.6, 3.5, 0], aligned_edge=UR).shift(DOWN * c[0].height / 2)
-        self.say("笔记里的 foo 也是递归：foo(i) = i + foo(i − 1)。它的汇编和阶乘并排一看，骨架完全一样。",
+        self.say("笔记里的 foo 也是递归：foo(i) = i + foo(i − 1)。它的汇编和阶乘并排一看，骨架完全一样。"
+                 "只有三处不同：直接和 x0 比较，省掉 li；基本情况返回 0；乘法换成加法。",
                  FadeOut(addrs), FadeIn(foo, shift=LEFT * 0.2), FadeIn(c))
-        self.hold()
         rows = [5, 6, 7, 12]
         boxes = VGroup(*[b for r in rows for b in (lst.line_box(r, color=RED_C, opacity=0.2),
                                                    foo.line_box(r, color=RED_C, opacity=0.2))])
-        self.say("只有三处不同：直接和 x0 比较，省掉 li；基本情况返回 0；乘法换成加法。",
-                 FadeIn(boxes))
-        self.play(Indicate(foo.glyphs(6, "x0"), color=RED_B))
+        self.cue(tr("只有三处不同"), FadeIn(boxes))
+        self.cue(tr("直接和 x0 比较"), Indicate(foo.glyphs(6, "x0"), color=RED_B))
         self.hold()
         m = CodeListing(FOO_MAIN[:6], font_size=20, line_gap=0.31)
         m.next_to(c, DOWN, buff=0.45).align_to(c, LEFT)
@@ -669,7 +673,7 @@ class Ep08Recursion(NarratedScene):
             depth.shift(LEFT * (depth.get_right()[0] - 6.9))
         self.say("笔记的 main 把 foo(3) 放进 s0，调用 foo(100) 后它还在。foo(100) 最深时压着 101 个栈帧，共 808 字节。",
                  FadeOut(boxes), FadeIn(m))
-        self.play(Indicate(m[3], color=C_S), FadeIn(depth, shift=UP * 0.1))
+        self.cue(tr("foo(100) 最深时"), Indicate(m[3], color=C_S), FadeIn(depth, shift=UP * 0.1))
         self.hold()
         self.clear_stage()
 
@@ -696,16 +700,19 @@ class Ep08Recursion(NarratedScene):
         edges = VGroup(Line(main.get_bottom(), ss.get_top(), buff=0.05, color=GREY_B),
                        Line(ss.get_bottom(), m1.get_top(), buff=0.05, color=GREY_B),
                        Line(ss.get_bottom(), m2.get_top(), buff=0.05, color=GREY_B))
-        self.say("并非每个函数都需要栈。笔记里的 sum_square 调用两次 mult，而 mult 不再调用任何函数。",
+        self.say("并非每个函数都需要栈。笔记里的 sum_square 调用两次 mult，而 mult 不再调用任何函数。"
+                 "mult 这样的函数叫叶子函数：它没有 jal，ra 不会被覆盖；只用 t、a 寄存器的话，连一条 sw、lw 都不用。",
                  FadeIn(c, shift=RIGHT * 0.2), FadeIn(main), FadeIn(ss), FadeIn(m1), FadeIn(m2), Create(edges))
         leaf_t = zh("叶子", 24, GREEN_B).next_to(VGroup(m1, m2), DOWN, buff=0.2)
         asm = CodeListing(["mult:", "    mul  a0, a0, a1", "    ret"], font_size=26, line_gap=0.48)
         asm.next_to(c, DOWN, buff=0.6).align_to(c, LEFT)
         note = zh("没有 sw，没有 lw，sp 一动不动", 24, GREEN_B).next_to(asm, DOWN, buff=0.35).align_to(c, LEFT)
-        self.say("mult 这样的函数叫叶子函数：它没有 jal，ra 不会被覆盖；只用 t、a 寄存器的话，连一条 sw、lw 都不用。",
-                 FadeIn(leaf_t), Indicate(m1, color=GREEN_B), Indicate(m2, color=GREEN_B))
-        self.play(FadeIn(asm, shift=UP * 0.15))
-        self.play(FadeIn(note))
+        self.cue(tr("mult 这样的函数叫叶子函数"),
+                 FadeIn(leaf_t),
+                 Indicate(m1, color=GREEN_B),
+                 Indicate(m2, color=GREEN_B))
+        self.cue(tr("它没有 jal"), FadeIn(asm, shift=UP * 0.15))
+        self.cue(tr("连一条 sw、lw 都不用"), FadeIn(note))
         self.hold()
         self.clear_stage()
 
@@ -745,14 +752,16 @@ class Ep08Recursion(NarratedScene):
             return SurroundingRectangle(rows[k], color=color, buff=0.06, stroke_width=2.5)
 
         gt = VGroup(row_box(3, RED_C), row_box(4, RED_C))
-        self.say("完整的寄存器约定表如下。gp 和 tp 另有专门用途，不归调用约定管，别去碰它们。",
+        self.say("完整的寄存器约定表如下。gp 和 tp 另有专门用途，不归调用约定管，别去碰它们。"
+                 "s0 又叫 fp，即帧指针：sp 可能在函数中途移动，fp 则一直指着当前栈帧。",
                  FadeIn(head), Create(rule),
                  LaggedStart(*[FadeIn(r, shift=UP * 0.05) for r in rows], lag_ratio=0.06, run_time=1.6))
-        self.play(Create(gt), rows[3].animate.set_opacity(0.45), rows[4].animate.set_opacity(0.45))
-        self.hold()
+        self.cue(tr("gp 和 tp 另有专门用途"),
+                 Create(gt),
+                 rows[3].animate.set_opacity(0.45),
+                 rows[4].animate.set_opacity(0.45))
         fp = row_box(6, C_S)
-        self.say("s0 又叫 fp，即帧指针：sp 可能在函数中途移动，fp 则一直指着当前栈帧。",
-                 FadeOut(gt), Create(fp))
+        self.cue(tr("s0 又叫 fp"), FadeOut(gt), Create(fp))
         self.hold()
         self.clear_stage()
 
@@ -781,7 +790,7 @@ class Ep08Recursion(NarratedScene):
 
         self.say("笔记里的 func_a 就在中途动了 sp：它要调用 func_b，调用前后都要用 t1。",
                  FadeIn(lst, shift=RIGHT * 0.2), FadeIn(addrs), FadeIn(regs), FadeIn(col), FadeIn(sp))
-        self.play(LaggedStart(*[FadeIn(b) for b in braces], lag_ratio=0.2))
+        self.cue(tr("调用前后都要用 t1"), LaggedStart(*[FadeIn(b) for b in braces], lag_ratio=0.2))
         self.hold()
         box = lst.line_box(1)
 
@@ -845,9 +854,10 @@ class Ep08Recursion(NarratedScene):
         self.say("三道判断题，取自笔记的练习。先自己想一想。", Write(head),
                  LaggedStart(*[FadeIn(r, shift=RIGHT * 0.2) for r in rows], lag_ratio=0.3))
         self.hold(1.5)
-        self.say("第 1 题错：a0、a1 要带回返回值。a 寄存器和 t 一样，都由调用者保存。",
+        self.say("第 1 题错：a0、a1 要带回返回值。a 寄存器和 t 一样，都由调用者保存。"
+                 "第 2 题对：s 寄存器由被调用者保存，通常在序言里存、在尾声里恢复。",
                  FadeIn(marks[0], scale=1.4))
-        self.say("第 2 题对：s 寄存器由被调用者保存，通常在序言里存、在尾声里恢复。", FadeIn(marks[1], scale=1.4))
+        self.cue(tr("第 2 题对"), FadeIn(marks[1], scale=1.4))
         self.say("第 3 题错：func_a 就在中途压栈保存了 t1。只要压栈、弹栈配对，栈随时能用。",
                  FadeIn(marks[2], scale=1.4))
         self.hold()
@@ -875,11 +885,11 @@ class Ep08Recursion(NarratedScene):
             r[1].move_to([-5.6, y, 0], aligned_edge=LEFT)
             r[2].move_to([-3.7 if EN else -3.9, y, 0], aligned_edge=LEFT)
         proc = zh("RISC-V 手册里的“过程”（procedure），就是函数", 22, GREY_B).move_to([-6.2, -1.3, 0], aligned_edge=LEFT)
-        self.say("最后，再过一遍第 7 集的六个步骤。第 1、2 步归调用者：存好还要用的 t、a 寄存器，放好参数，然后 jal。",
+        self.say("最后，再过一遍第 7 集的六个步骤。第 1、2 步归调用者：存好还要用的 t、a 寄存器，放好参数，然后 jal。"
+                 "第 3 步序言：sp 只减一次，局部数组一并分配；存下要用的 s 寄存器，要调用别人就存 ra。",
                  Write(head), FadeIn(proc),
                  LaggedStart(*[FadeIn(r, shift=RIGHT * 0.2) for r in rows[:2]], lag_ratio=0.3))
-        self.say("第 3 步序言：sp 只减一次，局部数组一并分配；存下要用的 s 寄存器，要调用别人就存 ra。",
-                 FadeIn(rows[2], shift=RIGHT * 0.2))
+        self.cue(tr("第 3 步序言"), FadeIn(rows[2], shift=RIGHT * 0.2))
         self.say("第 4 步是函数体；第 5、6 步是尾声：返回值放进 a0，恢复寄存器、弹栈帧，jr ra。",
                  LaggedStart(*[FadeIn(r, shift=RIGHT * 0.2) for r in rows[3:]], lag_ratio=0.3))
         self.hold()
@@ -893,8 +903,8 @@ class Ep08Recursion(NarratedScene):
         for a, b in pairs:
             grid.add(VGroup(zh(a, 26, GOLD_B), mono("→", 26, GREY_B), zh(b, 26, BLUE_B)).arrange(RIGHT, buff=0.3))
         grid.arrange_in_grid(3, 2, buff=(1.2, 0.5), col_alignments="ll").move_to(UP * 1.0)
-        self.say("笔记的比喻：调用函数就像替父母看家。父母是调用者，你是被调用者；桌子是寄存器，壁橱是内存。",
+        self.say("笔记的比喻：调用函数就像替父母看家。父母是调用者，你是被调用者；桌子是寄存器，壁橱是内存。"
+                 "父母备在桌上的是参数。桌上别的东西，先收进壁橱（序言）；走前原样摆回，再留一份礼物：返回值（尾声）。",
                  LaggedStart(*[FadeIn(g, shift=UP * 0.1) for g in grid[:4]], lag_ratio=0.2))
-        self.say("父母备在桌上的是参数。桌上别的东西，先收进壁橱（序言）；走前原样摆回，再留一份礼物：返回值（尾声）。",
-                 LaggedStart(*[FadeIn(g, shift=UP * 0.1) for g in grid[4:]], lag_ratio=0.3))
+        self.cue(tr("父母备在桌上的是参数"), LaggedStart(*[FadeIn(g, shift=UP * 0.1) for g in grid[4:]], lag_ratio=0.3))
         self.hold()

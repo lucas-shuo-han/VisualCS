@@ -2,7 +2,11 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import *  # noqa: E402,F403
+from manim_kit import *  # noqa: E402,F403
+import re
+
+# ideographs, CJK punctuation and fullwidth forms: text that must be translated
+NEEDS_TR = re.compile(r"[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]")
 
 # ---------------------------------------------------------------- the notes' listings, checked
 
@@ -285,16 +289,18 @@ class Ep14HelloWorld(NarratedScene):
                                      stroke_color=GREY_D, stroke_width=2)
         s_tab = mono("hello.s", 26, TEAL_C).next_to(frame, UP, buff=0.1).align_to(frame, LEFT).shift(RIGHT * 0.1)
         comp = zh("编译器", 26, BLUE_C)
-        self.say("第一步，编译器把 C 代码翻译成汇编，得到 hello.s。", FadeIn(c_tab), FadeIn(c))
+        self.say("第一步，编译器把 C 代码翻译成汇编，得到 hello.s。"
+                 "注意 la、call、li、ret 都是伪指令，要留给汇编器展开。", FadeIn(c_tab), FadeIn(c))
         comp.next_to(c, DOWN, buff=0.45)
         self.play(FadeIn(comp, shift=UP * 0.1))
-        self.play(FadeOut(VGroup(c_tab, c, comp), shift=LEFT * 0.6),
-                  FadeIn(VGroup(s_tab, frame, colA, colB), shift=LEFT * 0.6), run_time=1.2)
+        self.cue(tr("得到 hello.s"),
+                 FadeOut(VGroup(c_tab, c, comp), shift=LEFT * 0.6),
+                 FadeIn(VGroup(s_tab, frame, colA, colB), shift=LEFT * 0.6),
+                 run_time=1.2)
 
         pseudo = VGroup(*[SurroundingRectangle(colA.glyphs(i, m), color=ORANGE, buff=0.05, stroke_width=2.5)
                           for i, m in ((6, "la"), (7, "la"), (8, "call"), (11, "li"), (12, "ret"))])
-        self.say("注意 la、call、li、ret 都是伪指令，要留给汇编器展开。",
-                 LaggedStart(*[Create(b) for b in pseudo], lag_ratio=0.15))
+        self.cue(tr("注意 la、call、li、ret"), LaggedStart(*[Create(b) for b in pseudo], lag_ratio=0.15))
 
         spots = [(colA, 0), (colA, 1), (colA, 2), (colB, 0), (colB, 1), (colB, 3), (colB, 5)]
         faint = VGroup(*[lst.line_box(i, color=YELLOW_D, opacity=0.12, pad=0.1) for lst, i in spots])
@@ -362,7 +368,8 @@ class Ep14HelloWorld(NarratedScene):
             h.set_y(2.85)
             if h.width > col.width:   # English "Machine code" is wider than the hex column
                 h.scale_to_fit_width(col.width, about_edge=LEFT)
-        self.say("把 main 反汇编出来：左列是模块内的地址，中间是机器码，右列是指令。",
+        self.say("把 main 反汇编出来：左列是模块内的地址，中间是机器码，右列是指令。"
+                 "伪指令都展开了。注意这份清单做了简化：call 只变成了一条 jalr。",
                  o_tab.animate.move_to([D.get_left()[0] + o_tab.width / 2 + 0.1, s_tab.get_y(), 0]),
                  *[ReplacementTransform(w, D.hex[i]) for i, w in enumerate(words)], run_time=1.4)
         self.add(D)
@@ -377,8 +384,9 @@ class Ep14HelloWorld(NarratedScene):
             marks.add(VGroup(a, ln, b))
         foot = zh("注：la 也可能展开成 auipc + addi；call 通常是 auipc + jalr（第 12 集）", 18, GREY_B)
         foot.next_to(D, DOWN, buff=0.3).align_to(D, LEFT)
-        self.say("伪指令都展开了。注意这份清单做了简化：call 只变成了一条 jalr。",
-                 LaggedStart(*[Create(m) for m in marks], lag_ratio=0.25, run_time=2.2), FadeIn(foot))
+        self.cue(tr("伪指令都展开了"),
+                 LaggedStart(*[Create(m) for m in marks], lag_ratio=0.25, run_time=2.2),
+                 FadeIn(foot))
         self.hold()
         dx = -6.55 - D.get_left()[0]
         self.play(FadeOut(VGroup(colA, s_tab, marks, foot)), VGroup(D, heads, o_tab).animate.shift(RIGHT * dx))
@@ -388,10 +396,11 @@ class Ep14HelloWorld(NarratedScene):
         for i, (n, sub) in HOLES.items():
             holes.add(D.digits(i, 0, n), D.imm(i, sub))
             boxes.add(SurroundingRectangle(D.digits(i, 0, n), color=C_HOLE, buff=0.04, stroke_width=2))
-        self.say("但这五条的立即数都是 0，只是占位符：数据和 printf 在哪，汇编器还不知道。",
+        self.say("但这五条的立即数都是 0，只是占位符：数据和 printf 在哪，汇编器还不知道。"
+                 "其余指令不涉及地址，汇编完，机器码就定了。",
                  holes.animate.set_color(C_HOLE), LaggedStart(*[Create(b) for b in boxes], lag_ratio=0.15))
         fixed = [0, 1, 7, 8, 9, 10]
-        self.say("其余指令不涉及地址，汇编完，机器码就定了。",
+        self.cue(tr("其余指令不涉及地址"),
                  VGroup(*[D.hex[i][1:] for i in fixed]).animate.set_color(C_DONE),
                  Circumscribe(D.row(1), color=C_DONE))
 
@@ -403,11 +412,11 @@ class Ep14HelloWorld(NarratedScene):
                           ["str2", "0x0000000c", "local data"]],
                          [X0, X0 + 1.2, X0 + 3.2], colors=[C_LABEL, C_NUM, C_TEXT])
         sym.shift(UP * D.row_y(1))
-        self.say("符号表记下本文件的标签，以及它们在各自段内的地址；调试器 gdb 也要用它。",
+        self.say("符号表记下本文件的标签，以及它们在各自段内的地址；调试器 gdb 也要用它。"
+                 "main 在代码段偏移 0 处，类型是 global，这正是 .global 的作用。",
                  FadeIn(sym_t), FadeIn(sym[0]), Create(sym[1]),
                  LaggedStart(*[FadeIn(r, shift=LEFT * 0.2) for r in sym[2]], lag_ratio=0.2))
-        self.say("main 在代码段偏移 0 处，类型是 global，这正是 .global 的作用。",
-                 Indicate(sym[2][0], color=YELLOW_D, scale_factor=1.1))
+        self.cue(tr("main 在代码段偏移 0 处"), Indicate(sym[2][0], color=YELLOW_D, scale_factor=1.1))
         self.hold()
 
         cells = VGroup()
@@ -430,8 +439,14 @@ class Ep14HelloWorld(NarratedScene):
                  Indicate(VGroup(sym[2][1], sym[2][2]), color=YELLOW_D, scale_factor=1.05),
                  LaggedStart(*[FadeIn(c) for c in cells], lag_ratio=0.04, run_time=1.4),
                  FadeIn(strip_t))
-        self.play(GrowFromCenter(br1), FadeIn(l1), FadeIn(o1), GrowFromCenter(br2), FadeIn(l2), FadeIn(o2))
-        self.play(Indicate(o2, color=YELLOW_D), Indicate(sym[2][2][1], color=YELLOW_D))
+        self.cue(tr("第一个连同结尾的 0"),
+                 GrowFromCenter(br1),
+                 FadeIn(l1),
+                 FadeIn(o1),
+                 GrowFromCenter(br2),
+                 FadeIn(l2),
+                 FadeIn(o2))
+        self.cue(tr("所以第二个从 0xc 开始"), Indicate(o2, color=YELLOW_D), Indicate(sym[2][2][1], color=YELLOW_D))
         self.hold()
 
         self.play(FadeOut(VGroup(sym_t, sym, cells, br1, br2, l1, l2, o1, o2, strip_t)))
@@ -445,14 +460,17 @@ class Ep14HelloWorld(NarratedScene):
         links = VGroup(*[DashedLine([D.get_right()[0] + 0.12, D.row_y(i), 0], [X0 - 0.15, D.row_y(i), 0],
                                     stroke_color=C_HOLE, stroke_width=2, dash_length=0.08)
                          for i in range(2, 7)])
-        self.say("重定位表是留给链接器的“待办清单”，每一项对应一个占位符。",
+        self.say("重定位表是留给链接器的“待办清单”，每一项对应一个占位符。"
+                 "前两项：0x8 处的 lui 等着 str1 地址的高 20 位，0xc 处的 addi 等着低 12 位。"
+                 "str2 的两项同理；最后一项在 0x18，jalr 等着 printf 的地址。",
                  FadeIn(rel_t), FadeIn(rel[0]), Create(rel[1]),
                  LaggedStart(*[FadeIn(r, shift=LEFT * 0.2) for r in rel[2]], lag_ratio=0.15))
-        self.say("前两项：0x8 处的 lui 等着 str1 地址的高 20 位，0xc 处的 addi 等着低 12 位。",
-                 Create(links[0]), Create(links[1]),
+        self.cue(tr("前两项"),
+                 Create(links[0]),
+                 Create(links[1]),
                  Indicate(rel[2][0], color=RED_B, scale_factor=1.05),
                  Indicate(rel[2][1], color=RED_B, scale_factor=1.05))
-        self.say("str2 的两项同理；最后一项在 0x18，jalr 等着 printf 的地址。",
+        self.cue(tr("str2 的两项同理"),
                  *[Create(links[k]) for k in (2, 3, 4)],
                  Indicate(rel[2][4], color=RED_B, scale_factor=1.05))
         self.hold()
@@ -484,16 +502,18 @@ class Ep14HelloWorld(NarratedScene):
         v1b = zh("B 型分支从不用改", 18, GREY_A).next_to(v1, DOWN, buff=0.15)
         v2 = zh("进重定位表", 24, C_HOLE).next_to(c2[0].get_bottom(), UP, buff=0.55)
         v3 = zh("进重定位表", 24, C_HOLE).next_to(c3[0].get_bottom(), UP, buff=0.55)
-        self.say("为什么有的地址汇编器就能定，有的却要等链接器？因为地址分三种。", Write(head))
-        self.say("一、文件内的 PC 相对跳转，比如 beq，或 jal 到本文件的标签：代码整体挪到哪儿，距离都不变。",
-                 FadeIn(c1), Create(arc), FadeIn(off))
-        self.play(VGroup(code1, arc, off).animate(rate_func=there_and_back, run_time=1.6).shift(DOWN * 0.45))
+        self.say("为什么有的地址汇编器就能定，有的却要等链接器？因为地址分三种。"
+                 "一、文件内的 PC 相对跳转，比如 beq，或 jal 到本文件的标签：代码整体挪到哪儿，距离都不变。", Write(head))
+        self.cue(tr("一、文件内的 PC 相对跳转"), FadeIn(c1), Create(arc), FadeIn(off))
+        self.cue(tr("代码整体挪到哪儿"),
+                 VGroup(code1, arc, off).animate(rate_func=there_and_back, run_time=1.6).shift(DOWN * 0.45))
         self.play(FadeIn(v1, shift=UP * 0.1))
-        self.say("二、静态数据的地址，比如 la 要装入的 str1、lw 要读的全局变量：要等所有文件拼好才知道。",
+        self.say("二、静态数据的地址，比如 la 要装入的 str1、lw 要读的全局变量：要等所有文件拼好才知道。"
+                 "三、外部函数，比如 printf：它在别的文件里，汇编器连它有多远都不知道。"
+                 "后两种要记进重定位表。所以 jal 有时要改，而 B 型分支只在模块内跳，从来不用改。",
                  FadeIn(c2))
-        self.say("三、外部函数，比如 printf：它在别的文件里，汇编器连它有多远都不知道。", FadeIn(c3))
-        self.say("后两种要记进重定位表。所以 jal 有时要改，而 B 型分支只在模块内跳，从来不用改。",
-                 FadeIn(v2, shift=UP * 0.1), FadeIn(v3, shift=UP * 0.1), FadeIn(v1b))
+        self.cue(tr("三、外部函数"), FadeIn(c3))
+        self.cue(tr("后两种要记进重定位表"), FadeIn(v2, shift=UP * 0.1), FadeIn(v3, shift=UP * 0.1), FadeIn(v1b))
         self.hold()
         self.clear_stage()
 
@@ -558,23 +578,34 @@ class Ep14HelloWorld(NarratedScene):
                   stroke_width=3)
         q_l = mono("printf?", 20, YELLOW_D).next_to(q, RIGHT, buff=0.1)
         bundle = zh("一包 .o 文件", 20, GREY_A).next_to(libc_t, RIGHT, buff=0.3)
-        self.say("printf 在哪？链接器先查用户的 .o 文件，找不到再查库。库文件 .a 其实就是一包 .o 文件。",
+        self.say("printf 在哪？链接器先查用户的 .o 文件，找不到再查库。库文件 .a 其实就是一包 .o 文件。"
+                 "链接也让分开编译成为可能：改了 hello.c 只需重新编译它自己，庞大的 C 库不用跟着重编。",
                  Circumscribe(crt, color=GREY_B), Circumscribe(hello, color=GREY_B))
-        self.play(GrowArrow(q), FadeIn(q_l), FadeIn(bundle))
-        self.play(Circumscribe(pf, color=YELLOW_D))
+        self.cue(tr("找不到再查库"), GrowArrow(q), FadeIn(q_l), FadeIn(bundle))
+        self.cue(tr("库文件 .a 其实就是一包"), Circumscribe(pf, color=YELLOW_D))
         re_c = zh("重新编译", 20, BLUE_B).next_to(hello, UP, buff=0.12)
         no_c = zh("不用重新编译", 20, GREY_A).next_to(libc_box, DOWN, buff=0.12).align_to(libc_box, RIGHT)
-        self.say("链接也让分开编译成为可能：改了 hello.c 只需重新编译它自己，庞大的 C 库不用跟着重编。",
-                 FadeIn(re_c, shift=DOWN * 0.1), Indicate(hello[0], color=BLUE_B), FadeIn(no_c))
+        self.cue(tr("链接也让分开编译成为可能"),
+                 FadeIn(re_c, shift=DOWN * 0.1),
+                 Indicate(hello[0], color=BLUE_B),
+                 FadeIn(no_c))
         self.hold()
 
-        self.say("先把各代码段从 0x10000 起首尾相接：启动例程在最前，接着是 main，再往后是 printf。",
+        self.say("先把各代码段从 0x10000 起首尾相接：启动例程在最前，接着是 main，再往后是 printf。"
+                 "数据段接在代码之后：str1 在 0x20A10，str2 比它晚 12 字节。",
                  FadeOut(VGroup(q, q_l, re_c, no_c)), GrowFromCenter(br_t), FadeIn(br_tl))
-        self.play(TransformFromCopy(crt[0][0], fill_t[4]), FadeIn(a_crt), run_time=1.0)
-        self.play(TransformFromCopy(hello[0][0], fill_t[3]), FadeIn(a_main), FadeIn(fill_t[2]), run_time=1.0)
-        self.play(TransformFromCopy(pf[0][0], fill_t[1]), FadeIn(a_pf), FadeIn(fill_t[0]), run_time=1.0)
-        self.say("数据段接在代码之后：str1 在 0x20A10，str2 比它晚 12 字节。",
-                 GrowFromCenter(br_d), FadeIn(br_dl))
+        self.cue(tr("启动例程在最前"), TransformFromCopy(crt[0][0], fill_t[4]), FadeIn(a_crt), run_time=1.0)
+        self.cue(tr("接着是 main"),
+                 TransformFromCopy(hello[0][0], fill_t[3]),
+                 FadeIn(a_main),
+                 FadeIn(fill_t[2]),
+                 run_time=1.0)
+        self.cue(tr("再往后是 printf"),
+                 TransformFromCopy(pf[0][0], fill_t[1]),
+                 FadeIn(a_pf),
+                 FadeIn(fill_t[0]),
+                 run_time=1.0)
+        self.cue(tr("数据段接在代码之后"), GrowFromCenter(br_d), FadeIn(br_dl))
         self.play(TransformFromCopy(hello[0][1], VGroup(fill_d[1], fill_d[2])), FadeIn(a_s1), FadeIn(a_s2),
                   FadeIn(fill_d[0]), run_time=1.2)
 
@@ -587,8 +618,10 @@ class Ep14HelloWorld(NarratedScene):
         st.shift(UP * 2.15)
         self.say("所有符号的最终地址都定了，链接器据此更新符号表。",
                  FadeOut(VGroup(inputs, bundle)), FadeIn(st_t), FadeIn(st[0]), Create(st[1]))
-        self.play(*[TransformFromCopy(a, st[2][k][1]) for k, a in enumerate((a_main, a_pf, a_s1, a_s2))],
-                  *[FadeIn(st[2][k][0]) for k in range(4)], run_time=1.2)
+        self.cue(tr("据此更新符号表"),
+                 *[TransformFromCopy(a, st[2][k][1]) for k, a in enumerate((a_main, a_pf, a_s1, a_s2))],
+                 *[FadeIn(st[2][k][0]) for k in range(4)],
+                 run_time=1.2)
         self.hold()
 
         # --- fill the holes
@@ -603,11 +636,13 @@ class Ep14HelloWorld(NarratedScene):
             boxes[i] = SurroundingRectangle(D.digits(i, 0, n), color=C_HOLE, buff=0.04, stroke_width=2)
         new_addr = plain_listing([addr_s(a) for a, _, _ in A_OUT], GREY_B)
         new_addr.shift(D.addr[0].get_left() - new_addr[0].get_left())
-        self.say("然后按重定位表逐项补洞。先换上每条指令的最终地址。",
+        self.say("然后按重定位表逐项补洞。先换上每条指令的最终地址。"
+                 "从 str1 = 0x20A10 开始：低 12 位 0xA10 的最高位是 1，addi 会把它当成负数 −1520。"
+                 "所以高 20 位要多加 1，写成 0x21。这正是第 12 集里 li 的拆法。",
                  FadeOut(VGroup(mem, aout_t, fill_d, fill_t, br_t, br_d, br_tl, br_dl,
                                 a_crt, a_main, a_pf, a_s1, a_s2)),
                  FadeIn(D), FadeIn(VGroup(*boxes.values())))
-        self.play(ReplacementTransform(D.addr, new_addr), run_time=1.2)
+        self.cue(tr("先换上每条指令的最终地址"), ReplacementTransform(D.addr, new_addr), run_time=1.2)
         D.addr = new_addr
 
         CX = 1.9
@@ -616,12 +651,13 @@ class Ep14HelloWorld(NarratedScene):
         for k, m in enumerate(calc):
             m.move_to([CX, -0.05 - k * 0.4, 0], aligned_edge=LEFT)
         calc[2][:7].set_color(C_DONE)
-        self.say("从 str1 = 0x20A10 开始：低 12 位 0xA10 的最高位是 1，addi 会把它当成负数 −1520。",
-                 Indicate(st[2][2], color=YELLOW_D, scale_factor=1.05), FadeIn(calc[0]),
-                 Circumscribe(D.row(2), color=C_HOLE), Circumscribe(D.row(3), color=C_HOLE))
-        self.play(FadeIn(calc[1], shift=DOWN * 0.1))
-        self.say("所以高 20 位要多加 1，写成 0x21。这正是第 12 集里 li 的拆法。",
-                 FadeIn(calc[2], shift=DOWN * 0.1))
+        self.cue(tr("从 str1 = 0x20A10 开始"),
+                 Indicate(st[2][2], color=YELLOW_D, scale_factor=1.05),
+                 FadeIn(calc[0]),
+                 Circumscribe(D.row(2), color=C_HOLE),
+                 Circumscribe(D.row(3), color=C_HOLE))
+        self.cue(tr("addi 会把它当成负数"), FadeIn(calc[1], shift=DOWN * 0.1))
+        self.cue(tr("所以高 20 位要多加 1"), FadeIn(calc[2], shift=DOWN * 0.1))
         self.hold()
 
         bf = BitField([("imm[31:12]", 20, YELLOW_D), ("rd", 5, FIELD_COLORS["rd"]),
@@ -631,14 +667,20 @@ class Ep14HelloWorld(NarratedScene):
         bf.field_digits[0].set_color(C_HOLE)
         bf.move_to([6.6 - bf.width / 2, -1.9, 0])
         bf_t = mono("lui  a0 0x21", 18, GREY_A).next_to(bf.labels[0], UP, buff=0.08).align_to(bf, LEFT)
-        self.say("把 0x21 填进 lui 的立即数字段：占位的 0 变成了真正的地址位。",
+        self.say("把 0x21 填进 lui 的立即数字段：占位的 0 变成了真正的地址位。"
+                 "addi 填入 −1520，这两条指令就补全了。",
                  FadeIn(bf), FadeIn(bf_t))
         self.play(LaggedStart(*[Transform(d, mono(ch, bf.font_size, C_DONE).move_to(d))
                                 for d, ch in zip(bf.field_digits[0], format(0x21, "020b"))],
                               lag_ratio=0.04, run_time=1.2))
-        self.play(*D.refill(2, A_OUT[2][1], A_OUT[2][2], 5), FadeOut(boxes[2]), run_time=1.2)
-        self.say("addi 填入 −1520，这两条指令就补全了。",
-                 *D.refill(3, A_OUT[3][1], A_OUT[3][2], 3), FadeOut(boxes[3]), run_time=1.2)
+        self.cue(tr("占位的 0 变成了真正的地址位"),
+                 *D.refill(2, A_OUT[2][1], A_OUT[2][2], 5),
+                 FadeOut(boxes[2]),
+                 run_time=1.2)
+        self.cue(tr("addi 填入 −1520"),
+                 *D.refill(3, A_OUT[3][1], A_OUT[3][2], 3),
+                 FadeOut(boxes[3]),
+                 run_time=1.2)
         self.hold()
 
         calc2 = VGroup(mono("str2 = 0x20A1C", SZ, C_TEXT), mono("0xA1C → -0x5E4 = -1508", SZ, C_TEXT),
@@ -646,24 +688,30 @@ class Ep14HelloWorld(NarratedScene):
         for a, b in zip(calc2, calc):
             a.move_to(b, aligned_edge=LEFT)
         calc2[2][:7].set_color(C_DONE)
-        self.say("str2 同理：lui 也填 0x21，addi 填 −1508。",
+        self.say("str2 同理：lui 也填 0x21，addi 填 −1508。"
+                 "最后是 printf：它在 0x10450，离这条调用 0x288 字节。"
+                 "jal 能跳 ±1 MiB，足够了：链接器把这里直接改写成一条 jal。",
                  FadeOut(VGroup(bf, bf_t)), Transform(calc, calc2), Indicate(st[2][3], color=YELLOW_D,
                                                                             scale_factor=1.05))
-        self.play(*D.refill(4, A_OUT[4][1], A_OUT[4][2], 5), *D.refill(5, A_OUT[5][1], A_OUT[5][2], 3),
-                  FadeOut(boxes[4]), FadeOut(boxes[5]), run_time=1.4)
+        self.cue(tr("lui 也填 0x21"),
+                 *D.refill(4, A_OUT[4][1], A_OUT[4][2], 5),
+                 *D.refill(5, A_OUT[5][1], A_OUT[5][2], 3),
+                 FadeOut(boxes[4]),
+                 FadeOut(boxes[5]),
+                 run_time=1.4)
 
         calc3 = VGroup(mono("printf = 0x10450", SZ, C_TEXT), mono("PC     = 0x101C8", SZ, C_TEXT),
                        mono("0x10450 - 0x101C8 = 0x288", SZ, C_TEXT))
         for a, b in zip(calc3, calc):
             a.move_to(b, aligned_edge=LEFT)
         calc3[2][-5:].set_color(C_DONE)
-        self.say("最后是 printf：它在 0x10450，离这条调用 0x288 字节。",
-                 Transform(calc, calc3), Indicate(st[2][1], color=YELLOW_D, scale_factor=1.05),
+        self.cue(tr("最后是 printf"),
+                 Transform(calc, calc3),
+                 Indicate(st[2][1], color=YELLOW_D, scale_factor=1.05),
                  Circumscribe(D.row(6), color=C_HOLE))
         editor = zh("链接器旧称“链接编辑器”，\n因为它改写的正是这些“链接”", 20, GREY_B)
         editor.move_to([CX, -1.6, 0], aligned_edge=LEFT)
-        self.say("jal 能跳 ±1 MiB，足够了：链接器把这里直接改写成一条 jal。",
-                 *D.refill(6, A_OUT[6][1], A_OUT[6][2], 8), FadeOut(boxes[6]), run_time=1.4)
+        self.cue(tr("jal 能跳"), *D.refill(6, A_OUT[6][1], A_OUT[6][2], 8), FadeOut(boxes[6]), run_time=1.4)
         self.play(FadeIn(editor))
         self.hold()
 
@@ -681,16 +729,20 @@ class Ep14HelloWorld(NarratedScene):
     # ------------------------------------------------------------------ the quick check, answered
     def quiz_answer(self):
         quiz = self.quiz()
-        self.say("回到小测验：add 不涉及任何地址，汇编之后就确定了。", FadeIn(quiz))
+        self.say("回到小测验：add 不涉及任何地址，汇编之后就确定了。"
+                 "而 jal 跳向 stdio 库里的外部函数 fprintf，要到链接之后才确定。", FadeIn(quiz))
         a1 = VGroup(Arrow(LEFT * 0.4, RIGHT * 0.4, buff=0, color=C_DONE), zh("汇编之后", 26, C_DONE))
         a1[1].next_to(a1[0], RIGHT, buff=0.15)
         a1.next_to(quiz.code, RIGHT, buff=0.5).set_y(quiz.code[0].get_y())
-        self.play(FadeIn(a1, shift=RIGHT * 0.2), quiz.opts[1][0].animate.set_stroke(C_DONE).set_fill(C_DONE, 0.3))
+        self.cue(tr("汇编之后就确定了"),
+                 FadeIn(a1, shift=RIGHT * 0.2),
+                 quiz.opts[1][0].animate.set_stroke(C_DONE).set_fill(C_DONE, 0.3))
         a2 = VGroup(Arrow(LEFT * 0.4, RIGHT * 0.4, buff=0, color=C_DONE), zh("链接之后", 26, C_DONE))
         a2[1].next_to(a2[0], RIGHT, buff=0.15)
         a2.next_to(quiz.code, RIGHT, buff=0.5).set_y(quiz.code[1].get_y())
-        self.say("而 jal 跳向 stdio 库里的外部函数 fprintf，要到链接之后才确定。",
-                 FadeIn(a2, shift=RIGHT * 0.2), quiz.opts[2][0].animate.set_stroke(C_DONE).set_fill(C_DONE, 0.3))
+        self.cue(tr("而 jal"),
+                 FadeIn(a2, shift=RIGHT * 0.2),
+                 quiz.opts[2][0].animate.set_stroke(C_DONE).set_fill(C_DONE, 0.3))
         self.hold()
         self.clear_stage()
 
@@ -713,15 +765,17 @@ class Ep14HelloWorld(NarratedScene):
 
         sa, sb = prog("程序 A", -5.0, True), prog("程序 B", -1.8, True)
         big = zh("每个程序都很大", 22, GREY_A).move_to([-3.4, -1.25, 0])
-        self.say("刚才这种叫静态链接：库代码直接拷进 a.out，程序自给自足，但文件很大。",
+        self.say("刚才这种叫静态链接：库代码直接拷进 a.out，程序自给自足，但文件很大。"
+                 "库一旦修了 bug 或安全漏洞，每个程序都得重新链接、重新发布。",
                  Create(div), FadeIn(st_t), FadeIn(sa), FadeIn(sb))
-        self.play(FadeIn(big))
+        self.cue(tr("但文件很大"), FadeIn(big))
         bugs = VGroup(*[zh("漏洞", 20, RED_B).move_to(p[1][1]).shift(DOWN * 0.35) for p in (sa, sb)])
-        self.say("库一旦修了 bug 或安全漏洞，每个程序都得重新链接、重新发布。",
-                 FadeIn(bugs), *[p[1][1][0].animate.set_fill(RED_C, 0.35) for p in (sa, sb)])
+        self.cue(tr("库一旦修了 bug"), FadeIn(bugs), *[p[1][1][0].animate.set_fill(RED_C, 0.35) for p in (sa, sb)])
         relink = zh("逐个重新链接、重新发布", 22, RED_B).move_to(big)
-        self.play(FadeOut(big), FadeIn(relink),
-                  *[Indicate(p, color=RED_B, scale_factor=1.04) for p in (sa, sb)])
+        self.cue(tr("每个程序都得重新链接"),
+                 FadeOut(big),
+                 FadeIn(relink),
+                 *[Indicate(p, color=RED_B, scale_factor=1.04) for p in (sa, sb)])
         self.hold()
 
         da, db = prog("程序 A", 1.9, False), prog("程序 B", 5.0, False)
@@ -729,18 +783,20 @@ class Ep14HelloWorld(NarratedScene):
         arrows = VGroup(*[Arrow(p[0].get_bottom(), so.get_top() + RIGHT * dx, buff=0.1, color=GREY_B,
                                 stroke_width=3) for p, dx in ((da, -0.5), (db, 0.5))])
         at_load = zh("加载时链接", 20, GREY_A).next_to(arrows, UP, buff=0.05).shift(DOWN * 0.35)
-        self.say("动态链接则把库单独存成文件，比如 libc.so，等程序加载时才链接进来。",
+        self.say("动态链接则把库单独存成文件，比如 libc.so，等程序加载时才链接进来。"
+                 "程序文件更小，多个程序还能共享内存里的同一份库；换掉 libc.so，大家一起升级。"
+                 "代价是运行时的链接开销，而且光有 a.out 已经跑不起来。总体上仍是利大于弊。",
                  FadeIn(dy_t), FadeIn(da), FadeIn(db), FadeIn(so))
-        self.play(*[GrowArrow(a) for a in arrows], FadeIn(at_load))
+        self.cue(tr("等程序加载时才链接进来"), *[GrowArrow(a) for a in arrows], FadeIn(at_load))
         new_so = seg_box("libc.so（新）", C_DONE, 2.4, 0.8, size=24).move_to(so)
         share = zh("一份库，大家共享", 22, GREY_A).next_to(so, DOWN, buff=0.3)
-        self.say("程序文件更小，多个程序还能共享内存里的同一份库；换掉 libc.so，大家一起升级。",
-                 FadeIn(share))
-        self.play(Transform(so, new_so), *[Indicate(p, color=C_DONE, scale_factor=1.04) for p in (da, db)])
+        self.cue(tr("程序文件更小"), FadeIn(share))
+        self.cue(tr("换掉 libc.so"),
+                 Transform(so, new_so),
+                 *[Indicate(p, color=C_DONE, scale_factor=1.04) for p in (da, db)])
         cons = VGroup(zh("运行时有链接开销", 22, RED_B), zh("光有 a.out 不够，还要库文件", 22, RED_B))
         cons.arrange(DOWN, buff=0.15, aligned_edge=LEFT).next_to(share, DOWN, buff=0.3)
-        self.say("代价是运行时的链接开销，而且光有 a.out 已经跑不起来。总体上仍是利大于弊。",
-                 FadeIn(cons, shift=UP * 0.1))
+        self.cue(tr("代价是运行时的链接开销"), FadeIn(cons, shift=UP * 0.1))
         self.hold()
         self.clear_stage()
 
@@ -761,10 +817,13 @@ class Ep14HelloWorld(NarratedScene):
             stops.add(VGroup(dot, nt, dt))
         easy = zh("← 更好写", 22, BLUE_B).move_to([-5.0, -0.45, 0])
         fast = zh("更快 →", 22, GOLD_C).move_to([5.2, -0.45, 0])
-        self.say("番外（不考）：程序也可以不翻译，而是交给解释器（另一个程序）直接执行。",
+        self.say("番外（不考）：程序也可以不翻译，而是交给解释器（另一个程序）直接执行。"
+                 "Python 全靠解释，最好写也最慢；Java 先编译成字节码再解释，所以到处都能跑。",
                  Write(head), FadeIn(tag), GrowFromCenter(line))
-        self.say("Python 全靠解释，最好写也最慢；Java 先编译成字节码再解释，所以到处都能跑。",
-                 FadeIn(stops[0], shift=UP * 0.1), FadeIn(stops[1], shift=UP * 0.1), FadeIn(easy))
+        self.cue(tr("Python 全靠解释"),
+                 FadeIn(stops[0], shift=UP * 0.1),
+                 FadeIn(stops[1], shift=UP * 0.1),
+                 FadeIn(easy))
         self.say("C 编译成机器码，快得多。机器码最难手写，却最好“解释”：硬件直接就能执行。",
                  FadeIn(stops[2], shift=UP * 0.1), FadeIn(stops[3], shift=UP * 0.1), FadeIn(fast))
         badges = VGroup(box_label("Venus：用软件逐条执行 RISC-V", TEAL_C, h=0.7, font_size=22),
@@ -773,10 +832,10 @@ class Ep14HelloWorld(NarratedScene):
         if badges.width > 13.2:
             badges.scale_to_fit_width(13.2)
         hist = mono("680x0 → PowerPC → x86 → ARM", 18, GREY_B).next_to(badges[1], DOWN, buff=0.15)
-        self.say("机器码也能用软件来解释：Venus 逐条模拟 RISC-V，方便单步调试。",
+        self.say("机器码也能用软件来解释：Venus 逐条模拟 RISC-V，方便单步调试。"
+                 "Apple 几次更换 ISA，都靠软件来运行旧 ISA 的程序，最近的一次就是 Rosetta。",
                  FadeIn(badges[0], shift=UP * 0.1))
-        self.say("Apple 几次更换 ISA，都靠软件来运行旧 ISA 的程序，最近的一次就是 Rosetta。",
-                 FadeIn(badges[1], shift=UP * 0.1), FadeIn(hist))
+        self.cue(tr("Apple 几次更换 ISA"), FadeIn(badges[1], shift=UP * 0.1), FadeIn(hist))
         self.hold()
 
         def col(title, color, items, x):
@@ -814,25 +873,27 @@ class Ep14HelloWorld(NarratedScene):
         for s, a in zip(steps, arrows):   # English labels are wider than the gap
             if s.width > a.width:
                 s.scale_to_fit_width(a.width)
-        self.say("串起来看：编译成汇编，汇编成带占位符的机器码，链接时补上地址，最后加载运行。",
+        self.say("串起来看：编译成汇编，汇编成带占位符的机器码，链接时补上地址，最后加载运行。"
+                 "加载器把 a.out 读进内存，经启动例程调用 main，屏幕上就出现了 Hello, world!",
                  LaggedStart(*[AnimationGroup(FadeIn(chain[k], shift=RIGHT * 0.15),
                                               *([GrowArrow(arrows[k - 1]), FadeIn(steps[k - 1])] if k else []))
                                for k in range(5)], lag_ratio=0.45, run_time=4))
-        self.say("加载器把 a.out 读进内存，经启动例程调用 main，屏幕上就出现了 Hello, world!",
-                 FadeIn(prompt), Indicate(chain[3], color=GREEN_C, scale_factor=1.08))
-        self.play(AddTextLetterByLetter(out, run_time=1.0))
+        self.cue(tr("加载器把 a.out 读进内存"), FadeIn(prompt), Indicate(chain[3], color=GREEN_C, scale_factor=1.08))
+        self.cue(tr("屏幕上就出现了"), AddTextLetterByLetter(out, run_time=1.0))
 
         entries = VGroup()
-        for n, ep in enumerate(series.SERIES, 1):
-            e = VGroup(mono(f"{n:02d}", 20, GREY_B), zh(series.title(ep, LANG), 20, GREY_A))
+        for n, ep in enumerate(EPISODES, 1):
+            e = VGroup(mono(f"{n:02d}", 20, GREY_B), zh(ep["title"][LANG], 20, GREY_A))
             e.arrange(RIGHT, buff=0.2)
             entries.add(e)
         grid = VGroup(VGroup(*entries[:7]).arrange(DOWN, buff=0.2, aligned_edge=LEFT),
                       VGroup(*entries[7:]).arrange(DOWN, buff=0.2, aligned_edge=LEFT))
         grid.arrange(RIGHT, buff=1.2, aligned_edge=UP).move_to(DOWN * 0.95)
-        self.say("这也是整个系列的缩影：从寄存器、内存、分支、函数，到指令编码和 CALL。",
+        self.say("这也是整个系列的缩影：从寄存器、内存、分支、函数，到指令编码和 CALL。"
+                 "从一行 printf 到一串确定的比特，这就是程序运行前走过的路。",
                  LaggedStart(*[FadeIn(e, shift=UP * 0.1) for e in entries], lag_ratio=0.1, run_time=2.4))
-        self.play(entries[-1][1].animate.set_color(YELLOW_D), entries[-1][0].animate.set_color(YELLOW_D))
-        self.say("从一行 printf 到一串确定的比特，这就是程序运行前走过的路。",
-                 Indicate(term, color=C_DONE, scale_factor=1.05))
+        self.cue(tr("到指令编码和 CALL"),
+                 entries[-1][1].animate.set_color(YELLOW_D),
+                 entries[-1][0].animate.set_color(YELLOW_D))
+        self.cue(tr("从一行 printf"), Indicate(term, color=C_DONE, scale_factor=1.05))
         self.hold(0.5)

@@ -1,120 +1,216 @@
 1
-00:00:06,200 --> 00:00:13,200
-So far we've been writing assembly. But what the hardware actually runs is a sequence of 32-bit binary numbers.
+00:00:06,200 --> 00:00:09,526
+In the last few episodes we kept writing assembly,
 
 2
-00:00:13,200 --> 00:00:19,800
-Instructions are data too, kept in memory just like any other data: that's the stored-program idea.
+00:00:09,526 --> 00:00:15,048
+but what the hardware really executes is a series of thirty-two bit binary numbers.
 
 3
-00:00:19,800 --> 00:00:23,566
-The PC holds the memory address of the current instruction.
+00:00:15,048 --> 00:00:22,866
+Instructions are themselves data, stored in memory just like ordinary data, and that is the stored program idea.
 
 4
-00:00:23,566 --> 00:00:28,366
-So how exactly does a line of assembly become 32 bits?
+00:00:22,866 --> 00:00:26,805
+The PC holds the address of the current instruction in memory.
 
 5
-00:00:28,366 --> 00:00:37,766
-The 32 bits are cut into pieces called fields. Instructions whose operands are all registers, like add and sub, use the R-type format.
+00:00:26,805 --> 00:00:32,466
+So how does an assembly instruction actually turn into thirty-two bits?
 
 6
-00:00:37,766 --> 00:00:47,333
-rd, rs1 and rs2 get 5 bits each: 2 to the 5th is 32, just enough to number all 32 registers.
+00:00:32,466 --> 00:00:37,030
+The thirty-two bits are cut into pieces, and each piece is called a field.
 
 7
-00:00:47,333 --> 00:00:56,233
-The opcode, in the lowest 7 bits, says what kind of instruction this is; funct3 and funct7 pin down the exact operation.
+00:00:37,030 --> 00:00:42,088
+Instructions like add and sub, whose operands are all registers, use the R format.
 
 8
-00:00:56,233 --> 00:01:00,533
-Let's encode add x18, x19, x10.
+00:00:42,088 --> 00:00:47,393
+The fields rd, rs1, and rs2 take five bits each, since two to the fifth is thirty-two,
 
 9
-00:01:00,533 --> 00:01:13,466
-rd = 18 is 10010 in 5-bit binary; rs1 = 19 is 10011; rs2 = 10 is 01010.
+00:00:47,393 --> 00:00:50,291
+just enough to number the thirty-two registers.
 
 10
-00:01:13,466 --> 00:01:22,266
-For add, funct3 and funct7 are both 0, and the opcode for R-type arithmetic is 0110011.
+00:00:50,291 --> 00:00:55,349
+The opcode takes the lowest seven bits and says which kind of instruction this is,
 
 11
-00:01:22,266 --> 00:01:29,800
-Every 4 bits make one hex digit: the whole instruction is 0x00A98933.
+00:00:55,349 --> 00:00:59,166
+while funct3 and funct7 narrow down the exact operation.
 
 12
-00:01:29,800 --> 00:01:40,733
-What about sub? Only funct7 changes, to 0100000. That 1 in bit 30 tells the hardware to make the adder subtract.
+00:00:59,166 --> 00:01:01,873
+Let's encode add x18, x19, x10.
 
 13
-00:01:40,733 --> 00:01:48,966
-All R-type operations share one opcode; the combination of funct3 and funct7 tells them apart.
+00:01:01,873 --> 00:01:08,160
+Here rd is eighteen, which is one zero zero one zero in five-bit binary.
 
 14
-00:01:48,966 --> 00:01:53,866
-addi has only two registers, plus a constant. Where does the constant go?
+00:01:08,160 --> 00:01:17,433
+Then rs1 is nineteen, which is one zero zero one one, and rs2 is ten, which is zero one zero one zero.
 
 15
-00:01:53,866 --> 00:02:02,800
-I-type merges R-type's funct7 and rs2 slots into one 12-bit immediate; every other field stays exactly where it was.
+00:01:17,433 --> 00:01:26,679
+For add, funct3 and funct7 are both zero, and the opcode for R-type arithmetic is zero one one zero zero one one.
 
 16
-00:02:02,800 --> 00:02:14,866
-That answers the question from Episode 2: the immediate only gets these 12 bits, and 12-bit two's complement spans exactly −2048 to 2047.
+00:01:26,679 --> 00:01:34,833
+Putting every four bits together as one hexadecimal digit, the whole instruction is 0x00A98933.
 
 17
-00:02:14,866 --> 00:02:26,866
-Encode addi x15, x1, -50: -50 in 12-bit two's complement is 1111 1100 1110.
+00:01:34,833 --> 00:01:35,901
+What about sub?
 
 18
-00:02:26,866 --> 00:02:38,900
-When it runs, the hardware sign-extends these 12 bits to 32 and adds them to rs1. The encoding is 0xFCE08793.
+00:01:35,901 --> 00:01:40,032
+Only funct7 changes, to zero one zero zero zero zero zero.
 
 19
-00:02:38,900 --> 00:02:49,433
-Loads are I-type too. In lw x14, 8(x2), the offset 8 is the immediate and the base register x2 goes in rs1.
+00:01:40,032 --> 00:01:46,733
+When the hardware sees that one in bit thirty, it makes the adder subtract.
 
 20
-00:02:49,433 --> 00:02:59,266
-All loads share one opcode; funct3 picks the width and signedness: lb, lh, lw, lbu, lhu.
+00:01:46,733 --> 00:01:55,433
+All the R-type operations share one opcode, and are told apart by the combination of funct3 and funct7.
 
 21
-00:02:59,266 --> 00:03:10,933
-slli, srli and srai are I-type too, but a shift amount is at most 31, so only the immediate's low 5 bits are used.
+00:01:55,433 --> 00:01:59,665
+The addi instruction has only two registers, plus a constant.
 
 22
-00:03:10,933 --> 00:03:18,266
-A store has two source registers, the data and the base, and no destination, but it still needs a 12-bit offset.
+00:01:59,665 --> 00:02:01,539
+Where does the constant go?
 
 23
-00:03:18,266 --> 00:03:26,733
-S-type's trick: split the immediate in two. The upper 7 bits go where funct7 was, the lower 5 where rd used to be.
+00:02:01,539 --> 00:02:08,616
+The I format merges the funct7 and rs2 positions from the R format into a single twelve-bit immediate,
 
 24
-00:03:26,733 --> 00:03:42,566
-Encode sw x14, 8(x2). The offset 8 in 12 bits is 0000000 01000: the upper 7 bits are all 0, the lower 5 are 01000.
+00:02:08,616 --> 00:02:12,866
+and leaves all the other fields exactly where they were.
 
 25
-00:03:42,566 --> 00:03:55,266
-The data to store, x14, goes in rs2 and the base x2 in rs1; funct3 = 010 means a full word, and the opcode is 0100011.
+00:02:12,866 --> 00:02:15,572
+That answers the question from episode two.
 
 26
-00:03:55,266 --> 00:04:02,900
-Put together, this sw is 0x00E12423.
+00:02:15,572 --> 00:02:18,215
+The immediate gets only these twelve bits,
 
 27
-00:04:02,900 --> 00:04:08,133
-Stack the three formats: why does S-type split its immediate so awkwardly?
+00:02:18,215 --> 00:02:25,200
+and the range of a twelve-bit two's complement number is exactly minus two thousand forty-eight to two thousand
 
 28
-00:04:08,133 --> 00:04:14,533
-The answer: in every format that uses them, rs1 and rs2 sit in the same place.
+00:02:25,200 --> 00:02:27,333
+forty-seven.
 
 29
-00:04:14,533 --> 00:04:22,900
-The same goes for funct3 and opcode. The hardware can read the registers from fixed positions before it even knows the instruction type.
+00:02:27,333 --> 00:02:30,439
+Let's encode addi x15, x1, minus fifty.
 
 30
-00:04:22,900 --> 00:04:31,833
-Register reads and decoding can happen at the same time: simpler, faster circuits. A lovely touch in RISC-V's design.
+00:02:30,439 --> 00:02:39,042
+Minus fifty as a twelve-bit two's complement number is one one one one, one one zero zero, one one one zero.
+
+31
+00:02:39,042 --> 00:02:46,768
+When it executes, the hardware sign-extends those twelve bits to thirty-two and adds them to rs1.
+
+32
+00:02:46,768 --> 00:02:51,066
+The encoding comes out as 0xFCE08793.
+
+33
+00:02:51,066 --> 00:02:54,303
+Load instructions are also I format.
+
+34
+00:02:54,303 --> 00:03:02,766
+In lw x14, 8(x2), the offset eight is the immediate, and the base register x2 goes in rs1.
+
+35
+00:03:02,766 --> 00:03:11,741
+All the loads share one opcode, and funct3 tells apart the width and the signedness, for lb, lh, lw, lbu, and lhu.
+
+36
+00:03:11,741 --> 00:03:20,007
+The shift instructions slli, srli, and srai are I format too, but the shift amount is at most thirty-one,
+
+37
+00:03:20,007 --> 00:03:25,466
+so only the low five bits of the immediate are used.
+
+38
+00:03:25,466 --> 00:03:30,959
+A store has two source registers, the data and the base, and no destination register,
+
+39
+00:03:30,959 --> 00:03:33,480
+but it still needs a twelve-bit offset.
+
+40
+00:03:33,480 --> 00:03:36,711
+The S format splits the immediate into two pieces.
+
+41
+00:03:36,711 --> 00:03:43,466
+The upper seven bits go in the old place of funct7, and the lower five bits go where rd used to be.
+
+42
+00:03:43,466 --> 00:03:45,687
+Let's encode sw x14, 8(x2).
+
+43
+00:03:45,687 --> 00:03:53,006
+The offset eight in twelve-bit binary is seven zeros followed by zero one zero zero zero.
+
+44
+00:03:53,006 --> 00:04:00,766
+So the upper seven bits are all zero, and the lower five bits are zero one zero zero zero.
+
+45
+00:04:00,766 --> 00:04:06,660
+The data in x14 goes into rs2 and the base x2 goes into rs1.
+
+46
+00:04:06,660 --> 00:04:16,189
+Then funct3 is zero one zero for a whole word, and the opcode is zero one zero zero zero one one.
+
+47
+00:04:16,189 --> 00:04:22,100
+Put together, this sw is 0x00E12423.
+
+48
+00:04:22,100 --> 00:04:25,990
+Now let's stack the three formats on top of each other.
+
+49
+00:04:25,990 --> 00:04:28,748
+Why is the S format split so awkwardly?
+
+50
+00:04:28,748 --> 00:04:34,900
+The answer is that whenever a format uses rs1 and rs2, they sit in the same place.
+
+51
+00:04:34,900 --> 00:04:37,361
+The same goes for funct3 and the opcode.
+
+52
+00:04:37,361 --> 00:04:44,562
+So the hardware can read the registers straight from fixed positions, without first working out the instruction type.
+
+53
+00:04:44,562 --> 00:04:50,902
+Reading registers and decoding can happen at the same time, which makes the circuit simpler and faster,
+
+54
+00:04:50,902 --> 00:04:54,900
+and is a really neat touch in the design of RISC-V.
 

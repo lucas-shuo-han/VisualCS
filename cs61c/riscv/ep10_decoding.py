@@ -2,7 +2,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import *  # noqa: E402,F403
+from manim_kit import *  # noqa: E402,F403
 
 
 # ---------------------------------------------------------------- encodings
@@ -226,20 +226,21 @@ class Ep10Decoding(FormatScene):
             col.move_to([(k - 1) * 4.4, -0.3, 0])
             cols.add(col)
         arrows = VGroup(*[arr(top.get_bottom(), c[0].get_top(), buff=0.12) for c in cols])
-        self.say("第 2 集说过，x86、ARM、RISC-V 是三种不同的指令集。同一行 C 代码，交给三种编译器……",
+        self.say("第 2 集说过，x86、ARM、RISC-V 是三种不同的指令集。同一行 C 代码，交给三种编译器，"
+                 "得到的机器码完全不同。手机里多是 ARM 芯片，电脑里多是 x86。",
                  FadeIn(top, shift=DOWN * 0.2),
                  LaggedStart(*[GrowArrow(a) for a in arrows], lag_ratio=0.25),
                  LaggedStart(*[FadeIn(c[0], shift=DOWN * 0.1) for c in cols], lag_ratio=0.25),
                  run_time=1.6)
-        self.say("……得到的机器码完全不同。手机里多是 ARM 芯片，电脑里多是 x86。",
+        self.cue(tr("得到的机器码完全不同"),
                  LaggedStart(*[FadeIn(VGroup(c[1], c[2]), shift=DOWN * 0.1) for c in cols], lag_ratio=0.3),
                  run_time=1.6)
-        self.say("连长度都不一样：x86 的指令有长有短，这一条只有 2 个字节。",
+        self.say("连长度都不一样：x86 的指令有长有短，这一条只有 2 个字节。"
+                 "RISC-V 的指令则一律 32 位，和数据字一样宽：取指令和读数据能共用同一套内存硬件。",
                  FadeIn(VGroup(*[c[3] for c in cols])),
                  Indicate(cols[2][2], color=GREY_A, scale_factor=1.15))
         word = SurroundingRectangle(cols[0][2], color=YELLOW_D, buff=0.1)
-        self.say("RISC-V 的指令则一律 32 位，和数据字一样宽：取指令和读数据能共用同一套内存硬件。",
-                 Create(word))
+        self.cue(tr("RISC-V 的指令则一律 32 位"), Create(word))
         self.hold()
         self.clear_stage()
 
@@ -252,40 +253,45 @@ class Ep10Decoding(FormatScene):
         a2 = arr(old[0].get_right(), pc.get_left() + DOWN * 0.25, buff=0.2)
         no = x_mark().move_to(a1.get_center() + UP * 0.05)
         yes = check_mark().move_to(a2.get_center() + UP * 0.05)
-        self.say("所以程序的二进制文件和指令集是绑定的：RISC-V 的可执行文件，在 Intel 的 x86 电脑上根本跑不起来。",
+        self.say("所以程序的二进制文件和指令集是绑定的：RISC-V 的可执行文件，在 Intel 的 x86 电脑上根本跑不起来。"
+                 "不过，同一个指令集常常向后兼容：今天的 x86 处理器，仍能运行 1981 年为 Intel 8088 写的程序。",
                  FadeIn(exe, shift=RIGHT * 0.2), FadeIn(pc))
-        self.play(GrowArrow(a1))
-        self.play(Create(no))
-        self.say("不过，同一个指令集常常向后兼容：今天的 x86 处理器，仍能运行 1981 年为 Intel 8088 写的程序。",
-                 FadeIn(old, shift=RIGHT * 0.2))
-        self.play(GrowArrow(a2))
-        self.play(Create(yes))
+        self.cue(tr("RISC-V 的可执行文件"), GrowArrow(a1))
+        self.cue(tr("根本跑不起来"), Create(no))
+        self.cue(tr("不过，同一个指令集常常向后兼容"), FadeIn(old, shift=RIGHT * 0.2))
+        self.cue(tr("今天的 x86 处理器"), GrowArrow(a2))
+        self.cue(tr("仍能运行"), Create(yes))
         self.hold()
         self.clear_stage()
 
     # ------------------------------------------------------------------ disassembly
     def disassemble(self):
         head = self.heading("反汇编：从机器码到汇编")
-        self.say("上一集把汇编翻译成机器码；这一集反过来：拿到机器码，怎么读回汇编？这叫反汇编（disassembly）。", Write(head))
+        self.say("上一集把汇编翻译成机器码；这一集反过来：拿到机器码，怎么读回汇编？这叫反汇编（disassembly）。"
+                 "拿这个字练手：0x01B342B3。", Write(head))
         word = mono(hex32(XOR), 48, YELLOW_D).move_to(UP * 2.2)
-        self.say("拿这个字练手：0x01B342B3。", FadeIn(word, shift=DOWN * 0.2))
+        self.cue(tr("拿这个字练手"), FadeIn(word, shift=DOWN * 0.2))
 
         row = nibble_row(b32(XOR)).move_to(UP * 0.85)
         xs = [VGroup(*row[4 * k:4 * k + 4]).get_center()[0] for k in range(8)]
         prefix, digits = VGroup(*word[:2]), VGroup(*word[2:])
         self.remove(word)
         self.add(prefix, digits)
-        self.say("第一步：换成二进制。每个十六进制数字，正好展开成 4 位。",
+        self.say("第一步：换成二进制。每个十六进制数字，正好展开成 4 位。"
+                 "接着找 opcode：不管哪种格式，它永远占最低的 7 位。"
+                 "每种格式都有自己专属的一组 opcode。查表：0110011，是 R 型。",
                  FadeOut(prefix), *[d.animate.move_to([x, 2.2, 0]) for d, x in zip(digits, xs)])
-        self.play(LaggedStart(*[
+        self.cue(tr("每个十六进制数字，正好展开成"),
+                 LaggedStart(*[
             AnimationGroup(FadeIn(VGroup(*[c[0] for c in row[4 * k:4 * k + 4]])),
                            *[TransformFromCopy(digits[k], row[4 * k + j][1]) for j in range(4)])
-            for k in range(8)], lag_ratio=0.18), run_time=2.6)
+            for k in range(8)], lag_ratio=0.18),
+                 run_time=2.6)
 
         op_cells = VGroup(*row[25:])
         op_box = SurroundingRectangle(op_cells, color=FIELD_COLORS["opcode"], buff=0.07)
         op_lab = mono("opcode", 22, FIELD_COLORS["opcode"]).next_to(op_box, DOWN, buff=0.12)
-        self.say("接着找 opcode：不管哪种格式，它永远占最低的 7 位。", Create(op_box), FadeIn(op_lab))
+        self.cue(tr("接着找 opcode"), Create(op_box), FadeIn(op_lab))
 
         specs = [("0110011", "R 型", "寄存器之间运算"), ("0010011", "I 型", "立即数运算"),
                  ("0000011", "I 型", "load"), ("0100011", "S 型", "store")]
@@ -298,11 +304,13 @@ class Ep10Decoding(FormatScene):
         table.move_to(DOWN * 1.35)
         probe = VGroup(*[c[1] for c in row[25:]]).copy()
         hl = SurroundingRectangle(table[0], color=FIELD_COLORS["opcode"], buff=0.1)
-        self.say("每种格式都有自己专属的一组 opcode。查表：0110011，是 R 型。",
+        self.cue(tr("每种格式都有自己专属的一组 opcode"),
                  LaggedStart(*[FadeIn(r, shift=UP * 0.1) for r in table], lag_ratio=0.15))
-        self.play(probe.animate.set_color(FIELD_COLORS["opcode"]).arrange(RIGHT, buff=0.04)
-                  .match_height(table[0][0]).move_to(table[0][0]), run_time=1.0)
-        self.play(FadeOut(probe), Create(hl))
+        self.cue(tr("查表"),
+                 probe.animate.set_color(FIELD_COLORS["opcode"]).arrange(RIGHT, buff=0.04)
+                  .match_height(table[0][0]).move_to(table[0][0]),
+                 run_time=1.0)
+        self.cue(tr("是 R 型"), FadeOut(probe), Create(hl))
 
         bf = BitField(fmt_fields("R")).move_to(DOWN * 0.85)
         self.say("第二步：知道了格式，才知道其余 25 位怎么切。按 R 型切开：funct7、rs2、rs1、funct3、rd。",
@@ -316,31 +324,33 @@ class Ep10Decoding(FormatScene):
 
         tbl = r_table().move_to(DOWN * 1.1)
         xor_row = tbl.rows[4]
-        self.say("第三步：funct3 = 100，funct7 = 0000000。查 R 型的表：这是 xor。",
+        self.say("第三步：funct3 = 100，funct7 = 0000000。查 R 型的表：这是 xor。"
+                 "注意：助记符（mnemonic）xor 不存放在任何一个字段里，而是由 opcode、funct3、funct7 共同决定。",
                  Indicate(bf.frames[3], scale_factor=1.08), Indicate(bf.frames[0], scale_factor=1.05),
                  FadeIn(tbl))
         hl = SurroundingRectangle(xor_row, color=YELLOW_D, buff=0.08)
         n_op = under(bf, 3, "xor", C_MNEM)
-        self.play(Create(hl))
-        self.play(TransformFromCopy(xor_row[0], n_op))
-        self.say("注意：助记符（mnemonic）xor 不存放在任何一个字段里，而是由 opcode、funct3、funct7 共同决定。",
-                 *[Indicate(bf.frames[i], scale_factor=1.06) for i in (0, 3, 5)])
+        self.cue(tr("查 R 型的表"), Create(hl))
+        self.cue(tr("这是 xor"), TransformFromCopy(xor_row[0], n_op))
+        self.cue(tr("注意：助记符"), *[Indicate(bf.frames[i], scale_factor=1.06) for i in (0, 3, 5)])
         self.hold()
 
         n_rd, n_rs1, n_rs2 = under(bf, 4, "x5"), under(bf, 2, "x6"), under(bf, 1, "x27")
-        self.say("第四步：寄存器字段是 5 位无符号数：rd = 00101 = 5，rs1 = 00110 = 6，rs2 = 11011 = 27。",
+        self.say("第四步：寄存器字段是 5 位无符号数：rd = 00101 = 5，rs1 = 00110 = 6，rs2 = 11011 = 27。"
+                 "再换成寄存器名：x5 是 t0，x6 是 t1，x27 是 s11。"
+                 "拼起来：xor t0, t1, s11。",
                  FadeOut(VGroup(tbl, hl)),
                  LaggedStart(*[FadeIn(n, shift=DOWN * 0.1) for n in (n_rd, n_rs1, n_rs2)], lag_ratio=0.3))
         abi = [mono(s, 28, abi_color(s)).next_to(n, DOWN, buff=0.14)
                for s, n in (("t0", n_rd), ("t1", n_rs1), ("s11", n_rs2))]
-        self.say("再换成寄存器名：x5 是 t0，x6 是 t1，x27 是 s11。",
-                 LaggedStart(*[FadeIn(a, shift=DOWN * 0.1) for a in abi], lag_ratio=0.3))
+        self.cue(tr("再换成寄存器名"), LaggedStart(*[FadeIn(a, shift=DOWN * 0.1) for a in abi], lag_ratio=0.3))
 
         asm = asm_code("xor t0, t1, s11", 44).move_to(DOWN * 1.3)
         toks = [asm.glyphs(0, s) for s in ("xor", "t0", "t1", "s11")]
         commas = VGroup(asm.glyphs(0, ",", 0), asm.glyphs(0, ",", 1))
-        self.say("拼起来：xor t0, t1, s11。",
-                 *[TransformFromCopy(s, t) for s, t in zip([n_op, *abi], toks)], FadeIn(commas),
+        self.cue(tr("拼起来"),
+                 *[TransformFromCopy(s, t) for s, t in zip([n_op, *abi], toks)],
+                 FadeIn(commas),
                  run_time=1.6)
         self.remove(*toks, commas)
         self.add(asm)
@@ -369,7 +379,7 @@ class Ep10Decoding(FormatScene):
         self.say("反汇编就这四步。前两步对任何格式都一样，后两步因格式而异。",
                  Write(self.heading("反汇编的四个步骤")),
                  LaggedStart(*[FadeIn(r, shift=RIGHT * 0.2) for r in rows], lag_ratio=0.25), run_time=2.0)
-        self.play(GrowFromCenter(b1), FadeIn(t1), GrowFromCenter(b2), FadeIn(t2))
+        self.cue(tr("前两步对任何格式都一样"), GrowFromCenter(b1), FadeIn(t1), GrowFromCenter(b2), FadeIn(t2))
         self.hold()
         self.clear_stage()
 
@@ -377,13 +387,15 @@ class Ep10Decoding(FormatScene):
     def bit30(self):
         head = self.heading("第 30 位：一个开关")
         tbl = r_table(size=26, row_gap=0.5, group_dx=5.4).move_to(UP * 0.55)
-        self.say("回头看完整的 R 型表：10 条指令共用一个 opcode，funct3 却只有 8 种。",
+        self.say("回头看完整的 R 型表：10 条指令共用一个 opcode，funct3 却只有 8 种。"
+                 "funct3 相同的有两对：add 和 sub 都是 000，srl 和 sra 都是 101。"
+                 "区分它们靠 funct7。funct7 也只有两种取值，而且只差一位：第 30 位。",
                  Write(head), FadeIn(tbl, lag_ratio=0.02))
         pairs = VGroup(SurroundingRectangle(VGroup(tbl.rows[0], tbl.rows[1]), color=YELLOW_D, buff=0.1),
                        SurroundingRectangle(VGroup(tbl.rows[6], tbl.rows[7]), color=YELLOW_D, buff=0.1))
-        self.say("funct3 相同的有两对：add 和 sub 都是 000，srl 和 sra 都是 101。", Create(pairs))
+        self.cue(tr("funct3 相同的有两对"), Create(pairs))
         ones = [tbl.rows[1][1][1], tbl.rows[7][1][1]]
-        self.say("区分它们靠 funct7。funct7 也只有两种取值，而且只差一位：第 30 位。",
+        self.cue(tr("区分它们靠 funct7"),
                  *[Indicate(o, color=WHITE, scale_factor=1.8) for o in ones],
                  *[Circumscribe(o, color=RED_B, buff=0.06) for o in ones])
         tally = zh("opcode 7 位 + funct3 3 位 + funct7 7 位 = 17 位", 26, GREY_A).next_to(tbl, DOWN, buff=0.5)
@@ -398,11 +410,14 @@ class Ep10Decoding(FormatScene):
         b30 = bf.field_digits[0][1]
         mark = SurroundingRectangle(b30, color=RED_B, buff=0.05)
         m_lab = zh("第 30 位", 22, RED_B).move_to([b30.get_center()[0], bf.labels[0].get_top()[1] + 0.28, 0])
-        self.say("以 add t0, t1, s11 为例：把第 30 位从 0 翻成 1，它就变成了 sub t0, t1, s11。",
+        self.say("以 add t0, t1, s11 为例：把第 30 位从 0 翻成 1，它就变成了 sub t0, t1, s11。"
+                 "add 和 sub 共用一个加法器。第 30 位就是个开关（flag）：为 1 时先把 rs2 取负（按位取反再加 1），再相加。",
                  FadeOut(VGroup(tbl, pairs, tally)), FadeIn(VGroup(bf, tag)), FadeIn(asm), FadeIn(hx))
-        self.play(Create(mark), FadeIn(m_lab))
-        self.play(bf.fill_field(0, "0100000"), Transform(asm, asm_code("sub t0, t1, s11", 34).move_to(asm)),
-                  Transform(hx, mono(hex32(SUB), 34, YELLOW_D).move_to(hx)))
+        self.cue(tr("把第 30 位从 0 翻成 1"), Create(mark), FadeIn(m_lab))
+        self.cue(tr("它就变成了"),
+                 bf.fill_field(0, "0100000"),
+                 Transform(asm, asm_code("sub t0, t1, s11", 34).move_to(asm)),
+                 Transform(hx, mono(hex32(SUB), 34, YELLOW_D).move_to(hx)))
 
         # add / sub share one adder; bit 30 switches the negation of rs2 on
         bx = b30.get_center()[0]
@@ -429,15 +444,16 @@ class Ep10Decoding(FormatScene):
 
         neg_box.set_stroke(RED_C).set_fill(RED_C, 0.2)
         ctrl.set_stroke(RED_B)
-        self.say("add 和 sub 共用一个加法器。第 30 位就是个开关（flag）：为 1 时先把 rs2 取负（按位取反再加 1），再相加。",
-                 FadeIn(VGroup(s_in, t_in, neg, adder, out, wires)), Create(ctrl))
+        self.cue(tr("add 和 sub 共用一个加法器"), FadeIn(VGroup(s_in, t_in, neg, adder, out, wires)), Create(ctrl))
         self.play(bf.fill_field(0, "0000000"), *neg_state(False),
                   Transform(asm, asm_code("add t0, t1, s11", 34).move_to(asm)),
                   Transform(hx, mono(hex32(ADD), 34, YELLOW_D).move_to(hx)))
         self.wait(0.4)
-        self.play(bf.fill_field(0, "0100000"), *neg_state(True),
-                  Transform(asm, asm_code("sub t0, t1, s11", 34).move_to(asm)),
-                  Transform(hx, mono(hex32(SUB), 34, YELLOW_D).move_to(hx)))
+        self.cue(tr("为 1 时先把 rs2 取负"),
+                 bf.fill_field(0, "0100000"),
+                 *neg_state(True),
+                 Transform(asm, asm_code("sub t0, t1, s11", 34).move_to(asm)),
+                 Transform(hx, mono(hex32(SUB), 34, YELLOW_D).move_to(hx)))
         self.hold()
         diagram = VGroup(s_in, t_in, neg, adder, out, wires, ctrl)
 
@@ -448,22 +464,26 @@ class Ep10Decoding(FormatScene):
         res_l = mono("srl", 24, C_MNEM).next_to(res, LEFT, buff=0.3)
         for k in (0, 1):
             res[k][1].set_color(GREEN_B)
-        self.say("funct3 换成 101 就是右移。第 30 位为 0 是 srl：逻辑右移，空出的高位补 0。",
+        self.say("funct3 换成 101 就是右移。第 30 位为 0 是 srl：逻辑右移，空出的高位补 0。"
+                 "第 30 位为 1 就成了 sra：算术右移，高位补的是符号位。这回，这个开关管的是符号扩展。",
                  FadeOut(diagram), bf.fill_field(3, "101"), bf.fill_field(0, "0000000"),
                  Transform(asm, asm_code("srl t0, t1, s11", 34).move_to(asm)),
                  Transform(hx, mono(hex32(SRL), 34, YELLOW_D).move_to(hx)))
-        self.play(FadeIn(src), FadeIn(demo_l))
-        self.play(FadeIn(VGroup(*[c[0] for c in res])), FadeIn(res_l),
-                  *[TransformFromCopy(src[k][1], res[k + 2][1]) for k in range(6)],
-                  FadeIn(VGroup(res[0][1], res[1][1]), shift=RIGHT * 0.3), run_time=1.4)
+        self.cue(tr("逻辑右移"), FadeIn(src), FadeIn(demo_l))
+        self.cue(tr("空出的高位补 0"),
+                 FadeIn(VGroup(*[c[0] for c in res])),
+                 FadeIn(res_l),
+                 *[TransformFromCopy(src[k][1], res[k + 2][1]) for k in range(6)],
+                 FadeIn(VGroup(res[0][1], res[1][1]), shift=RIGHT * 0.3),
+                 run_time=1.4)
         ones = VGroup(*[mono("1", 24, RED_B).move_to(res[k][0]) for k in (0, 1)])
-        self.say("第 30 位为 1 就成了 sra：算术右移，高位补的是符号位。这回，这个开关管的是符号扩展。",
+        self.cue(tr("第 30 位为 1 就成了 sra"),
                  bf.fill_field(0, "0100000"),
                  Transform(asm, asm_code("sra t0, t1, s11", 34).move_to(asm)),
                  Transform(hx, mono(hex32(SRA), 34, YELLOW_D).move_to(hx)),
                  Transform(res_l, mono("sra", 24, C_MNEM).move_to(res_l)))
-        self.play(Indicate(src[0], color=RED_B, scale_factor=1.3))
-        self.play(Transform(VGroup(res[0][1], res[1][1]), ones))
+        self.cue(tr("高位补的是符号位"), Indicate(src[0], color=RED_B, scale_factor=1.3))
+        self.cue(tr("这回，这个开关管的是符号扩展"), Transform(VGroup(res[0][1], res[1][1]), ones))
         self.hold()
 
         # shift-immediates: the same bit, inside the I-type immediate
@@ -474,13 +494,15 @@ class Ep10Decoding(FormatScene):
                  Transform(tag, mono("I*", 30, WHITE).move_to(tag)),
                  Transform(bf.labels[1], lab1),
                  bf.frames[1].animate.set_stroke(YELLOW_D).set_fill(YELLOW_D, 0.14))
-        self.play(bf.fill_field(1, "00101"), bf.fill_field(5, "0010011"),
-                  Transform(asm, asm_code("srai t0, t1, 5", 34).move_to(asm)),
-                  Transform(hx, mono(hex32(SRAI), 34, YELLOW_D).move_to(hx)))
-        self.say("立即数的高 7 位不当数值用，而是像 funct7 一样当开关：srai 的这 7 位是 0100000，开关依旧是第 30 位。",
+        self.cue(tr("移位量最多 31"),
+                 bf.fill_field(1, "00101"),
+                 bf.fill_field(5, "0010011"),
+                 Transform(asm, asm_code("srai t0, t1, 5", 34).move_to(asm)),
+                 Transform(hx, mono(hex32(SRAI), 34, YELLOW_D).move_to(hx)))
+        self.say("立即数的高 7 位不当数值用，而是像 funct7 一样当开关：srai 的这 7 位是 0100000，开关依旧是第 30 位。"
+                 "关掉第 30 位就是 srli。左移只有逻辑移位一种，所以 slli 的这一位永远是 0。",
                  Transform(bf.labels[0], lab0), Indicate(mark, color=RED_B))
-        self.hold()
-        self.say("关掉第 30 位就是 srli。左移只有逻辑移位一种，所以 slli 的这一位永远是 0。",
+        self.cue(tr("关掉第 30 位就是 srli"),
                  bf.fill_field(0, "0000000"),
                  Transform(asm, asm_code("srli t0, t1, 5", 34).move_to(asm)),
                  Transform(hx, mono(hex32(SRLI), 34, YELLOW_D).move_to(hx)))
@@ -507,13 +529,13 @@ class Ep10Decoding(FormatScene):
                         zh("I 型", 24, GREY_A).move_to([-1.5, 2.3, 0], aligned_edge=LEFT))
         subi = rows[0][2][1]
         subi.set_color(GREY_D)
-        self.say("I 型不只有 addi。把立即数运算和 R 型并排：funct3 一一对应，addi 对 add，xori 对 xor，slti 对 slt……",
+        self.say("I 型不只有 addi。把立即数运算和 R 型并排：funct3 一一对应，addi 对 add，xori 对 xor，slti 对 slt，"
+                 "唯独没有 subi：要减一个常数，addi 一个负数就行。",
                  Write(head), FadeIn(header),
                  LaggedStart(*[FadeIn(r, shift=RIGHT * 0.15) for r in rows], lag_ratio=0.12), run_time=2.2)
         strike = Line(subi.get_left() + LEFT * 0.08, subi.get_right() + RIGHT * 0.08, color=RED_C, stroke_width=4)
         alt = CodeListing(["addi t0, t0, -5", "# t0 = t0 - 5"], font_size=28, line_gap=0.5).move_to([3.9, 1.1, 0])
-        self.say("唯独没有 subi：要减一个常数，addi 一个负数就行。",
-                 Create(strike), FadeIn(alt, shift=LEFT * 0.2))
+        self.cue(tr("唯独没有 subi"), Create(strike), FadeIn(alt, shift=LEFT * 0.2))
         box101 = SurroundingRectangle(rows[5], color=RED_B, buff=0.08)
         self.say("3 位的 funct3 只有 8 种编码，这里已经全部用光，srli 和 srai 还得靠第 30 位来区分。",
                  LaggedStart(*[Indicate(r[0], scale_factor=1.3) for r in rows], lag_ratio=0.08),
@@ -542,13 +564,15 @@ class Ep10Decoding(FormatScene):
         ecall_m, ebreak_m = sysrow[2][0], sysrow[2][1]
         os_box = box_label("操作系统", BLUE_C, h=0.6, font_size=24).move_to([ecall_m.get_x() - 1.45, -1.65, 0])
         dbg_box = box_label("调试器", GREEN_C, h=0.6, font_size=24).move_to([ebreak_m.get_x() + 1.1, -1.65, 0])
-        self.say("ecall（environment call，环境调用）向操作系统请求服务，比如输出文字、结束程序。",
+        self.say("ecall（environment call，环境调用）向操作系统请求服务，比如输出文字、结束程序。"
+                 "ebreak 则把控制权交给调试器：调试器里的断点，就是靠它实现的。",
                  table[:3].animate.set_opacity(0.35), Create(hl))
-        self.play(GrowArrow(arr(ecall_m.get_bottom(), os_box.get_top(), color=BLUE_C, buff=0.1)),
-                  FadeIn(os_box))
-        self.say("ebreak 则把控制权交给调试器：调试器里的断点，就是靠它实现的。")
-        self.play(GrowArrow(arr(ebreak_m.get_bottom(), dbg_box.get_top(), color=GREEN_C, buff=0.1)),
-                  FadeIn(dbg_box))
+        self.cue(tr("向操作系统请求服务"),
+                 GrowArrow(arr(ecall_m.get_bottom(), os_box.get_top(), color=BLUE_C, buff=0.1)),
+                 FadeIn(os_box))
+        self.cue(tr("把控制权交给调试器"),
+                 GrowArrow(arr(ebreak_m.get_bottom(), dbg_box.get_top(), color=GREEN_C, buff=0.1)),
+                 FadeIn(dbg_box))
         self.hold()
         self.clear_stage(head)
 
@@ -558,10 +582,11 @@ class Ep10Decoding(FormatScene):
         b20 = SurroundingRectangle(bf.field_digits[0][11], color=RED_B, buff=0.05)
         self.say("这两条都没有操作数：ecall 除了 opcode 全是 0；ebreak 只是在立即数的最低位多了一个 1。",
                  FadeIn(bf), FadeIn(name), FadeIn(hx))
-        self.play(Create(b20))
-        self.play(bf.fill_field(0, "000000000001"),
-                  Transform(name, mono("ebreak", 36, C_MNEM).move_to(name)),
-                  Transform(hx, mono(hex32(EBREAK), 36, YELLOW_D).move_to(hx)))
+        self.cue(tr("ecall 除了 opcode 全是 0"), Create(b20))
+        self.cue(tr("ebreak 只是在立即数的最低位"),
+                 bf.fill_field(0, "000000000001"),
+                 Transform(name, mono("ebreak", 36, C_MNEM).move_to(name)),
+                 Transform(hx, mono(hex32(EBREAK), 36, YELLOW_D).move_to(hx)))
         self.hold()
         self.clear_stage(head)
 
@@ -578,13 +603,15 @@ class Ep10Decoding(FormatScene):
                        mono("load", 22, GREY).move_to([-2.8, 2.3, 0]),
                        mono("store", 22, GREY).move_to([-1.1, 2.3, 0]))
         pair = SurroundingRectangle(VGroup(*[VGroup(r[1], r[2]) for r in lrows[:3]]), color=YELLOW_D, buff=0.12)
-        self.say("load 和 store 的 funct3 也是配套的：lb 和 sb 是 000，lh 和 sh 是 001，lw 和 sw 是 010。",
+        self.say("load 和 store 的 funct3 也是配套的：lb 和 sb 是 000，lh 和 sh 是 001，lw 和 sw 是 010。"
+                 "lbu、lhu 没有对应的 store：store 只写入指定的字节，不涉及扩展。同理，RV32 也没有 lwu。",
                  FadeIn(lhead), LaggedStart(*[FadeIn(r, shift=UP * 0.1) for r in lrows], lag_ratio=0.15),
                  run_time=1.8)
-        self.play(Create(pair))
+        self.cue(tr("lb 和 sb 是 000"), Create(pair))
         no_lwu = zh("RV32 也没有 lwu：一个字正好填满 32 位的寄存器", 24, GREY_A).move_to(DOWN * 1.4)
-        self.say("lbu、lhu 没有对应的 store：store 只写入指定的字节，不涉及扩展。同理，RV32 也没有 lwu。",
-                 *[Indicate(r[2], color=GREY_A) for r in lrows[3:]], FadeIn(no_lwu, shift=UP * 0.1))
+        self.cue(tr("lbu、lhu 没有对应的 store"),
+                 *[Indicate(r[2], color=GREY_A) for r in lrows[3:]],
+                 FadeIn(no_lwu, shift=UP * 0.1))
         self.hold()
 
         code = CodeListing([
@@ -598,7 +625,9 @@ class Ep10Decoding(FormatScene):
         self.say("load 和 jalr 为什么也用 I 型？它们都要先算 rs1 + 立即数：一个算地址，一个算跳转目标，正好复用同一个加法器。",
                  FadeOut(VGroup(lrows, lhead, pair, no_lwu)),
                  LaggedStart(*[FadeIn(line, shift=RIGHT * 0.2) for line in code.lines], lag_ratio=0.25))
-        self.play(LaggedStart(*[Create(b) for b in boxes], lag_ratio=0.25), FadeIn(shared, shift=UP * 0.1))
+        self.cue(tr("它们都要先算"),
+                 LaggedStart(*[Create(b) for b in boxes], lag_ratio=0.25),
+                 FadeIn(shared, shift=UP * 0.1))
         self.hold()
         self.clear_stage()
 
@@ -616,18 +645,19 @@ class Ep10Decoding(FormatScene):
         eq = VGroup(asm_code("ret", 34), mono("=", 34, GREY_A), asm_code("jr ra", 34),
                     mono("=", 34, GREY_A), asm_code("jalr x0, ra, 0", 34)).arrange(RIGHT, buff=0.45)
         eq.move_to(UP * 2.25)
-        self.say("第 7 集的 ret 和 jr ra 都是伪指令，没有自己的 opcode：汇编器把它们都翻译成 jalr x0, ra, 0。",
+        self.say("第 7 集的 ret 和 jr ra 都是伪指令，没有自己的 opcode：汇编器把它们都翻译成 jalr x0, ra, 0。"
+                 "rd 取 x0，是因为返回时不需要再留下返回地址：写进 x0 的值会被直接丢掉。",
                  FadeOut(VGroup(g, eff), shift=UP * 0.2), FadeIn(eq, shift=UP * 0.2))
-        self.say("rd 取 x0，是因为返回时不需要再留下返回地址：写进 x0 的值会被直接丢掉。",
-                 Circumscribe(eq[4].glyphs(0, "x0"), color=YELLOW_D))
+        self.cue(tr("rd 取 x0"), Circumscribe(eq[4].glyphs(0, "x0"), color=YELLOW_D))
         self.hold()
 
         bf = BitField(fmt_fields("I")).move_to(UP * 0.4)
-        self.say("编码：立即数 0，rs1 = ra = x1，rd = x0。jalr 只有一条，funct3 其实用不上，按格式填 000。",
+        self.say("编码：立即数 0，rs1 = ra = x1，rd = x0。jalr 只有一条，funct3 其实用不上，按格式填 000。"
+                 "opcode 是 1100111。合起来就是 0x00008067：在反汇编结果里见到它，就知道函数要返回了。",
                  FadeIn(bf.frames), FadeIn(bf.labels), FadeIn(bf.ranges))
         notes = self.encode(bf, [(0, "000000000000", "0"), (1, "00001", "ra = x1"), (3, "00000", "x0"),
                                  (2, "000", "000")], rt=0.7)
-        self.say("opcode 是 1100111。合起来就是 0x00008067：在反汇编结果里见到它，就知道函数要返回了。")
+        self.cue(tr("opcode 是 1100111"))
         notes.add(*self.encode(bf, [(4, "1100111", "jalr")], rt=0.7))
         self.hex_of(bf, -1.65)
         self.hold()
@@ -638,30 +668,30 @@ class Ep10Decoding(FormatScene):
         head = self.heading("S 型：拆开的立即数")
         asm = asm_code("sw x14, 36(x2)", 40).move_to(UP * 2.4)
         sbf = BitField(fmt_fields("S")).move_to(DOWN * 0.55)
-        self.say("再来一个 S 型的例子：sw x14, 36(x2)。",
+        self.say("再来一个 S 型的例子：sw x14, 36(x2)。"
+                 "36 的 12 位二进制是 0000 0010 0100。高 7 位 0000001 放进 imm[11:5]，低 5 位 00100 放进 imm[4:0]。",
                  Write(head), FadeIn(asm, shift=DOWN * 0.2), FadeIn(sbf.frames), FadeIn(sbf.labels),
                  FadeIn(sbf.ranges))
         bits = format(36, "012b")
         row = bit_row(bits, YELLOW_D, box=0.42, font_size=24).move_to(UP * 1.3)
         idx = VGroup(*[mono(str(11 - k), 16, GREY).next_to(row[k], UP, buff=0.08) for k in range(12)])
         lab = mono("36 =", 28, YELLOW_D).next_to(row, LEFT, buff=0.3)
-        self.say("36 的 12 位二进制是 0000 0010 0100。高 7 位 0000001 放进 imm[11:5]，低 5 位 00100 放进 imm[4:0]。",
-                 FadeIn(row), FadeIn(idx), FadeIn(lab))
+        self.cue(tr("36 的 12 位二进制"), FadeIn(row), FadeIn(idx), FadeIn(lab))
         self.fly_bits(row, sbf, [(0, range(0, 7)), (4, range(7, 12))])
-        self.say("为什么要拆？只用 funct7 的 7 位，只能表示 128 个值；store 没有 rd，正好借用 rd 的 5 位，凑满 12 位。",
+        self.say("为什么要拆？只用 funct7 的 7 位，只能表示 128 个值；store 没有 rd，正好借用 rd 的 5 位，凑满 12 位。"
+                 "其余照旧：rs2 = x14，rs1 = x2，funct3 = 010 表示 sw，opcode 是 0100011。",
                  Indicate(sbf.frames[0], color=YELLOW_D, scale_factor=1.05),
                  Indicate(sbf.frames[4], color=YELLOW_D, scale_factor=1.1))
-        self.hold()
-        self.say("其余照旧：rs2 = x14，rs1 = x2，funct3 = 010 表示 sw，opcode 是 0100011。")
+        self.cue(tr("其余照旧"))
         notes = self.encode(sbf, [(1, "01110", "x14"), (2, "00010", "x2"), (3, "010", "sw"),
                                   (5, "0100011", "store")], rt=0.7)
         self.say("结果是 0x02E12223。反汇编时就反过来：把两段拼回去，0000001 00100 就是 36。")
         self.hex_of(sbf, -2.05)
-        self.play(FadeOut(VGroup(*[c[1] for c in row])))
+        self.cue(tr("反汇编时就反过来"), FadeOut(VGroup(*[c[1] for c in row])))
         back = VGroup(*[c[1].copy() for c in row])
         self.play(*[TransformFromCopy(d, b) for d, b in
                     zip([*sbf.field_digits[0], *sbf.field_digits[4]], back)], run_time=1.4)
-        self.play(Indicate(lab, color=YELLOW_D))
+        self.cue(tr("0000001 00100 就是 36"), Indicate(lab, color=YELLOW_D))
         self.hold()
         self.clear_stage()
 
@@ -683,15 +713,18 @@ class Ep10Decoding(FormatScene):
         self.play(FadeOut(VGroup(q2, ring, sweep)), q1.animate.scale(0.75).move_to([1.2, 2.4, 0]))
         bf = BitField(fmt_fields("R"), bits=b32(Q1)).move_to(UP * 0.9)
         bf.digits.set_opacity(0)
-        self.say("第 1 题：opcode 是 0110011，R 型；funct3 和 funct7 全是 0，所以是 add。",
+        self.say("第 1 题：opcode 是 0110011，R 型；funct3 和 funct7 全是 0，所以是 add。"
+                 "rd = 1，rs1 = 2，rs2 = 3：答案是 add x1, x2, x3，也就是 add ra, sp, gp。",
                  FadeIn(bf.frames), FadeIn(bf.labels), FadeIn(bf.ranges))
-        self.play(LaggedStart(*[d.animate.set_opacity(1) for d in bf.digits], lag_ratio=0.03), run_time=1.4)
+        self.cue(tr("opcode 是 0110011"),
+                 LaggedStart(*[d.animate.set_opacity(1) for d in bf.digits], lag_ratio=0.03),
+                 run_time=1.4)
         n1 = VGroup(under(bf, 5, "R"), under(bf, 3, "add", C_MNEM), under(bf, 0, "0000000"))
-        self.play(LaggedStart(*[FadeIn(n, shift=DOWN * 0.1) for n in n1], lag_ratio=0.3))
+        self.cue(tr("所以是 add"), LaggedStart(*[FadeIn(n, shift=DOWN * 0.1) for n in n1], lag_ratio=0.3))
         n2 = VGroup(under(bf, 4, "x1"), under(bf, 2, "x2"), under(bf, 1, "x3"))
         ans = VGroup(asm_code("add x1, x2, x3", 40), mono("= add ra, sp, gp", 30, GREY_A)).arrange(RIGHT, buff=0.5)
         ans.move_to(DOWN * 1.4)
-        self.say("rd = 1，rs1 = 2，rs2 = 3：答案是 add x1, x2, x3，也就是 add ra, sp, gp。",
+        self.cue(tr("rd = 1，rs1 = 2，rs2 = 3"),
                  LaggedStart(*[FadeIn(n, shift=DOWN * 0.1) for n in n2], lag_ratio=0.3))
         self.play(FadeIn(ans, shift=UP * 0.2))
         self.hold()
@@ -700,14 +733,14 @@ class Ep10Decoding(FormatScene):
         q2.scale(0.75).move_to([1.2, 2.4, 0])
         ibf = BitField(fmt_fields("I"), bits=b32(Q2)).move_to(UP * 0.9)
         ibf.digits.set_opacity(0)
-        self.say("第 2 题：opcode 0000011 是 load，funct3 = 010 是 lw；rd = 10 是 a0，rs1 = 2 是 sp。",
+        self.say("第 2 题：opcode 0000011 是 load，funct3 = 010 是 lw；rd = 10 是 a0，rs1 = 2 是 sp。"
+                 "立即数 1111 1111 1100 的最高位是 1，按补码是 −4。答案：lw a0, -4(sp)。",
                  FadeIn(q2), FadeIn(ibf.frames), FadeIn(ibf.labels), FadeIn(ibf.ranges))
         self.play(LaggedStart(*[d.animate.set_opacity(1) for d in ibf.digits], lag_ratio=0.03), run_time=1.4)
         m1 = VGroup(under(ibf, 4, "load"), under(ibf, 2, "lw", C_MNEM), under(ibf, 3, "a0"), under(ibf, 1, "sp"))
         self.play(LaggedStart(*[FadeIn(n, shift=DOWN * 0.1) for n in m1], lag_ratio=0.3))
         imm = under(ibf, 0, "1111 1111 1100 = -4")
         ans = asm_code("lw a0, -4(sp)", 44).move_to(DOWN * 1.4)
-        self.say("立即数 1111 1111 1100 的最高位是 1，按补码是 −4。答案：lw a0, -4(sp)。",
-                 FadeIn(imm, shift=DOWN * 0.1))
+        self.cue(tr("立即数 1111 1111 1100"), FadeIn(imm, shift=DOWN * 0.1))
         self.play(FadeIn(ans, shift=UP * 0.2))
         self.hold(0.5)

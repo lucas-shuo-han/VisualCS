@@ -2,7 +2,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import *  # noqa: E402,F403
+from manim_kit import *  # noqa: E402,F403
 
 assert bits_to_hex("0000000" + "01100" + "01011" + "000" + "01010" + "0110011") == "0x00C58533"
 
@@ -76,24 +76,25 @@ class Ep13CALL(NarratedScene):
         ])
         lib = file_icon("lib.o", TEAL_C, w=0.8, h=1.0, font_size=16).next_to(items[5], DOWN, buff=0.55)
         lib_arrow = Arrow(lib.get_top(), items[5][-1].get_bottom(), buff=0.08, color=GREY_B, stroke_width=3)
-        self.say("从一个 C 文件到一个正在运行的程序，要经过四个步骤。",
+        self.say("从一个 C 文件到一个正在运行的程序，要经过四个步骤。"
+                 "编译器 Compiler、汇编器 Assembler、链接器 Linker、加载器 Loader——首字母连起来，就是 CALL。",
                  FadeIn(items[0], shift=RIGHT * 0.2))
         self.play(LaggedStart(*[AnimationGroup(GrowArrow(arrows[k]), FadeIn(items[k + 1], shift=RIGHT * 0.2))
                                 for k in range(8)], lag_ratio=0.35, run_time=4))
         self.play(FadeIn(lib, shift=UP * 0.2), GrowArrow(lib_arrow))
-        self.say("编译器 Compiler、汇编器 Assembler、链接器 Linker、加载器 Loader——首字母连起来，就是 CALL。",
-                 *[Indicate(c, color=YELLOW_D, scale_factor=1.6) for c in initials])
+        self.cue(tr("编译器 Compiler"), *[Indicate(c, color=YELLOW_D, scale_factor=1.6) for c in initials])
         self.hold()
-        self.say("编译器把 C 翻译成汇编——前面几集，我们一直在手工做这件事。",
+        self.say("编译器把 C 翻译成汇编——前面几集，我们一直在手工做这件事。"
+                 "编译器输出的汇编里可以有伪指令，比如 mv、li、j，展开的活儿留给汇编器。",
                  Circumscribe(items[1], color=BLUE_C))
-        self.say("编译器输出的汇编里可以有伪指令，比如 mv、li、j，展开的活儿留给汇编器。")
         self.hold()
         self.clear_stage()
 
     # ------------------------------------------------------------------ assembler
     def assembler(self):
         head = self.heading("汇编器 Assembler")
-        self.say("汇编器读入汇编代码，产出目标文件（object file）。里面除了机器码，还有链接和调试要用的信息。", Write(head))
+        self.say("汇编器读入汇编代码，产出目标文件（object file）。里面除了机器码，还有链接和调试要用的信息。"
+                 "第一件事：把伪指令展开成真实的指令。", Write(head))
         left = CodeListing(["mv   a0, s0", "li   t0, 0xDEADBEEF", "", "j    Loop", "ret"],
                            font_size=26, line_gap=0.56)
         right = CodeListing(["addi a0, s0, 0", "lui  t0, 0xDEADC", "addi t0, t0, -273", "jal  x0, Loop",
@@ -105,8 +106,9 @@ class Ep13CALL(NarratedScene):
                 [(left.get_right()[0] + right.get_left()[0]) / 2, left[i].get_center()[1], 0])
             for i in (0, 1, 3, 4)
         ])
-        self.say("第一件事：把伪指令展开成真实的指令。",
-                 FadeIn(left), LaggedStart(*[GrowArrow(a) for a in arrows], lag_ratio=0.2),
+        self.cue(tr("第一件事"),
+                 FadeIn(left),
+                 LaggedStart(*[GrowArrow(a) for a in arrows], lag_ratio=0.2),
                  FadeIn(right, lag_ratio=0.1))
         self.hold()
         self.play(FadeOut(VGroup(left, right, arrows)))
@@ -118,30 +120,30 @@ class Ep13CALL(NarratedScene):
         ], font_size=30, line_gap=0.62).move_to(LEFT * 2.6 + UP * 0.9)
         addrs = VGroup(*[mono(f"0x{4 * i:02X}", 24, GREY).next_to(code.left_of(i, 0.4), LEFT, buff=0)
                          for i in range(3)])
-        self.say("第二件事：把标签换算成偏移。但这里有个麻烦：向前引用（forward reference）。",
+        self.say("第二件事：把标签换算成偏移。但这里有个麻烦：向前引用（forward reference）。"
+                 "汇编器读到 bne 时，还没见过 Skip 的定义，不知道该跳多远。",
                  FadeIn(code), FadeIn(addrs))
         q = mono("?", 36, RED_B).next_to(code.glyphs(0, "Skip"), UP, buff=0.1)
-        self.say("汇编器读到 bne 时，还没见过 Skip 的定义，不知道该跳多远。",
-                 Circumscribe(code.glyphs(0, "Skip"), color=RED_B), FadeIn(q))
+        self.cue(tr("汇编器读到 bne 时"), Circumscribe(code.glyphs(0, "Skip"), color=RED_B), FadeIn(q))
         self.hold()
 
         tbl_head = VGroup(zh("符号表", 26, YELLOW_D))
         tbl_box = Rectangle(width=3.4, height=1.6, stroke_color=YELLOW_D, stroke_width=2)
         tbl_box.move_to(RIGHT * 4.6 + UP * 0.7)
         tbl_head.next_to(tbl_box, UP, buff=0.15)
-        self.say("解决办法：扫描两遍。第一遍不生成机器码，只把每个标签的地址记进符号表（symbol table）。",
+        self.say("解决办法：扫描两遍。第一遍不生成机器码，只把每个标签的地址记进符号表（symbol table）。"
+                 "第二遍再生成机器码。这时 Skip 的地址已知：偏移 = 0x08 − 0x00 = 8。",
                  Create(tbl_box), FadeIn(tbl_head))
         scan = code.line_box(0, color=BLUE_B)
-        self.play(FadeIn(scan))
+        self.cue(tr("第一遍不生成机器码"), FadeIn(scan))
         for i in (1, 2):
             self.play(scan.animate.become(code.line_box(i, color=BLUE_B)), run_time=0.6)
         entry = mono("Skip  →  0x08", 28, C_LABEL).move_to(tbl_box)
-        self.play(TransformFromCopy(VGroup(code.glyphs(2, "Skip"), addrs[2]), entry))
+        self.cue(tr("记进符号表"), TransformFromCopy(VGroup(code.glyphs(2, "Skip"), addrs[2]), entry))
         self.play(FadeOut(scan))
-        self.say("第二遍再生成机器码。这时 Skip 的地址已知：偏移 = 0x08 − 0x00 = 8。",
-                 FadeOut(q))
+        self.cue(tr("第二遍再生成机器码"), FadeOut(q))
         off = mono("+8", 30, YELLOW_D).next_to(code.glyphs(0, "Skip"), UP, buff=0.12)
-        self.play(TransformFromCopy(entry, off))
+        self.cue(tr("偏移 = 0x08"), TransformFromCopy(entry, off))
         self.hold()
         self.play(FadeOut(VGroup(code, addrs, off)))
 
@@ -150,15 +152,15 @@ class Ep13CALL(NarratedScene):
             "la   t0, A          # 静态数据 A 的地址",
         ], font_size=24, line_gap=0.62)
         ext.to_edge(LEFT, buff=0.6).set_y(0.8)
-        self.say("但有些地址，扫多少遍都算不出来：调用另一个文件里的 printf，或者取静态数据 A 的地址。",
+        self.say("但有些地址，扫多少遍都算不出来：调用另一个文件里的 printf，或者取静态数据 A 的地址。"
+                 "它们的最终地址要等链接时才知道。汇编器把这些“待补的洞”记进重定位表（relocation table），留给链接器。",
                  FadeIn(ext, shift=UP * 0.15))
         reloc_box = Rectangle(width=3.4, height=1.3, stroke_color=RED_B, stroke_width=2)
         reloc_box.next_to(tbl_box, DOWN, buff=0.75)
         reloc_head = zh("重定位表", 26, RED_B).next_to(reloc_box, UP, buff=0.15)
         rel = VGroup(mono("printf @ jal", 22, RED_B), mono("A @ la", 22, RED_B)).arrange(DOWN, buff=0.15)
         rel.move_to(reloc_box)
-        self.say("它们的最终地址要等链接时才知道。汇编器把这些“待补的洞”记进重定位表（relocation table），留给链接器。",
-                 Create(reloc_box), FadeIn(reloc_head), TransformFromCopy(ext, rel))
+        self.cue(tr("它们的最终地址"), Create(reloc_box), FadeIn(reloc_head), TransformFromCopy(ext, rel))
         self.hold()
         self.clear_stage()
 
@@ -185,31 +187,39 @@ class Ep13CALL(NarratedScene):
 
         foo = obj("foo", TEAL_C).move_to(LEFT * 4.6 + UP * 1.3)
         lib = obj("lib", TEAL_C).move_to(LEFT * 4.6 + DOWN * 0.9)
-        self.say("链接器把多个目标文件拼成一个可执行文件。", Write(head), FadeIn(foo), FadeIn(lib))
+        self.say("链接器把多个目标文件拼成一个可执行文件。"
+                 "第一步：把各文件的代码段首尾相接，再把数据段接在后面。", Write(head), FadeIn(foo), FadeIn(lib))
         out_segs = VGroup(
             seg_box("foo 代码", C_TEXT_SEG, w=2.8), seg_box("lib 代码", C_TEXT_SEG, w=2.8),
             seg_box("foo 数据", C_DATA_SEG, w=2.8), seg_box("lib 数据", C_DATA_SEG, w=2.8),
         ).arrange(DOWN, buff=0).move_to(RIGHT * 0.4 + UP * 0.2)
         out_l = mono("a.out", 28, GREEN_C).next_to(out_segs, UP, buff=0.15)
-        self.say("第一步：把各文件的代码段首尾相接，再把数据段接在后面。", FadeIn(out_l))
-        self.play(TransformFromCopy(foo[0][0], out_segs[0]), TransformFromCopy(lib[0][0], out_segs[1]), run_time=1.2)
-        self.play(TransformFromCopy(foo[0][1], out_segs[2]), TransformFromCopy(lib[0][1], out_segs[3]), run_time=1.2)
+        self.cue(tr("第一步"), FadeIn(out_l))
+        self.cue(tr("代码段首尾相接"),
+                 TransformFromCopy(foo[0][0], out_segs[0]),
+                 TransformFromCopy(lib[0][0], out_segs[1]),
+                 run_time=1.2)
+        self.cue(tr("再把数据段接在后面"),
+                 TransformFromCopy(foo[0][1], out_segs[2]),
+                 TransformFromCopy(lib[0][1], out_segs[3]),
+                 run_time=1.2)
         addr = VGroup(mono("0x10000", 20, GREY_B).next_to(out_segs[0], RIGHT, buff=0.2).align_to(out_segs[0], UP),
                       mono("0x10100", 20, GREY_B).next_to(out_segs[1], RIGHT, buff=0.2).align_to(out_segs[1], UP))
         self.say("第二步：各段位置一旦排定（代码从 0x10000 开始），每个符号的最终地址也就定了，比如 printf 在 0x10180。",
                  FadeIn(addr))
         sym = mono("printf = 0x10180", 24, YELLOW_D).next_to(out_segs[1], RIGHT, buff=0.2).align_to(out_segs[1], DOWN)
-        self.play(FadeIn(sym, shift=LEFT * 0.1))
+        self.cue(tr("比如 printf 在"), FadeIn(sym, shift=LEFT * 0.1))
         hole = CodeListing(["0x10040:  jal ra, ???"], font_size=26)
         hole.move_to(DOWN * 2.2).set_x(-5.6 + hole.width / 2)
-        self.say("第三步：按重定位表逐个补洞。foo 里 0x10040 处的 jal 要跳到 printf……",
+        self.say("第三步：按重定位表逐个补洞。foo 里 0x10040 处的 jal 要跳到 printf，"
+                 "jal 用 PC 相对偏移，所以填进去的是 0x10180 − 0x10040 = 0x140。",
                  FadeIn(hole, shift=UP * 0.15))
         filled = CodeListing(["0x10040:  jal ra, 0x140   # 0x10180 - 0x10040"], font_size=26).move_to(hole, aligned_edge=LEFT)
-        self.say("……jal 用 PC 相对偏移，所以填进去的是 0x10180 − 0x10040 = 0x140。", Transform(hole, filled))
+        self.cue(tr("jal 用 PC 相对偏移"), Transform(hole, filled))
         self.hold()
-        self.say("而文件内部的分支完全不用改：PC 相对偏移，整块挪动后依然正确。这正是第 11 集说的“位置无关”。",
+        self.say("而文件内部的分支完全不用改：PC 相对偏移，整块挪动后依然正确。这正是第 11 集说的“位置无关”。"
+                 "顺便一提：现代系统还常用“动态链接”，库要等程序加载时才链接进来。这里讲的是静态链接。",
                  Indicate(out_segs[0], color=PURPLE_B))
-        self.say("顺便一提：现代系统还常用“动态链接”，库要等程序加载时才链接进来。这里讲的是静态链接。")
         self.hold()
         self.clear_stage()
 
@@ -236,14 +246,19 @@ class Ep13CALL(NarratedScene):
             "5. 初始化寄存器，sp 指向栈顶",
             "6. 跳到启动例程，再由它调用 main",
         ]]).arrange(DOWN, aligned_edge=LEFT, buff=0.22).move_to(LEFT * 3.2 + DOWN * 0.9)
-        self.say("最后，操作系统中的加载器负责把可执行文件真正运行起来。",
+        self.say("最后，操作系统中的加载器负责把可执行文件真正运行起来。"
+                 "它先读文件头，得知代码段和数据段有多大，再为程序创建一个新的地址空间……",
                  Write(head), FadeIn(aout))
-        self.say("它先读文件头，得知代码段和数据段有多大，再为程序创建一个新的地址空间……",
-                 FadeIn(steps[0]), FadeIn(steps[1]), FadeIn(mem_l),
+        self.cue(tr("它先读文件头"),
+                 FadeIn(steps[0]),
+                 FadeIn(steps[1]),
+                 FadeIn(mem_l),
                  LaggedStart(*[Create(s[0]) for s in mem], lag_ratio=0.2))
         text_copy = seg_box("代码", C_TEXT_SEG, w=1.2, h=0.4, size=18).move_to(aout)
         data_copy = seg_box("数据", C_DATA_SEG, w=1.2, h=0.4, size=18).move_to(aout)
-        self.say("……然后把代码和数据复制进内存……", FadeIn(steps[2]))
+        self.say("……然后把代码和数据复制进内存，"
+                 "把命令行参数放到栈上，初始化寄存器，让 sp 指向栈顶，"
+                 "最后跳到启动例程，由它调用 main。程序开始运行！", FadeIn(steps[2]))
         self.play(text_copy.animate.move_to(mem[4]).scale(1.3), data_copy.animate.move_to(mem[3]).scale(1.3),
                   run_time=1.4)
         self.play(FadeOut(text_copy), FadeOut(data_copy),
@@ -254,13 +269,16 @@ class Ep13CALL(NarratedScene):
         sp[1].next_to(sp[0], RIGHT, buff=0.1)
         sp.next_to(mem[0], RIGHT, buff=0.08)
         argv = zh("argc / argv", 20, GREY_A)
-        self.say("……把命令行参数放到栈上，初始化寄存器，让 sp 指向栈顶……",
-                 FadeIn(steps[3]), FadeIn(steps[4]),
-                 mem[0][0].animate.set_fill(BLUE_C, 0.25), mem[0][1].animate.set_opacity(1), FadeIn(sp))
+        self.cue(tr("把命令行参数放到栈上"),
+                 FadeIn(steps[3]),
+                 FadeIn(steps[4]),
+                 mem[0][0].animate.set_fill(BLUE_C, 0.25),
+                 mem[0][1].animate.set_opacity(1),
+                 FadeIn(sp))
         pc = VGroup(Arrow(RIGHT * 0.9, ORIGIN, buff=0, color=YELLOW_D), mono("PC", 26, YELLOW_D))
         pc[1].next_to(pc[0], RIGHT, buff=0.1)
         pc.next_to(mem[4], RIGHT, buff=0.08)
-        self.say("……最后跳到启动例程，由它调用 main。程序开始运行！", FadeIn(steps[5]), FadeIn(pc))
+        self.cue(tr("最后跳到启动例程"), FadeIn(steps[5]), FadeIn(pc))
         self.play(Indicate(mem[4], color=YELLOW_D))
         self.hold()
         self.clear_stage()
@@ -275,7 +293,8 @@ class Ep13CALL(NarratedScene):
         ).arrange(DOWN, buff=0.7).move_to(UP * 0.5)
         arrows = VGroup(*[Arrow(chain[k].get_bottom(), chain[k + 1].get_top(), buff=0.12, color=GREY_B)
                           for k in range(3)])
-        self.say("到这里，我们走完了一整条路：C 代码，到汇编，到机器码，再到内存里运行的程序。",
+        self.say("到这里，我们走完了一整条路：C 代码，到汇编，到机器码，再到内存里运行的程序。"
+                 "寄存器、内存、分支、函数调用、指令编码、编译链接——这就是 CS61C 中 RISC-V 部分的全貌。",
                  LaggedStart(*[AnimationGroup(FadeIn(chain[k], shift=DOWN * 0.1),
                                               *([GrowArrow(arrows[k - 1])] if k else []))
                                for k in range(4)], lag_ratio=0.4, run_time=3))
@@ -283,6 +302,5 @@ class Ep13CALL(NarratedScene):
             "①② 机器结构与算术", "③④ 内存", "⑤⑥ 分支与循环", "⑦⑧ 函数与栈",
             "⑨–⑫ 指令编码", "⑬⑭ CALL",
         ]]).arrange(DOWN, aligned_edge=LEFT, buff=0.25).to_edge(RIGHT, buff=0.9).shift(UP * 0.4)
-        self.say("寄存器、内存、分支、函数调用、指令编码、编译链接——这就是 CS61C 中 RISC-V 部分的全貌。",
-                 LaggedStart(*[FadeIn(e, shift=LEFT * 0.2) for e in eps], lag_ratio=0.15))
+        self.cue(tr("寄存器、内存、分支"), LaggedStart(*[FadeIn(e, shift=LEFT * 0.2) for e in eps], lag_ratio=0.15))
         self.hold(0.5)

@@ -2,7 +2,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import *  # noqa: E402,F403
+from manim_kit import *  # noqa: E402,F403
 
 # ---------------------------------------------------------------- numbers from the notes (rv-intro)
 PERIOD_NS = 1 / 4                         # 4 GHz clock
@@ -186,20 +186,20 @@ class Ep01Intro(NarratedScene):
             return anims
 
         c = CodeListing(["a = b + c;"], lang="c", font_size=40).move_to([2.4, 2.3, 0])
-        self.say("最上层是高级语言，比如 C。", FadeIn(ptr), *focus(0, move=False),
+        self.say("最上层是高级语言，比如 C。"
+                 "编译器把它翻译成汇编语言，"
+                 "汇编器再把它变成机器码：机器能直接读懂的 0 和 1。", FadeIn(ptr), *focus(0, move=False),
                  FadeIn(c, shift=LEFT * 0.2))
         asm = CodeListing(["add x10, x11, x12"], font_size=36).move_to([2.4, 0.85, 0])
         a1 = Arrow(c.get_bottom(), asm.get_top(), buff=0.15, color=GREY_B)
         l1 = zh("编译器", 22, GREY_A).next_to(a1, RIGHT, buff=0.2)
-        self.say("编译器把它翻译成汇编语言……", *focus(1), GrowArrow(a1), FadeIn(l1),
-                 FadeIn(asm, shift=DOWN * 0.2))
+        self.cue(tr("编译器把它翻译成汇编语言"), *focus(1), GrowArrow(a1), FadeIn(l1), FadeIn(asm, shift=DOWN * 0.2))
         cols = [FIELD_COLORS[k] for k in ("funct7", "rs2", "rs1", "funct3", "rd", "opcode")]
         mc = MarkupText(" ".join(span(b, col) for b, col in zip(ADD_FIELDS, cols)),
                         font=MONO, font_size=24).move_to([2.4, -0.6, 0])
         a2 = Arrow(asm.get_bottom(), mc.get_top(), buff=0.15, color=GREY_B)
         l2 = zh("汇编器", 22, GREY_A).next_to(a2, RIGHT, buff=0.2)
-        self.say("……汇编器再把它变成机器码：机器能直接读懂的 0 和 1。", *focus(2), GrowArrow(a2),
-                 FadeIn(l2), FadeIn(mc, lag_ratio=0.05))
+        self.cue(tr("汇编器再把它变成机器码"), *focus(2), GrowArrow(a2), FadeIn(l2), FadeIn(mc, lag_ratio=0.05))
         self.hold()
 
         # hardware: block diagram -> gates -> transistor, each a zoom into the one before
@@ -208,9 +208,12 @@ class Ep01Intro(NarratedScene):
                  *focus(3), FadeOut(VGroup(c, a1, l1, asm, a2, l2, mc), shift=UP * 0.3),
                  FadeIn(bd, shift=UP * 0.3))
         d1, d2 = Dot(bd.r1.get_bottom(), color=YELLOW_D), Dot(bd.r2.get_bottom(), color=YELLOW_D)
-        self.play(d1.animate.move_to(bd.alu_in[0]), d2.animate.move_to(bd.alu_in[1]), run_time=0.8)
+        self.cue(tr("比如两个寄存器的值送进"),
+                 d1.animate.move_to(bd.alu_in[0]),
+                 d2.animate.move_to(bd.alu_in[1]),
+                 run_time=0.8)
         d3 = Dot(bd.alu.get_bottom(), color=YELLOW_D)
-        self.play(ReplacementTransform(VGroup(d1, d2), d3), run_time=0.4)
+        self.cue(tr("一个加法器"), ReplacementTransform(VGroup(d1, d2), d3), run_time=0.4)
         self.play(d3.animate.move_to(bd.rd.get_top()), run_time=0.6)
         self.play(FadeOut(d3), Indicate(bd.rd, color=YELLOW_D))
         self.hold()
@@ -218,18 +221,20 @@ class Ep01Intro(NarratedScene):
         gates = self.half_adder()
         gates.save_state()
         gates.scale(0.15).move_to(bd.alu.get_center()).set_opacity(0)
-        self.say("放大加法器，里面是逻辑门：两个比特相加，异或门给出和，与门给出进位。",
+        self.say("放大加法器，里面是逻辑门：两个比特相加，异或门给出和，与门给出进位。"
+                 "再放大一个逻辑门：它由晶体管搭成。这是最底层。",
                  *focus(4), bd.animate.scale(5, about_point=bd.alu.get_center()).set_opacity(0),
                  Restore(gates), run_time=1.6)
         self.remove(bd)
-        self.hold()
 
         tr_pic = self.transistor()
         tr_pic.save_state()
         tr_pic.scale(0.15).move_to(gates.and_g.get_center()).set_opacity(0)
-        self.say("再放大一个逻辑门：它由晶体管搭成。这是最底层。",
-                 *focus(5), gates.animate.scale(5, about_point=gates.and_g.get_center()).set_opacity(0),
-                 Restore(tr_pic), run_time=1.6)
+        self.cue(tr("再放大一个逻辑门"),
+                 *focus(5),
+                 gates.animate.scale(5, about_point=gates.and_g.get_center()).set_opacity(0),
+                 Restore(tr_pic),
+                 run_time=1.6)
         self.remove(gates)
         self.hold()
 
@@ -243,7 +248,8 @@ class Ep01Intro(NarratedScene):
         self.say("相邻两层之间都有定义清晰的接口：只要遵守接口，就不必关心下一层的细节。",
                  FadeOut(tr_pic), FadeOut(ptr), *unfocus,
                  LaggedStart(*[Create(l) for l in ifaces], lag_ratio=0.2, run_time=1.5))
-        self.play(LaggedStart(*[Indicate(l, color=WHITE, scale_factor=1.05) for l in ifaces],
+        self.cue(tr("只要遵守接口"),
+                 LaggedStart(*[Indicate(l, color=WHITE, scale_factor=1.05) for l in ifaces],
                               lag_ratio=0.15))
         self.hold()
 
@@ -367,7 +373,7 @@ class Ep01Intro(NarratedScene):
         self.play(*[d.animate.move_to(ch[0].get_center()) for d, ch in zip(dots, chips)], run_time=0.7)
         self.play(*[FadeOut(d, scale=2) for d in dots], *[Indicate(ch[0], color=YELLOW_D) for ch in chips])
         rv = zh("RISC-V", 30, WHITE).move_to(bar[1])
-        self.play(Transform(bar[1], rv))
+        self.cue(tr("叫作 RISC-V"), Transform(bar[1], rv))
         self.play(Indicate(bar, color=YELLOW_D, scale_factor=1.03))
         self.hold()
         self.clear_stage(self.head)
@@ -387,22 +393,23 @@ class Ep01Intro(NarratedScene):
         self.say("汇编大多由编译器生成，很少有人手写。那为什么还要学它？",
                  Transform(self.head, new_head), FadeIn(row, lag_ratio=0.3), GrowArrow(arr[0]),
                  GrowArrow(arr[1]), FadeIn(tools), FadeIn(rare))
-        self.play(Circumscribe(a, color=YELLOW_D))
+        self.cue(tr("那为什么还要学它"), Circumscribe(a, color=YELLOW_D))
 
         card = RoundedRectangle(corner_radius=0.15, width=10.4, height=1.5, stroke_color=GREY_B,
                                 stroke_width=2, fill_color=GREY_E, fill_opacity=0.35).move_to(DOWN * 0.75)
         src = mono("Slashdot · 2004", 22, GREY_B).next_to(card.get_corner(UL), DR, buff=0.18)
         body = fit(zh("程序员平庸还是优秀，就看懂不懂汇编", 30), 9.6)
         body.move_to(card.get_center() + DOWN * 0.18)
-        self.say("2004 年 Slashdot 上有篇帖子甚至说：程序员平庸还是优秀，就看懂不懂汇编。",
+        self.say("2004 年 Slashdot 上有篇帖子甚至说：程序员平庸还是优秀，就看懂不懂汇编。"
+                 "懂汇编，就懂计算机怎样执行指令；用高级语言也能写出更快、更省资源、成本更低的程序。",
                  FadeIn(card), FadeIn(src), FadeIn(body, shift=UP * 0.15))
-        self.hold()
 
         key = zh("懂汇编 → 懂计算机怎样执行指令", 30, YELLOW_D).move_to(DOWN * 0.35)
         badges = VGroup(*[tag(s, GOLD_C, 2.4, 0.7, 26) for s in ["更快", "更省资源", "成本更低"]])
         badges.arrange(RIGHT, buff=0.6).move_to(DOWN * 1.55)
-        self.say("懂汇编，就懂计算机怎样执行指令；用高级语言也能写出更快、更省资源、成本更低的程序。",
-                 FadeOut(VGroup(card, src, body)), FadeIn(key, shift=UP * 0.15),
+        self.cue(tr("懂汇编"),
+                 FadeOut(VGroup(card, src, body)),
+                 FadeIn(key, shift=UP * 0.15),
                  LaggedStart(*[FadeIn(b, shift=UP * 0.2) for b in badges], lag_ratio=0.3))
         self.hold()
         self.clear_stage()
@@ -453,16 +460,16 @@ class Ep01Intro(NarratedScene):
         link = DoubleArrow([mem.get_right()[0] + 0.05, -0.1, 0], [io.get_left()[0] - 0.05, -0.1, 0], buff=0,
                            color=GREY_B, stroke_width=3, max_tip_length_to_length_ratio=0.2)
 
-        self.say("学 ISA 之前，先来看计算机的基本布局：冯·诺依曼结构。",
+        self.say("学 ISA 之前，先来看计算机的基本布局：冯·诺依曼结构。"
+                 "处理器（CPU）负责计算，由两部分组成：控制单元（control）和数据通路（datapath）。",
                  Write(head), Create(cpu), Create(mem), Create(io), FadeIn(cpu_l), FadeIn(mem_l), FadeIn(io_l))
-        self.say("处理器（CPU）负责计算，由两部分组成：控制单元（control）和数据通路（datapath）。",
-                 FadeIn(ctrl, shift=DOWN * 0.15), Create(dp), FadeIn(dp_l))
-        self.say("数据通路的主角，是寄存器和负责运算的算术逻辑单元（ALU）。",
+        self.cue(tr("处理器（CPU）负责计算"), FadeIn(ctrl, shift=DOWN * 0.15), Create(dp), FadeIn(dp_l))
+        self.say("数据通路的主角，是寄存器和负责运算的算术逻辑单元（ALU）。"
+                 "处理器之外，是存放程序和数据的内存（memory），以及键盘、显示器这样的输入输出设备（I/O）。"
+                 "控制、数据通路、内存、输入、输出：这就是计算机的五大部件。",
                  FadeIn(regs, lag_ratio=0.2), FadeIn(regs_l), FadeIn(alu_g, shift=UP * 0.15))
-        self.say("处理器之外，是存放程序和数据的内存（memory），以及键盘、显示器这样的输入输出设备（I/O）。",
-                 FadeIn(prog, shift=DOWN * 0.15), FadeIn(data, shift=UP * 0.15))
-        self.play(FadeIn(inp_b), FadeIn(out_b), FadeIn(inp), FadeIn(out), GrowFromCenter(link))
-        self.hold()
+        self.cue(tr("处理器之外"), FadeIn(prog, shift=DOWN * 0.15), FadeIn(data, shift=UP * 0.15))
+        self.cue(tr("以及键盘、显示器"), FadeIn(inp_b), FadeIn(out_b), FadeIn(inp), FadeIn(out), GrowFromCenter(link))
 
         parts = [ctrl, dp, VGroup(mem, prog, data), inp_b, out_b]
         badges = VGroup()
@@ -472,7 +479,7 @@ class Ep01Intro(NarratedScene):
             b[1].move_to(b[0])
             b.move_to(p.get_corner(UL) + np.array([0.05, -0.05, 0]))
             badges.add(b)
-        self.say("控制、数据通路、内存、输入、输出：这就是计算机的五大部件。",
+        self.cue(tr("控制"),
                  LaggedStart(*[AnimationGroup(FadeIn(b, scale=1.5), Indicate(p, color=YELLOW_D, scale_factor=1.03))
                                for b, p in zip(badges, parts)], lag_ratio=0.35, run_time=3))
         self.hold()
@@ -480,7 +487,7 @@ class Ep01Intro(NarratedScene):
         self.say("处理器发出地址来读写内存；“使能”信号保证只读的时候不会误改内存。",
                  LaggedStart(*[GrowArrow(b) for b in buses], lag_ratio=0.15), FadeIn(bus_l))
         addr = Dot([x_a, 1.25, 0], color=YELLOW_D, radius=0.09)
-        self.play(FadeIn(addr), Indicate(bus_l[0], color=YELLOW_D))
+        self.cue(tr("处理器发出地址"), FadeIn(addr), Indicate(bus_l[0], color=YELLOW_D))
         self.play(addr.animate.move_to([x_b, 1.25, 0]), run_time=0.7)
         self.play(addr.animate.move_to(data.get_center()), run_time=0.6)
         self.play(FadeOut(addr), Indicate(data, color=GOLD_B))
@@ -488,7 +495,10 @@ class Ep01Intro(NarratedScene):
         self.play(FadeIn(val), Indicate(bus_l[2], color=GOLD_B))
         self.play(val.animate.move_to([x_a, -0.35, 0]), run_time=0.8)
         self.play(val.animate.move_to(regs.get_center()), run_time=0.5)
-        self.play(FadeOut(val), Indicate(regs, color=YELLOW_D), Indicate(bus_l[3], color=RED_B, scale_factor=1.3))
+        self.cue(tr("信号保证"),
+                 FadeOut(val),
+                 Indicate(regs, color=YELLOW_D),
+                 Indicate(bus_l[3], color=RED_B, scale_factor=1.3))
         self.hold()
         self.clear_stage()
 
@@ -506,9 +516,10 @@ class Ep01Intro(NarratedScene):
         br = Brace(Line([x0, hi, 0], [x0 + P, hi, 0]), UP, buff=0.08, color=YELLOW_D)
         br_l = mono("0.25 ns", 24, YELLOW_D).next_to(br, UP, buff=0.06)
         ghz = zh("4 GHz：每秒 40 亿个周期", 24, BLUE_B).move_to([3.4, 2.6, 0])
-        self.say("处理器非常快：4 GHz 的处理器，一个时钟周期只有 0.25 纳秒。",
+        self.say("处理器非常快：4 GHz 的处理器，一个时钟周期只有 0.25 纳秒。"
+                 "这有多短？光速约每秒 30 万公里，而 0.25 纳秒只够光走 7.5 厘米。",
                  Write(head), Create(wave, run_time=1.5), FadeIn(ghz))
-        self.play(GrowFromCenter(br), FadeIn(br_l))
+        self.cue(tr("一个时钟周期只有"), GrowFromCenter(br), FadeIn(br_l))
 
         ry, cm = -0.7, 1.0
         rx0 = -5.0
@@ -529,25 +540,26 @@ class Ep01Intro(NarratedScene):
             Dot([rx0 + t.get_value() * LIGHT_CM_PER_NS * cm, ry, 0], radius=0.22, color=YELLOW_D).set_opacity(0.3),
             Dot([rx0 + t.get_value() * LIGHT_CM_PER_NS * cm, ry, 0], radius=0.1, color=YELLOW_A)))
         tl = always_redraw(lambda: mono(f"t = {t.get_value():.2f} ns", 26, WHITE).move_to([4.6, 0.35, 0]))
-        self.say("这有多短？光速约每秒 30 万公里，而 0.25 纳秒只够光走 7.5 厘米。",
-                 FadeIn(ruler), FadeIn(nums), FadeIn(light))
+        self.cue(tr("这有多短"), FadeIn(ruler), FadeIn(nums), FadeIn(light))
         self.add(sweep, trail, photon, tl)
+        self.cue(tr("0.25 纳秒只够光走"))
         self.play(t.animate.set_value(PERIOD_NS), run_time=2.5, rate_func=linear)
         m75 = VGroup(Line([rx0 + 7.5 * cm, ry + 0.1, 0], [rx0 + 7.5 * cm, ry + 0.5, 0], stroke_color=YELLOW_D, stroke_width=3),
                      mono("7.5 cm", 24, YELLOW_D))
         m75[1].next_to(m75[0], UP, buff=0.08)
-        self.play(FadeIn(m75), Indicate(br_l))
+        self.cue(tr("7.5 厘米"), FadeIn(m75), Indicate(br_l))
         self.hold()
 
         over = Rectangle(width=(NS_10CM - PERIOD_NS) / PERIOD_NS * P, height=hi - lo + 0.4, stroke_width=0,
                          fill_color=RED_C, fill_opacity=0.35)
         over.move_to([x0 + P + over.width / 2, (lo + hi) / 2, 0])
         self.say("数据哪怕只在 10 厘米外，光也要跑约 0.3 纳秒，超过一个周期。所以数据必须离处理器很近。")
+        self.cue(tr("数据哪怕只在 10 厘米外"))
         self.play(t.animate.set_value(NS_10CM), run_time=1.0, rate_func=linear)
         over_l = zh("超过一个周期", 22, RED_B).next_to(over, DOWN, buff=0.1)
         chip = zh("好在芯片本身远小于 10 厘米", 20, GREY_A).move_to([0, -1.85, 0])
-        self.play(FadeIn(over), FadeIn(over_l))
-        self.play(FadeIn(chip))
+        self.cue(tr("，超过一个周期"), FadeIn(over), FadeIn(over_l))
+        self.cue(tr("所以数据必须离处理器很近"), FadeIn(chip))
         self.hold()
         sweep.clear_updaters()
         trail.clear_updaters()
@@ -590,17 +602,17 @@ class Ep01Intro(NarratedScene):
 
     def two_kinds(self):
         d = self.chip_diagram()
-        self.say("因此，现代计算机至少有两种存数据的硬件。一是寄存器：在处理器内部，空间小，但快如闪电。",
+        self.say("因此，现代计算机至少有两种存数据的硬件。一是寄存器：在处理器内部，空间小，但快如闪电。"
+                 "二是内存：在处理器之外，大得多，但访问一次约 100 纳秒，相当于 400 个周期。",
                  FadeIn(d.core))
         self.quick_trips(d, 3)
         fast = zh("极快，但空间有限", 22, YELLOW_D).next_to(d.cpu, DOWN, buff=0.2)
-        self.play(FadeIn(fast))
+        self.cue(tr("空间小，但快如闪电"), FadeIn(fast))
         lat = zh("约 100 ns ≈ 400 个周期", 24, GREEN_B).next_to(d.bus, UP, buff=0.15)
         big = zh("大得多，但慢", 22, GREEN_B).next_to(d.mem, DOWN, buff=0.2)
-        self.say("二是内存：在处理器之外，大得多，但访问一次约 100 纳秒，相当于 400 个周期。",
-                 FadeIn(d.far, shift=LEFT * 0.2), FadeIn(big))
+        self.cue(tr("二是内存"), FadeIn(d.far, shift=LEFT * 0.2), FadeIn(big))
         dot = Dot(d.cpu.get_right(), radius=0.09, color=GREEN_B)
-        self.play(FadeIn(dot), FadeIn(lat))
+        self.cue(tr("访问一次约 100 纳秒"), FadeIn(dot), FadeIn(lat))
         self.play(dot.animate.move_to(d.grid[7].get_center()), run_time=1.8, rate_func=linear)
         self.play(Indicate(d.grid[7], color=GREEN_B))
         self.play(dot.animate.move_to(d.regs[0].get_center()), run_time=1.8, rate_func=linear)
@@ -655,6 +667,7 @@ class Ep01Intro(NarratedScene):
         self.remove(sq)
         self.add(mem_sq, reg_sq, zl, zn)
         self.play(FadeOut(sq_l), run_time=0.4)
+        self.cue(tr("同样比例下"))
         self.play(z.animate.set_value(math.log10(Z)), run_time=5, rate_func=smooth)
         for m in (mem_sq, reg_sq, zn):
             m.clear_updaters()
@@ -663,7 +676,7 @@ class Ep01Intro(NarratedScene):
         ring = Circle(radius=0.22, stroke_color=YELLOW_D, stroke_width=3).move_to(spot)
         reg_l = zh("128 B 寄存器", 24, YELLOW_D).move_to(spot + np.array([-2.4, -0.55, 0]))
         ptr = Arrow(reg_l.get_right(), ring.get_left(), buff=0.08, color=YELLOW_D, stroke_width=3)
-        self.play(FadeIn(mem_l), Create(ring), FadeIn(reg_l), GrowArrow(ptr))
+        self.cue(tr("小方块连一个像素都不到"), FadeIn(mem_l), Create(ring), FadeIn(reg_l), GrowArrow(ptr))
         self.play(Indicate(ring, color=YELLOW_D, scale_factor=1.5))
         self.hold()
         self.clear_stage(self.head)
@@ -694,14 +707,15 @@ class Ep01Intro(NarratedScene):
         d_disk = zh("更大，也更慢", 22, BLUE_B)
         for d, y in zip((d_reg, d_dram, d_disk), (1.75, 0.2, -1.35)):
             fit(d, 5.5).move_to([1.2, y, 0], aligned_edge=LEFT)
-        self.say("主存通常是另一块芯片上的 DRAM（如 DDR3/4/5、HBM），几十美元就能买好几 GB。",
+        self.say("主存通常是另一块芯片上的 DRAM（如 DDR3/4/5、HBM），几十美元就能买好几 GB。"
+                 "但物理规律决定了：越小，越快。寄存器比 DRAM 快大约 50 到 500 倍。",
                  LaggedStart(*[FadeIn(b, shift=DOWN * 0.1) for b in bands], lag_ratio=0.2), FadeIn(names),
                  FadeIn(gi), FadeIn(d_reg), FadeIn(d_dram, shift=LEFT * 0.15), FadeIn(d_disk))
-        self.hold()
         speed = fit(zh("寄存器快 50–500 倍", 26, YELLOW_D), 5.5).move_to([1.2, 1.0, 0], aligned_edge=LEFT)
         rule = fit(zh("越小，越快", 30, YELLOW_D), 2.5).move_to([-5.4, 2.1, 0])
-        self.say("但物理规律决定了：越小，越快。寄存器比 DRAM 快大约 50 到 500 倍。",
-                 FadeIn(rule, shift=RIGHT * 0.2), FadeIn(speed, shift=LEFT * 0.2),
+        self.cue(tr("但物理规律决定了"),
+                 FadeIn(rule, shift=RIGHT * 0.2),
+                 FadeIn(speed, shift=LEFT * 0.2),
                  Indicate(bands[0], color=YELLOW_D, scale_factor=1.05))
         self.hold()
         self.clear_stage(self.head)
@@ -725,13 +739,14 @@ class Ep01Intro(NarratedScene):
             bars.add(Rectangle(width=max(mins * per, 0.04), height=0.3, stroke_width=0, fill_color=col,
                                fill_opacity=0.8).move_to([x0, y - 0.45, 0], aligned_edge=LEFT))
         car = Dot(B, radius=0.1, color=YELLOW_A)
-        self.say("借用 Jim Gray 的比喻：从寄存器取数据，好比在脑子里回想一件事，花 1 分钟……",
+        self.say("借用 Jim Gray 的比喻：从寄存器取数据，好比在脑子里回想一件事，花 1 分钟，"
+                 "那么慢 100 倍的内存，就像为了一张忘带的纸，开车去萨克拉门托取回来。",
                  FadeIn(outline), FadeIn(marks), FadeIn(labels[0]), GrowFromEdge(bars[0], LEFT))
-        self.play(Indicate(marks[0][0], color=YELLOW_D, scale_factor=2))
-        self.say("……那么慢 100 倍的内存，就像为了一张忘带的纸，开车去萨克拉门托取回来。",
-                 FadeIn(labels[1]), FadeIn(car))
+        self.cue(tr("好比在脑子里回想一件事"), Indicate(marks[0][0], color=YELLOW_D, scale_factor=2))
+        self.cue(tr("那么慢 100 倍的内存"), FadeIn(labels[1]), FadeIn(car))
         bars[1].stretch(0.001, 0, about_edge=LEFT)
         self.add(bars[1])
+        self.cue(tr("开车去萨克拉门托"))
         self.play(car.animate.move_to(Sa), bars[1].animate.stretch(500, 0, about_edge=LEFT), run_time=1.2,
                   rate_func=linear)
         self.play(car.animate.move_to(B), bars[1].animate.stretch(2, 0, about_edge=LEFT), run_time=1.2,
@@ -751,7 +766,7 @@ class Ep01Intro(NarratedScene):
         d = self.chip_diagram()
         self.say("寄存器数量很少，和处理器核心共用宝贵的芯片面积，非常昂贵。所以设计 ISA 像跳一支探戈：尽量在寄存器里算，少跑内存和磁盘。",
                  FadeIn(d))
-        self.play(Indicate(d.regs, color=YELLOW_D, scale_factor=1.1))
+        self.cue(tr("和处理器核心共用宝贵的芯片面积"), Indicate(d.regs, color=YELLOW_D, scale_factor=1.1))
         self.quick_trips(d, 4, rt=0.22)
         dot = Dot(d.cpu.get_right(), radius=0.09, color=GREEN_B)
         self.add(dot)
@@ -787,10 +802,10 @@ class Ep01Intro(NarratedScene):
         seg_names = ["读内存", "相加", "写回内存"]
         cisc = VGroup(*[tag(s, RED_C, 2.3, 0.8, 26) for s in seg_names]).arrange(RIGHT, buff=0).move_to(UP * 0.25)
         cisc_l = zh("一条复杂指令", 22, RED_B).next_to(cisc, UP, buff=0.15)
-        self.say("ISA 该怎样设计？七八十年代的潮流是让指令越来越复杂：一条指令同时读内存、运算、写回。",
+        self.say("ISA 该怎样设计？七八十年代的潮流是让指令越来越复杂：一条指令同时读内存、运算、写回。"
+                 "程序更短，访存也可能更少；代价是硬件复杂、造价高。这类架构后来被称为 CISC：复杂指令集计算机。",
                  Create(axis), FadeIn(ticks), GrowFromEdge(band, LEFT), FadeIn(band_l))
-        self.play(FadeIn(cisc, shift=UP * 0.2), FadeIn(cisc_l))
-        self.hold()
+        self.cue(tr("一条指令同时读内存"), FadeIn(cisc, shift=UP * 0.2), FadeIn(cisc_l))
 
         rng = np.random.default_rng(7)
         hw_box = RoundedRectangle(corner_radius=0.1, width=2.8, height=1.2, stroke_color=RED_C, stroke_width=2.5,
@@ -802,9 +817,8 @@ class Ep01Intro(NarratedScene):
         hw_l = zh("硬件：复杂、昂贵", 24, RED_B).next_to(hw_box, RIGHT, buff=0.35)
         cisc_name = zh("CISC：复杂指令集计算机", 24, RED_B).next_to(hw_l, DOWN, buff=0.2).align_to(hw_l, LEFT)
         cisc_tag = mono("CISC", 18, WHITE).move_to(band)
-        self.say("程序更短，访存也可能更少；代价是硬件复杂、造价高。这类架构后来被称为 CISC：复杂指令集计算机。",
-                 Create(hw_box), Create(tangle, lag_ratio=0.1), FadeIn(hw_l))
-        self.play(FadeIn(cisc_name), ReplacementTransform(band_l, cisc_tag))
+        self.cue(tr("程序更短"), Create(hw_box), Create(tangle, lag_ratio=0.1), FadeIn(hw_l))
+        self.cue(tr("这类架构后来被称为 CISC"), FadeIn(cisc_name), ReplacementTransform(band_l, cisc_tag))
         self.hold()
 
         ev801 = self.event(1980, "IBM 801 · John Cocke", 0.65, BLUE_B, align="right")
@@ -819,16 +833,18 @@ class Ep01Intro(NarratedScene):
         simple = VGroup(*[Line(hw_box.get_left() + RIGHT * 0.25 + UP * dy, hw_box.get_right() + LEFT * 0.25 + UP * dy,
                                stroke_color=BLUE_B, stroke_width=2) for dy in (-0.3, 0, 0.3)])
         hw_l2 = zh("硬件：简单、快", 24, BLUE_B).move_to(hw_l, aligned_edge=LEFT)
-        self.say("思路正相反：指令集小而简单，复杂操作交给软件和编译器，用简单指令拼出来。",
+        self.say("思路正相反：指令集小而简单，复杂操作交给软件和编译器，用简单指令拼出来。"
+                 "指令条数变多了，但简单的硬件每秒能执行多得多的指令，整体反而更快。",
                  *[ReplacementTransform(c[0], r[0]) for c, r in zip(cisc, risc)],
                  *[ReplacementTransform(c[1], s) for c, s in zip(cisc, subs)],
                  *[FadeIn(r[1]) for r in risc], ReplacementTransform(cisc_l, risc_l),
                  FadeOut(cisc_name))
-        self.play(hw_box.animate.set_stroke(BLUE_C).set_fill(BLUE_C, 0.08), ReplacementTransform(tangle, simple),
-                  ReplacementTransform(hw_l, hw_l2))
-        self.hold()
+        self.cue(tr("复杂操作交给软件和编译器"),
+                 hw_box.animate.set_stroke(BLUE_C).set_fill(BLUE_C, 0.08),
+                 ReplacementTransform(tangle, simple),
+                 ReplacementTransform(hw_l, hw_l2))
 
-        self.play(FadeOut(VGroup(risc, subs, risc_l, hw_box, simple, hw_l2)))
+        self.cue(tr("指令条数变多了"), FadeOut(VGroup(risc, subs, risc_l, hw_box, simple, hw_l2)))
         unit, bx = 1.15, -2.3
         rc = fit(zh("CISC：1 条复杂指令", 24, RED_B), 3.7).move_to([-6.3, 0.6, 0], aligned_edge=LEFT)
         rr = fit(zh("RISC：3 条简单指令", 24, BLUE_B), 3.7).move_to([-6.3, -0.65, 0], aligned_edge=LEFT)
@@ -843,8 +859,7 @@ class Ep01Intro(NarratedScene):
                     max_tip_length_to_length_ratio=0.05)
         tax_l = zh("时间", 22, GREY_A).next_to(tax, RIGHT, buff=0.12)
         note = zh("（示意）", 20, GREY).next_to(tax, DOWN, buff=0.1).align_to(tax, RIGHT)
-        self.say("指令条数变多了，但简单的硬件每秒能执行多得多的指令，整体反而更快。",
-                 FadeIn(rc), FadeIn(rr), GrowArrow(tax), FadeIn(tax_l), FadeIn(note))
+        self.cue(tr("指令条数变多了"), FadeIn(rc), FadeIn(rr), GrowArrow(tax), FadeIn(tax_l), FadeIn(note))
         self.play(GrowFromEdge(cbar, LEFT, run_time=3.2, rate_func=linear),
                   Succession(*[GrowFromEdge(b, LEFT, run_time=0.8, rate_func=linear) for b in rbars]))
         done = zh("先完成", 22, BLUE_B).next_to(rbars, RIGHT, buff=0.2)
@@ -858,9 +873,9 @@ class Ep01Intro(NarratedScene):
         cards = VGroup(c1, c2).arrange(RIGHT, buff=1.2).move_to(DOWN * 0.1)
         frames = VGroup(*[SurroundingRectangle(c, buff=0.25, corner_radius=0.12, color=col, stroke_width=2)
                           for c, col in zip(cards, (GOLD_C, RED_C))])
-        self.say("伯克利的 Dave Patterson 和斯坦福的 John Hennessy 把它推向极致，同时做出了 RISC 和 MIPS 项目。",
+        self.say("伯克利的 Dave Patterson 和斯坦福的 John Hennessy 把它推向极致，同时做出了 RISC 和 MIPS 项目。"
+                 "三位先驱后来都获得了图灵奖：Cocke 在 1987 年，Patterson 和 Hennessy 在 2017 年。",
                  FadeIn(ev_bm, shift=DOWN * 0.1), FadeIn(cards, shift=UP * 0.2), Create(frames))
-        self.hold()
 
         st87 = self.event(1987, "图灵奖", 0.65, GOLD_B, align="left", star=True)
         st17 = self.event(2017, "图灵奖", 0.65, GOLD_B, align="right", star=True)
@@ -868,8 +883,10 @@ class Ep01Intro(NarratedScene):
             VGroup(Star(n=5, outer_radius=0.15, color=GOLD_B, fill_opacity=1), zh(n, 24, WHITE)).arrange(RIGHT, buff=0.18)
             for n in ["John Cocke · 1987", "Dave Patterson · 2017", "John Hennessy · 2017"]
         ]).arrange(DOWN, aligned_edge=LEFT, buff=0.3).move_to(DOWN * 0.35)
-        self.say("三位先驱后来都获得了图灵奖：Cocke 在 1987 年，Patterson 和 Hennessy 在 2017 年。",
-                 FadeOut(VGroup(cards, frames)), FadeIn(st87, shift=DOWN * 0.1), FadeIn(st17, shift=DOWN * 0.1),
+        self.cue(tr("三位先驱后来都获得了图灵奖"),
+                 FadeOut(VGroup(cards, frames)),
+                 FadeIn(st87, shift=DOWN * 0.1),
+                 FadeIn(st17, shift=DOWN * 0.1),
                  LaggedStart(*[FadeIn(p, shift=RIGHT * 0.2) for p in people], lag_ratio=0.3))
         self.hold()
 
@@ -885,7 +902,7 @@ class Ep01Intro(NarratedScene):
         self.say("如今 RISC 和 CISC 都很流行、都在快速发展：许多 Windows 电脑用 x86，很多手机和苹果自研芯片用 ARM。",
                  FadeOut(people), FadeIn(x86[0], shift=UP * 0.2), FadeIn(arm[0], shift=UP * 0.2),
                  GrowFromCenter(race), FadeIn(race_l))
-        self.play(FadeIn(x86[1:], shift=UP * 0.2), FadeIn(arm[1:], shift=UP * 0.2))
+        self.cue(tr("许多 Windows 电脑用 x86"), FadeIn(x86[1:], shift=UP * 0.2), FadeIn(arm[1:], shift=UP * 0.2))
         self.hold()
         self.play(FadeOut(today), FadeOut(race), FadeOut(race_l))
 
@@ -900,9 +917,13 @@ class Ep01Intro(NarratedScene):
         c_toy = card("老旧或“自创”的 ISA", "缺少真正的编译器和软件", GREY_B, font=CJK)
         c_rv = card("RISC-V", "?", YELLOW_D)
         cards = VGroup(c_x86, c_toy, c_rv).arrange(RIGHT, buff=0.55).move_to(DOWN * 0.2)
-        self.say("教学总得选一个 ISA：x86 太复杂；老旧或“自创”的 ISA，又缺少真正的编译器和软件。",
+        self.say("教学总得选一个 ISA：x86 太复杂；老旧或“自创”的 ISA，又缺少真正的编译器和软件。"
+                 "RISC-V 于 2010 年诞生在 UC Berkeley 的 Par Lab，由 Patterson 和 Krste Asanovic 发起；到 2020 年前后，连 MIPS 都转向了它。",
                  LaggedStart(*[FadeIn(c, shift=UP * 0.2) for c in cards[:2]], lag_ratio=0.3))
-        self.play(c_x86.animate.fade(0.65), c_toy.animate.fade(0.65), FadeIn(c_rv, shift=UP * 0.2))
+        self.cue(tr("RISC-V 于"),
+                 c_x86.animate.fade(0.65),
+                 c_toy.animate.fade(0.65),
+                 FadeIn(c_rv, shift=UP * 0.2))
 
         ev10 = self.event(2010, "RISC-V 诞生", 1.2, YELLOW_D, align="right")
         ev20 = self.event(2020, "MIPS → RISC-V", 1.2, GREY_A, align="right")
@@ -911,9 +932,11 @@ class Ep01Intro(NarratedScene):
         born.next_to(c_rv[0], DOWN, buff=0.35)
         fit(born, 4.2)
         born.set_x(min(born.get_x(), 6.7 - born.width / 2))
-        self.say("RISC-V 于 2010 年诞生在 UC Berkeley 的 Par Lab，由 Patterson 和 Krste Asanovic 发起；到 2020 年前后，连 MIPS 都转向了它。",
-                 FadeIn(ev10, shift=DOWN * 0.1), FadeOut(c_rv[1]), FadeIn(born, shift=UP * 0.1))
-        self.play(FadeIn(ev20, shift=DOWN * 0.1))
+        self.cue(tr("2010 年诞生"),
+                 FadeIn(ev10, shift=DOWN * 0.1),
+                 FadeOut(c_rv[1]),
+                 FadeIn(born, shift=UP * 0.1))
+        self.cue(tr("到 2020 年前后"), FadeIn(ev20, shift=DOWN * 0.1))
         self.hold()
 
         self.play(FadeOut(VGroup(c_x86, c_toy, born)), c_rv[0].animate.move_to(UP * 0.7))
@@ -922,12 +945,12 @@ class Ep01Intro(NarratedScene):
         uses = VGroup(*[tag(s, GREY_B, 1.9, 0.6, 24, fill=0.06) for s in ["教学", "研究", "商用"]])
         VGroup(b1, b2).arrange(RIGHT, buff=0.6).move_to(DOWN * 0.45)
         uses.arrange(RIGHT, buff=0.4).move_to(DOWN * 1.55)
-        self.say("它受欢迎有两大原因：开源、免授权费。谁都能免费用，教学、研究、商用都行。",
+        self.say("它受欢迎有两大原因：开源、免授权费。谁都能免费用，教学、研究、商用都行。"
+                 "全球学界和业界共同推动它。从嵌入式微控制器，到仓库级超级计算机，都已经有人用它来打造。",
                  FadeIn(b1, shift=UP * 0.2), FadeIn(b2, shift=UP * 0.2),
                  LaggedStart(*[FadeIn(u) for u in uses], lag_ratio=0.3))
-        self.hold()
 
-        self.play(FadeOut(VGroup(b1, b2, uses)))
+        self.cue(tr("全球学界和业界共同推动它"), FadeOut(VGroup(b1, b2, uses)))
         small = chip_icon("MCU", 0.6, TEAL_C).move_to([-4.6, -0.8, 0])
         rack = VGroup(*[RoundedRectangle(corner_radius=0.05, width=1.2, height=0.28, stroke_color=BLUE_C, stroke_width=2,
                                          fill_color=BLUE_C, fill_opacity=0.2) for _ in range(6)]).arrange(DOWN, buff=0.05)
@@ -939,8 +962,13 @@ class Ep01Intro(NarratedScene):
         world = VGroup(zh("全球学术界与产业界共同推动", 22, GREY_A),
                        mono("RISC-V International", 20, GREY_B)).arrange(DOWN, buff=0.1)
         fit(world, span_.width).next_to(span_, UP, buff=0.2)
-        self.say("全球学界和业界共同推动它。从嵌入式微控制器，到仓库级超级计算机，都已经有人用它来打造。",
-                 FadeIn(small), FadeIn(s_l), GrowArrow(span_), FadeIn(world), FadeIn(racks, lag_ratio=0.2), FadeIn(r_l))
+        self.cue(tr("全球学界和业界共同推动它"),
+                 FadeIn(small),
+                 FadeIn(s_l),
+                 GrowArrow(span_),
+                 FadeIn(world),
+                 FadeIn(racks, lag_ratio=0.2),
+                 FadeIn(r_l))
         self.hold()
         self.clear_stage()
 
@@ -961,8 +989,10 @@ class Ep01Intro(NarratedScene):
         var.next_to(name, UP, buff=0.35)
         self.say("RISC-V 有 32、64、128 位等变体。本系列学 RV32I：32 位基础整数指令集；乘法等功能则放在 M 等扩展里。",
                  Write(head), FadeIn(var, lag_ratio=0.2), FadeIn(name, shift=UP * 0.2))
-        self.play(var[0].animate.set_color(BLUE_B), var[1:].animate.set_opacity(0.4),
-                  LaggedStart(*[FadeIn(n, shift=UP * 0.1) for n in notes], lag_ratio=0.3))
+        self.cue(tr("本系列学 RV32I"),
+                 var[0].animate.set_color(BLUE_B),
+                 var[1:].animate.set_opacity(0.4),
+                 LaggedStart(*[FadeIn(n, shift=UP * 0.1) for n in notes], lag_ratio=0.3))
 
         base = tag("RV32I 基础指令集", GREEN_C, 5.0, 0.8, 26).move_to([-3.4, -1.55, 0])
         ext_m = tag("M：乘除法", GOLD_C, 2.35, 0.7, 24)
@@ -970,7 +1000,7 @@ class Ep01Intro(NarratedScene):
         exts = VGroup(ext_m, ext_f).arrange(RIGHT, buff=0.3).next_to(base, UP, buff=0.12)
         ext_l = zh("可选扩展", 20, GREY_A).next_to(exts, UP, buff=0.1)
         self.play(FadeIn(base, shift=UP * 0.2))
-        self.play(FadeIn(ext_m, shift=DOWN * 0.4), FadeIn(ext_f, shift=DOWN * 0.4), FadeIn(ext_l))
+        self.cue(tr("乘法等功能"), FadeIn(ext_m, shift=DOWN * 0.4), FadeIn(ext_f, shift=DOWN * 0.4), FadeIn(ext_l))
         self.play(Indicate(ext_m, color=GOLD_B))
         self.hold()
 
@@ -987,23 +1017,22 @@ class Ep01Intro(NarratedScene):
         fit(table, 3.3).next_to(card_t, DOWN, buff=0.2)
         ibm = zh("名字来自 1960 年代的 IBM 360 绿卡", 20, GREY_A).next_to(card, DOWN, buff=0.1)
         fit(ibm, 4.2)
-        self.say("整个架构的定义一页纸就能装下，叫作“绿卡”，名字来自 1960 年代著名的 IBM 360 绿卡。",
+        self.say("整个架构的定义一页纸就能装下，叫作“绿卡”，名字来自 1960 年代著名的 IBM 360 绿卡。"
+                 "简洁、优雅，学汇编、学设计计算机都合适：这正是 CS61C 教它的原因。Go Bears！",
                  FadeIn(card, shift=LEFT * 0.3), FadeIn(card_t), FadeIn(table, lag_ratio=0.02), FadeIn(ibm))
-        self.hold()
         bears = zh("Go Bears!", 30, GOLD_B).move_to([-3.4, 0.45, 0])
-        self.say("简洁、优雅，学汇编、学设计计算机都合适：这正是 CS61C 教它的原因。Go Bears！",
-                 Circumscribe(card, color=YELLOW_D), FadeIn(bears, scale=1.3))
+        self.cue(tr("简洁"), Circumscribe(card, color=YELLOW_D), FadeIn(bears, scale=1.3))
         self.hold()
         self.clear_stage()
 
     # ------------------------------------------------------------------ roadmap
     def roadmap(self):
         tiles = VGroup()
-        for i, ep in enumerate(series.SERIES):
+        for i, ep in enumerate(EPISODES):
             r = RoundedRectangle(corner_radius=0.1, width=6.3, height=0.52, stroke_color=GREY_B, stroke_width=2,
                                  fill_color=GREY_E, fill_opacity=0.3)
             num = mono(f"{i + 1:02d}", 22, YELLOW_D).move_to(r.get_left() + RIGHT * 0.45)
-            t = fit(zh(series.title(ep, LANG), 24, WHITE), 5.1)
+            t = fit(zh(ep["title"][LANG], 24, WHITE), 5.1)
             t.next_to(num, RIGHT, buff=0.3)
             tiles.add(VGroup(r, num, t))
         for i, tl in enumerate(tiles):
@@ -1011,7 +1040,7 @@ class Ep01Intro(NarratedScene):
             tl.move_to([-3.3 + 6.6 * col, 2.55 - 0.66 * row, 0])
         self.say("全系列共 14 集。下一集，从一行 C 代码出发，看它怎样变成汇编，并认识 RISC-V 的寄存器。",
                  LaggedStart(*[FadeIn(t, shift=UP * 0.15) for t in tiles], lag_ratio=0.08, run_time=2.5))
-        self.play(tiles[0][0].animate.set_stroke(YELLOW_D).set_fill(YELLOW_D, 0.15))
+        self.cue(tr("下一集"), tiles[0][0].animate.set_stroke(YELLOW_D).set_fill(YELLOW_D, 0.15))
         self.play(tiles[1][0].animate.set_stroke(GREEN_C, 3).set_fill(GREEN_C, 0.25),
                   tiles[0][0].animate.set_stroke(GREY_B).set_fill(GREY_E, 0.3))
         self.play(Indicate(tiles[1], color=GREEN_B, scale_factor=1.05))

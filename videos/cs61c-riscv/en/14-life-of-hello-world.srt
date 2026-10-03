@@ -1,232 +1,380 @@
 1
-00:00:06,200 --> 00:00:14,000
-Last time we met the four steps of CALL. This time, let's follow one real program all the way through.
+00:00:06,200 --> 00:00:09,176
+The last episode covered the four steps of CALL.
 
 2
-00:00:14,000 --> 00:00:20,933
-First, a quick check: after which step are all the machine code bits of these two instructions known?
+00:00:09,176 --> 00:00:14,133
+In this one, we follow a real program all the way through.
 
 3
-00:00:20,933 --> 00:00:26,466
-Step one: the compiler translates the C code into assembly, hello.s.
+00:00:14,133 --> 00:00:15,361
+First, a quick quiz.
 
 4
-00:00:26,466 --> 00:00:33,766
-Note that la, call, li and ret are pseudo-instructions, left for the assembler to expand.
+00:00:15,361 --> 00:00:21,933
+For the two instructions below, after which step is the machine code completely settled?
 
 5
-00:00:33,766 --> 00:00:41,566
-Lines starting with a dot are directives: they produce no machine instructions, they tell the assembler how to lay out the object file.
+00:00:21,933 --> 00:00:27,724
+In step one, the compiler translates the C code into assembly, giving hello.s.
 
 6
-00:00:41,566 --> 00:00:49,033
-.text says what follows goes in the text segment; .align 2 aligns it to 2² = 4 bytes.
+00:00:27,724 --> 00:00:35,233
+Notice that la, call, li, and ret are all pseudo-instructions, left for the assembler to expand.
 
 7
-00:00:49,033 --> 00:00:55,400
-.global (also spelled .globl) makes main a global symbol that other files can refer to.
+00:00:35,233 --> 00:00:38,923
+Everything that begins with a dot is an assembler directive.
 
 8
-00:00:55,400 --> 00:01:01,466
-Then we switch to the read-only data section, .rodata, again aligned to 4 bytes.
+00:00:38,923 --> 00:00:45,266
+It produces no machine instruction, and only tells the assembler how to organize the object file.
 
 9
-00:01:01,466 --> 00:01:09,100
-.string stores a null-terminated string; the labels str1 and str2 mark where each one starts.
+00:00:45,266 --> 00:00:52,466
+The .text directive says that code comes next, and .align 2 aligns to four bytes, which is two squared.
 
 10
-00:01:09,100 --> 00:01:18,700
-Two other common directives aren't used here: .data switches to the data segment, and .word stores 32-bit words one after another.
+00:00:52,466 --> 00:01:00,333
+The .global directive, also written .globl, declares main as a global symbol, so other files can refer to it.
 
 11
-00:01:18,700 --> 00:01:27,433
-Step two: the assembler produces the object file hello.o. It's binary: looked at directly, it's just a run of hex numbers.
+00:01:00,333 --> 00:01:06,233
+Next we switch to the read-only data section, .rodata, again aligned to four bytes.
 
 12
-00:01:27,433 --> 00:01:34,333
-Disassembling main: addresses within the module on the left, machine code in the middle, instructions on the right.
+00:01:06,233 --> 00:01:13,433
+The .string directive stores strings that end in a zero, and the labels str1 and str2 mark where they start.
 
 13
-00:01:34,333 --> 00:01:42,666
-The pseudo-instructions are expanded. This listing is simplified: call became a single jalr.
+00:01:13,433 --> 00:01:16,438
+Two other common directives aren't used here.
 
 14
-00:01:42,666 --> 00:01:50,400
-But these five have immediates of 0, just placeholders: the assembler doesn't yet know where the data or printf will be.
+00:01:16,438 --> 00:01:24,566
+The .data directive enters the data segment, and .word stores thirty-two bit words one after another.
 
 15
-00:01:50,400 --> 00:01:56,233
-The other instructions involve no addresses, so their machine code is final after assembly.
+00:01:24,566 --> 00:01:28,609
+In step two, the assembler produces the object file hello.o.
 
 16
-00:01:56,233 --> 00:02:03,533
-The symbol table lists this file's labels and their offsets within their segments; the debugger gdb uses it too.
+00:01:28,609 --> 00:01:34,300
+It is binary, so looked at directly it is just a string of hexadecimal numbers.
 
 17
-00:02:03,533 --> 00:02:09,133
-main sits at offset 0 of the text segment and is global: that's what .global did.
+00:01:34,300 --> 00:01:35,799
+Let's disassemble main.
 
 18
-00:02:09,133 --> 00:02:17,600
-Both strings are local data. The first is 12 bytes including its terminating 0, so the second starts at 0xc.
+00:01:35,799 --> 00:01:41,342
+The left column holds addresses within the module, the middle holds the machine code,
 
 19
-00:02:17,600 --> 00:02:22,733
-The relocation table is the linker's to-do list: one entry per placeholder.
+00:01:41,342 --> 00:01:44,212
+and the right column holds the instructions.
 
 20
-00:02:22,733 --> 00:02:31,466
-The first two: the lui at 0x8 waits for the upper 20 bits of str1's address, the addi at 0xc for the lower 12.
+00:01:44,212 --> 00:01:53,000
+All the pseudo-instructions have been expanded, though this listing is simplified, and call becomes only one jalr.
 
 21
-00:02:31,466 --> 00:02:40,066
-Same for str2; the last entry, at 0x18, is the jalr waiting for printf's address.
+00:01:53,000 --> 00:01:56,484
+But the immediates of these five instructions are all zero.
 
 22
-00:02:40,066 --> 00:02:45,433
-Why can the assembler settle some addresses but not others? Because there are three kinds.
+00:01:56,484 --> 00:02:02,213
+They are just placeholders, because the assembler doesn't yet know where the data and printf are.
 
 23
-00:02:45,433 --> 00:02:55,533
-One: PC-relative jumps within the file, like beq, or jal to a local label. Wherever the code moves, the distance stays the same.
+00:02:02,213 --> 00:02:08,000
+The other instructions involve no address, so once assembled, their machine code is settled.
 
 24
-00:02:55,533 --> 00:03:05,233
-Two: addresses of static data, like str1 for la, or a global that lw reads. They're known only once all the files are put together.
+00:02:08,000 --> 00:02:13,951
+The symbol table records this file's labels and their addresses within their own segments,
 
 25
-00:03:05,233 --> 00:03:13,233
-Three: external functions like printf. It lives in another file, so the assembler can't even tell how far away it is.
+00:02:13,951 --> 00:02:16,199
+and the debugger gdb needs it too.
 
 26
-00:03:13,233 --> 00:03:23,100
-The last two go into the relocation table. So jal sometimes needs editing, but B-type branches stay within the module and never do.
+00:02:16,199 --> 00:02:23,633
+The label main is at offset zero in the code segment, with type global, which is exactly what .global does.
 
 27
-00:03:23,100 --> 00:03:31,200
-Step three: the linker combines hello.o, the start-up code and printf from the library into the executable a.out.
+00:02:23,633 --> 00:02:25,625
+The two strings are local data.
 
 28
-00:03:31,200 --> 00:03:40,300
-Where's printf? The linker searches the user's .o files first, then the libraries. A .a library is just a bundle of .o files.
+00:02:25,625 --> 00:02:33,366
+The first one, including its terminating zero, takes twelve bytes, so the second one starts at 0xc.
 
 29
-00:03:40,300 --> 00:03:48,466
-Linking also makes separate compilation possible: change hello.c and only it gets recompiled, not the huge C library.
+00:02:33,366 --> 00:02:39,343
+The relocation table is a to-do list for the linker, with an entry for every placeholder.
 
 30
-00:03:48,466 --> 00:03:57,866
-First the text segments are laid end to end from 0x10000: start-up code first, then main, and further on, printf.
+00:02:39,343 --> 00:02:46,595
+The first two entries are the lui at 0x8, which is waiting for the upper twenty bits of the address of str1.
 
 31
-00:03:57,866 --> 00:04:06,300
-The data segment follows the code: str1 lands at 0x20A10, str2 12 bytes later.
+00:02:46,595 --> 00:02:50,155
+The addi at 0xc is waiting for the lower twelve bits.
 
 32
-00:04:06,300 --> 00:04:11,300
-Every symbol now has its final address, and the linker updates the symbol table.
+00:02:50,155 --> 00:02:59,033
+The two entries for str2 work the same way, and the last one, at 0x18, is a jalr waiting for the address of printf.
 
 33
-00:04:11,300 --> 00:04:18,166
-Then it works through the relocation table, filling each hole. First, every instruction gets its final address.
+00:02:59,033 --> 00:03:04,406
+Why can the assembler settle some addresses, while others must wait for the linker?
 
 34
-00:04:18,166 --> 00:04:31,133
-Start with str1 = 0x20A10. The low 12 bits, 0xA10, have their top bit set, so addi reads them as the negative number -1520.
+00:03:04,406 --> 00:03:06,866
+Because addresses come in three kinds.
 
 35
-00:04:31,133 --> 00:04:38,333
-So the upper 20 bits get an extra 1: 0x21. It's the same split li uses, from Episode 12.
+00:03:06,866 --> 00:03:12,562
+First, PC-relative jumps within the file, such as beq, or a jal to a label in this file,
 
 36
-00:04:38,333 --> 00:04:45,600
-0x21 goes into lui's immediate field: the placeholder zeros become real address bits.
+00:03:12,562 --> 00:03:17,400
+where the distance stays the same wherever the code as a whole moves.
 
 37
-00:04:45,600 --> 00:04:49,600
-addi gets -1520, and both instructions are complete.
+00:03:17,400 --> 00:03:24,397
+Second, the addresses of static data, such as the str1 that la loads, or a global variable that lw reads,
 
 38
-00:04:49,600 --> 00:04:56,166
-Likewise for str2: lui gets 0x21 again, addi gets -1508.
+00:03:24,397 --> 00:03:27,862
+can't be known until all the files are put together.
 
 39
-00:04:56,166 --> 00:05:03,200
-Finally, printf: it's at 0x10450, 0x288 bytes from the call.
+00:03:27,862 --> 00:03:32,060
+Third, external functions, such as printf, are in another file,
 
 40
-00:05:03,200 --> 00:05:11,433
-jal reaches ±1 MiB, which is plenty, so the linker rewrites this as a single jal.
+00:03:32,060 --> 00:03:35,858
+so the assembler doesn't even know how far away they are.
 
 41
-00:05:11,433 --> 00:05:20,033
-The other instructions are untouched. Add a header and debugging info, and a.out is done: every bit is now fixed.
+00:03:35,858 --> 00:03:42,256
+The last two kinds go into the relocation table, which is why a jal sometimes has to be changed,
 
 42
-00:05:20,033 --> 00:05:25,133
-Back to the quick check: add involves no addresses, so it's settled after assembly.
+00:03:42,256 --> 00:03:48,100
+while a B-type branch only jumps within the module and never needs to.
 
 43
-00:05:25,133 --> 00:05:33,266
-But jal targets fprintf, an external function in the stdio library, so it's settled only after linking.
+00:03:48,100 --> 00:03:52,207
+In step three, the linker puts hello.o, the startup routine,
 
 44
-00:05:33,266 --> 00:05:41,233
-What we just did is static linking: the library code is copied into a.out. The program is self-contained, but large.
+00:03:52,207 --> 00:03:57,166
+and the printf from the library together into the executable a.out.
 
 45
-00:05:41,233 --> 00:05:48,066
-When the library fixes a bug or a security hole, every program must be relinked and shipped again.
+00:03:57,166 --> 00:03:58,210
+Where is printf?
 
 46
-00:05:48,066 --> 00:05:55,333
-Dynamic linking keeps the library in its own file, such as libc.so, and links it in when the program is loaded.
+00:03:58,210 --> 00:04:03,496
+The linker looks through your own .o files first, and then through the libraries,
 
 47
-00:05:55,333 --> 00:06:03,366
-Programs get smaller, and they can share one copy of the library in memory. Replace libc.so and they all upgrade.
+00:04:03,496 --> 00:04:07,282
+and a .a library file is really just a bundle of .o files.
 
 48
-00:06:03,366 --> 00:06:11,633
-The cost: linking overhead at run time, and a.out alone no longer runs. On balance, it's still worth it.
+00:04:07,282 --> 00:04:14,395
+Linking also makes separate compilation possible, so if you change hello.c, only that file needs recompiling,
 
 49
-00:06:11,633 --> 00:06:19,700
-A bonus, not tested: instead of translating a program, we can hand it to an interpreter, another program that runs it directly.
+00:04:14,395 --> 00:04:18,033
+and the huge C library doesn't have to be rebuilt.
 
 50
-00:06:19,700 --> 00:06:29,600
-Python is fully interpreted: easiest to write, slowest to run. Java compiles to bytecode, which is then interpreted, so it runs anywhere.
+00:04:18,033 --> 00:04:27,630
+First the code segments are joined end to end from 0x10000, with the startup routine first, then main, and then printf.
 
 51
-00:06:29,600 --> 00:06:39,133
-C compiles to machine code and is much faster. Machine code is the hardest to write, yet the easiest to "interpret": the hardware runs it directly.
+00:04:27,630 --> 00:04:35,100
+The data segment follows the code, with str1 at 0x20A10, and str2 twelve bytes after it.
 
 52
-00:06:39,133 --> 00:06:46,933
-Machine code can be interpreted in software too: Venus simulates RISC-V one instruction at a time, so you can step through it.
+00:04:35,100 --> 00:04:40,933
+With the final addresses of all the symbols settled, the linker updates the symbol table to match.
 
 53
-00:06:46,933 --> 00:06:53,733
-Each time Apple switched ISAs, software ran the programs built for the old one. The latest is Rosetta.
+00:04:40,933 --> 00:04:46,267
+Then, entry by entry, it fills in the holes according to the relocation table.
 
 54
-00:06:53,733 --> 00:07:03,800
-Interpreters are easier to write, debug and port; translated programs usually run 10 times faster or more, and keep the source private.
+00:04:46,267 --> 00:04:49,686
+First it puts in each instruction's final address.
 
 55
-00:07:03,800 --> 00:07:12,666
-Putting it together: compile to assembly, assemble to machine code with placeholders, fill in the addresses when linking, then load and run.
+00:04:49,686 --> 00:04:55,841
+Starting with str1, which is 0x20A10, the lower twelve bits, 0xA10, have a top bit of one,
 
 56
-00:07:12,666 --> 00:07:19,900
-The loader reads a.out into memory, the start-up code calls main, and Hello, world! appears.
+00:04:55,841 --> 00:05:01,791
+so addi would treat them as the negative number minus one thousand five hundred twenty.
 
 57
-00:07:19,900 --> 00:07:27,733
-It's the whole series in miniature: registers, memory, branches, functions, instruction encoding, and CALL.
+00:05:01,791 --> 00:05:09,733
+So the upper twenty bits must be one higher, written 0x21, which is exactly how li was split in episode twelve.
 
 58
-00:07:27,733 --> 00:07:35,066
-From one line of printf to a string of settled bits: that's the road a program travels before it runs.
+00:05:09,733 --> 00:05:16,789
+Now we put 0x21 into the immediate field of the lui, so the placeholder zeros turn into real address bits.
+
+59
+00:05:16,789 --> 00:05:24,200
+And with minus one thousand five hundred twenty filled into the addi, these two instructions are complete.
+
+60
+00:05:24,200 --> 00:05:32,995
+For str2 it is the same, with the lui also filled with 0x21, and the addi with minus one thousand five hundred eight.
+
+61
+00:05:32,995 --> 00:05:38,106
+Last is printf, which is at 0x10450, and 0x288 bytes from this call.
+
+62
+00:05:38,106 --> 00:05:47,333
+A jal can jump about one mebibyte either way, which is plenty, so the linker rewrites this directly into a single jal.
+
+63
+00:05:47,333 --> 00:05:50,892
+None of the other instructions changed by a single bit.
+
+64
+00:05:50,892 --> 00:05:58,400
+With the file header and debugging information added, a.out is complete, and every bit is settled.
+
+65
+00:05:58,400 --> 00:05:59,617
+Back to the quiz.
+
+66
+00:05:59,617 --> 00:06:03,985
+The add involves no address, so it is settled after assembly.
+
+67
+00:06:03,985 --> 00:06:13,233
+But the jal jumps to fprintf, an external function in the stdio library, so it isn't settled until after linking.
+
+68
+00:06:13,233 --> 00:06:16,017
+What we just did is called static linking.
+
+69
+00:06:16,017 --> 00:06:22,779
+The library code is copied right into a.out, so the program is self-sufficient, but the file is large.
+
+70
+00:06:22,779 --> 00:06:30,033
+And once the library fixes a bug or a security hole, every program has to be relinked and redistributed.
+
+71
+00:06:30,033 --> 00:06:35,169
+Dynamic linking instead stores the library as a separate file, such as libc.so,
+
+72
+00:06:35,169 --> 00:06:38,290
+and links it in only when the program is loaded.
+
+73
+00:06:38,290 --> 00:06:44,597
+The program files are smaller, several programs can share the same copy of the library in memory,
+
+74
+00:06:44,597 --> 00:06:47,718
+and replacing libc.so upgrades everyone at once.
+
+75
+00:06:47,718 --> 00:06:52,660
+The cost is link overhead at run time, and an a.out alone can no longer run,
+
+76
+00:06:52,660 --> 00:06:57,066
+but overall the benefits still outweigh the costs.
+
+77
+00:06:57,066 --> 00:07:02,391
+As a bonus, which isn't on the exam, a program doesn't have to be translated at all,
+
+78
+00:07:02,391 --> 00:07:07,082
+but can be handed to an interpreter, another program, to execute directly.
+
+79
+00:07:07,082 --> 00:07:13,041
+Python relies entirely on interpretation, which makes it the easiest to write and the slowest.
+
+80
+00:07:13,041 --> 00:07:18,400
+Java is first compiled to bytecode and then interpreted, so it runs everywhere.
+
+81
+00:07:18,400 --> 00:07:21,705
+C is compiled to machine code, which is much faster.
+
+82
+00:07:21,705 --> 00:07:29,433
+Machine code is the hardest to write by hand, but the best to interpret, since the hardware can execute it directly.
+
+83
+00:07:29,433 --> 00:07:32,862
+Machine code can also be interpreted by software.
+
+84
+00:07:32,862 --> 00:07:39,090
+Venus simulates RISC-V one instruction at a time, which makes single-step debugging easy.
+
+85
+00:07:39,090 --> 00:07:46,018
+Apple has changed its ISA several times, each time using software to run programs from the old one,
+
+86
+00:07:46,018 --> 00:07:48,266
+and the latest was Rosetta.
+
+87
+00:07:48,266 --> 00:07:51,955
+Interpreters are easy to write, easy to debug, and portable,
+
+88
+00:07:51,955 --> 00:07:59,833
+while translated programs are usually more than ten times faster, and don't have to reveal their source code.
+
+89
+00:07:59,833 --> 00:08:06,483
+Putting it together, the program is compiled into assembly, assembled into machine code with placeholders,
+
+90
+00:08:06,483 --> 00:08:10,247
+linked to fill in the addresses, and finally loaded and run.
+
+91
+00:08:10,247 --> 00:08:16,332
+The loader reads a.out into memory, and through the startup routine calls main, and Hello, world!
+
+92
+00:08:16,332 --> 00:08:18,066
+appears on the screen.
+
+93
+00:08:18,066 --> 00:08:24,036
+This is also a miniature of the whole series, from registers, memory, branches, and functions,
+
+94
+00:08:24,036 --> 00:08:26,131
+to instruction encoding and CALL.
+
+95
+00:08:26,131 --> 00:08:33,866
+From a single line of printf to a string of settled bits, this is the road a program travels before it runs.
 

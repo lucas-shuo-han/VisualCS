@@ -2,7 +2,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import *  # noqa: E402,F403
+from manim_kit import *  # noqa: E402,F403
 
 
 def addr_labels(listing, addrs, size=22):
@@ -56,13 +56,15 @@ class Ep07Procedures(NarratedScene):
                 row.add(t)
             rows.add(row)
         rows.arrange(DOWN, buff=0.34, aligned_edge=LEFT).move_to(DOWN * 0.1)
-        self.say("调用一个函数，要经过六个基本步骤。", Write(head))
-        self.say("先把参数放到函数拿得到的地方，然后跳过去……",
+        self.say("调用一个函数，要经过六个基本步骤。"
+                 "先把参数放到函数拿得到的地方，然后跳过去，"
+                 "函数给自己准备局部存储，执行函数体，"
+                 "把返回值放好，最后跳回调用它的地方。", Write(head))
+        self.cue(tr("先把参数放到函数拿得到的地方"),
                  LaggedStart(*[FadeIn(r, shift=RIGHT * 0.2) for r in rows[:2]], lag_ratio=0.4))
-        self.say("……函数给自己准备局部存储，执行函数体……",
+        self.cue(tr("函数给自己准备局部存储"),
                  LaggedStart(*[FadeIn(r, shift=RIGHT * 0.2) for r in rows[2:4]], lag_ratio=0.4))
-        self.say("……把返回值放好，最后跳回调用它的地方。",
-                 LaggedStart(*[FadeIn(r, shift=RIGHT * 0.2) for r in rows[4:]], lag_ratio=0.4))
+        self.cue(tr("把返回值放好"), LaggedStart(*[FadeIn(r, shift=RIGHT * 0.2) for r in rows[4:]], lag_ratio=0.4))
         self.hold()
         self.clear_stage()
 
@@ -92,34 +94,44 @@ class Ep07Procedures(NarratedScene):
         regs[0].box.set_stroke(YELLOW_D)
         regs[0].label.set_color(YELLOW_D)
         regs.move_to(RIGHT * 5.3 + DOWN * 0.1)
-        self.say("看一个最简单的例子：a = sum(a, b)。a 在 s0，b 在 s1。",
+        self.say("看一个最简单的例子：a = sum(a, b)。a 在 s0，b 在 s1。"
+                 "第一步：把参数放进 a0、a1。返回值将来也通过 a0 带回来。",
                  FadeIn(c, shift=RIGHT * 0.2), FadeIn(main), FadeIn(fn), FadeIn(ma), FadeIn(fa),
                  FadeIn(regs))
         R = dict(zip(["PC", "ra", "a0", "a1", "s0", "s1"], regs))
         arrow = pc_arrow().next_to(ma[0], LEFT, buff=0.15)
         self.play(FadeIn(arrow))
-        self.say("第一步：把参数放进 a0、a1。返回值将来也通过 a0 带回来。")
-        self.play(R["a0"].set(3))
-        self.play(arrow.animate.next_to(ma[1], LEFT, buff=0.15), R["PC"].set("0x1004"), R["a1"].set(4))
-        self.play(arrow.animate.next_to(ma[2], LEFT, buff=0.15), R["PC"].set("0x1008"))
+        self.cue(tr("把参数放进"), R["a0"].set(3))
+        self.cue(tr("、a1"),
+                 arrow.animate.next_to(ma[1], LEFT, buff=0.15),
+                 R["PC"].set("0x1004"),
+                 R["a1"].set(4))
+        self.cue(tr("返回值将来也通过"), arrow.animate.next_to(ma[2], LEFT, buff=0.15), R["PC"].set("0x1008"))
         self.say("jal 是 jump and link：先把下一条指令的地址 PC + 4 存进 ra，再跳到 sum。",
                  Circumscribe(main[2], color=YELLOW_D))
-        self.play(R["ra"].set("0x100C"))
+        self.cue(tr("先把下一条指令的地址"), R["ra"].set("0x100C"))
         link = SurroundingRectangle(ma[3], color=RED_B, buff=0.06)
         self.play(Create(link))
         jump = CurvedArrow(main.right_of(2, 0.2), fn.right_of(1, 0.2), angle=-TAU / 4, color=YELLOW_D)
-        self.play(Create(jump), arrow.animate.next_to(fa[0], LEFT, buff=0.15), R["PC"].set("0x2000"))
-        self.say("函数把结果算好放进 a0……", FadeOut(jump))
-        self.play(R["a0"].set(7))
+        self.cue(tr("再跳到 sum"),
+                 Create(jump),
+                 arrow.animate.next_to(fa[0], LEFT, buff=0.15),
+                 R["PC"].set("0x2000"))
+        self.say("函数把结果算好放进 a0，"
+                 "然后 jr ra：跳回 ra 记下的地址 0x100C，接着往下执行。", FadeOut(jump))
+        self.cue(tr("放进 a0"), R["a0"].set(7))
         self.play(arrow.animate.next_to(fa[1], LEFT, buff=0.15), R["PC"].set("0x2004"))
         back = CurvedArrow(fn.right_of(2, 0.2), main.right_of(3, 0.2), angle=TAU / 4, color=RED_B)
-        self.say("……然后 jr ra：跳回 ra 记下的地址 0x100C，接着往下执行。",
-                 Indicate(R["ra"], color=RED_B))
-        self.play(Create(back), arrow.animate.next_to(ma[3], LEFT, buff=0.15), R["PC"].set("0x100C"))
-        self.play(R["s0"].set(7), FadeOut(back), FadeOut(link))
-        self.say("为什么不用 j 跳回去？因为 sum 可能在很多地方被调用，只有 ra 知道这一次该回到哪里。")
+        self.cue(tr("然后 jr ra"), Indicate(R["ra"], color=RED_B))
+        self.cue(tr("跳回 ra 记下的地址"),
+                 Create(back),
+                 arrow.animate.next_to(ma[3], LEFT, buff=0.15),
+                 R["PC"].set("0x100C"))
+        self.cue(tr("接着往下执行"), R["s0"].set(7), FadeOut(back), FadeOut(link))
+        self.say("为什么不用 j 跳回去？因为 sum 可能在很多地方被调用，只有 ra 知道这一次该回到哪里。"
+                 "jr ra 是 jalr x0, 0(ra) 的简写，也常写成 ret。")
         ret = CodeListing(["jr ra   =   jalr x0, 0(ra)   =   ret"], font_size=28).to_edge(DOWN, buff=1.35)
-        self.say("jr ra 是 jalr x0, 0(ra) 的简写，也常写成 ret。", FadeIn(ret, shift=UP * 0.15))
+        self.cue(tr("jr ra 是 jalr"), FadeIn(ret, shift=UP * 0.15))
         self.hold()
         self.clear_stage()
 
@@ -129,19 +141,20 @@ class Ep07Procedures(NarratedScene):
         callee = box_label("被调用的函数 f", GOLD_C, w=3.6, h=0.8).move_to(RIGHT * 3.6 + UP * 2.2)
         t0 = RegBox("t0", 42, width=1.4).next_to(caller, DOWN, buff=0.6)
         note = zh("重要数据，调用后还要用", 24, GREY_A).next_to(t0, DOWN, buff=0.25)
-        self.say("麻烦来了：寄存器只有一套，调用者和被调用的函数共用它们。",
+        self.say("麻烦来了：寄存器只有一套，调用者和被调用的函数共用它们。"
+                 "可 f 也要用寄存器。如果它改写了调用者还要用的值，数据就被悄悄破坏了。"
+                 "所以大家约定了一套规则，叫做调用约定（calling convention）。",
                  FadeIn(caller), FadeIn(callee), FadeIn(t0), FadeIn(note))
         call = Arrow(caller.get_right(), callee.get_left(), buff=0.2, color=GREY_B)
         call_l = mono("jal f", 26, C_MNEM).next_to(call, UP, buff=0.1)
-        self.play(GrowArrow(call), FadeIn(call_l))
+        self.cue(tr("调用者和被调用的函数共用"), GrowArrow(call), FadeIn(call_l))
         use = CodeListing(["addi t0, x0, 7"], font_size=28).next_to(callee, DOWN, buff=0.6)
-        self.say("可 f 也要用寄存器。如果它改写了调用者还要用的值，数据就被悄悄破坏了。", FadeIn(use))
+        self.cue(tr("可 f 也要用寄存器"), FadeIn(use))
         v = mono("7", 26, RED_B).move_to(use.get_center())
-        self.play(v.animate.move_to(t0.box), run_time=1.0)
+        self.cue(tr("如果它改写了"), v.animate.move_to(t0.box), run_time=1.0)
         self.play(FadeOut(v), t0.set(7))
         cross = Cross(t0, stroke_color=RED_C, stroke_width=5)
-        self.play(Create(cross))
-        self.say("所以大家约定了一套规则，叫做调用约定（calling convention）。")
+        self.cue(tr("数据就被悄悄破坏了"), Create(cross))
         self.hold()
         self.clear_stage()
 
@@ -156,12 +169,12 @@ class Ep07Procedures(NarratedScene):
             zh("函数若要使用，必须先保存旧值，\n返回前原样恢复。", 26, GREY_A),
         ).arrange(DOWN, buff=0.4)
         VGroup(col1, col2).arrange(RIGHT, buff=0.8, aligned_edge=UP).move_to(UP * 0.5)
-        self.say("t、a 寄存器和 ra 是“调用者保存”的：被调用的函数可以随便改。调用者如果之后还要用，得自己先存好。",
+        self.say("t、a 寄存器和 ra 是“调用者保存”的：被调用的函数可以随便改。调用者如果之后还要用，得自己先存好。"
+                 "s 寄存器和 sp 是“被调用者保存”的：函数要用，就得先存旧值，返回前原样恢复。",
                  FadeIn(col1, shift=UP * 0.2))
-        self.say("s 寄存器和 sp 是“被调用者保存”的：函数要用，就得先存旧值，返回前原样恢复。",
-                 FadeIn(col2, shift=UP * 0.2))
-        self.say("换句话说：跨过一次函数调用，s 寄存器的值保证不变；t、a 寄存器则不保证。")
-        self.say("那么，这些旧值要存到哪里？答案是内存里的“栈”。")
+        self.cue(tr("s 寄存器和 sp"), FadeIn(col2, shift=UP * 0.2))
+        self.say("换句话说：跨过一次函数调用，s 寄存器的值保证不变；t、a 寄存器则不保证。"
+                 "那么，这些旧值要存到哪里？答案是内存里的“栈”。")
         self.hold()
         self.clear_stage()
 
@@ -181,14 +194,14 @@ class Ep07Procedures(NarratedScene):
         down = Arrow(layout[0].get_bottom() + UP * 0.1, layout[0].get_bottom() + DOWN * 0.7,
                      buff=0, color=BLUE_B)
         up = Arrow(layout[2].get_top() + DOWN * 0.1, layout[2].get_top() + UP * 0.6, buff=0, color=GREEN_B)
-        self.say("一个程序的内存大致分成几块：代码、静态数据、堆，以及位于高地址的栈。",
+        self.say("一个程序的内存大致分成几块：代码、静态数据、堆，以及位于高地址的栈。"
+                 "栈从高地址往低地址“向下”生长。sp（栈指针）指向栈顶，也就是当前用到的最低地址。",
                  LaggedStart(*[FadeIn(s, shift=UP * 0.1) for s in reversed(layout)], lag_ratio=0.2),
                  FadeIn(hi), FadeIn(lo))
         sp = VGroup(Arrow(RIGHT * 1.2, ORIGIN, buff=0, color=C_SP), mono("sp", 28, C_SP))
         sp[1].next_to(sp[0], RIGHT, buff=0.1)
         sp.next_to(layout[0].get_corner(DR), RIGHT, buff=0.05)
-        self.say("栈从高地址往低地址“向下”生长。sp（栈指针）指向栈顶，也就是当前用到的最低地址。",
-                 GrowArrow(down), GrowArrow(up), FadeIn(sp))
+        self.cue(tr("栈从高地址往低地址“向下”生长"), GrowArrow(down), GrowArrow(up), FadeIn(sp))
         self.hold()
         self.clear_stage()
 
@@ -207,32 +220,31 @@ class Ep07Procedures(NarratedScene):
         ], font_size=26, line_gap=0.48).next_to(regs, DOWN, buff=0.6).align_to(regs, LEFT)
         self.say("放大来看。假设函数要保存 ra 和 s0 两个寄存器。",
                  FadeIn(col), FadeIn(sp_arrow), FadeIn(regs))
-        self.say("压栈：先把 sp 减 8，腾出两个字的空间……", FadeIn(push, shift=UP * 0.15))
+        self.say("压栈：先把 sp 减 8，腾出两个字的空间，"
+                 "再用 sw 把寄存器存进去：ra 放在 sp + 4，s0 放在 sp + 0。", FadeIn(push, shift=UP * 0.15))
         box = push.line_box(0)
-        self.play(FadeIn(box))
+        self.cue(tr("先把 sp 减 8"), FadeIn(box))
         self.play(regs[0].set("0xFF8"), sp_arrow.animate.next_to(col.cells[2], RIGHT, buff=0.1))
-        self.say("……再用 sw 把寄存器存进去：ra 放在 sp + 4，s0 放在 sp + 0。",
-                 box.animate.become(push.line_box(1)))
+        self.cue(tr("再用 sw 把寄存器存进去"), box.animate.become(push.line_box(1)))
         v = regs[1].val.copy()
-        self.play(v.animate.move_to(col.cells[1]), run_time=0.8)
+        self.cue(tr("ra 放在 sp + 4"), v.animate.move_to(col.cells[1]), run_time=0.8)
         self.play(FadeOut(v), col.set(0xFFC, "ra = 0x1010", C_RA))
-        self.play(box.animate.become(push.line_box(2)))
+        self.cue(tr("s0 放在 sp + 0"), box.animate.become(push.line_box(2)))
         v = regs[2].val.copy()
         self.play(v.animate.move_to(col.cells[2]), run_time=0.8)
         self.play(FadeOut(v), col.set(0xFF8, "s0 = 42", C_S))
         self.hold()
 
-        self.say("函数现在可以放心地改 ra 和 s0 了。", regs[1].set("0x2468"), regs[2].set(-1))
-        self.hold()
+        self.say("函数现在可以放心地改 ra 和 s0 了。"
+                 "返回之前出栈，顺序正好反过来：用 lw 取回旧值，再把 sp 加回去。", regs[1].set("0x2468"), regs[2].set(-1))
         pop = CodeListing([
             "lw   s0, 0(sp)",
             "lw   ra, 4(sp)",
             "addi sp, sp, 8    # 归还空间",
         ], font_size=26, line_gap=0.48).move_to(push, aligned_edge=UL)
-        self.say("返回之前出栈，顺序正好反过来：用 lw 取回旧值，再把 sp 加回去。",
-                 FadeOut(box), ReplacementTransform(push, pop))
+        self.cue(tr("返回之前出栈"), FadeOut(box), ReplacementTransform(push, pop))
         box = pop.line_box(0)
-        self.play(FadeIn(box))
+        self.cue(tr("用 lw 取回旧值"), FadeIn(box))
         v = col.texts[2].copy()
         self.play(v.animate.move_to(regs[2].box).scale(0.6), run_time=0.8)
         self.play(FadeOut(v), regs[2].set(42))
@@ -241,7 +253,9 @@ class Ep07Procedures(NarratedScene):
         self.play(v.animate.move_to(regs[1].box).scale(0.6), run_time=0.8)
         self.play(FadeOut(v), regs[1].set("0x1010"))
         self.play(box.animate.become(pop.line_box(2)))
-        self.play(regs[0].set("0x1000"), sp_arrow.animate.next_to(col.cells[0], RIGHT, buff=0.1))
+        self.cue(tr("再把 sp 加回去"),
+                 regs[0].set("0x1000"),
+                 sp_arrow.animate.next_to(col.cells[0], RIGHT, buff=0.1))
         self.say("sp 回到原处，寄存器恢复原值。存过的数据不用清除，它们只是不再属于任何人。",
                  col.cells[1].animate.set_fill(opacity=0.05), col.cells[2].animate.set_fill(opacity=0.05),
                  col.texts[1].animate.set_opacity(0.35), col.texts[2].animate.set_opacity(0.35))
@@ -287,12 +301,12 @@ class Ep07Procedures(NarratedScene):
         sp_arrow[1].next_to(sp_arrow[0], RIGHT, buff=0.1)
         sp_arrow.next_to(col.cells[0], RIGHT, buff=0.08)
         xy = zh("x = 3，y = 5", 24, GREY_A).next_to(col, DOWN, buff=0.35)
-        self.say("调用时 x = 3 在 a0，y = 5 在 a1，ra 里是调用者的返回地址。",
+        self.say("调用时 x = 3 在 a0，y = 5 在 a1，ra 里是调用者的返回地址。"
+                 "sumSquare 自己也要 jal 调用 mult，而 jal 会覆盖 ra。不先保存 ra，就再也回不到调用者了。"
+                 "y 也得存到栈上：a1 马上要用来传 x，而且 a 寄存器由调用者保存，mult 也可能改掉它。",
                  FadeIn(asm, shift=UP * 0.2), FadeIn(regs), FadeIn(col), FadeIn(sp_arrow), FadeIn(xy))
-        self.say("sumSquare 自己也要 jal 调用 mult，而 jal 会覆盖 ra。不先保存 ra，就再也回不到调用者了。",
-                 Circumscribe(asm[5], color=RED_B))
-        self.say("y 也得存到栈上：a1 马上要用来传 x，而且 a 寄存器由调用者保存，mult 也可能改掉它。",
-                 Circumscribe(asm[3], color=YELLOW_D))
+        self.cue(tr("sumSquare 自己也要"), Circumscribe(asm[5], color=RED_B))
+        self.cue(tr("y 也得存到栈上"), Circumscribe(asm[3], color=YELLOW_D))
         self.hold()
 
         box = asm.line_box(1)
@@ -301,29 +315,34 @@ class Ep07Procedures(NarratedScene):
             self.play(box.animate.become(asm.line_box(i)), *anims, run_time=rt)
 
         self.say("先是序言（prologue）：腾出两个字，存好 ra 和 y。", FadeIn(box))
-        self.play(R["sp"].set("0xFF8"), sp_arrow.animate.next_to(col.cells[2], RIGHT, buff=0.08))
+        self.cue(tr("腾出两个字"), R["sp"].set("0xFF8"), sp_arrow.animate.next_to(col.cells[2], RIGHT, buff=0.08))
         go(2)
-        self.play(col.set(0xFFC, "ra = 0x1010", C_RA))
+        self.cue(tr("存好 ra"), col.set(0xFFC, "ra = 0x1010", C_RA))
         go(3)
-        self.play(col.set(0xFF8, "y = 5", C_A))
-        self.say("准备参数 mult(3, 3)，然后 jal：ra 被改成 jal 下一条指令的地址，这里是 0x2014。",
+        self.cue(tr("和 y"), col.set(0xFF8, "y = 5", C_A))
+        self.say("准备参数 mult(3, 3)，然后 jal：ra 被改成 jal 下一条指令的地址，这里是 0x2014。"
+                 "mult 返回后，a1 里是什么已经说不准了——幸好 y 存在栈上。",
                  box.animate.become(asm.line_box(4)))
-        self.play(R["a1"].set(3))
+        self.cue(tr("准备参数"), R["a1"].set(3))
+        self.cue(tr("然后 jal"))
         go(5, R["ra"].set("0x2014"))
         mult = box_label("mult：a0 = 3 × 3 = 9", GREY_B, w=4.2, h=0.7, font_size=24)
         mult.next_to(xy, DOWN, buff=0.35)
         self.play(FadeIn(mult, shift=LEFT * 0.2))
         self.play(R["a0"].set(9), R["a1"].set("???"))
-        self.say("mult 返回后，a1 里是什么已经说不准了——幸好 y 存在栈上。", FadeOut(mult))
+        self.cue(tr("mult 返回后"), FadeOut(mult))
         go(6, R["a1"].set(5))
-        self.say("算出 9 + 5 = 14。然后是尾声（epilogue）：恢复 ra，sp 加回 8，最后 jr ra 回到调用者。",
+        self.say("算出 9 + 5 = 14。然后是尾声（epilogue）：恢复 ra，sp 加回 8，最后 jr ra 回到调用者。"
+                 "序言保存现场，尾声恢复现场。几乎每个会调用其他函数的函数，都是这个结构。",
                  box.animate.become(asm.line_box(7)))
         self.play(R["a0"].set(14))
+        self.cue(tr("恢复 ra"))
         go(8, R["ra"].set("0x1010"))
+        self.cue(tr("sp 加回 8"))
         go(9, R["sp"].set("0x1000"), sp_arrow.animate.next_to(col.cells[0], RIGHT, buff=0.08))
+        self.cue(tr("最后 jr ra"))
         go(10)
         self.play(Circumscribe(R["a0"], color=YELLOW_D), Circumscribe(R["ra"], color=RED_B))
-        self.hold()
         pro = Brace(VGroup(asm[1], asm[3]), LEFT, color=BLUE_B)
         epi = Brace(VGroup(asm[8], asm[10]), LEFT, color=BLUE_B)
         pro_l = zh("序言", 22, BLUE_B)
@@ -333,6 +352,5 @@ class Ep07Procedures(NarratedScene):
             epi_l.rotate(PI / 2)
         pro_l.next_to(pro, LEFT, buff=0.1)
         epi_l.next_to(epi, LEFT, buff=0.1)
-        self.say("序言保存现场，尾声恢复现场。几乎每个会调用其他函数的函数，都是这个结构。",
-                 GrowFromCenter(pro), GrowFromCenter(epi), FadeIn(pro_l), FadeIn(epi_l))
+        self.cue(tr("序言保存现场"), GrowFromCenter(pro), GrowFromCenter(epi), FadeIn(pro_l), FadeIn(epi_l))
         self.hold(0.5)
