@@ -40,11 +40,12 @@ def scene_names() -> tuple[str, list[str]]:
     src = EP.read_text(encoding="utf-8")
     cls = re.search(r"^class (Ep\d+\w*)\(", src, re.M)[1]
     names = re.findall(r'"(\w+)"', re.search(r"SCENES = \[(.*?)\]", src, re.S)[1])
-    return cls, names
+    # the title card is number 00 and the closing card comes after the last scene
+    return cls, ["opening"] + names + ["closing"]
 
 
 def render(cls, names, name, a):
-    n = names.index(name) + 1
+    n = names.index(name)
     stem = f"{n:02d}_{name}"
     media = WORK / stem
     media.mkdir(parents=True, exist_ok=True)
@@ -95,7 +96,7 @@ def main():
     ap.add_argument("--jobs", type=int, default=max(2, (os.cpu_count() or 4) // 2))
     a = ap.parse_args()
     cls, names = scene_names()
-    want = names if a.scenes == ["all"] else [names[int(s) - 1] if s.isdigit() else s for s in a.scenes]
+    want = names if a.scenes == ["all"] else [names[int(s)] if s.isdigit() else s for s in a.scenes]
     bad = [s for s in want if s not in names]
     if bad:
         sys.exit(f"unknown scene(s) {bad}; scenes are: {', '.join(names)}")

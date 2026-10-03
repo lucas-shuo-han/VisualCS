@@ -711,3 +711,15 @@ And all along, U and V transpose never changed. So the middle is now all ones, a
 
 ### back_to_matrix 07 <!-- #40417c -->
 The ellipse has become a circle. All it took was matrix products, and a cubic built from two simple wishes.
+
+## closing — The method in two lines, and the answer to the title
+
+> **Purpose.** The closing card, right after the ellipse has become a circle. Not a recap list: scene 13 already gave the full table.
+> **Logic chain.** The circle stays on screen → the whole method is two lines (divide once, then repeat the step) → the title's question, answered in one sentence.
+> **Opening card.** The title card has no line here. The voice only says the title, "Newton–Schulz. Where does a singular value go?" (set in `opening()` in the code).
+
+### closing 01 <!-- #a711a6 -->
+So the whole method is two lines. Divide W by its Frobenius norm, once. Then apply the step, again and again.
+
+### closing 02 <!-- #bf713b -->
+And where does a singular value go? After that first division, every one of them goes to one.

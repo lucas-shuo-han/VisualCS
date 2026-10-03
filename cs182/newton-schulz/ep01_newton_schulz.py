@@ -141,13 +141,16 @@ class Ep01NewtonSchulz(NarratedScene):
               "too_big", "the_gap", "first_boundary", "basins", "boundary_points", "summary",
               "back_to_matrix"]
 
+    CARDS = ["opening", "closing"]      # not story scenes: no number, no entry in the scene list
+
     def construct(self):
-        # KIT_ONLY=the_gap,basins renders just those scenes (see preview.py): no title or end
-        # card, and the corner formula that why_p normally leaves behind is put up directly
+        # KIT_ONLY=the_gap,basins renders just those scenes (see preview.py), and the corner
+        # formula that why_p normally leaves behind is put up directly
         only = [s for s in os.environ.get("KIT_ONLY", "").split(",") if s]
         if only:
-            assert all(s in self.SCENES for s in only), only
-            if self.SCENES.index(only[0]) > self.SCENES.index("why_p"):
+            assert all(s in self.SCENES + self.CARDS for s in only), only
+            if only[0] == "closing" or (only[0] in self.SCENES
+                                        and self.SCENES.index(only[0]) > self.SCENES.index("why_p")):
                 self.corner = MathTex(r"p(x)=\tfrac32x-\tfrac12x^3", font_size=34).to_corner(UR, buff=0.35)
                 self.corner[0][5:].set_color(C_P)
                 self.add(self.corner)
@@ -159,17 +162,59 @@ class Ep01NewtonSchulz(NarratedScene):
                 getattr(self, s)()
             self.uncaption()
             return
-        self.title_card()
+        self.opening()
         for s in self.SCENES:
             getattr(self, s)()
-        self.end_card([
-            "Newton–Schulz only changes the singular values: each σ follows p on its own",
-            "Fixed points −1, 0, 1: ±1 attract (slope 0), 0 repels (slope 1.5)",
-            "Below √3 the sign never flips, so σ goes to +1",
-            "√5 decides shrink or grow: √5 bounces, anything bigger diverges",
-            "Between √3 and √5 the number of flips picks −1 or +1, in alternating basins",
-            "So scale W first, so every singular value is below √3",
-        ])
+        self.closing()
+
+    # ------------------------------------------------------------ the two cards
+    def opening(self):
+        """The name and the question, under a circle being pulled into an ellipse. No episode
+        number and no list of contents: the story should not be given away before it starts."""
+        C0, R = np.array([0, 1.55, 0]), 1.05
+        ref = Circle(radius=R, color=GREY_B, stroke_width=3).move_to(C0)
+        shape = Circle(radius=R, color=C_SIG, stroke_width=5).move_to(C0)
+        ell = Ellipse(width=2 * R * 1.5, height=2 * R * 0.55, color=C_SIG, stroke_width=5)
+        ell.rotate(30 * DEGREES).move_to(C0)
+        name = crisp_text("Newton–Schulz", SANS, 68, WHITE, weight=BOLD).move_to([0, -0.7, 0])
+        ask = txt("Where does a singular value go?", 36, C_SIG).next_to(name, DOWN, buff=0.45)
+        tag = txt(series_name(), 24, GREY_B).to_edge(DOWN, buff=0.5)
+        self.play(Create(ref), run_time=1.0)
+        self.add(shape)
+        t0 = self.time
+        talk = self.voice("Newton–Schulz. Where does a singular value go?")
+        self.play(Transform(shape, ell), ref.animate.set_stroke(opacity=0.35), Write(name), run_time=1.8)
+        self.play(FadeIn(ask, shift=UP * 0.2), FadeIn(tag))
+        self.wait(max(1.2, talk + 0.8 - (self.time - t0)))
+        self.play(FadeOut(VGroup(ref, shape, name, ask, tag)), run_time=0.8)
+
+    def closing(self):
+        """Under the finished circle: the method in two lines, then the title's question, answered."""
+        circ = getattr(self, "final_circle", None)
+        if circ is None:    # rendered on its own: put up what back_to_matrix leaves behind
+            circ = Circle(radius=1.0, color=C_PLUS, stroke_width=4).move_to([0, 1.6, 0])
+            self.add(circ)
+        r1 = mt(r"W\ \leftarrow\ W\,/\,\|W\|_F", 40)
+        r2 = mt(r"W\ \leftarrow\ \tfrac32\,W-\tfrac12\,W\,W^{\top}W", 40)
+        rows = VGroup(r1, r2).arrange(DOWN, buff=0.45, aligned_edge=LEFT).move_to([-0.9, -0.75, 0])
+        n1 = txt("once", 24, GREY_B).next_to(r1, RIGHT, buff=0.6)
+        n2 = txt("again and again", 24, GREY_B).next_to(r2, RIGHT, buff=0.6)
+        self.say("So the whole method is two lines. Divide W by its Frobenius norm, once. "
+                 "Then apply the step, again and again.")
+        self.cue("Divide W by its Frobenius norm", FadeIn(r1, shift=UP * 0.1), FadeIn(n1))
+        self.cue("Then apply the step", FadeIn(r2, shift=UP * 0.1), FadeIn(n2))
+        self.hold()
+        ans = txt("every singular value goes to 1", 34, C_PLUS).move_to([0, -2.45, 0])
+        tag = txt(series_name(), 24, GREY_B).to_edge(DOWN, buff=0.4)
+        self.say("And where does a singular value go? After that first division, every one of them "
+                 "goes to one.")
+        self.cue("every one of them", FadeIn(ans, shift=UP * 0.15), Indicate(circ, color=C_PLUS, scale_factor=1.06))
+        self.hold(1.2)
+        self.uncaption()
+        self.play(FadeIn(tag), run_time=0.6)
+        self.wait(1.2)
+        self.play(*[FadeOut(m) for m in self.mobjects], run_time=1.0)
+        self.wait(0.5)
 
     # ------------------------------------------------------------ helpers
     def number_row(self, y, lo=-2.5, hi=2.5, length=10.2, x=0.7, marks=(-2, -1, 0, 1, 2)):
@@ -1897,4 +1942,7 @@ class Ep01NewtonSchulz(NarratedScene):
                  " simple wishes.", FadeOut(VGroup(step, each, res, k_lab)), FadeIn(ell))
         self.play(Transform(ell, circ), run_time=2.0)
         self.hold(0.8)
+        # leave only the circle (and the corner formula): closing() picks it up from here
+        self.clear_stage(self.corner, ell)
+        self.final_circle = ell
 # --- end of episode
