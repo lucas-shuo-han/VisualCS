@@ -1,0 +1,120 @@
+1
+00:00:06,200 --> 00:00:09,344
+How do you learn a function that nobody will show you?
+
+2
+00:00:09,344 --> 00:00:15,574
+Somewhere there's a target function f that turns each input x into an output y, and we never get to see it.
+
+3
+00:00:15,574 --> 00:00:23,200
+All we ever get is a handful of samples, where each one is an input paired with a slightly noisy output.
+
+4
+00:00:23,200 --> 00:00:28,240
+So we build a function of our own, called N of theta, with parameters we can adjust.
+
+5
+00:00:28,240 --> 00:00:33,280
+We want it to pass close to these samples and still behave sensibly everywhere else.
+
+6
+00:00:33,280 --> 00:00:41,633
+Between the samples it has to interpolate, and past the last one it has to extrapolate, which is where the real test is.
+
+7
+00:00:41,633 --> 00:00:43,989
+Calculus already has one trick for this.
+
+8
+00:00:43,989 --> 00:00:47,935
+We chop the input into intervals and hold a flat value on each one.
+
+9
+00:00:47,935 --> 00:00:55,166
+With three intervals the fit is crude, and somewhere inside a step we miss the curve by about one point two.
+
+10
+00:00:55,166 --> 00:00:59,031
+Double that to six intervals, and the steps start to hug the curve.
+
+11
+00:00:59,031 --> 00:01:02,319
+Go up to twelve, and the worst miss roughly halves again.
+
+12
+00:01:02,319 --> 00:01:07,100
+So the finer we chop, the better the fit gets.
+
+13
+00:01:07,100 --> 00:01:12,301
+But there's a catch, and we can see it if we take a single step, slide it along x,
+
+14
+00:01:12,301 --> 00:01:15,917
+and ask how the loss changes as its location, tau, moves.
+
+15
+00:01:15,917 --> 00:01:23,233
+For a hard step the loss is a staircase, which is dead flat between samples and then makes a sudden jump.
+
+16
+00:01:23,233 --> 00:01:29,671
+Flat means the derivative is zero almost everywhere, so backpropagation has no idea which way to push the step.
+
+17
+00:01:29,671 --> 00:01:36,066
+A layer on top could still learn how tall each step is, but it can't learn where the steps should sit.
+
+18
+00:01:36,066 --> 00:01:39,695
+Now swap the step for a ramp, which is ReLU of x minus tau.
+
+19
+00:01:39,695 --> 00:01:43,323
+It's the same loss, but now it's a curve with a real slope.
+
+20
+00:01:43,323 --> 00:01:47,505
+Watch what happens as tau slides across the gap between two samples.
+
+21
+00:01:47,505 --> 00:01:53,100
+The step's loss doesn't budge, while the ramp's loss keeps moving.
+
+22
+00:01:53,100 --> 00:01:57,053
+At tau equals two point four, the step's slope is exactly zero.
+
+23
+00:01:57,053 --> 00:02:02,827
+The ramp's slope there is minus one point three nine, and that gives us a direction to walk.
+
+24
+00:02:02,827 --> 00:02:10,133
+So a ramp is just a step that tilts, and that tilt is what makes its location learnable.
+
+25
+00:02:10,133 --> 00:02:15,994
+And there's a second catch, which is that lots of different curves pass through exactly the same samples.
+
+26
+00:02:15,994 --> 00:02:19,957
+Here's the obvious one, where we just connect them with straight lines.
+
+27
+00:02:19,957 --> 00:02:25,766
+And here's a strange one, which wanders off in between but still hits every single sample.
+
+28
+00:02:25,766 --> 00:02:31,884
+Both of them get zero error on the training set, so the samples alone can't tell us which one to trust.
+
+29
+00:02:31,884 --> 00:02:35,745
+The hidden target function, drawn dashed, turns out to be smooth.
+
+30
+00:02:35,745 --> 00:02:42,866
+But betting on smooth curves is an inductive bias, and only fresh data can check that bet.
+

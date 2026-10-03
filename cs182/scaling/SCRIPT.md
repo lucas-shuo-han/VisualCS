@@ -1,0 +1,295 @@
+# CS182 · Scaling and muP — narration
+
+Generated from the episode subtitles (.srt).
+
+
+## 01-steepest
+
+- `00:06` Why should we care which optimizer we use?
+- `00:08` Because training a big model costs real money.
+- `00:11` And right now nearly everyone just reaches for AdamW, with hyperparameters tuned by hand.
+- `00:17` Try a new optimizer and you're back to square one, with a whole new, painful hyperparameter search.
+- `00:24` Worse, Adam often gives us lazy training, where the weights barely move from where they started.
+- `00:29` We used to start every weight as a standard normal, until initialization got its rules.
+- `00:34` So the question for this unit is whether updates can get rules too.
+- `00:40` Here's the loss, averaged over the data, with theta holding every parameter at once.
+- `00:45` Zoom in near where we stand, and the loss looks like a straight line.
+- `00:49` That line is the current loss, plus the gradient times the step.
+- `00:53` Take a small step, and the line is spot on.
+- `00:56` Take a big step, though, and the line lies, because it promises a much lower loss than we actually get.
+- `01:02` So that's the tension.
+- `01:04` The step has to be small enough to trust the line, but big enough to get somewhere.
+- `01:11` Let's start with a step we already know.
+- `01:13` On a single least-squares sample, the gradient is the residual times the input.
+- `01:18` SGD just walks against it, scaled by the learning rate eta.
+- `01:23` Plug in some numbers.
+- `01:24` The residual comes out as minus three, so one step moves theta from zero to zero point three and zero point six.
+- `01:31` But why this direction, and why this length?
+- `01:33` We'd like to derive the step instead of guessing it.
+- `01:38` So let's ask the question directly.
+- `01:40` Of all the steps whose size is at most eta, which one lowers the linearized loss the most?
+- `01:45` The current loss doesn't care which step we take, so only the inner product with the gradient matters.
+- `01:52` Take two parameters, where the gradient is two in the first coordinate and minus one half in the second.
+- `01:58` For our first ball, let each coordinate move by at most eta, which makes the ball a square.
+- `02:04` Now slide a line of equal inner product against the gradient, until it's about to leave the square.
+- `02:10` It leaves through a corner, where every coordinate moves the full eta against the sign of its gradient.
+- `02:16` So the best step is minus eta times the sign of the gradient, and that's known as sign SGD.
+- `02:22` It buys us two from the first coordinate and a half from the second, which is a drop of two point five eta.
+- `02:29` For the second ball, we bound the ordinary length instead, so the allowed steps fill a circle.
+- `02:35` This time the line last touches the circle right where the step points straight against the gradient.
+- `02:41` That's the Cauchy-Schwarz inequality at work.
+- `02:43` An inner product is biggest when the two vectors line up, so we step against the unit gradient.
+- `02:49` This is normalized gradient descent.
+- `02:51` It drops the loss by about two point oh six eta, a bit less than the sign step.
+- `02:58` Here's a cousin of that idea.
+- `02:59` Instead of a hard wall, we charge a penalty of lambda times the step's squared length.
+- `03:04` There's no constraint anymore, so we just set the gradient to zero and solve.
+- `03:10` Out pops minus one over two lambda, times the gradient, and that's plain gradient descent.
+- `03:16` So the learning rate is one over two lambda, which means turning the lambda knob does the same job as turning eta.
+- `03:25` But look, the sign step is longer.
+- `03:27` Its corner sits at root two times eta, which is about one point four one eta.
+- `03:32` With d parameters, it's root d times eta.
+- `03:35` So it's the same eta under a different norm, and that means a different idea of what small is.
+- `03:43` That's the recipe of Bernstein and Newhouse, from twenty twenty-four.
+- `03:47` You pick a norm, you pick a step size, and out falls an optimizer.
+- `03:51` The infinity norm gave us sign SGD, the two norm gave us gradient descent, and the spectral norm is coming next.
+- `03:59` So which norm is the right one?
+- `04:00` That depends on the shape of the network, and that's where we're headed.
+
+## 02-spectral
+
+- `00:06` So far we've treated theta as one long vector.
+- `00:09` But a network's weights come as matrices, one for each layer.
+- `00:12` And every scaling problem we met in Xavier initialization came from those weight matrices.
+- `00:18` So let's measure a step as what it really is, which is a matrix.
+- `00:24` First we need an inner product for matrices.
+- `00:26` Multiply the entries in matching spots and add everything up, which here gives five.
+- `00:31` That's the same number you get from the trace of G transpose times the step.
+- `00:37` How big is a matrix?
+- `00:39` Take this two by two matrix, and feed it every input of length one, which is the whole unit circle.
+- `00:45` What comes out the other side is an ellipse.
+- `00:48` Its longest stretch is two point one four, and that's the largest singular value.
+- `00:53` The shortest is zero point six nine.
+- `00:55` The biggest stretch is what we call the spectral norm, so it's the most the matrix can stretch a unit vector.
+- `01:02` That makes the spectral ball of radius eta the set of steps that stretch no input by more than eta.
+- `01:10` Now ask our question for a matrix.
+- `01:12` Which step of spectral size eta lowers the linearized loss the most?
+- `01:17` To answer it, break the gradient into its singular value decomposition.
+- `01:21` That gives us output directions U, input directions V, and a stretch sigma for each pair.
+- `01:28` The trace is linear, so the inner product splits into a sum, with each singular value times one number.
+- `01:35` Each of those numbers is at most one, because B can't stretch anything past one.
+- `01:40` So the sum of the sigmas is a ceiling, and choosing B to be U V transpose hits it exactly.
+- `01:46` That makes the best step minus eta times U V transpose.
+- `01:51` Let's check that with numbers.
+- `01:53` Take a random five by three gradient.
+- `01:56` Its singular values are three point five four, two point one five and zero point seven seven.
+- `02:01` Together they add up to six point four six.
+- `02:04` The gradient step collects only four point two one.
+- `02:08` And twenty thousand random tries never get past four point eight.
+- `02:11` Only U V transpose collects the full sum.
+- `02:14` So a bigger ball of allowed steps buys us a bigger predicted drop.
+- `02:20` Now look at what this step does.
+- `02:22` The gradient has three very different singular values.
+- `02:25` But U V transpose keeps the directions and throws the stretches away, so every singular value becomes one.
+- `02:32` A matrix like that is called semi-orthogonal.
+- `02:34` Its condition number drops from four point six all the way down to one.
+- `02:38` That means every direction gets the same size of step, and the big singular values don't get to hog it.
+- `02:46` And this isn't new.
+- `02:47` It's the Shampoo optimizer, from Gupta and coauthors in twenty seventeen and twenty eighteen.
+- `02:53` Shampoo squeezes the gradient from both sides with inverse fourth roots, and out comes U V transpose again.
+- `03:00` A variant of it, from Dahl and coauthors, won the AlgoPerf contest in twenty twenty-three.
+- `03:06` There are two catches, though.
+- `03:08` An SVD at every step is expensive, and we still don't know what step size fits layers of different shapes.
+
+## 03-rms
+
+- `00:06` Let's flash back to Xavier initialization.
+- `00:08` We feed a neuron standard normal inputs, as many as its fan-in, and we'd like the output to be standard normal too.
+- `00:15` With independent weights, the squared output averages to the weight variance times the sum of the squared inputs.
+- `00:22` Each squared input is about one, so that sum is about the fan-in, which we write as d_in.
+- `00:27` And that means the weight variance has to be one over the fan-in.
+- `00:33` Does that actually work?
+- `00:35` With unit-variance weights, the output grows like the square root of the fan-in.
+- `00:40` At a fan-in of four thousand and ninety-six, it's sixty-four times too big.
+- `00:44` With a variance of one over the fan-in, it sits right near one at every width.
+- `00:51` So what is Xavier really keeping steady?
+- `00:54` It's the length divided by root d, which is called the root-mean-square norm, or RMS norm for short.
+- `01:00` Four entries of plus or minus one have length two, and sixteen of them have length four.
+- `01:06` But the RMS norm is one for both.
+- `01:08` So an RMS norm of one just means a typical entry is about size one, however wide the vector gets.
+- `01:16` And that's what the plot showed.
+- `01:18` With Xavier scaling, the RMS size going in equals the RMS size coming out.
+- `01:23` So can we turn that into a norm for matrices, one that measures how much a weight matrix grows RMS size?
+- `01:31` There's a standard way to do that, and it's called the induced norm.
+- `01:35` Feed in every input of size one, and take the biggest output.
+- `01:39` If we measure both sides in RMS, it tells us how much the matrix can grow an input of RMS size one.
+- `01:46` An input with RMS norm one has length root d_in, and an output's RMS norm is its length over root d_out.
+- `01:53` Put those together, and the RMS to RMS norm is just the spectral norm, times the square root of d_in over d_out.
+- `02:02` Let's check it on a random matrix that's sixty-four by two hundred fifty-six.
+- `02:06` Its spectral norm is one point four nine, so its RMS to RMS norm should be twice that, or two point nine eight.
+- `02:13` And sure enough, two thousand random inputs never grow by more than one point two nine.
+- `02:20` Now drop this norm into our recipe from episode one, and allow steps whose RMS to RMS norm is at most eta.
+- `02:28` In spectral terms, that's eta times the square root of d_out over d_in.
+- `02:33` So the best step is that amount times U V transpose.
+- `02:37` Try an eta of zero point one on three layer shapes.
+- `02:40` A layer that narrows gets a smaller spectral step, and a layer that widens gets a bigger one.
+- `02:46` But look at the last column, where every layer's output changes by exactly eta.
+- `02:51` So one eta gives each layer its own right rate, and the fan-in and fan-out do the adjusting.
+- `02:57` Push that idea to growing widths and you get maximal update parametrization, which is where this unit ends up.
+
+## 04-muon
+
+- `00:06` Last time we found the step we want.
+- `00:08` It's U V transpose, scaled by the square root of d_out over d_in, and that's the first key idea of Muon.
+- `00:15` The catch is that getting U V transpose means an SVD of the gradient at every step, and that's expensive.
+- `00:22` There are two ways out of this.
+- `00:24` First, we don't need the exact direction, because one that's approximately right is good enough.
+- `00:30` And second, a trick called the Newton-Schulz iteration gets us there cheaply, which is Muon's second key idea.
+- `00:37` So here's the goal.
+- `00:38` We want a cheap function that takes U sigma V transpose and hands back U V transpose.
+- `00:44` In other words, it should replace every singular value with one.
+- `00:49` Let's try odd polynomials of a matrix.
+- `00:52` They're built from X, then X times X transpose times X, and so on up.
+- `00:56` Here's one example, with three halves on the first term and minus one half on the second.
+- `01:03` Now plug in the SVD.
+- `01:04` In the middle, V transpose meets V and then U transpose meets U.
+- `01:09` Both pairs cancel, because their columns are orthonormal.
+- `01:13` What's left is U, then p of the singular values, then V transpose.
+- `01:18` So here's the trick.
+- `01:19` The polynomial acts on the whole matrix, but it only touches the singular values.
+- `01:24` The singular vectors don't budge.
+- `01:26` That means we can reshape the singular values without ever computing an SVD.
+- `01:33` Now we need a polynomial that, applied over and over, drives every singular value to one.
+- `01:38` Let's try this cubic, which is three halves x minus one half x cubed.
+- `01:43` Start at zero point three, and bounce between the curve and the diagonal.
+- `01:48` You get zero point four four, then zero point six one, then zero point eight, creeping up toward one.
+- `01:54` That's because one is a fixed point that pulls its neighbors in, so anything between zero and one climbs up to it.
+- `02:03` But zoom out, and there's a danger.
+- `02:05` Start at two point five, and it jumps to minus four point one, then to about twenty-seven, and off it goes.
+- `02:12` So the singular values have to start between zero and one.
+- `02:15` Dividing by the Frobenius norm makes sure of that.
+- `02:20` Let's run it on a real gradient, five by three and normalized.
+- `02:24` Its singular values start at zero point eight four, zero point five one and zero point one eight.
+- `02:30` After one iteration, the small values get the biggest boost in proportion.
+- `02:35` After another, the gap between them keeps shrinking.
+- `02:38` And after three, the top two are nearly one, while the smallest is still catching up at zero point five six.
+- `02:45` By iteration six, even the smallest has reached zero point nine nine, which is practically U V transpose.
+- `02:52` The slow case is a tiny value, since it only grows about one and a half times per iteration.
+- `02:58` Starting from zero point zero one, it takes fourteen iterations to get close.
+- `03:05` But who says it has to be this cubic?
+- `03:07` Higher powers can converge faster, though each iteration costs more.
+- `03:12` The NanoGPT speedrun uses a fifth-degree polynomial with these tuned coefficients.
+- `03:17` And look at what it does at one.
+- `03:19` It gives zero point seven, not one, so this iteration never settles down at one.
+- `03:25` Yet five rounds of it lift every input, even one as small as zero point zero one, into a band near one.
+- `03:32` It runs from zero point six eight to one point one three.
+- `03:36` So does it need to converge?
+- `03:38` Not really, because roughly one is good enough.
+- `03:40` And it gets there far faster than the cubic.
+- `03:43` After five iterations, the cubic has only brought zero point zero one up to zero point zero eight.
+- `03:51` Now let's put it all together.
+- `03:52` Muon stands for momentum, orthogonalized by Newton-Schulz, and that name is the whole algorithm.
+- `03:58` We keep a momentum buffer, orthogonalize it with a few Newton-Schulz iterations, then step the weights against it.
+- `04:06` So is it worth it?
+- `04:07` Per step, Muon costs about what Adam does, and far less than Shampoo or SOAP.
+- `04:12` And each step cuts the validation loss more, so it reaches a target loss in less wall-clock time.
+- `04:20` Here's the record on the NanoGPT speedrun.
+- `04:22` Back in May of twenty twenty-four, the record stood at about forty-five minutes.
+- `04:27` Muon helped bring that down, and by December it was about four minutes.
+- `04:32` Then in February of twenty twenty-five, Moonshot and UCLA showed that Muon holds up for large language models.
+- `04:39` So the recipe we started with, a linearized loss inside a norm ball, has turned into a real optimizer.
+
+## 05-transfer
+
+- `00:06` What's a parameterization?
+- `00:07` It's really a choice of units, and the reason it matters is hyperparameter search.
+- `00:12` Search hurts most on a big network, where every single experiment costs a fortune.
+- `00:17` So here's a tempting idea.
+- `00:19` Why not tune on a small network, where it's cheap, and then copy the answer over to the big one?
+- `00:24` Whether that works depends entirely on the scaling.
+- `00:30` Let's try it for real.
+- `00:31` We'll train a three-layer network with Adam, using one learning rate for every layer, at five different widths.
+- `00:37` And the best learning rate doesn't stay put.
+- `00:41` At width thirty-two, the best rate is two to the minus six.
+- `00:44` At width five hundred twelve, it's down to two to the minus nine.
+- `00:48` Yang and coauthors saw the same drift in Transformers in twenty twenty-two.
+- `00:53` With this scaling, each width wants its own setting.
+- `00:58` Let's warm up with something simpler.
+- `01:00` Add up n random numbers with mean zero and variance one.
+- `01:03` How should we scale that sum?
+- `01:05` Watch the spread of each version.
+- `01:07` If we divide by root n, it stays at one whatever n is, and the sum settles into a standard normal.
+- `01:14` If we divide by n, it shrinks to nothing, and if we don't divide at all, it blows up.
+- `01:20` So one over root n is the right scaling.
+- `01:22` It's the only choice that lands on something interesting, neither zero nor infinity.
+- `01:29` Now turn that scale into a knob, and call it c.
+- `01:32` We tune c to minimize the average of some bounded function f, and we'll call that average F sub n of c.
+- `01:40` Here's that average for n from four up to two hundred fifty-six.
+- `01:44` The best c slides from zero point six three all the way down to zero point zero nine.
+- `01:49` So if you tune at a small n, you miss badly at a large one.
+- `01:54` Now let's change units.
+- `01:56` Write c as alpha over root n, and suddenly the best alpha barely moves.
+- `02:01` That's no accident.
+- `02:02` The curves settle onto a single limit curve, whose best alpha is the square root of two.
+- `02:08` So you can copy the best alpha from a small n to a large one, and it just works.
+- `02:13` Copying the best c never could.
+- `02:17` Can we pull the same trick with a real network's hyperparameters?
+- `02:21` Here's a sneak peek.
+- `02:22` For Adam-like updates, we set the learning rate to gamma divided by the fan-in.
+- `02:28` The one over fan-in part handles the width.
+- `02:30` Gamma is still a hyperparameter, but you tune it just once, on a small network.
+- `02:35` Next time, we'll see why that works.
+
+## 06-mup
+
+- `00:06` Here's one hidden layer, with its weights, its bias and its nonlinearity.
+- `00:10` What should stay fixed as we make it wider?
+- `00:13` Condition one comes straight from Xavier, and it says the activations should keep an RMS size of about one.
+- `00:20` Condition two is about learning.
+- `00:22` Each update should change those activations by an amount that doesn't vanish as the layer widens.
+- `00:28` And theta of one just means pinned between two constants, however wide the layer gets.
+- `00:35` To get condition one, let's ignore the bias and the nonlinearity for now.
+- `00:39` Then the output's length is at most the spectral norm times the input's length.
+- `00:44` We want the output to have length around root d_out, and the input has length around root d_in.
+- `00:50` That forces the spectral norm to be about the square root of d_out over d_in.
+- `00:55` And that's the same as an RMS to RMS norm of order one.
+- `00:59` Random matrices agree.
+- `01:00` With unit-variance weights, that norm climbs to sixty-four by width one thousand twenty-four.
+- `01:06` Xavier scaling holds it near two at every width.
+- `01:10` So condition one holds when the weights have an RMS to RMS norm of order one.
+- `01:15` That's the very norm we built our optimizer around.
+- `01:19` Now for the update.
+- `01:21` The layer's output changes for two reasons, because the weights changed and because its input changed.
+- `01:27` Take lengths and use the triangle inequality, and each piece is at most a spectral norm times the length it acts on.
+- `01:34` Condition one already takes care of the second piece.
+- `01:37` The first piece needs an update whose spectral size is about root d_out over d_in.
+- `01:42` Then both pieces come out around root d_out, so the output's RMS change is order one.
+- `01:48` That's just what we wanted.
+- `01:50` So here's the whole story in two lines.
+- `01:52` The weights and the updates both need an RMS to RMS norm of order one.
+- `01:59` So what does that mean for Adam?
+- `02:01` We'll use sign SGD as a stand-in, and ask how its eta should depend on the layer.
+- `02:06` With a batch of one, the gradient has rank one.
+- `02:09` So does its sign, which is an outer product of two sign vectors.
+- `02:14` At rank one, the spectral and Frobenius norms agree.
+- `02:18` Every entry is plus or minus one, so that norm is the square root of d_in times d_out.
+- `02:24` Now cap the step's RMS to RMS size at gamma.
+- `02:27` The square roots cancel, and what's left is an eta of gamma over d_in, the layer's fan-in.
+- `02:34` So Adam's rate should shrink like one over the fan-in.
+- `02:37` And that's the heart of muP.
+- `02:41` Let's test it at widths from sixty-four up to one thousand twenty-four.
+- `02:45` With a fixed learning rate, the size of the update grows right along with the width.
+- `02:50` Switch to gamma over d, and it holds still, and so does the change in the layer's output.
+- `02:57` There's one caveat.
+- `02:58` With bigger batches, the gradient isn't rank one anymore, and the spectral norm falls below the Frobenius norm.
+- `03:05` So this rule plays it safe.
+- `03:08` Now back to our experiment, with widths from thirty-two to five hundred twelve.
+- `03:13` On the left is standard scaling, and the best learning rate keeps sliding as the network widens.
+- `03:19` On the right, each layer whose fan-in is the width gets its rate multiplied by thirty-two over the width.
+- `03:25` The first layer keeps its rate.
+- `03:27` And now every width agrees, because the best rate is two to the minus six for all of them.
+- `03:33` So you tune the narrow network, and the wide one inherits the answer.
+- `03:37` Yang and coauthors saw this in Transformers in twenty twenty-two.
+- `03:41` The optimum holds still, and wider networks do better.
+- `03:45` And that's muP, short for maximal update parametrization.
+- `03:48` It takes the biggest updates that still keep activations, and their changes, at order one for any width.

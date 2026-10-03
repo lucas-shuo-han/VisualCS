@@ -1,0 +1,168 @@
+1
+00:00:06,200 --> 00:00:09,749
+What's the simplest bend you can put in a straight line?
+
+2
+00:00:09,749 --> 00:00:15,516
+It's this one, called ReLU, which stays at zero on the left and then just copies its input.
+
+3
+00:00:15,516 --> 00:00:23,233
+Now feed it w times x plus b instead of the plain input, and we get one ramp, which is a single ReLU unit.
+
+4
+00:00:23,233 --> 00:00:24,949
+So where does the ramp bend?
+
+5
+00:00:24,949 --> 00:00:30,282
+It bends right where the inside hits zero, and that happens at x equals minus b over w.
+
+6
+00:00:30,282 --> 00:00:33,333
+We'll call that point the knot.
+
+7
+00:00:33,333 --> 00:00:39,201
+If we turn up the weight, the ramp gets steeper, and with the same bias the knot slides in toward zero.
+
+8
+00:00:39,201 --> 00:00:46,466
+If we make the weight negative, the ramp flips over, so now it switches on to the left of its knot.
+
+9
+00:00:46,466 --> 00:00:51,514
+You might wonder why we use ReLU and not the older sigmoid or hyperbolic tangent.
+
+10
+00:00:51,514 --> 00:00:58,744
+Those curves flatten out for big inputs, so their gradients shrink, and after enough layers the gradient fades away.
+
+11
+00:00:58,744 --> 00:01:05,900
+ReLU's slope is exactly one wherever the unit is on, so gradients pass straight through.
+
+12
+00:01:05,900 --> 00:01:11,509
+The idea is that any curve made of straight pieces is just a starting height, a starting slope,
+
+13
+00:01:11,509 --> 00:01:13,398
+and a slope change at each knot.
+
+14
+00:01:13,398 --> 00:01:16,174
+The notes write this as equation one point six.
+
+15
+00:01:16,174 --> 00:01:23,233
+It's a straight line plus one ramp per knot, and each ramp is scaled by how much the slope changes there.
+
+16
+00:01:23,233 --> 00:01:27,984
+Let's build this curve one bend at a time, starting with just the straight line.
+
+17
+00:01:27,984 --> 00:01:32,201
+It begins at one half and climbs with a gentle slope of zero point two.
+
+18
+00:01:32,201 --> 00:01:38,912
+At x equals one, the slope jumps from zero point two to one point four, so we add a ramp that starts right there,
+
+19
+00:01:38,912 --> 00:01:42,066
+scaled by one point two.
+
+20
+00:01:42,066 --> 00:01:46,991
+At two point five, the slope drops from one point four to minus zero point eight,
+
+21
+00:01:46,991 --> 00:01:50,699
+so the next ramp gets a negative weight, minus two point two.
+
+22
+00:01:50,699 --> 00:01:58,000
+And at four the slope climbs back up to zero point six, which takes one last ramp with weight one point four.
+
+23
+00:01:58,000 --> 00:02:02,106
+And the reason this works is that a ramp is exactly zero before its knot.
+
+24
+00:02:02,106 --> 00:02:09,533
+So adding a new ramp can never disturb the part of the curve we've already built.
+
+25
+00:02:09,533 --> 00:02:15,173
+There's one loose end, because the straight-line piece doesn't look like a ReLU at all.
+
+26
+00:02:15,173 --> 00:02:17,572
+But it can be written as two of them.
+
+27
+00:02:17,572 --> 00:02:21,008
+Any number x equals ReLU of x, minus ReLU of minus x.
+
+28
+00:02:21,008 --> 00:02:25,966
+So one ramp covers the right side and the other covers the left.
+
+29
+00:02:25,966 --> 00:02:31,097
+Now every term is a scaled ReLU of w times x plus b, and that shape has a name.
+
+30
+00:02:31,097 --> 00:02:33,629
+It's called a one-hidden-layer network.
+
+31
+00:02:33,629 --> 00:02:41,800
+Ours needs five hidden units, two for the line and one for each knot, and every weight is read straight off the picture.
+
+32
+00:02:41,800 --> 00:02:45,208
+Add the five units up, and out comes exactly the same curve.
+
+33
+00:02:45,208 --> 00:02:46,629
+Nothing was learned here.
+
+34
+00:02:46,629 --> 00:02:52,133
+We just took the spline and wrote it down as a network.
+
+35
+00:02:52,133 --> 00:02:55,950
+But real targets curve smoothly, so can straight pieces keep up?
+
+36
+00:02:55,950 --> 00:03:00,066
+On a closed interval they can, as long as we keep adding knots.
+
+37
+00:03:00,066 --> 00:03:04,447
+With three knots, which means five hidden units, the fit is pretty rough.
+
+38
+00:03:04,447 --> 00:03:07,208
+With six knots it's already hugging the curve.
+
+39
+00:03:07,208 --> 00:03:14,366
+And with twelve, the worst miss is down to zero point zero three, so more ramps really do mean a better fit.
+
+40
+00:03:14,366 --> 00:03:16,372
+But be careful about what this says.
+
+41
+00:03:16,372 --> 00:03:21,387
+It's a statement about existence, which means some wide enough network can draw the curve.
+
+42
+00:03:21,387 --> 00:03:29,500
+It doesn't say your network is wide enough, and it doesn't say gradient descent will ever find those weights.
+
