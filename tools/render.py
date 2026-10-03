@@ -34,7 +34,7 @@ def render(ep, lang, preview, media_root, manim, lax, voice):
     e = series.SERIES[ep - 1]
     media = media_root / lang / f"ep{ep:02d}"
     quality = ["-ql"] if preview else ["-r", "1920,1080", "--fps", "30"]
-    cmd = [manim, *quality, "--media_dir", str(media), e.file, e.scene]
+    cmd = [manim, *quality, "--disable_caching", "--media_dir", str(media), e.file, e.scene]
     log = media_root / lang / f"ep{ep:02d}.log"
     media.mkdir(parents=True, exist_ok=True)
     env = {**os.environ, "VCS_LANG": lang, "PYTHONIOENCODING": "utf-8"}

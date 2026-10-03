@@ -18,6 +18,8 @@ series; they save most of the trial and error.
 | `scripts/manim_kit.py` | Component library: `NarratedScene` (timed captions + .srt, voice-over, title/end cards), translation layer, code listings (asm/C/Python), registers, memory, bit fields, network diagram, heatmap. Read its docstring first. |
 | `scripts/tts.py` | Voice-over: caption → spoken form → neural voice (edge-tts, or offline Kokoro), cached. Copied next to the kit. |
 | `scripts/render.py` | Renders a unit's episodes × languages in parallel, collects `mp4` + `srt`. `--preview` 480p, `--voice`, `--lang`. |
+| `scripts/preview.py` | Copied next to the episode. Renders single scenes (methods listed in the episode's `SCENES`) in parallel with voice and sentence subtitles drawn on the frame: `python preview.py 9 10`, `all --join`. The fast loop when one long episode is being polished scene by scene. |
+| `scripts/narration.py` | Copied next to the episode. Keeps the script in an editable `narration.md` (body vs notes); `say()` swaps the text in at render time; `narration.py check` reports lines that no longer match the code. |
 | `scripts/contact_sheet.py` | One frame per caption tiled into numbered PNG sheets. This is how you *see* the video. |
 | `scripts/captions.py` | Dumps an episode's narration in order, all languages side by side, `--spoken` shows what the voice will say. For proofreading without rendering. |
 | `scripts/narration_lint.py` | Lints the script before rendering: split sentences, choppy runs, terms the voice will misread; `--audition` synthesizes them to listen to. |
@@ -121,6 +123,8 @@ empty frames, numbers that don't match the narration. The frame number is the ca
 index. Fix, re-render, look again: budget two or three rounds per episode, and look at
 **every language** (translations break layouts). Never edit a file whose render is
 still running.
+
+**Long beats: tie each step to the words.** The narration is the baseline and is always spoken in full. Start the line with `self.say(text, ...)`, then add each step with `self.cue("a few words from the line", anims...)`: it waits until the voice reaches that phrase. If the animation is shorter than the words it waits; if longer, shorten its `run_time`, or play a pure demonstration silently between two lines. A beat of 20+ seconds with one animation is a frozen frame: split it into cues. When scenes share a stage (one graph built up over several scenes), `self.fast_forward(self.scene_a, self.scene_b)` puts their end state on stage without rendering, so a later scene can be previewed alone.
 
 ### 6. Review the writing and the coverage
 Per episode, after it renders cleanly: coverage against the checklist, the source

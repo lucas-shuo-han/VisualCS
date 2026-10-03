@@ -45,7 +45,8 @@ def render(unit, ep, lang, a, voice):
         env["KIT_I18N_LAX"] = "1"
     log = media_root / lang / f"ep{n:02d}.log"
     with open(log, "w", encoding="utf-8") as fh:
-        rc = subprocess.run([a.manim, *quality, "--media_dir", str(media), ep["file"], scene],
+        # no animation cache: on a cache hit Manim's clock does not advance and the voice-over drifts
+        rc = subprocess.run([a.manim, *quality, "--disable_caching", "--media_dir", str(media), ep["file"], scene],
                             cwd=unit.src, stdout=fh, stderr=subprocess.STDOUT, env=env).returncode
     if rc != 0:
         tail = log.read_text(encoding="utf-8", errors="replace").strip().splitlines()[-3:]

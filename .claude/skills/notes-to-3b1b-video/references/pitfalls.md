@@ -80,6 +80,10 @@
 - Explain *why* a design is the way it is, not just *what* it is — that's the
   difference between a 3b1b-style video and an animated slide deck.
 
+## Voice-over and Manim's cache
+- Render voiced videos with `--disable_caching` (render.py and preview.py do). On a cache hit Manim plays the cached clip without advancing its clock, so `add_sound` places later lines too early or drops them: a re-render comes out with missing or shifted voice while the picture looks right.
+- After every voiced render compare audio and video duration (`ffprobe`) and look for long silences (`ffmpeg -af silencedetect`). Frames alone do not show a lost voice track.
+
 ## Regexes on mixed text
 - Python's `\b` and `\w` count CJK characters as word characters, so `\bx5\b` never
   matches in "寄存器x5里". Use `flags=re.ASCII` for anything that runs on CJK text.
