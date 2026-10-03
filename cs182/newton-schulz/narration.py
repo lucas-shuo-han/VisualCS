@@ -31,6 +31,15 @@ MD = Path(os.environ.get("KIT_NARRATION", HERE / "narration.md"))
 SCRIPTS = sorted(HERE.glob("ep[0-9][0-9]_*.py"))
 DUMP = os.environ.get("KIT_NARRATION_DUMP")
 MAX_CAPTION = 105          # characters; longer captions wrap to three lines
+
+
+def _burned() -> bool:
+    """Are captions drawn on the frame? (series.py BURN_CAPTIONS / KIT_CAPTIONS)"""
+    if os.environ.get("KIT_CAPTIONS"):
+        return os.environ["KIT_CAPTIONS"] != "0"
+    m = re.search(r"^BURN_CAPTIONS\s*=\s*(\w+)", (HERE / "series.py").read_text(encoding="utf-8")
+                  if (HERE / "series.py").exists() else "", re.M)
+    return not (m and m[1] == "False")
 HEAD = re.compile(r"^### (\S+) (\d+)\s*<!-- #(\w+) -->\s*$")
 
 _sites_cache: dict[str, list[dict]] = {}
@@ -237,7 +246,7 @@ def check():
         if not text:
             print(f"EMPTY     {key[0]} {key[1]:02d}")
             bad += 1
-        if len(text) > MAX_CAPTION:
+        if len(text) > MAX_CAPTION and _burned():   # .srt-only subtitles are split per sentence
             print(f"LONG      {key[0]} {key[1]:02d}: {len(text)} chars (max {MAX_CAPTION}): {text[:50]}...")
             bad += 1
         if re.search(r"[{}]", text):

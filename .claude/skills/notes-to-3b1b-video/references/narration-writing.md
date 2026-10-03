@@ -57,8 +57,23 @@ misread.
 8. **Chinese:** avoid the 书面语 chain "X：Y。Z：W。". Use 口语 connectives (所以、也就是说、
    接下来、你看). Keep Latin letters out of the sentence when they are variables: a Chinese
    voice reads a lone "a" as 啊. Write 变量 A, or use `speak=`.
-9. **Numbers:** round and say them the way people do: "about a hundred times slower",
-   not "100×". Keep exact values on screen.
+9. **Numbers and symbols, spelled out:** every numeral and symbol a voice would read
+   strangely becomes an English word or phrase. "1.7" is "one point seven", "1.3" is "one
+   point three", "×" is "times", "Σ" is "sigma" (pronunciation in
+   `bilingual-and-voice.md` §5). Round where natural: "about a hundred times slower", not
+   "100×". The exact value stays on screen; the voice never reads it. Use `speak=` when the
+   caption must carry notation (§3).
+10. **No colons in narration.** A colon turns the caption into a labelled bullet ("Step
+    two: ..."). Rephrase so the two halves are a spoken sentence: "watch what happens to
+    s0 next" instead of "s0: what happens next". This applies to captions and `speak=`
+    text alike.
+11. **Moderate length, low complexity.** A long run of very short captions reads like a
+    list and sounds unclear; a long sentence stacked with subordinate clauses loses the
+    viewer. Prefer a few medium-length sentences with at most one clause each. Say the
+    idea completely, but keep the grammar simple enough to follow by ear.
+12. **Plain, easy words.** Say the idea in the simplest words that still say it
+    completely. Reach for everyday verbs and nouns, not technical or fancy ones, so a
+    listener who is new to the topic can follow on a first pass.
 
 ## 3. Captions vs. narration: `speak=`
 
