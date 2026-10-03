@@ -49,6 +49,14 @@ REWRITES = [
     (r"([−-]?\d+)\((\w+)\)", {"en": _offset("en"), "zh": _offset("zh")}),
     # func_a, func_b: the underscore rule would leave a lone "a" for the voice to read as an article
     (r"\bfunc_a\b", {"en": lambda m: f"func {LETTER_A}", "zh": "func A"}),
+    # file names and assembler directives: ".text" is "dot text", "a.out" is "A dot out"
+    (r"\bhello\.([cso])\b", {"en": lambda m: f"hello dot {m[1].upper()}", "zh": "hello 点 \\1"}),
+    (r"\ba\.out\b", {"en": lambda m: f"{LETTER_A} dot out", "zh": "a 点 out"}),
+    (r"\blibc\.so\b", {"en": "lib C dot S O", "zh": "libc 点 so"}),
+    (r"(?<![\w.])\.globl\b", {"en": " dot global", "zh": " 点 global"}),
+    (r"(?<![\w.])\.(text|data|word|string|global|align|balign|section|rodata)\b", {"en": " dot \\1", "zh": " 点 \\1"}),
+    (r"(?<![\w.])\.o\b", {"en": " dot O", "zh": " 点 O"}),
+    (r"(?<![\w.])\.a\b", {"en": lambda m: f" dot {LETTER_A}", "zh": " 点 a"}),
     # registers x5, t0, a1, s11
     (r"\b([xatsXATS])(\d{1,2})\b", {"en": _reg, "zh": _reg}),
 ]
@@ -61,7 +69,7 @@ SAY_AS = {
     "opcode": "op code", "RISC-V": "risk five", "RISC": "risk", "ARM": "arm",
     "RV32I": "R V 32 I", "RV32": "R V 32", "CS61C": "C S 61 C", "CS": "C S", "61C": "61 C",
     "ASCII": "ask ee", "F5": "F 5",
-    "XOR": "ex or", "AND": "and", "FF": "F F", "arr": "array", "DRAM": "dee ram", "CISC": "sisk", "MIPS": "mips",
+    "XOR": "ex or", "AND": "and", "FF": "F F", "CALL": "call", "stdio": "standard I O", "str1": "string one", "str2": "string two", "fprintf": "F print F", "arr": "array", "DRAM": "dee ram", "CISC": "sisk", "MIPS": "mips",
     "Neumann": "Noyman", "Cocke": "Coke", "Krste": "Kerstay", "Asanovic": "Ah sah no vich",
     "KiB": {"en": "kibibytes", "zh": "KB"}, "MiB": {"en": "mebibytes", "zh": "MB"},
     # spelled out, "jal ra" sounds like "jalr a"
@@ -70,4 +78,4 @@ SAY_AS = {
 
 SPELL = """lw sw lb lbu lh lhu lwu sb sh sbu beq bne blt bge bltu bgeu bgt ble sll srl sra
     slli srli srai slt slti sltu sltiu lui auipc li la ISA ABI PC pc sp ra fp gp tp
-    rd rs rs1 rs2 lt CPU ALU DDR HBM IBM UC""".split()
+    rd rs rs1 rs2 lt CPU ALU DDR HBM IBM UC gdb""".split()
