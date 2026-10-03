@@ -2,7 +2,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import *  # noqa: E402,F403
+from manim_kit import *  # noqa: E402,F403
 
 
 # ---------------------------------------------------------------- a tiny RV32 model

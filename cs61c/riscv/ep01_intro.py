@@ -2,7 +2,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import *  # noqa: E402,F403
+from manim_kit import *  # noqa: E402,F403
 
 # ---------------------------------------------------------------- numbers from the notes (rv-intro)
 PERIOD_NS = 1 / 4                         # 4 GHz clock
@@ -999,11 +999,11 @@ class Ep01Intro(NarratedScene):
     # ------------------------------------------------------------------ roadmap
     def roadmap(self):
         tiles = VGroup()
-        for i, ep in enumerate(series.SERIES):
+        for i, ep in enumerate(EPISODES):
             r = RoundedRectangle(corner_radius=0.1, width=6.3, height=0.52, stroke_color=GREY_B, stroke_width=2,
                                  fill_color=GREY_E, fill_opacity=0.3)
             num = mono(f"{i + 1:02d}", 22, YELLOW_D).move_to(r.get_left() + RIGHT * 0.45)
-            t = fit(zh(series.title(ep, LANG), 24, WHITE), 5.1)
+            t = fit(zh(ep["title"][LANG], 24, WHITE), 5.1)
             t.next_to(num, RIGHT, buff=0.3)
             tiles.add(VGroup(r, num, t))
         for i, tl in enumerate(tiles):

@@ -2,7 +2,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import *  # noqa: E402,F403
+from manim_kit import *  # noqa: E402,F403
 
 # ---------------------------------------------------------------- the notes' listings, checked
 
@@ -823,8 +823,8 @@ class Ep14HelloWorld(NarratedScene):
         self.play(AddTextLetterByLetter(out, run_time=1.0))
 
         entries = VGroup()
-        for n, ep in enumerate(series.SERIES, 1):
-            e = VGroup(mono(f"{n:02d}", 20, GREY_B), zh(series.title(ep, LANG), 20, GREY_A))
+        for n, ep in enumerate(EPISODES, 1):
+            e = VGroup(mono(f"{n:02d}", 20, GREY_B), zh(ep["title"][LANG], 20, GREY_A))
             e.arrange(RIGHT, buff=0.2)
             entries.add(e)
         grid = VGroup(VGroup(*entries[:7]).arrange(DOWN, buff=0.2, aligned_edge=LEFT),

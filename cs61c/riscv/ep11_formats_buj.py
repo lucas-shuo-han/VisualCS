@@ -2,7 +2,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import *  # noqa: E402,F403
+from manim_kit import *  # noqa: E402,F403
 
 # beq x19, x10, End   with End 16 bytes ahead
 BEQ = "0" + "000000" + "01010" + "10011" + "000" + "1000" + "0" + "1100011"
