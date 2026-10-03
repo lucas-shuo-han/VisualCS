@@ -1,12 +1,17 @@
 """Lint the narration of a unit before rendering: where the voice will stumble,
 and where the script sounds like a list of fragments read aloud.
 
-Per episode and language, over every say() caption and end-card bullet:
-  choppy  runs of 3+ consecutive short captions (en < 9 words, zh < 14 chars),
+Per episode and language, over every say() beat and end-card bullet:
+  choppy  runs of 3+ consecutive short beats (en < 9 words, zh < 14 chars),
           and episodes where more than 15% of sentences are tiny
           (en < 5 words, zh < 7 chars): "Done!", "Step two.", "Why?"
-  split   a sentence continued in the next caption ("...then" / "...and"):
-          each caption is voiced as its own clip, so the sentence breaks in two
+  split   a sentence continued in the next beat ("...then" / "...and"):
+          each beat is voiced as its own clip, so the sentence breaks in two
+  long    sentences over 32 words (zh 60 chars): too much to follow by ear
+  colon   beats with a colon: they read like labelled bullets ("Step two: ...")
+  numeral more than a quarter of the beats leave digits for the voice to read
+  cue     a cue("phrase") whose phrase is not in the say() beat before it: the
+          animation would play at once instead of on its words
   voice   tokens in the *spoken* form a neural voice is likely to misread:
           spelled letters that fuse with a word (xor -> "X or", andi -> "and I"),
           ALL-CAPS words not in say_as.py (read as a word, or not),
@@ -24,6 +29,7 @@ finds candidates; an ear decides.
 """
 
 import argparse
+import ast
 import re
 import sys
 from collections import Counter
@@ -34,6 +40,7 @@ from project import Unit, narration  # noqa: E402
 
 SHORT = {"en": 9, "zh": 14}
 TINY = {"en": 5, "zh": 7}
+LONG = {"en": 32, "zh": 60}
 ALLOWED_SYM = set(".,;:!?'’()%-，。；：！？、（）")
 SENT_END = re.compile(r"(?<=[.!?。！？])\s*")
 
@@ -58,6 +65,26 @@ def voice_risks(spoken: str, lang: str, say_as: dict) -> list[str]:
     for ch in spoken:
         if not (ch.isalnum() or ch.isspace() or ch in ALLOWED_SYM):
             out.append(f"symbol '{ch}'")
+    return out
+
+
+def cue_problems(path: Path) -> list[str]:
+    """cue() phrases that do not occur in the say() literal before them (same method)."""
+    out = []
+    for fn in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+        if not isinstance(fn, ast.FunctionDef):
+            continue
+        calls = sorted((n for n in ast.walk(fn) if isinstance(n, ast.Call)
+                        and isinstance(n.func, ast.Attribute) and n.func.attr in ("say", "cue") and n.args),
+                       key=lambda c: (c.lineno, c.col_offset))
+        beat = None
+        for c in calls:
+            arg = c.args[0]
+            if c.func.attr == "say":
+                # only literal beats can be checked; f-strings are checked at render time
+                beat = arg.value if isinstance(arg, ast.Constant) else None
+            elif isinstance(arg, ast.Constant) and isinstance(beat, str) and arg.value not in beat:
+                out.append(f"  cue     line {c.lineno}: \"{arg.value}\" is not in the beat before it")
     return out
 
 
@@ -86,6 +113,19 @@ def lint_episode(lines, lang, say_as, risks: Counter) -> list[str]:
         if kind == "say" and re.search(r"(……|\.\.\.|…)\s*$", shown):
             report.append(f"  split   #{i + 1}-{i + 2}: {shown}  //  "
                           f"{lines[i + 1][1] if i + 1 < len(lines) else ''}")
+    # sentences too long to follow by ear, labelled-bullet colons, numerals left to the voice
+    long_ = [x for x in sents if size(x, lang) > LONG.get(lang[:2], 32)]
+    for x in long_[:6]:
+        report.append(f"  long    {size(x, lang)}: {x}")
+    colons = [i + 1 for i, (kind, shown, _) in enumerate(lines)
+              if kind == "say" and re.search(r"[:：](?!\d)", shown)]
+    if colons:
+        report.append(f"  colon   {len(colons)} beats read like labelled bullets "
+                      f"(#{', #'.join(map(str, colons[:15]))}): rephrase as a sentence")
+    digits = [i + 1 for i, (kind, _, sp) in enumerate(lines) if kind == "say" and re.search(r"\d", sp)]
+    if len(digits) > len(lines) / 4:
+        report.append(f"  numeral {len(digits)}/{len(lines)} beats leave numerals to the voice: "
+                      f"spell them as words or use speak= (exact values stay on screen)")
     for i, (kind, shown, sp) in enumerate(lines):
         r = voice_risks(sp, lang, say_as)
         risks.update(r)
@@ -113,6 +153,10 @@ def main():
         path = unit.path(ep)
         if not path.exists():
             continue
+        cues = cue_problems(path)
+        if cues:
+            print(f"## {ep['num']:02d} [code]")
+            print("\n".join(cues) + "\n")
         for lang in langs:
             table = unit.table(ep["num"], lang)
             lines = []

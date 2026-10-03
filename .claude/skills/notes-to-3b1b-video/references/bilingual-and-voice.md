@@ -58,13 +58,13 @@ EN = {
 
 English runs ~1.3–2× wider than Chinese for the same content. In order of preference:
 a shorter translation; `scale_to_fit_width` on the one label; a small `if EN:` branch in
-the episode. Captions: CJK 30 pt at 30 units per line, Latin 28 pt at 35 units, up to
-three lines (the top of a 3-line caption reaches y ≈ −2.6, so keep content above −2.5).
+the episode. Subtitles: CJK 30 pt at 30 units per line, Latin 28 pt at 35 units, one sentence at a
+time and at most two lines (keep content above y ≈ −2.9).
 Always look at the contact sheets of *every* language: most translation bugs are layout.
 
 ## 4. Voice-over
 
-`tts.py` (copy next to the kit) synthesizes each caption, by default with Microsoft's
+`tts.py` (copy next to the kit) synthesizes each beat (one `say()`) as one clip, by default with Microsoft's
 neural voices through the `edge-tts` package: good quality, many languages, no API key, but it needs
 network access. Clips are cached (`KIT_TTS_CACHE`, render.py puts it in the media dir),
 trimmed of leading/trailing silence, and reused across renders, so only new or changed
@@ -156,8 +156,12 @@ rewriting.
 
 ## 6. Timing
 
-With a voice, a caption stays up for max(reading time, audio + 0.35 s) plus `extra`, and
-the audio starts 0.15 s after the caption appears. Animations passed to `say()` play
-while it is spoken; `hold()` waits for the voice to finish. So a voiced episode runs
+With a voice, a beat lasts as long as its clip plus 0.35 s (plus `extra`), and the audio
+starts 0.15 s after the first subtitle appears. The subtitle switches sentence, and a
+`cue("phrase")` fires, at the moment given by the phrase's position in the text (by
+character count, weighted for CJK), which is within about half a second of the voice.
+Animations passed to `say()` play while it is spoken; `hold()` waits for the voice to
+finish. In a translation the same cue lands at the same fraction of the translated beat,
+so keep the order of ideas inside a beat the same in both languages. So a voiced episode runs
 longer than the silent one (roughly +10–25%), and the voice sets the pace: if the
 visuals need longer than the sentence, use `self.hold(extra)` rather than padding text.

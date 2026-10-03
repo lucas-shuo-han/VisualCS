@@ -41,8 +41,17 @@
 - **The last caption only reaches the .srt when it is closed**: end every episode with
   `end_card(...)` or `self.uncaption()`.
 - `say(text, *anims, run_time=x)` sets the run time of `anims`.
-- Keep a caption to one sentence: ≤ ~30 English words or ~50 CJK characters. Longer
-  captions wrap to 3 lines and cover content.
+- A beat can be several sentences; the subtitle shows one at a time (two lines at
+  most). A sentence over ~30 English words / ~60 CJK characters is shown in parts cut
+  at commas: rewrite it as two sentences instead.
+- **`cue()` phrase not found** prints `[cue] phrase not in the current line` and plays
+  the animation at once. It means the beat was reworded and the cue was not.
+- **`Scene.time` does not advance inside an animation, and a mobject's updaters are
+  suspended while it animates.** Anything that must follow the clock during a `play`
+  (the subtitle reel) has to count `dt` in a scene-level updater.
+- **Manim flattens a group's family when an animation starts.** Swapping a group's
+  children during a `play` leaves the old children drawn. Keep all children and toggle
+  their opacity instead (the subtitle reel does).
 - The wrapper never breaks inside an English word or an arrow route, but it can split a
   CJK word (洛/杉矶). Read the contact sheets; reword or shorten when it happens.
 - `captions.py` finds captions by walking `construct()` and the `self.<method>()` calls

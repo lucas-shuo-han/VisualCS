@@ -7,16 +7,22 @@ Contents (search for the section banners):
   fonts & palette ....... SANS / MONO picked from installed fonts, BG, semantic colors
   text helpers .......... txt(), mono(), box_label(), file_icon()
   captions .............. wrap_caption(), reading_time()
-  NarratedScene ......... say() / hold() / voice() / clear_stage() / heading() / title_card() / end_card()
+  NarratedScene ......... say() / cue() / hold() / clear_stage() / heading() / title_card() / end_card()
+                          fast_forward() / preview_only()
   code .................. CodeListing (asm / c / python highlighting), pc_arrow()
   bits .................. bit_row(), set_bit_row(), BitField, FormatScene helpers
   machine state ......... RegBox, reg_column(), RegisterFile, MemoryView, WordColumn, alu_shape()
   ML / math ............. nn_diagram(), heatmap()  (see references/visual-patterns.md for more)
 
-Every episode is one NarratedScene. Captions are burned in, timed so each one
-stays readable, and exported as an .srt next to the rendered video. With
-BURN_CAPTIONS = False in series.py (or KIT_CAPTIONS=0) nothing is drawn on the
-frame and the .srt, cut into short cues, is the only subtitle.
+Every episode is one NarratedScene, narrated in beats:
+
+    self.say("Two or three connected sentences about one picture. They are spoken "
+             "as one clip. The subtitle shows one sentence at a time.", FadeIn(thing))
+    self.cue("They are spoken", Indicate(thing))   # when the voice reaches these words
+
+Subtitles are drawn on the frame and exported as an .srt next to the video, one
+sentence at a time with the same timing. With BURN_CAPTIONS = False in series.py
+(or KIT_CAPTIONS=0) nothing is drawn on the frame and the .srt is the only subtitle.
 
 Optional files next to this one (see the skill's references/bilingual-and-voice.md):
   series.py ............. episode order, titles per language, SOURCE_LANG, LANGS.
@@ -31,8 +37,9 @@ Environment (render.py sets these):
                      episode's table. With a CJK source language a missing
                      entry is an error (nothing untranslated can slip through).
   KIT_I18N_LAX=1     warn instead of failing on a missing translation.
-  KIT_TTS=1          voice-over: each caption is spoken, and stays up until
+  KIT_TTS=1          voice-over: each beat is spoken as one clip and lasts until
                      its audio has finished.
+  KIT_ONLY=a,b       render only these scene methods (preview.py; see preview_only).
   KIT_CAPTIONS=0|1   override series.py BURN_CAPTIONS (0: subtitles only in the .srt).
 """
 
@@ -935,26 +942,38 @@ def reading_time(text: str, cps: float = 5.2) -> float:
     return max(1.8, 0.5 + cjk / cps + other * 0.28)
 
 
-def split_cue(text: str, max_chars: int = 84) -> list[str]:
-    """Cut one narration line into subtitle-sized cues: whole sentences where
-    they fit, otherwise at commas, otherwise between words."""
-    def pack(parts, sep=" "):
+def split_cue(text: str, max_units: float = 46) -> list[str]:
+    """Cut one narration beat into subtitle-sized cues (two caption lines at
+    most; widths in CJK-character units, a Latin letter is 0.55): whole
+    sentences where they fit, otherwise at commas, otherwise between words.
+    Sentences are never merged, so a cue is one sentence or a part of one."""
+    def join(a, b):
+        cjk_edge = ord(a[-1]) > 0x2E7F or ord(b[0]) > 0x2E7F
+        return a + ("" if cjk_edge else " ") + b
+
+    def pack(parts):
         out = []
         for part in parts:
-            if out and len(out[-1]) + len(sep) + len(part) <= max_chars:
-                out[-1] += sep + part
+            if out and text_units(join(out[-1], part)) <= max_units:
+                out[-1] = join(out[-1], part)
             else:
                 out.append(part)
         return out
 
+    def words(clause):   # Latin words, or CJK characters when there are no spaces
+        parts = clause.split()
+        return parts if len(parts) > 1 else list(clause)
+
     cues = []
-    for sent in re.split(r"(?<=[.?!。？！])\s+", text.strip()):
-        if len(sent) <= max_chars:
+    for sent in re.split(r"(?<=[.?!])\s+|(?<=[。？！])\s*", text.strip()):
+        if not sent:
+            continue
+        if text_units(sent) <= max_units:
             cues.append(sent)
             continue
-        for clause in pack(re.split(r"(?<=[,;，；])\s+", sent)):
-            cues += [clause] if len(clause) <= max_chars else pack(clause.split())
-    return pack(cues)
+        for clause in pack([c for c in re.split(r"(?<=[,;:])\s+|(?<=[，；：])\s*", sent) if c]):
+            cues += [clause] if text_units(clause) <= max_units else pack(words(clause))
+    return cues
 
 
 class NarratedScene(Scene):
@@ -992,6 +1011,28 @@ class NarratedScene(Scene):
         finally:
             self._ff = False
 
+    def preview_only(self, *chains):
+        """For scripts/preview.py: when KIT_ONLY names scene methods, run just
+        those (no title or end card) and return True. Each chain lists scenes that
+        draw on one shared stage, in order; the ones before the requested scene are
+        fast-forwarded so it finds the stage as it expects.
+
+            def construct(self):
+                if self.preview_only(["graph", "slopes", "basins"]):
+                    return
+                self.title_card() ...
+        """
+        only = [s for s in os.environ.get("KIT_ONLY", "").split(",") if s]
+        if not only:
+            return False
+        for chain in chains:
+            if only[0] in chain[1:]:
+                self.fast_forward(*[getattr(self, s) for s in chain[:chain.index(only[0])]])
+        for s in only:
+            getattr(self, s)()
+        self.uncaption()
+        return True
+
     def play(self, *args, **kwargs):
         if not self._ff:
             return super().play(*args, **kwargs)
@@ -1026,19 +1067,66 @@ class NarratedScene(Scene):
         if remaining > 0.02:
             self.wait(remaining)
 
+    def _cue_times(self, text, span):
+        """Split a beat into subtitle cues and give each its start time: the
+        share of `span` (how long the beat is spoken, or read) before it."""
+        cues = split_cue(text, self.caption_units * 2 - 4)
+        total = sum(len(c) for c in cues)
+        starts, done = [], 0
+        for c in cues:
+            starts.append(self._cap_t0 + span * done / total)
+            done += len(c)
+        return cues, starts
+
     def _close_sub(self):
+        if self._cap is not None:
+            self._cap.clear_updaters()
+        if getattr(self, "_cap_tick", None) is not None:
+            self.remove_updater(self._cap_tick)
+            self._cap_tick = None
         if self._cap_text is not None:
-            dur = self.time - self._cap_t0
-            if dur > 0:
-                # one cue per sentence or so, each with its share of the time
-                cues = split_cue(self._cap_text)
-                total = sum(len(c) for c in cues)
-                t = -dur
-                for c in cues:
-                    d = dur * len(c) / total
-                    self.add_subcaption(c, duration=d, offset=t)
-                    t += d
+            now = self.time
+            if now > self._cap_t0:
+                # one .srt cue per sentence or so, timed like the burned caption
+                cues, starts = self._cue_times(self._cap_text, self._cap_span)
+                ends = starts[1:] + [now]
+                for c, a, b in zip(cues, starts, ends):
+                    if min(b, now) > a:
+                        self.add_subcaption(c, duration=min(b, now) - a, offset=a - now)
             self._cap_text = None
+
+    def _caption_reel(self, text, span):
+        """The burned caption of a beat. A beat that fits two lines is one
+        static caption; a longer one shows one sentence at a time, switching
+        as the voice reaches each (same split and times as the .srt)."""
+        cues, starts = self._cue_times(text, span)
+        frames = [self._make_caption(c) for c in cues]
+        if len(frames) == 1:
+            return frames[0]
+
+        # All sentences sit in one group and only the current one is opaque. (Swapping
+        # the group's children instead leaves the old ones on screen: Manim flattens
+        # families when an animation starts.)
+        def show(f, on):
+            f[0].set_fill(BG, opacity=0.72 if on else 0)
+            f[1].set_fill(opacity=1 if on else 0)
+
+        for f in frames[1:]:
+            show(f, False)
+        holder = VGroup(*frames)
+        state = {"k": 0, "clock": self._cap_t0}
+
+        def tick(dt):   # a scene updater: Scene.time stands still inside an animation,
+            state["clock"] += dt   # and mobject updaters are suspended while they animate
+            k = sum(1 for s in starts if s <= state["clock"] + 1e-6) - 1
+            if k != state["k"] and k >= 0:
+                show(frames[state["k"]], False)
+                show(frames[k], True)
+                state["k"] = k
+        holder.add_updater(lambda m, dt: None)   # marks the caption as moving, so it is redrawn
+        self.add_updater(tick)
+        self._cap_tick = tick
+        return holder
 
     def voice(self, text, speak=None, delay=0.15) -> float:
         """Start speaking `text` now (no-op unless KIT_TTS=1) and return how
@@ -1062,39 +1150,45 @@ class NarratedScene(Scene):
             text, speak = narration.apply(sys._getframe(1), text, speak)
         except ImportError:
             pass
-        text = tr(text)
+        src, text = text, tr(text)
         self._flush()
         self._close_sub()
-        new = self._make_caption(text) if BURN_CAPTIONS else None
-        swap = [FadeIn(new, run_time=0.4)] if new is not None else []
-        if self._cap is not None:
-            swap.append(FadeOut(self._cap, run_time=0.3))
+        old = self._cap
         self._cap_t0 = self.time
         if self._ff:   # fast-forward: put the beat's end state on stage, silently, in no time
             self.play(*anims)
             return
         talk = self.voice(text, speak)
+        need = reading_time(text) if need is None else need
+        self._cap_span = talk if talk else need
+        self._cap_need = max(need, talk + 0.35 if talk else 0.0) + extra
+        new = self._caption_reel(text, self._cap_span) if BURN_CAPTIONS else None
+        swap = [FadeIn(new, run_time=0.4)] if new is not None else []
+        if old is not None:
+            swap.append(FadeOut(old, run_time=0.3))
+        self._cap, self._cap_text, self._cap_src = new, text, src
         if swap or anims:
             self.play(*swap, *anims)
-        self._cap, self._cap_text = new, text
-        need = reading_time(text) if need is None else need
-        self._cap_need = max(need, talk + 0.35 if talk else 0.0) + extra
-        self._cap_span = talk if talk else need
 
     def cue(self, phrase, *anims, run_time=None, lead=0.3):
         """Play `anims` when the narration of the current beat reaches `phrase`
         (found in the beat's text; its position in the text gives the time).
         For long beats: say() starts the line, cue() adds each step as it is said."""
-        text = self._cap_text or ""
-        i = 0 if self._ff else text.find(phrase)
-        if self._ff:
-            pass
-        elif i < 0:
-            print(f"[cue] phrase not in the current line: {phrase!r}", file=sys.stderr)
-        else:
-            dt = self._cap_t0 + self._cap_span * i / len(text) - lead - self.time
-            if dt > 0.05:
-                self.wait(dt)
+        if not self._ff:
+            # where the phrase sits in the beat, as a fraction of it; in a translated
+            # render the phrase is looked up in the source text (no table entry needed)
+            frac = None
+            for text in (self._cap_text or "", getattr(self, "_cap_src", None) or ""):
+                i = text.find(phrase)
+                if i >= 0:
+                    frac = i / len(text)
+                    break
+            if frac is None:
+                print(f"[cue] phrase not in the current line: {phrase!r}", file=sys.stderr)
+            else:
+                dt = self._cap_t0 + self._cap_span * frac - lead - self.time
+                if dt > 0.05:
+                    self.wait(dt)
         if anims:
             self.play(*anims, **({} if run_time is None else {"run_time": run_time}))
 
