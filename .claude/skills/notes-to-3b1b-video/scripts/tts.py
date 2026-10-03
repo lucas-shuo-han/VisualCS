@@ -161,6 +161,11 @@ def math_letters(s: str, lang: str) -> str:
         listy = (prev == "," and i > 1 and single(toks[i - 2][2])) or                 (nxt == "," and i + 2 < len(toks) and single(toks[i + 2][2]))
         after = lang[:2] == "en" and t in ("a", "A") and nxt in _NOT_AFTER_ARTICLE and not (
             nxt == "to" and i + 2 < len(toks) and toks[i + 2][2] == "-")
+        # "by a register", "plus a constant": a word follows, so this is the article
+        article = (lang[:2] == "en" and t in ("a", "A") and re.fullmatch(r"[A-Za-z]{2,}", nxt or "") is not None
+                   and nxt not in _OPS and nxt not in _NOT_AFTER_ARTICLE and not nouns.search(prev))
+        if article:
+            continue
         if nouns.search(prev) or prev in _OPS or nxt in _OPS or glued_digit or listy or after:
             out += [s[last:a], names[t]]
             last = b

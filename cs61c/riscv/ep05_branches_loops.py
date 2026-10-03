@@ -44,13 +44,13 @@ class Ep05BranchesLoops(NarratedScene):
                  FadeIn(code, shift=UP * 0.2), FadeIn(addrs), FadeIn(pc))
         arrow = pc_arrow().next_to(addrs[0], LEFT, buff=0.2)
         box = code.line_box(0)
-        self.play(FadeIn(arrow), FadeIn(box))
-        self.say("每条指令占 4 个字节。执行完一条，PC 就加 4，指向下一条。")
+        self.cue(tr("记住当前指令的地址"), FadeIn(arrow), FadeIn(box))
+        self.say("每条指令占 4 个字节。执行完一条，PC 就加 4，指向下一条。"
+                 "可如果只能一条接一条地执行，就写不出 if，也写不出循环。我们需要能“跳”的指令。")
         for i in range(1, 4):
             self.play(arrow.animate.next_to(addrs[i], LEFT, buff=0.2), box.animate.become(code.line_box(i)),
                       pc.set(f"0x{4 * i:02X}"), run_time=0.8)
             self.wait(0.3)
-        self.say("可如果只能一条接一条地执行，就写不出 if，也写不出循环。我们需要能“跳”的指令。")
         self.hold()
         self.clear_stage()
 
@@ -61,7 +61,7 @@ class Ep05BranchesLoops(NarratedScene):
         mean = zh("如果 rs1 == rs2，跳到 Label；否则执行下一条", 30, GREY_A).next_to(syn, DOWN, buff=0.4)
         self.say("条件分支 beq（branch if equal）：如果 rs1 等于 rs2，就跳到 Label；否则照常执行下一条。",
                  Write(head), FadeIn(syn, shift=DOWN * 0.2))
-        self.play(FadeIn(mean, shift=UP * 0.15))
+        self.cue(tr("如果 rs1 等于 rs2"), FadeIn(mean, shift=UP * 0.15))
         self.hold()
 
         rows = [("beq", "=="), ("bne", "!="), ("blt", "<"), ("bge", ">="),
@@ -72,18 +72,19 @@ class Ep05BranchesLoops(NarratedScene):
         grid = VGroup(VGroup(*cells[0::2]).arrange(DOWN, buff=0.35, aligned_edge=LEFT),
                       VGroup(*cells[1::2]).arrange(DOWN, buff=0.35, aligned_edge=LEFT)).arrange(RIGHT, buff=2.2)
         grid.next_to(mean, DOWN, buff=0.6)
-        self.say("RISC-V 一共 6 条条件分支：相等、不等、小于、大于等于，以及小于和大于等于的无符号版本。",
+        self.say("RISC-V 一共 6 条条件分支：相等、不等、小于、大于等于，以及小于和大于等于的无符号版本。"
+                 "没有 bgt 和 ble？交换两个操作数就行：a > b 就是 b < a。汇编器也提供了这类伪指令。",
                  LaggedStart(*[FadeIn(c, shift=UP * 0.15) for c in cells], lag_ratio=0.15))
         bgt = CodeListing(["bgt a, b, L   =   blt b, a, L"], font_size=30).next_to(grid, DOWN, buff=0.5)
-        self.say("没有 bgt 和 ble？交换两个操作数就行：a > b 就是 b < a。汇编器也提供了这类伪指令。",
-                 FadeIn(bgt, shift=UP * 0.15))
+        self.cue(tr("没有 bgt 和 ble"), FadeIn(bgt, shift=UP * 0.15))
         self.hold()
         self.play(FadeOut(VGroup(grid, bgt, mean)), syn.animate.move_to(UP * 2.4))
         j = CodeListing(["j Label      # = jal x0, Label"], font_size=36).next_to(syn, DOWN, buff=0.6)
-        self.say("还有无条件跳转 j Label：直接跳过去。它是 jal x0, Label 的简写，第 7 集会讲 jal。",
+        self.say("还有无条件跳转 j Label：直接跳过去。它是 jal x0, Label 的简写，第 7 集会讲 jal。"
+                 "Label 只是给代码中某个位置起的名字，汇编器会把它换算成地址。",
                  FadeIn(j, shift=UP * 0.15))
         lab = zh("Label  =  某条指令的地址", 30, C_LABEL).next_to(j, DOWN, buff=0.6)
-        self.say("Label 只是给代码中某个位置起的名字，汇编器会把它换算成地址。", FadeIn(lab))
+        self.cue(tr("Label 只是给代码中某个位置起的名字"), FadeIn(lab))
         self.hold()
         self.clear_stage()
 
@@ -112,31 +113,34 @@ class Ep05BranchesLoops(NarratedScene):
         asm.to_edge(RIGHT, buff=0.35).set_y(0.9)
         self.say("关键技巧是“条件取反”：C 里 i == j 时执行 then 部分，所以汇编里反过来用 bne——不相等就跳过它，直接去 Else。",
                  FadeIn(asm, shift=LEFT * 0.2))
-        self.play(Circumscribe(asm.glyphs(0, "bne"), color=RED_B), Circumscribe(c.glyphs(0, "=="), color=RED_B))
+        self.cue(tr("所以汇编里反过来用 bne"),
+                 Circumscribe(asm.glyphs(0, "bne"), color=RED_B),
+                 Circumscribe(c.glyphs(0, "=="), color=RED_B))
         self.hold()
 
         vals = mono("i = 5, j = 5", 28, YELLOW_D).next_to(mapping, DOWN, buff=0.5).align_to(c, LEFT)
         arrow = pc_arrow().move_to(asm.left_of(0, 0.5))
-        self.say("情况一：i 等于 j。bne 不跳，执行 add……", FadeIn(vals), FadeIn(arrow))
-        self.play(arrow.animate.move_to(asm.left_of(1, 0.5)))
-        self.play(Indicate(asm[1], color=YELLOW_D))
+        self.say("情况一：i 等于 j。bne 不跳，执行 add，"
+                 "然后 j Exit 跳过 else 部分。", FadeIn(vals), FadeIn(arrow))
+        self.cue(tr("bne 不跳"), arrow.animate.move_to(asm.left_of(1, 0.5)))
+        self.cue(tr("执行 add"), Indicate(asm[1], color=YELLOW_D))
         self.play(arrow.animate.move_to(asm.left_of(2, 0.5)))
         jump = CurvedArrow(asm.left_of(2, 0.6), asm.left_of(5, 0.6), angle=TAU / 5, color=YELLOW_D)
-        self.say("……然后 j Exit 跳过 else 部分。", Create(jump))
+        self.cue(tr("然后 j Exit"), Create(jump))
         self.play(arrow.animate.move_to(asm.left_of(5, 0.5)))
         self.hold()
 
         vals2 = mono("i = 5, j = 7", 28, TEAL_C).move_to(vals, aligned_edge=LEFT)
         self.play(FadeOut(jump), arrow.animate.move_to(asm.left_of(0, 0.5)))
         jump2 = CurvedArrow(asm.left_of(0, 0.6), asm.left_of(3, 0.6), angle=TAU / 5, color=TEAL_C)
-        self.say("情况二：i 不等于 j。bne 直接跳到 Else，执行 sub，然后自然走到 Exit。",
+        self.say("情况二：i 不等于 j。bne 直接跳到 Else，执行 sub，然后自然走到 Exit。"
+                 "注意 j Exit 不能省：否则执行完 then 部分，程序会一路“掉进” else 部分。",
                  Transform(vals, vals2), Create(jump2))
-        self.play(arrow.animate.move_to(asm.left_of(3, 0.5)))
-        self.play(arrow.animate.move_to(asm.left_of(4, 0.5)))
+        self.cue(tr("bne 直接跳到 Else"), arrow.animate.move_to(asm.left_of(3, 0.5)))
+        self.cue(tr("执行 sub"), arrow.animate.move_to(asm.left_of(4, 0.5)))
         self.play(Indicate(asm[4], color=TEAL_C))
-        self.play(arrow.animate.move_to(asm.left_of(5, 0.5)))
-        self.say("注意 j Exit 不能省：否则执行完 then 部分，程序会一路“掉进” else 部分。",
-                 Circumscribe(asm[2], color=RED_B))
+        self.cue(tr("自然走到 Exit"), arrow.animate.move_to(asm.left_of(5, 0.5)))
+        self.cue(tr("注意 j Exit 不能省"), Circumscribe(asm[2], color=RED_B))
         self.hold()
         self.clear_stage()
 
@@ -156,47 +160,47 @@ class Ep05BranchesLoops(NarratedScene):
         op = mono("and", 30, C_MNEM).next_to(rr, LEFT, buff=0.5)
         note = small("（只画出最低 8 位）", 22, GREY).next_to(rows, DOWN, buff=0.35)
         self.play(FadeIn(ra), FadeIn(rb), FadeIn(la), FadeIn(lb), FadeIn(note))
-        self.say("and：两位都是 1，结果才是 1。它常用来做“掩码”：只保留想要的那些位。",
+        self.say("and：两位都是 1，结果才是 1。它常用来做“掩码”：只保留想要的那些位。"
+                 "or：只要有一位是 1，结果就是 1，"
+                 "xor：两位不同，结果才是 1。",
                  Create(line), FadeIn(op),
                  LaggedStart(*[FadeIn(c, shift=DOWN * 0.2) for c in rr], lag_ratio=0.1))
-        self.hold()
         op_or = mono("or", 30, C_MNEM).move_to(op, aligned_edge=RIGHT)
-        self.say("or：只要有一位是 1，结果就是 1……",
-                 Transform(op, op_or), set_bit_row(rr, "10111111"))
-        self.hold()
+        self.cue(tr("or：只要有一位是 1"), Transform(op, op_or), set_bit_row(rr, "10111111"))
         op_x = mono("xor", 30, C_MNEM).move_to(op, aligned_edge=RIGHT)
-        self.say("……xor：两位不同，结果才是 1。", Transform(op, op_x), set_bit_row(rr, "10111001"))
+        self.cue(tr("xor：两位不同"), Transform(op, op_x), set_bit_row(rr, "10111001"))
         self.hold()
         imm = CodeListing([
             "andi t0, t1, 0xFF    # 取出最低字节",
             "xori t0, t1, -1      # 按位取反 (not)",
         ], font_size=28, line_gap=0.55).next_to(note, DOWN, buff=0.35)
-        self.say("它们都有立即数版本：andi、ori、xori。比如 andi t0, t1, 0xFF 取出最低的一个字节。",
+        self.say("它们都有立即数版本：andi、ori、xori。比如 andi t0, t1, 0xFF 取出最低的一个字节。"
+                 "RISC-V 没有真正的 not 指令：-1 的每一位都是 1，与它异或就是按位取反。伪指令 not 就是这么实现的。",
                  FadeIn(imm[0], shift=UP * 0.15))
-        self.say("RISC-V 没有真正的 not 指令：-1 的每一位都是 1，与它异或就是按位取反。伪指令 not 就是这么实现的。",
-                 FadeIn(imm[1], shift=UP * 0.15))
+        self.cue(tr("RISC-V 没有真正的 not 指令"), FadeIn(imm[1], shift=UP * 0.15))
         self.hold()
         self.play(FadeOut(VGroup(ra, rb, rr, line, la, lb, op, note, imm)))
 
         # shifts
         src = bit_row("00010110", BLUE_B).move_to(UP * 1.2)
         lbl = mono("t1 = 22", 30, WHITE).next_to(src, LEFT, buff=0.5)
-        self.say("移位指令把所有位整体挪动。sll 是逻辑左移：往左挪，右边补 0。",
+        self.say("移位指令把所有位整体挪动。sll 是逻辑左移：往左挪，右边补 0。"
+                 "左移 k 位，相当于乘以 2 的 k 次方：22 左移 2 位，变成 88。",
                  FadeIn(src), FadeIn(lbl))
         res = bit_row("00010110", GREEN_C).move_to(DOWN * 0.4)
         code = CodeListing(["slli t0, t1, 2"], font_size=30).next_to(res, LEFT, buff=0.5)
-        self.play(FadeIn(code), TransformFromCopy(src, res))
+        self.cue(tr("sll 是逻辑左移"), FadeIn(code), TransformFromCopy(src, res))
         box = res[0][0].width
         gone = VGroup(*[c[1] for c in res[:2]])
         keep = VGroup(*[c[1] for c in res[2:]])
         self.play(FadeOut(gone, shift=UP * 0.4), run_time=0.6)
         for cell in res[:2]:
             cell.remove(cell[1])
-        self.play(keep.animate.shift(LEFT * 2 * box), run_time=1.0)
+        self.cue(tr("往左挪"), keep.animate.shift(LEFT * 2 * box), run_time=1.0)
         zeros = VGroup(*[mono("0", 30, GREY_B).move_to(res[k][0]) for k in (6, 7)])
-        self.play(FadeIn(zeros, shift=LEFT * 0.3))
+        self.cue(tr("右边补 0"), FadeIn(zeros, shift=LEFT * 0.3))
         eq = mono("= 88 = 22 × 4", 30, GREEN_C).next_to(res, RIGHT, buff=0.5)
-        self.say("左移 k 位，相当于乘以 2 的 k 次方：22 左移 2 位，变成 88。", Write(eq))
+        self.cue(tr("左移 k 位"), Write(eq))
         self.hold()
         self.play(FadeOut(VGroup(src, lbl, res, zeros, code, eq)))
 
@@ -211,12 +215,12 @@ class Ep05BranchesLoops(NarratedScene):
         VGroup(neg, nl, srl, sra, srl_l, sra_l, srl_n, sra_n).move_to(UP * 0.2)
         # a real srli fills bit 31, not bit 7: say that this row is a toy 8-bit register
         toy = small("（示意：假设寄存器只有 8 位）", 22, GREY).next_to(VGroup(sra_l, sra), DOWN, buff=0.4)
-        self.say("右移有两种。srl 是逻辑右移：左边补 0。",
+        self.say("右移有两种。srl 是逻辑右移：左边补 0。"
+                 "sra 是算术右移：左边补符号位。这样负数除以 2 的幂之后，依然是负数。",
                  FadeIn(neg), FadeIn(nl), FadeIn(toy), FadeIn(srl_l), TransformFromCopy(neg, srl))
-        self.play(FadeIn(srl_n))
-        self.say("sra 是算术右移：左边补符号位。这样负数除以 2 的幂之后，依然是负数。",
-                 FadeIn(sra_l), TransformFromCopy(neg, sra))
-        self.play(FadeIn(sra_n), Indicate(VGroup(*sra[:2]), color=GREEN_C))
+        self.cue(tr("左边补 0"), FadeIn(srl_n))
+        self.cue(tr("sra 是算术右移"), FadeIn(sra_l), TransformFromCopy(neg, sra))
+        self.cue(tr("这样负数除以 2 的幂"), FadeIn(sra_n), Indicate(VGroup(*sra[:2]), color=GREEN_C))
         self.hold()
         self.clear_stage()
 
@@ -227,7 +231,8 @@ class Ep05BranchesLoops(NarratedScene):
             "for (int i = 0; i < n; i++)",
             "    sum += A[i];",
         ], lang="c", font_size=26, line_gap=0.44).to_corner(UL, buff=0.45)
-        self.say("现在把这些组合起来：对数组 A 的 n 个元素求和。", FadeIn(c, shift=RIGHT * 0.2))
+        self.say("现在把这些组合起来：对数组 A 的 n 个元素求和。"
+                 "A 的地址在 a0，n 在 a1；i 用 t0，sum 用 s1。", FadeIn(c, shift=RIGHT * 0.2))
         asm_src = [
             "    addi t0, x0, 0      # i = 0",
             "    addi s1, x0, 0      # sum = 0",
@@ -257,16 +262,22 @@ class Ep05BranchesLoops(NarratedScene):
             arr.add(VGroup(sq, t, ad))
         arr.arrange(RIGHT, buff=0).next_to(regs, DOWN, buff=0.6).align_to(regs, LEFT).shift(RIGHT * 0.45)
         arr_l = mono("A", 28, GREEN_B).next_to(arr, LEFT, buff=0.25)
-        self.say("A 的地址在 a0，n 在 a1；i 用 t0，sum 用 s1。",
-                 FadeIn(asm, shift=UP * 0.2), FadeIn(regs), FadeIn(names), FadeIn(arr), FadeIn(arr_l))
+        self.cue(tr("A 的地址在 a0"),
+                 FadeIn(asm, shift=UP * 0.2),
+                 FadeIn(regs),
+                 FadeIn(names),
+                 FadeIn(arr),
+                 FadeIn(arr_l))
         self.hold()
 
         back = CurvedArrow(asm.left_of(9, 0.2), asm.left_of(2, 0.2), angle=-TAU / 5, color=BLUE_B)
         out = CurvedArrow(asm.right_of(3, 0.15), asm.right_of(10, 0.15), angle=-TAU / 5, color=RED_B)
-        self.say("循环的骨架：开头检查条件，不满足就跳出；循环体末尾，无条件跳回开头。",
+        self.say("循环的骨架：开头检查条件，不满足就跳出；循环体末尾，无条件跳回开头。"
+                 "条件又取反了：C 里 i < n 时继续，汇编里 i >= n 时跳出。",
                  Create(back), Create(out))
-        self.say("条件又取反了：C 里 i < n 时继续，汇编里 i >= n 时跳出。",
-                 Circumscribe(asm.glyphs(3, "bge"), color=RED_B), Circumscribe(c.glyphs(1, "i < n"), color=RED_B))
+        self.cue(tr("条件又取反了"),
+                 Circumscribe(asm.glyphs(3, "bge"), color=RED_B),
+                 Circumscribe(c.glyphs(1, "i < n"), color=RED_B))
         self.say("A[i] 的地址是 A + 4i：用 slli 左移 2 位算出 4i，再加上基地址。",
                  Indicate(VGroup(asm[4], asm[5]), color=YELLOW_D, scale_factor=1.03))
         self.hold()
@@ -292,7 +303,8 @@ class Ep05BranchesLoops(NarratedScene):
         self.hold()
 
         total = 3
-        self.say("之后每一轮都一样：算出 A + 4i，取出 A[i] 累加进 sum，再让 i 加 1……")
+        self.say("之后每一轮都一样：算出 A + 4i，取出 A[i] 累加进 sum，再让 i 加 1，"
+                 "当 i 增加到 4，bge 条件成立，跳到 Done。sum = 3 + 1 + 4 + 1 = 9。")
         for i in range(1, 4):
             total += arr_vals[i]
             rt = 0.3
@@ -303,8 +315,7 @@ class Ep05BranchesLoops(NarratedScene):
             go(8, R["t0"].set(i + 1), rt=rt)
             go(9, rt=rt)
             go(3, rt=rt)
-        self.say("当 i 增加到 4，bge 条件成立，跳到 Done。sum = 3 + 1 + 4 + 1 = 9。",
-                 Indicate(R["t0"]), Indicate(R["a1"]))
+        self.cue(tr("当 i 增加到 4"), Indicate(R["t0"]), Indicate(R["a1"]))
         go(10, rt=0.8)
         self.play(Circumscribe(R["s1"], color=YELLOW_D))
         self.hold(0.5)
