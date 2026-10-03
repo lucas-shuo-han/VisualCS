@@ -1114,7 +1114,8 @@ class NarratedScene(Scene):
         for f in frames[1:]:
             show(f, False)
         holder = VGroup(*frames)
-        state = {"k": 0, "clock": self._cap_t0}
+        t0 = self._cap_t0
+        state = {"k": 0, "clock": t0}
 
         def tick(dt):   # a scene updater: Scene.time stands still inside an animation,
             state["clock"] += dt   # and mobject updaters are suspended while they animate
@@ -1123,6 +1124,11 @@ class NarratedScene(Scene):
                 show(frames[state["k"]], False)
                 show(frames[k], True)
                 state["k"] = k
+            elif state["k"] > 0 and state["clock"] - t0 > 0.45:
+                # the FadeIn that brought the caption in keeps re-applying its end state
+                # (first sentence on) until the play it belongs to is over: say it again
+                show(frames[0], False)
+                show(frames[state["k"]], True)
         holder.add_updater(lambda m, dt: None)   # marks the caption as moving, so it is redrawn
         self.add_updater(tick)
         self._cap_tick = tick
