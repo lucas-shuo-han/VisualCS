@@ -6,6 +6,7 @@ the video file names all come from here.
 
 SOURCE_LANG = "en"          # the episode files are written in English
 LANGS = ["en"]
+BURN_CAPTIONS = False       # subtitles go to the .srt next to the video, not onto the frame
 
 SERIES_NAME = {"en": "CS182 · Discussion 5"}
 

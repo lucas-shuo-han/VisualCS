@@ -4,3 +4,4 @@ media/
 .venv/
 videos/preview-en/
 .tts_cache/
+cs182/*/preview/

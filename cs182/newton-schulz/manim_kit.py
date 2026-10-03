@@ -14,7 +14,9 @@ Contents (search for the section banners):
   ML / math ............. nn_diagram(), heatmap()  (see references/visual-patterns.md for more)
 
 Every episode is one NarratedScene. Captions are burned in, timed so each one
-stays readable, and exported as an .srt next to the rendered video.
+stays readable, and exported as an .srt next to the rendered video. With
+BURN_CAPTIONS = False in series.py (or KIT_CAPTIONS=0) nothing is drawn on the
+frame and the .srt, cut into short cues, is the only subtitle.
 
 Optional files next to this one (see the skill's references/bilingual-and-voice.md):
   series.py ............. episode order, titles per language, SOURCE_LANG, LANGS.
@@ -31,6 +33,7 @@ Environment (render.py sets these):
   KIT_I18N_LAX=1     warn instead of failing on a missing translation.
   KIT_TTS=1          voice-over: each caption is spoken, and stays up until
                      its audio has finished.
+  KIT_CAPTIONS=0|1   override series.py BURN_CAPTIONS (0: subtitles only in the .srt).
 """
 
 from __future__ import annotations
@@ -63,6 +66,8 @@ LANG = (os.environ.get("KIT_LANG") or SOURCE_LANG).lower()
 TRANSLATING = LANG != SOURCE_LANG
 I18N_LAX = os.environ.get("KIT_I18N_LAX") == "1"
 TTS = os.environ.get("KIT_TTS") == "1"
+BURN_CAPTIONS = (os.environ["KIT_CAPTIONS"] != "0" if os.environ.get("KIT_CAPTIONS")
+                 else bool(_SERIES.get("BURN_CAPTIONS", True)))
 EPISODES = [dict(e, num=i + 1) for i, e in enumerate(_SERIES.get("EPISODES", []))]
 _BY_SCENE = {e["scene"]: e for e in EPISODES}
 EN = LANG == "en"   # handy for the rare `if EN:` layout branch in an episode
@@ -930,9 +935,31 @@ def reading_time(text: str, cps: float = 5.2) -> float:
     return max(1.8, 0.5 + cjk / cps + other * 0.28)
 
 
+def split_cue(text: str, max_chars: int = 84) -> list[str]:
+    """Cut one narration line into subtitle-sized cues: whole sentences where
+    they fit, otherwise at commas, otherwise between words."""
+    def pack(parts, sep=" "):
+        out = []
+        for part in parts:
+            if out and len(out[-1]) + len(sep) + len(part) <= max_chars:
+                out[-1] += sep + part
+            else:
+                out.append(part)
+        return out
+
+    cues = []
+    for sent in re.split(r"(?<=[.?!。？！])\s+", text.strip()):
+        if len(sent) <= max_chars:
+            cues.append(sent)
+            continue
+        for clause in pack(re.split(r"(?<=[,;，；])\s+", sent)):
+            cues += [clause] if len(clause) <= max_chars else pack(clause.split())
+    return pack(cues)
+
+
 class NarratedScene(Scene):
-    """Scene with timed, burned-in captions (also exported as .srt), an
-    optional voice-over, and title / end cards."""
+    """Scene with timed captions (burned in unless BURN_CAPTIONS is off, and
+    always exported as .srt), an optional voice-over, and title / end cards."""
 
     caption_size = 30 if LANG in CJK_LANGS else 28
     caption_units = 30 if LANG in CJK_LANGS else 35   # line width in CJK-character units
@@ -945,11 +972,42 @@ class NarratedScene(Scene):
         self._cap_text = None
         self._cap_t0 = 0.0
         self._cap_need = 0.0
+        self._cap_span = 0.0
         name = type(self).__name__
         self.episode = _BY_SCENE.get(name)
         m = re.match(r"Ep(\d+)", name)
         self.ep_no = self.episode["num"] if self.episode else (int(m[1]) if m else 0)
         load_table(self.ep_no)
+
+    # -- fast-forward (for previews of a scene that builds on the stage of earlier ones)
+    _ff = False
+
+    def fast_forward(self, *methods):
+        """Run scene methods without rendering, voice or captions: every
+        animation jumps to its end state and no time passes."""
+        self._ff = True
+        try:
+            for m in methods:
+                m()
+        finally:
+            self._ff = False
+
+    def play(self, *args, **kwargs):
+        if not self._ff:
+            return super().play(*args, **kwargs)
+        from manim.animation.animation import prepare_animation
+        anims = [prepare_animation(a) for a in args]
+        self.add_mobjects_from_animations(anims)   # as a real play() does, so removers find their mobject
+        for a in anims:
+            a._setup_scene(self)
+            a.begin()
+        for a in anims:
+            a.finish()
+            a.clean_up_from_scene(self)
+
+    def wait(self, *args, **kwargs):
+        if not self._ff:
+            return super().wait(*args, **kwargs)
 
     # -- captions
     def _make_caption(self, text):
@@ -962,7 +1020,7 @@ class NarratedScene(Scene):
         return VGroup(bg, t)
 
     def _flush(self):
-        if self._cap is None:
+        if self._cap is None and self._cap_text is None:
             return
         remaining = self._cap_need - (self.time - self._cap_t0)
         if remaining > 0.02:
@@ -972,7 +1030,14 @@ class NarratedScene(Scene):
         if self._cap_text is not None:
             dur = self.time - self._cap_t0
             if dur > 0:
-                self.add_subcaption(self._cap_text, duration=dur, offset=-dur)
+                # one cue per sentence or so, each with its share of the time
+                cues = split_cue(self._cap_text)
+                total = sum(len(c) for c in cues)
+                t = -dur
+                for c in cues:
+                    d = dur * len(c) / total
+                    self.add_subcaption(c, duration=d, offset=t)
+                    t += d
             self._cap_text = None
 
     def voice(self, text, speak=None, delay=0.15) -> float:
@@ -1000,16 +1065,38 @@ class NarratedScene(Scene):
         text = tr(text)
         self._flush()
         self._close_sub()
-        new = self._make_caption(text)
-        swap = [FadeIn(new, run_time=0.4)]
+        new = self._make_caption(text) if BURN_CAPTIONS else None
+        swap = [FadeIn(new, run_time=0.4)] if new is not None else []
         if self._cap is not None:
             swap.append(FadeOut(self._cap, run_time=0.3))
         self._cap_t0 = self.time
+        if self._ff:   # fast-forward: put the beat's end state on stage, silently, in no time
+            self.play(*anims)
+            return
         talk = self.voice(text, speak)
-        self.play(*swap, *anims)
+        if swap or anims:
+            self.play(*swap, *anims)
         self._cap, self._cap_text = new, text
         need = reading_time(text) if need is None else need
         self._cap_need = max(need, talk + 0.35 if talk else 0.0) + extra
+        self._cap_span = talk if talk else need
+
+    def cue(self, phrase, *anims, run_time=None, lead=0.3):
+        """Play `anims` when the narration of the current beat reaches `phrase`
+        (found in the beat's text; its position in the text gives the time).
+        For long beats: say() starts the line, cue() adds each step as it is said."""
+        text = self._cap_text or ""
+        i = 0 if self._ff else text.find(phrase)
+        if self._ff:
+            pass
+        elif i < 0:
+            print(f"[cue] phrase not in the current line: {phrase!r}", file=sys.stderr)
+        else:
+            dt = self._cap_t0 + self._cap_span * i / len(text) - lead - self.time
+            if dt > 0.05:
+                self.wait(dt)
+        if anims:
+            self.play(*anims, **({} if run_time is None else {"run_time": run_time}))
 
     def hold(self, extra=0.0):
         """Wait until the current caption has been read (and spoken), plus `extra`."""

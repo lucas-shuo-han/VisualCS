@@ -33,6 +33,10 @@
 - 1080p30 of a 7-minute voiced episode takes 10–20 min on 4 cores and ends up
   ~15–20 MB. Always iterate at `--preview` (480p15) and render 1080p once.
 
+- **dvisvgm fails when the working directory is on another drive** (Windows, project on D:, MiKTeX on C:): "does not support converting .dvi files to SVG", exit 127. Run Manim with `cwd` in a folder on the system drive and pass the episode by absolute path (preview.py does).
+- **ffmpeg's `subtitles=` filter cannot take a path with a drive colon.** Run ffmpeg with `cwd` in the folder of the .srt and give the bare file name.
+- **A fast-forwarded animation must still register its mobjects.** Jumping an animation to its end without `scene.add_mobjects_from_animations` leaves faded-out objects on stage (`fast_forward` in the kit does this).
+
 ## Captions / subtitles
 - **The last caption only reaches the .srt when it is closed**: end every episode with
   `end_card(...)` or `self.uncaption()`.
@@ -72,6 +76,9 @@
 - Transforming a mobject inside a group: prefer in-place `Transform(old, new)` (keeps
   group membership) over `FadeOut`/`FadeIn` swaps that detach it.
 
+- **A panel next to a graph collides with what stays all episode** (a corner formula, the previous scene's tag). Place panel lines from one anchor going down, and check the frame where the panel is fullest.
+- **Labels at the start point of a path hide axis labels** (a start marked "2.2" on top of √5). Use a plain dot and put the number in the side panel; put a level line's label at its far end, away from the diagonal.
+
 ## Content
 - Compute every number shown (bits, hex, addresses, loss values) in Python and
   `assert` the key ones. Hand-typed values drift from the narration.
@@ -79,6 +86,10 @@
   report the discrepancy.
 - Explain *why* a design is the way it is, not just *what* it is — that's the
   difference between a 3b1b-style video and an animated slide deck.
+
+## Voice-over and Manim's cache
+- Render voiced videos with `--disable_caching` (render.py and preview.py do). On a cache hit Manim plays the cached clip without advancing its clock, so `add_sound` places later lines too early or drops them: a re-render comes out with missing or shifted voice while the picture looks right.
+- After every voiced render compare audio and video duration (`ffprobe`) and look for long silences (`ffmpeg -af silencedetect`). Frames alone do not show a lost voice track.
 
 ## Regexes on mixed text
 - Python's `\b` and `\w` count CJK characters as word characters, so `\bx5\b` never
