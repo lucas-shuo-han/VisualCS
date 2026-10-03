@@ -1,0 +1,416 @@
+1
+00:00:06,200 --> 00:00:12,508
+Back in episode two, we said that x86, ARM, and RISC-V are three different instruction sets.
+
+2
+00:00:12,508 --> 00:00:19,640
+Give the same line of C to three compilers, and the machine code that comes out is completely different.
+
+3
+00:00:19,640 --> 00:00:23,700
+Most phones use ARM chips, and most computers use x86.
+
+4
+00:00:23,700 --> 00:00:30,352
+Even the lengths differ, since x86 instructions come in different sizes, and this one is only two bytes.
+
+5
+00:00:30,352 --> 00:00:34,893
+RISC-V instructions are always thirty-two bits, as wide as a data word,
+
+6
+00:00:34,893 --> 00:00:41,366
+so fetching an instruction and reading data can share one piece of memory hardware.
+
+7
+00:00:41,366 --> 00:00:45,152
+So a program's binary is tied to its instruction set.
+
+8
+00:00:45,152 --> 00:00:49,651
+A RISC-V executable simply cannot run on an Intel x86 computer.
+
+9
+00:00:49,651 --> 00:00:53,722
+However, an instruction set is often backward compatible,
+
+10
+00:00:53,722 --> 00:01:03,166
+and today's x86 processors can still run programs written in nineteen eighty-one for the Intel eight oh eight eight.
+
+11
+00:01:03,166 --> 00:01:09,872
+The last episode translated assembly into machine code, and this episode goes the other way.
+
+12
+00:01:09,872 --> 00:01:13,881
+Given machine code, how do we read it back as assembly?
+
+13
+00:01:13,881 --> 00:01:15,849
+That is called disassembly.
+
+14
+00:01:15,849 --> 00:01:19,133
+Let's practice on this word, 0x01B342B3.
+
+15
+00:01:19,133 --> 00:01:25,513
+Step one is to convert to binary, where each hexadecimal digit expands into exactly four bits.
+
+16
+00:01:25,513 --> 00:01:31,419
+Next we find the opcode, which, in every format, always occupies the lowest seven bits.
+
+17
+00:01:31,419 --> 00:01:39,033
+Every format has its own set of opcodes, so we look it up, and zero one one zero zero one one is an R-type.
+
+18
+00:01:39,033 --> 00:01:39,729
+Step two.
+
+19
+00:01:39,729 --> 00:01:45,221
+Once we know the format, we know how to cut the other twenty-five bits.
+
+20
+00:01:45,221 --> 00:01:50,233
+Cut as an R-type, they are funct7, rs2, rs1, funct3, and rd.
+
+21
+00:01:50,233 --> 00:01:51,040
+Step three.
+
+22
+00:01:51,040 --> 00:01:58,524
+The funct3 is one zero zero and the funct7 is all zeros, and looking up the R-type table, this is xor.
+
+23
+00:01:58,524 --> 00:02:07,400
+Note that the mnemonic xor isn't stored in any one field, but is decided together by the opcode, funct3, and funct7.
+
+24
+00:02:07,400 --> 00:02:08,222
+Step four.
+
+25
+00:02:08,222 --> 00:02:12,335
+The register fields are five-bit unsigned numbers.
+
+26
+00:02:12,335 --> 00:02:19,904
+So rd is zero zero one zero one, which is five, rs1 is zero zero one one zero, which is six,
+
+27
+00:02:19,904 --> 00:02:24,428
+and rs2 is one one zero one one, which is twenty-seven.
+
+28
+00:02:24,428 --> 00:02:29,776
+Converting to register names, x5 is t0, x6 is t1, and x27 is s11.
+
+29
+00:02:29,776 --> 00:02:33,200
+Put together, we get xor t0, t1, s11.
+
+30
+00:02:33,200 --> 00:02:35,515
+Be careful about the order.
+
+31
+00:02:35,515 --> 00:02:46,900
+In assembly we write rd, rs1, rs2, but the fields run from left to right as rs2, rs1, rd, which is exactly the reverse.
+
+32
+00:02:46,900 --> 00:02:50,134
+That is all there is to disassembly, just four steps.
+
+33
+00:02:50,134 --> 00:02:56,366
+The first two are the same for every format, and the last two depend on the format.
+
+34
+00:02:56,366 --> 00:03:03,745
+Looking back at the full R-type table, ten instructions share one opcode, but funct3 has only eight values.
+
+35
+00:03:03,745 --> 00:03:11,124
+Two pairs have the same funct3, add and sub are both zero zero zero, and srl and sra are both one zero one.
+
+36
+00:03:11,124 --> 00:03:19,000
+The funct7 field tells them apart, and it also has only two values, which differ in just one bit, bit thirty.
+
+37
+00:03:19,000 --> 00:03:24,500
+Just telling the operations apart uses seventeen bits, which is clearly more than needed.
+
+38
+00:03:24,500 --> 00:03:29,566
+But keeping the field positions aligned matters more than saving a few bits.
+
+39
+00:03:29,566 --> 00:03:32,265
+Take add t0, t1, s11 as an example.
+
+40
+00:03:32,265 --> 00:03:37,278
+Flip bit thirty from zero to one, and it becomes sub t0, t1, s11.
+
+41
+00:03:37,278 --> 00:03:42,599
+Add and sub share one adder, and bit thirty is just a switch, a flag.
+
+42
+00:03:42,599 --> 00:03:50,833
+When it is one, rs2 is first negated, by flipping its bits and adding one, and then the two are added.
+
+43
+00:03:50,833 --> 00:03:54,822
+Change funct3 to one zero one, and it becomes a right shift.
+
+44
+00:03:54,822 --> 00:04:01,670
+With bit thirty at zero it is srl, a logical right shift, which fills the vacated high bits with zeros.
+
+45
+00:04:01,670 --> 00:04:08,983
+With bit thirty at one it becomes sra, an arithmetic right shift, which fills the high bits with the sign bit.
+
+46
+00:04:08,983 --> 00:04:12,333
+This time the switch controls sign extension.
+
+47
+00:04:12,333 --> 00:04:17,316
+Shift immediates use a variant of the I format, which CS61C calls I-star,
+
+48
+00:04:17,316 --> 00:04:24,166
+where the shift amount is at most thirty-one and takes only the low five bits of the immediate.
+
+49
+00:04:24,166 --> 00:04:30,852
+The upper seven bits of the immediate aren't used as a number, but as a switch, just like funct7.
+
+50
+00:04:30,852 --> 00:04:37,745
+For srai those seven bits are zero one zero zero zero zero zero, and the switch is still bit thirty.
+
+51
+00:04:37,745 --> 00:04:40,295
+Turn bit thirty off and you get srli.
+
+52
+00:04:40,295 --> 00:04:47,733
+There is only one kind of left shift, the logical one, so for slli this bit is always zero.
+
+53
+00:04:47,733 --> 00:04:50,193
+The I format is more than addi.
+
+54
+00:04:50,193 --> 00:04:59,559
+Put the immediate operations next to the R-type, and funct3 matches one to one, so addi pairs with add, xori with xor,
+
+55
+00:04:59,559 --> 00:05:01,543
+slti with slt, and so on.
+
+56
+00:05:01,543 --> 00:05:09,200
+The only one missing is subi, since to subtract a constant, you just addi a negative number.
+
+57
+00:05:09,200 --> 00:05:17,109
+The three-bit funct3 has only eight encodings, and all of them are used up here, so srli, along with srai,
+
+58
+00:05:17,109 --> 00:05:20,533
+still has to be told apart by bit thirty.
+
+59
+00:05:20,533 --> 00:05:26,435
+The five loads also need funct3 to tell them apart, so they get an opcode of their own.
+
+60
+00:05:26,435 --> 00:05:29,566
+All told, the I format uses four opcodes.
+
+61
+00:05:29,566 --> 00:05:35,312
+The ecall instruction, short for environment call, asks the operating system for a service,
+
+62
+00:05:35,312 --> 00:05:38,091
+such as printing text or ending the program.
+
+63
+00:05:38,091 --> 00:05:46,333
+The ebreak instruction hands control to the debugger, and that is how breakpoints in a debugger are implemented.
+
+64
+00:05:46,333 --> 00:05:48,317
+Neither of these has operands.
+
+65
+00:05:48,317 --> 00:05:56,766
+Ecall is all zeros apart from the opcode, and ebreak just has an extra one in the lowest bit of the immediate.
+
+66
+00:05:56,766 --> 00:06:01,114
+The funct3 values for loads and stores are matched too.
+
+67
+00:06:01,114 --> 00:06:09,256
+The pair lb and sb uses zero zero zero, lh and sh uses zero zero one, and lw and sw uses zero one zero.
+
+68
+00:06:09,256 --> 00:06:13,366
+The lbu and lhu instructions have no matching store,
+
+69
+00:06:13,366 --> 00:06:22,966
+because a store writes only the bytes it is given and involves no extension, and for the same reason RV32 has no lwu.
+
+70
+00:06:22,966 --> 00:06:26,120
+Why do loads and jalr use the I format too?
+
+71
+00:06:26,120 --> 00:06:33,455
+Both first compute rs1 plus the immediate, one to get an address and the other to get a jump target,
+
+72
+00:06:33,455 --> 00:06:37,033
+so they can reuse the same adder.
+
+73
+00:06:37,033 --> 00:06:45,733
+The jalr instruction first stores PC plus four into rd, and then jumps to rs1 plus the immediate.
+
+74
+00:06:45,733 --> 00:06:52,523
+In episode seven, ret and jr ra were pseudo-instructions with no opcode of their own,
+
+75
+00:06:52,523 --> 00:06:56,837
+and the assembler turns them both into jalr x0, ra, 0.
+
+76
+00:06:56,837 --> 00:07:02,669
+The rd is x0 because on a return we don't need to leave a return address,
+
+77
+00:07:02,669 --> 00:07:07,333
+and whatever is written into x0 is simply thrown away.
+
+78
+00:07:07,333 --> 00:07:13,341
+For the encoding, the immediate is zero, rs1 is ra, which is x1, and rd is x0.
+
+79
+00:07:13,341 --> 00:07:21,660
+There is only one jalr, so funct3 isn't really needed, and we fill in zero zero zero as the format requires.
+
+80
+00:07:21,660 --> 00:07:27,592
+The opcode is one one zero zero one one one, and together this is 0x00008067.
+
+81
+00:07:27,592 --> 00:07:34,366
+When you see it in a disassembly, you know a function is about to return.
+
+82
+00:07:34,366 --> 00:07:38,565
+Here is another S-format example, sw x14, 36(x2).
+
+83
+00:07:38,565 --> 00:07:47,650
+The number thirty-six in twelve-bit binary is zero zero zero zero, zero zero one zero, zero one zero zero.
+
+84
+00:07:47,650 --> 00:07:56,220
+The upper seven bits, zero zero zero zero zero zero one, go into imm[11:5], and the lower five bits,
+
+85
+00:07:56,220 --> 00:08:00,200
+zero zero one zero zero, go into imm[4:0].
+
+86
+00:08:00,200 --> 00:08:01,167
+Why split it?
+
+87
+00:08:01,167 --> 00:08:08,310
+If we used only the seven bits of funct7, we could represent just a hundred twenty-eight values.
+
+88
+00:08:08,310 --> 00:08:13,891
+A store has no rd, so it borrows the five bits of rd to make up all twelve.
+
+89
+00:08:13,891 --> 00:08:20,364
+Everything else stays as before, rs2 is x14, rs1 is x2, funct3 is zero one zero for sw,
+
+90
+00:08:20,364 --> 00:08:24,466
+and the opcode is zero one zero zero zero one one.
+
+91
+00:08:24,466 --> 00:08:26,578
+The result is 0x02E12223.
+
+92
+00:08:26,578 --> 00:08:35,534
+Disassembling goes the other way, putting the two pieces back together, zero zero zero zero zero zero one,
+
+93
+00:08:35,534 --> 00:08:40,500
+zero zero one zero zero, which is thirty-six.
+
+94
+00:08:40,500 --> 00:08:42,992
+Finally, two questions to leave you with.
+
+95
+00:08:42,992 --> 00:08:45,425
+Translate these two words into assembly.
+
+96
+00:08:45,425 --> 00:08:48,966
+Pause the video and try it yourself.
+
+97
+00:08:48,966 --> 00:08:58,340
+For question one, the opcode is zero one one zero zero one one, which is R-type, and funct3 and funct7 are all zero,
+
+98
+00:08:58,340 --> 00:08:59,390
+so it is add.
+
+99
+00:08:59,390 --> 00:09:09,066
+Here rd is one, rs1 is two, and rs2 is three, so the answer is add x1, x2, x3, which is add ra, sp, gp.
+
+100
+00:09:09,066 --> 00:09:17,837
+For question two, the opcode zero zero zero zero zero one one is a load, and funct3 equal to zero one zero means lw.
+
+101
+00:09:17,837 --> 00:09:22,147
+Then rd is ten, which is a0, and rs1 is two, which is sp.
+
+102
+00:09:22,147 --> 00:09:28,876
+The immediate, one one one one, one one one one, one one zero zero, has a top bit of one,
+
+103
+00:09:28,876 --> 00:09:31,900
+so in two's complement it is minus four.
+
+104
+00:09:31,900 --> 00:09:35,100
+So the answer is lw a0, -4(sp).
+

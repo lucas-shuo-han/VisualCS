@@ -6,9 +6,16 @@ course's jargon, drop what doesn't apply. Check the result with
 
 import re
 
+try:
+    LETTER_A
+except NameError:   # run outside tts.py (e.g. a quick import)
+    LETTER_A = "A"
+
 
 def _reg(m):
-    return f"{m[1].upper()} {m[2]}"
+    # LETTER_A is provided by tts.py: "eigh" for Kokoro, which would read a bare "A 1" as "uh one"
+    letter = LETTER_A if m[1] in "aA" else m[1].upper()
+    return f"{letter} {m[2]}"
 
 
 def _offset(lang):

@@ -1,0 +1,216 @@
+1
+00:00:06,200 --> 00:00:08,727
+Calling a function takes six basic steps.
+
+2
+00:00:08,727 --> 00:00:13,967
+First we put the arguments where the function can get them, and then jump over to it.
+
+3
+00:00:13,967 --> 00:00:17,913
+The function sets up local storage for itself and runs its body.
+
+4
+00:00:17,913 --> 00:00:24,700
+Then it puts the return value in place, and finally jumps back to where it was called from.
+
+5
+00:00:24,700 --> 00:00:31,957
+Let's look at the simplest example, a is set to sum of a and b, where a is in s0 and b is in s1.
+
+6
+00:00:31,957 --> 00:00:39,900
+In step one we put the arguments into a0 and a1, and the return value will come back through a0 too.
+
+7
+00:00:39,900 --> 00:00:47,998
+The jal instruction first stores the address of the next instruction, PC plus four, into ra, and then jumps to sum,
+
+8
+00:00:47,998 --> 00:00:51,166
+which is why it is called jump and link.
+
+9
+00:00:51,166 --> 00:00:55,697
+The function computes its result and puts it into a0.
+
+10
+00:00:55,697 --> 00:01:04,600
+Then jr ra jumps back to the address that ra remembers, 0x100C, and execution carries on from there.
+
+11
+00:01:04,600 --> 00:01:07,256
+Why not jump back with a plain j?
+
+12
+00:01:07,256 --> 00:01:15,788
+Because sum can be called from many places, and only ra knows where this particular call should return to.
+
+13
+00:01:15,788 --> 00:01:23,633
+The instruction jr ra is shorthand for jalr x0, 0(ra), and it is often written ret.
+
+14
+00:01:23,633 --> 00:01:24,831
+Here is the trouble.
+
+15
+00:01:24,831 --> 00:01:30,342
+There is only one set of registers, and the caller and the function being called share them.
+
+16
+00:01:30,342 --> 00:01:36,991
+But f needs registers too, and if it overwrites a value the caller still needs, that data is quietly destroyed.
+
+17
+00:01:36,991 --> 00:01:42,233
+So everyone agreed on a set of rules, called the calling convention.
+
+18
+00:01:42,233 --> 00:01:47,517
+The registers t0 through t6 and a0 through a7, along with ra, are caller-saved,
+
+19
+00:01:47,517 --> 00:01:51,598
+which means the function being called may change them freely.
+
+20
+00:01:51,598 --> 00:01:55,745
+The caller has to save them first if it needs them afterwards.
+
+21
+00:01:55,745 --> 00:02:01,832
+The registers s0 through s11, and sp, are callee-saved, so if a function wants to use them,
+
+22
+00:02:01,832 --> 00:02:07,266
+it must save the old values first and restore them exactly before returning.
+
+23
+00:02:07,266 --> 00:02:12,796
+In other words, across a function call the saved registers are guaranteed to be unchanged,
+
+24
+00:02:12,796 --> 00:02:15,929
+while the temporary and argument registers are not.
+
+25
+00:02:15,929 --> 00:02:18,202
+So where do we keep those old values?
+
+26
+00:02:18,202 --> 00:02:21,466
+The answer is the stack in memory.
+
+27
+00:02:21,466 --> 00:02:27,788
+A program's memory is roughly divided into blocks, which are the code, the static data, the heap, and,
+
+28
+00:02:27,788 --> 00:02:29,586
+at high addresses, the stack.
+
+29
+00:02:29,586 --> 00:02:37,024
+The stack grows downward from high addresses toward low ones, and sp, the stack pointer, points to the top of the stack,
+
+30
+00:02:37,024 --> 00:02:40,966
+which is the lowest address currently in use.
+
+31
+00:02:40,966 --> 00:02:42,039
+Let's zoom in.
+
+32
+00:02:42,039 --> 00:02:46,866
+Suppose a function needs to save two registers, ra and s0.
+
+33
+00:02:46,866 --> 00:02:52,379
+To push, we first subtract eight from sp, making room for two words.
+
+34
+00:02:52,379 --> 00:03:00,100
+Then we use sw to store the registers, with ra at sp plus four, and s0 at sp plus zero.
+
+35
+00:03:00,100 --> 00:03:03,460
+The function can now change ra and s0 freely.
+
+36
+00:03:03,460 --> 00:03:10,330
+Before returning, we pop in exactly the opposite order, using lw to get the old values back,
+
+37
+00:03:10,330 --> 00:03:14,966
+and then adding to sp to give the space back.
+
+38
+00:03:14,966 --> 00:03:19,540
+Now sp is back where it started, and the registers have their old values.
+
+39
+00:03:19,540 --> 00:03:25,966
+The data we stored doesn't need clearing, since it just no longer belongs to anyone.
+
+40
+00:03:25,966 --> 00:03:30,833
+Finally, a complete example, in which sumSquare calls another function, mult.
+
+41
+00:03:30,833 --> 00:03:37,257
+When it is called, the argument x, which is three, is in a0, the argument y, which is five, is in a1,
+
+42
+00:03:37,257 --> 00:03:39,865
+and ra holds the caller's return address.
+
+43
+00:03:39,865 --> 00:03:45,653
+Since sumSquare itself calls mult with jal, and jal overwrites ra, it has to save ra first,
+
+44
+00:03:45,653 --> 00:03:48,261
+or it could never get back to its caller.
+
+45
+00:03:48,261 --> 00:03:54,558
+It must also save y on the stack, because a1 is about to be used to pass x, and a1 is caller-saved,
+
+46
+00:03:54,558 --> 00:03:56,566
+so mult might change it.
+
+47
+00:03:56,566 --> 00:04:02,733
+First comes the prologue, which makes room for two words and saves ra and y.
+
+48
+00:04:02,733 --> 00:04:06,906
+Next we set up the arguments for mult of three and three,
+
+49
+00:04:06,906 --> 00:04:13,788
+and then jal changes ra to the address of the instruction after the jal, which here is 0x2014.
+
+50
+00:04:13,788 --> 00:04:21,166
+When mult returns, we can't be sure what is in a1 any more, but luckily y is saved on the stack.
+
+51
+00:04:21,166 --> 00:04:24,568
+Now we work out nine plus five, which is fourteen.
+
+52
+00:04:24,568 --> 00:04:32,323
+Then comes the epilogue, which restores ra, adds eight back to sp, and finally uses jr ra to return to the caller.
+
+53
+00:04:32,323 --> 00:04:36,269
+The prologue saves the state and the epilogue restores it,
+
+54
+00:04:36,269 --> 00:04:42,033
+and almost every function that calls other functions has this structure.
+

@@ -1,0 +1,232 @@
+1
+00:00:06,200 --> 00:00:09,840
+A program is just a series of instructions in memory.
+
+2
+00:00:09,840 --> 00:00:17,566
+The CPU remembers the address of the current instruction in a special register, the program counter, or PC.
+
+3
+00:00:17,566 --> 00:00:23,707
+Every instruction takes four bytes, so after finishing one, the PC adds four and points to the next.
+
+4
+00:00:23,707 --> 00:00:29,296
+But if we could only run instructions one after another, we couldn't write an if or a loop.
+
+5
+00:00:29,296 --> 00:00:32,600
+We need instructions that can jump.
+
+6
+00:00:32,600 --> 00:00:39,782
+The conditional branch beq, which stands for branch if equal, jumps to the label if rs1 equals rs2,
+
+7
+00:00:39,782 --> 00:00:43,833
+and otherwise carries on with the next instruction.
+
+8
+00:00:43,833 --> 00:00:50,225
+RISC-V has six conditional branches, which are equal, not equal, less than, greater than or equal,
+
+9
+00:00:50,225 --> 00:00:54,464
+and the unsigned versions of less than and greater than or equal.
+
+10
+00:00:54,464 --> 00:01:00,465
+There is no bgt instruction and no ble instruction, because we can simply swap the operands,
+
+11
+00:01:00,465 --> 00:01:04,117
+since a is greater than b exactly when b is less than a.
+
+12
+00:01:04,117 --> 00:01:09,133
+The assembler also offers pseudo-instructions for these.
+
+13
+00:01:09,133 --> 00:01:14,251
+There is also an unconditional jump, j Label, which jumps straight there.
+
+14
+00:01:14,251 --> 00:01:19,229
+It is shorthand for jal x0, Label, and we'll meet jal in episode seven.
+
+15
+00:01:19,229 --> 00:01:27,200
+A label is just a name for a position in the code, and the assembler converts it into an address.
+
+16
+00:01:27,200 --> 00:01:29,416
+Let's translate an if-else.
+
+17
+00:01:29,416 --> 00:01:34,200
+The variables f, g, h, i, and j live in s0 through s4.
+
+18
+00:01:34,200 --> 00:01:36,908
+The key trick is inverting the condition.
+
+19
+00:01:36,908 --> 00:01:39,550
+In C the then part runs when i equals j.
+
+20
+00:01:39,550 --> 00:01:42,522
+So in assembly we turn it around and use bne,
+
+21
+00:01:42,522 --> 00:01:48,300
+which skips the then part when the values are not equal and goes straight to Else.
+
+22
+00:01:48,300 --> 00:01:50,335
+Case one is when i equals j.
+
+23
+00:01:50,335 --> 00:01:57,966
+The bne doesn't jump, so we execute the add, and then j Exit jumps over the else part.
+
+24
+00:01:57,966 --> 00:02:00,316
+Case two is when i does not equal j.
+
+25
+00:02:00,316 --> 00:02:06,126
+The bne jumps straight to Else, we execute the sub, and then we naturally arrive at Exit.
+
+26
+00:02:06,126 --> 00:02:08,802
+Notice that the j Exit can't be left out,
+
+27
+00:02:08,802 --> 00:02:16,100
+because otherwise the program would fall right through into the else part after the then part.
+
+28
+00:02:16,100 --> 00:02:23,233
+Before writing loops, let's meet a few bitwise instructions, which work on thirty-two bit data one bit at a time.
+
+29
+00:02:23,233 --> 00:02:28,947
+The and instruction gives a one only when both bits are one, and it is often used as a mask,
+
+30
+00:02:28,947 --> 00:02:30,811
+keeping just the bits we want.
+
+31
+00:02:30,811 --> 00:02:34,165
+The or instruction gives a one when either bit is one,
+
+32
+00:02:34,165 --> 00:02:38,766
+and the xor instruction gives a one only when the two bits differ.
+
+33
+00:02:38,766 --> 00:02:47,235
+They all come in immediate versions, andi, ori, and xori, so andi t0, t1, 0xFF extracts the lowest byte.
+
+34
+00:02:47,235 --> 00:02:50,086
+RISC-V has no real not instruction.
+
+35
+00:02:50,086 --> 00:03:00,166
+Minus one has every bit set, so xor with it flips every bit, which is how the not pseudo-instruction works.
+
+36
+00:03:00,166 --> 00:03:03,827
+The shift instructions move all the bits over together.
+
+37
+00:03:03,827 --> 00:03:11,150
+The sll instruction is a logical left shift, which moves the bits to the left and fills in zeros on the right.
+
+38
+00:03:11,150 --> 00:03:15,610
+Shifting left by k bits is the same as multiplying by two to the k,
+
+39
+00:03:15,610 --> 00:03:20,633
+so twenty-two shifted left by two becomes eighty-eight.
+
+40
+00:03:20,633 --> 00:03:23,009
+There are two kinds of right shift.
+
+41
+00:03:23,009 --> 00:03:28,168
+The srl instruction is a logical right shift, which fills zeros on the left.
+
+42
+00:03:28,168 --> 00:03:34,141
+The sra instruction is an arithmetic right shift, which fills in copies of the sign bit,
+
+43
+00:03:34,141 --> 00:03:39,933
+so a negative number stays negative after division by powers of two.
+
+44
+00:03:39,933 --> 00:03:45,683
+Now let's put all this together, to add up the n elements of an array A.
+
+45
+00:03:45,683 --> 00:03:51,966
+The address of A is in a0 and n is in a1, while i uses t0 and sum uses s1.
+
+46
+00:03:51,966 --> 00:03:53,982
+Here is the skeleton of the loop.
+
+47
+00:03:53,982 --> 00:03:57,708
+At the start we check the condition and jump out if it fails,
+
+48
+00:03:57,708 --> 00:04:02,168
+and at the end of the body we jump back to the beginning unconditionally.
+
+49
+00:04:02,168 --> 00:04:07,238
+The condition is inverted again, since the C loop continues while i is less than n,
+
+50
+00:04:07,238 --> 00:04:11,700
+but the assembly jumps out when i is greater than or equal to n.
+
+51
+00:04:11,700 --> 00:04:19,110
+The address of A[i] is A plus four times i, so we use slli to shift i left by two bits to get four i,
+
+52
+00:04:19,110 --> 00:04:21,833
+and then add the base address.
+
+53
+00:04:21,833 --> 00:04:24,116
+In the first round, i is zero.
+
+54
+00:04:24,116 --> 00:04:32,533
+The bge doesn't branch, we compute the address 0x100, we load A[0], which is three, and sum becomes three.
+
+55
+00:04:32,533 --> 00:04:34,963
+Every round after that is the same.
+
+56
+00:04:34,963 --> 00:04:40,797
+We compute A plus four i, load A[i] and add it into sum, and then increase i by one.
+
+57
+00:04:40,797 --> 00:04:48,992
+When i reaches four, the bge condition holds and we jump to Done, with sum equal to three plus one plus four plus one,
+
+58
+00:04:48,992 --> 00:04:50,833
+which is nine.
+
