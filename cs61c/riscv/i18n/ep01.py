@@ -323,8 +323,7 @@ EN = {
         "It is popular for two big reasons. It is open source, and it carries no license "
         "fees, so anyone can use it for free, whether for teaching, research, or business. A "
         "worldwide community of academia and industry drives it forward, and people have "
-        "already used it to build everything from embedded microcontrollers to warehouse- "
-        "scale supercomputers.",
+        "already used it to build everything from embedded microcontrollers to warehouse-scale supercomputers.",
     "全球学界和业界共同推动它": "A worldwide community",
     "RISC-V 有 32、64、128 位等变体。本系列学 RV32I：32 位基础整数指令集；乘法等功能则放在 M 等扩展里。":
         "RISC-V comes in thirty-two, sixty-four, and one hundred twenty-eight bit variants. "

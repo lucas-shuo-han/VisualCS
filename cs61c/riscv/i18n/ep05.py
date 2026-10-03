@@ -92,8 +92,7 @@ EN = {
     "执行 sub": "we execute the sub",
     "自然走到 Exit": "naturally arrive at Exit",
     "在写循环之前，先认识几条位运算指令。它们对 32 位数据逐位操作。":
-        "Before writing loops, let's meet a few bitwise instructions, which work on thirty- "
-        "two bit data one bit at a time.",
+        "Before writing loops, let's meet a few bitwise instructions, which work on thirty-two bit data one bit at a time.",
     "and：两位都是 1，结果才是 1。它常用来做“掩码”：只保留想要的那些位。or：只要有一位是 1，结果就是 1，xor：两位不同，结果才是 1。":
         "The and instruction gives a one only when both bits are one, and it is often used as "
         "a mask, keeping just the bits we want. The or instruction gives a one when either "

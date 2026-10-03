@@ -299,7 +299,7 @@ def edit_table(path, new_entries, drop_keys):
     assert body.endswith("}")
     out = ["", "    # ---- spoken beats and cue phrases (see references/narration-writing.md)"]
     for zh, en in new_entries.items():
-        wrapped = textwrap.wrap(en, 84)
+        wrapped = textwrap.wrap(en, 84, break_on_hyphens=False)
         if len(zh) + len(en) < 80 and len(wrapped) == 1:
             out.append(f"    {literal(zh)}: {literal(en)},")
         else:

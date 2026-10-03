@@ -154,8 +154,7 @@ EN = {
         "A quick quiz. If a program contains only thirty-two bit instructions, is inst[8] of "
         "a B-type instruction always zero? Yes. The offsets are then all multiples of four, "
         "so imm[1] is always zero, and it happens to be stored at inst[8]. Offsets count in "
-        "units of two bytes, so a branch can't move by just one byte, but with only thirty- "
-        "two bit instructions, half of the encodable targets go unused.",
+        "units of two bytes, so a branch can't move by just one byte, but with only thirty-two bit instructions, half of the encodable targets go unused.",
     "是的": "Yes",
     "上一集算过：B 型偏移的范围是 −4096 到 +4094 字节，约 ±4 KiB，也就是前后各 2 的 10 次方条指令。if 和循环通常很短，这个范围绰绰有余。可要是目标 far 远在 4 KiB 之外，beq x10, x0, far 就够不着了。":
         "Last episode we worked out that the range of a B-type offset is minus 4096 to plus "
@@ -196,15 +195,13 @@ EN = {
     "伪指令 call 展开的正是这一对。只想跳走、不必返回时，jalr 的 rd 改成 x0；中转寄存器也换成 t1，免得冲掉 ra 里的返回地址。注意：jalr 的 12 位立即数也会符号扩展。hi 和 lo 该怎么拆？这和 li 是同一个问题。":
         "The pseudo-instruction call expands into exactly this pair. If we only want to jump "
         "away and never come back, the rd of jalr becomes x0. The middle register also "
-        "changes to t1, so we don't wipe out the return address in ra. Note that the twelve- "
-        "bit immediate of jalr is also sign-extended, so how do we split hi and lo? That is "
+        "changes to t1, so we don't wipe out the return address in ra. Note that the twelve-bit immediate of jalr is also sign-extended, so how do we split hi and lo? That is "
         "the same problem as li.",
     "只想跳走": "If we only want to jump away",
     "注意：jalr": "Note that the twelve-bit immediate",
     "用笔记里的两道题，练练上一集的 lui + addi。先交代一句：常数在 −2048 到 2047 之间时，li 只需一条 addi。练习一：li x10, 0x87654321。高 20 位 0x87654 交给 lui，低 12 位 0x321 交给 addi。":
         "Let's practice last episode's lui plus addi with two problems from the notes. First, "
-        "when the constant is between minus two thousand forty-eight and two thousand forty- "
-        "seven, li needs only one addi. Exercise one is li x10, 0x87654321. The upper twenty "
+        "when the constant is between minus two thousand forty-eight and two thousand forty-seven, li needs only one addi. Exercise one is li x10, 0x87654321. The upper twenty "
         "bits, 0x87654, go to lui, and the lower twelve bits, 0x321, go to addi.",
     "练习一": "Exercise one",
     "lui 先得到 0x87654000。0x321 的最高位是 0，符号扩展后不变，一加正好是 0x87654321。顺手汇编成机器码：lui 是 U 型，opcode 为 0110111（auipc 是 0010111），得到 0x87654537；addi 则是 0x32150513。":

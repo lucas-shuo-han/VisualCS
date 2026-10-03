@@ -35,7 +35,7 @@ def set_values(path, values):
             if len(k.value) + len(en) < 76 and "\n" not in en:
                 new = [f"{indent}{literal(k.value)}: {literal(en)},"]
             else:
-                wrapped = textwrap.wrap(en, 84)
+                wrapped = textwrap.wrap(en, 84, break_on_hyphens=False)
                 new = [f"{indent}{literal(k.value)}:"]
                 for i, w in enumerate(wrapped):
                     tail = " " if i < len(wrapped) - 1 else ""

@@ -91,8 +91,7 @@ EN = {
         "machine code is 0x00A98863.",
     "12 位立即数只装得下小常数。想把 0xDEADBEEF 这样的 32 位常数放进寄存器，怎么办？U 型只有 rd 和一个 20 位的立即数。lui（load upper immediate）就用这个格式。":
         "A twelve-bit immediate holds only small constants. So how do we get a thirty-two bit "
-        "constant, like 0xDEADBEEF, into a register? The U format has just rd and a twenty- "
-        "bit immediate, and the lui instruction, short for load upper immediate, uses this "
+        "constant, like 0xDEADBEEF, into a register? The U format has just rd and a twenty-bit immediate, and the lui instruction, short for load upper immediate, uses this "
         "format.",
     "U 型只有 rd": "The U format has just",
     "lui t0, 0xDEADB：把 20 位立即数放进 t0 的高 20 位，低 12 位全部清零。":
@@ -103,8 +102,7 @@ EN = {
     "再用 addi 补上低 12 位 0xEEF 就行？小心：addi 的立即数是有符号的。0xEEF 的最高位是 1，按 12 位补码它表示 −273，会被符号扩展成 0xFFFFFEEF。":
         "Can we then add the low twelve bits, 0xEEF, with an addi? Careful, because the "
         "immediate of addi is signed. The top bit of 0xEEF is a one, so as a twelve-bit two's "
-        "complement number it means minus two hundred seventy-three, and it gets sign- "
-        "extended to 0xFFFFFEEF.",
+        "complement number it means minus two hundred seventy-three, and it gets sign-extended to 0xFFFFFEEF.",
     "0xEEF 的最高位是 1": "The top bit of 0xEEF",
     "相加的结果是 0xDEADAEEF：高 20 位被“借”走了 1。解决办法：低 12 位的最高位是 1 时，先把高 20 位加 1，写成 lui t0, 0xDEADC。":
         "The sum comes out as 0xDEADAEEF, so one has been borrowed from the upper twenty "

@@ -72,8 +72,7 @@ EN = {
     "编译器 Compiler": "They are the Compiler",
     "编译器把 C 翻译成汇编——前面几集，我们一直在手工做这件事。编译器输出的汇编里可以有伪指令，比如 mv、li、j，展开的活儿留给汇编器。":
         "The compiler translates C into assembly, which is what we have been doing by hand in "
-        "the last few episodes. The assembly a compiler outputs can contain pseudo- "
-        "instructions, such as mv, li, and j, leaving the work of expanding them to the "
+        "the last few episodes. The assembly a compiler outputs can contain pseudo-instructions, such as mv, li, and j, leaving the work of expanding them to the "
         "assembler.",
     "汇编器读入汇编代码，产出目标文件（object file）。里面除了机器码，还有链接和调试要用的信息。第一件事：把伪指令展开成真实的指令。":
         "The assembler reads assembly code and produces an object file, which holds the "

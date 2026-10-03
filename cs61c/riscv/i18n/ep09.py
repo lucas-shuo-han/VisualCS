@@ -43,8 +43,7 @@ EN = {
     "32 位被切成几段，每段叫一个字段（field）。add、sub 这类操作数全是寄存器的指令，用 R 型格式。rd、rs1、rs2 各占 5 位：2 的 5 次方是 32，刚好够给 32 个寄存器编号。opcode 占最低 7 位，说明这是哪一类指令；funct3 和 funct7 再进一步区分具体的运算。":
         "The thirty-two bits are cut into pieces, and each piece is called a field. "
         "Instructions like add and sub, whose operands are all registers, use the R format. "
-        "The fields rd, rs1, and rs2 take five bits each, since two to the fifth is thirty- "
-        "two, just enough to number the thirty-two registers. The opcode takes the lowest "
+        "The fields rd, rs1, and rs2 take five bits each, since two to the fifth is thirty-two, just enough to number the thirty-two registers. The opcode takes the lowest "
         "seven bits and says which kind of instruction this is, while funct3 and funct7 "
         "narrow down the exact operation.",
     "rd、rs1、rs2 各占 5 位": "The fields rd, rs1, and rs2",

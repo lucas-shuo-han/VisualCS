@@ -3,6 +3,10 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from manim_kit import *  # noqa: E402,F403
+import re
+
+# ideographs, CJK punctuation and fullwidth forms: text that must be translated
+NEEDS_TR = re.compile(r"[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]")
 
 # ---------------------------------------------------------------- the notes' listings, checked
 

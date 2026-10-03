@@ -224,8 +224,7 @@ EN = {
         "is 0x00008067. When you see it in a disassembly, you know a function is about to "
         "return.",
     "再来一个 S 型的例子：sw x14, 36(x2)。36 的 12 位二进制是 0000 0010 0100。高 7 位 0000001 放进 imm[11:5]，低 5 位 00100 放进 imm[4:0]。":
-        "Here is another S-format example, sw x14, 36(x2). The number thirty-six in twelve- "
-        "bit binary is zero zero zero zero, zero zero one zero, zero one zero zero. The upper "
+        "Here is another S-format example, sw x14, 36(x2). The number thirty-six in twelve-bit binary is zero zero zero zero, zero zero one zero, zero one zero zero. The upper "
         "seven bits, zero zero zero zero zero zero one, go into imm[11:5], and the lower five "
         "bits, zero zero one zero zero, go into imm[4:0].",
     "36 的 12 位二进制": "The number thirty-six",
