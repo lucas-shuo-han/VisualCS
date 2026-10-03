@@ -1,9 +1,11 @@
-"""Fast previews: render single scenes of the episode, in parallel, with the voice.
+"""Fast previews: render single scenes of the episodes, in parallel, with the voice.
 
     python preview.py the_gap                 one scene  -> preview/09_the_gap.mp4 (+ .srt)
-    python preview.py 9 10 11                 scenes by number
-    python preview.py all                     every scene, in parallel
-    python preview.py all --join              ... and glue them into preview/all.mp4
+    python preview.py 9 10 11                 story scenes by number (1-14, across the episodes)
+    python preview.py ep2                     every scene of episode 2, cards included
+    python preview.py ep3_recap ep1_opening ep2_closing     recaps and cards by name
+    python preview.py all                     everything, in parallel
+    python preview.py ep3 --join              ... and glue the clips into preview/joined.mp4
     python preview.py the_gap --silent        no voice (fastest; timing is then only estimated)
     python preview.py the_gap --no-captions   as in the final video: subtitles only in the .srt
     python preview.py the_gap --hq            1080p30 instead of 480p15
@@ -28,7 +30,6 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-EP = sorted(HERE.glob("ep[0-9][0-9]_*.py"))[0]
 OUT = HERE / "preview"
 # dvisvgm exits with 127 when the working directory is on the D: drive of this
 # machine, so Manim runs from a scratch folder on the system drive instead
@@ -36,17 +37,30 @@ WORK = Path(tempfile.gettempdir()) / "kit_preview" / HERE.name
 MIKTEX = Path.home() / "AppData/Local/Programs/MiKTeX/miktex/bin/x64"
 
 
-def scene_names() -> tuple[str, list[str]]:
-    src = EP.read_text(encoding="utf-8")
-    cls = re.search(r"^class (Ep\d+\w*)\(", src, re.M)[1]
-    names = re.findall(r'"(\w+)"', re.search(r"SCENES = \[(.*?)\]", src, re.S)[1])
-    # the title card is number 00 and the closing card comes after the last scene
-    return cls, ["opening"] + names + ["closing"]
+def targets() -> list[dict]:
+    """Every previewable piece, in story order: ep (1..), file, cls, scene (the method to run),
+    key (what to type) and stem (the output name). Story scenes are numbered 01.. across the
+    episodes; recaps and cards carry their episode instead."""
+    out, story = [], 0
+    for k, f in enumerate(sorted(HERE.glob("ep[0-9][0-9]_*.py")), 1):
+        src = f.read_text(encoding="utf-8")
+        cls = re.search(r"^class (Ep\d+\w*)\(", src, re.M)[1]
+        names = re.findall(r'"(\w+)"', re.search(r"SCENES = \[(.*?)\]", src, re.S)[1])
+        for name in ["opening"] + names + ["closing"]:
+            if name in ("opening", "closing"):
+                key = stem = f"ep{k}_{name}"
+            elif name.startswith(f"ep{k}_"):
+                key = stem = name
+            else:
+                story += 1
+                key, stem = name, f"{story:02d}_{name}"
+            out.append(dict(ep=k, file=f, cls=cls, scene=name, key=key, stem=stem,
+                            num=story if key == name and not name.startswith("ep") else None))
+    return out
 
 
-def render(cls, names, name, a):
-    n = names.index(name)
-    stem = f"{n:02d}_{name}"
+def render(t, a):
+    name, stem, cls, EP = t["scene"], t["stem"], t["cls"], t["file"]
     media = WORK / stem
     media.mkdir(parents=True, exist_ok=True)
     env = {**os.environ, "PYTHONIOENCODING": "utf-8", "KIT_ONLY": name,
@@ -68,7 +82,7 @@ def render(cls, names, name, a):
     text = log.read_text(encoding="utf-8", errors="replace")
     warn = [l.strip() for l in text.splitlines() if l.startswith(("[cue]", "[narration]"))]
     if rc != 0:
-        return name, None, f"FAILED, see {log}: " + " | ".join(text.strip().splitlines()[-3:]), warn
+        return stem, None, f"FAILED, see {log}: " + " | ".join(text.strip().splitlines()[-3:]), warn
     mp4 = max((media / "videos").rglob(f"{stem}.mp4"), key=lambda p: p.stat().st_mtime)
     OUT.mkdir(exist_ok=True)
     srt = mp4.with_suffix(".srt")
@@ -83,27 +97,35 @@ def render(cls, names, name, a):
         shutil.copy(mp4.parent / "burned.mp4", OUT / f"{stem}.mp4")
     else:
         shutil.copy(mp4, OUT / f"{stem}.mp4")
-    return name, OUT / f"{stem}.mp4", f"{time.time() - t0:.0f}s", warn
+    return stem, OUT / f"{stem}.mp4", f"{time.time() - t0:.0f}s", warn
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("scenes", nargs="+", help="scene names or numbers, or 'all'")
+    ap.add_argument("scenes", nargs="+", help="scene names or numbers, ep1/ep2/ep3, or 'all'")
     ap.add_argument("--silent", action="store_true", help="no voice-over")
     ap.add_argument("--no-captions", action="store_true", help="do not draw captions on the frame")
     ap.add_argument("--hq", action="store_true", help="1080p30")
-    ap.add_argument("--join", action="store_true", help="also concatenate the scenes into preview/all.mp4")
+    ap.add_argument("--join", action="store_true", help="also concatenate the clips into preview/joined.mp4")
     ap.add_argument("--jobs", type=int, default=max(2, (os.cpu_count() or 4) // 2))
     a = ap.parse_args()
-    cls, names = scene_names()
-    want = names if a.scenes == ["all"] else [names[int(s)] if s.isdigit() else s for s in a.scenes]
-    bad = [s for s in want if s not in names]
+    every = targets()
+    want, bad = [], []
+    for x in a.scenes:
+        if x == "all":
+            want += every
+        elif re.fullmatch(r"ep\d+", x):
+            want += [t for t in every if t["ep"] == int(x[2:])]
+        else:
+            hit = [t for t in every if t["key"] == x or (x.isdigit() and t["num"] == int(x))]
+            want += hit
+            bad += [] if hit else [x]
     if bad:
-        sys.exit(f"unknown scene(s) {bad}; scenes are: {', '.join(names)}")
+        sys.exit(f"unknown scene(s) {bad}; scenes are: {', '.join(t['key'] for t in every)}")
     WORK.mkdir(parents=True, exist_ok=True)
     done, failed = [], False
     with ThreadPoolExecutor(a.jobs) as ex:
-        for name, mp4, info, warn in ex.map(lambda s: render(cls, names, s, a), want):
+        for name, mp4, info, warn in ex.map(lambda t: render(t, a), want):
             print(f"{name}: {mp4 or ''} ({info})", flush=True)
             for w in warn:
                 print(f"    {w}")
@@ -113,7 +135,7 @@ def main():
     if a.join and done and not failed:
         lst = WORK / "join.txt"
         lst.write_text("".join(f"file '{p.as_posix()}'\n" for p in done), encoding="utf-8")
-        out = OUT / "all.mp4"
+        out = OUT / "joined.mp4"
         subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", str(lst),
                         "-c", "copy", str(out)], check=True)
         print(f"joined: {out}")

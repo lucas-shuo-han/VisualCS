@@ -69,6 +69,10 @@ TTS = os.environ.get("KIT_TTS") == "1"
 BURN_CAPTIONS = (os.environ["KIT_CAPTIONS"] != "0" if os.environ.get("KIT_CAPTIONS")
                  else bool(_SERIES.get("BURN_CAPTIONS", True)))
 EPISODES = [dict(e, num=i + 1) for i, e in enumerate(_SERIES.get("EPISODES", []))]
+# "latex": txt() and mono() are typeset by LaTeX, so prose, numbers and formulas share one typeface
+TEXT_FONT = _SERIES.get("TEXT_FONT", "pango")
+# pauses of the voice-over, in seconds: between sentences, between paragraphs of one beat, after a beat
+PACE = {"sentence": 0.4, "paragraph": 1.0, "beat": 0.9, **_SERIES.get("PACE", {})}
 _BY_SCENE = {e["scene"]: e for e in EPISODES}
 EN = LANG == "en"   # handy for the rare `if EN:` layout branch in an episode
 
@@ -273,7 +277,32 @@ def crisp_text(s, font, size, color=C_TEXT, **kw) -> Text:
 CJK_RUN = re.compile(r"[⺀-鿿＀-￯　-〿぀-ヿ가-힯“”‘’…—]+")
 
 
+_TEX_ESCAPE = {"\\": r"\textbackslash{}", "&": r"\&", "%": r"\%", "#": r"\#", "_": r"\_", "{": r"\{",
+               "}": r"\}", "~": r"\textasciitilde{}", "^": r"\textasciicircum{}"}
+_TEX_MATH = {"−": "-", "±": r"\pm ", "×": r"\times ", "·": r"\cdot ", "σ": r"\sigma ", "Σ": r"\Sigma ",
+             "⇔": r"\Leftrightarrow ", "≈": r"\approx ", "→": r"\to ", "ᵀ": r"^{\top}", "<": "<", ">": ">",
+             "|": "|", "≤": r"\le ", "≥": r"\ge ", "=": "="}
+# prose on screen comes in one size; formulas in two (see the episode's mt())
+TEX_LABEL = 28
+
+
+def tex_text(s, size=TEX_LABEL, color=C_TEXT, bold=False) -> Tex:
+    """Prose typeset by LaTeX (same typeface as the formulas). Unicode math
+    signs inside it (√3, −1, σ, ×, ⇔ ...) become real math."""
+    s = "".join(_TEX_ESCAPE.get(c, c) for c in tr(s))
+    s = re.sub(r"√(\d+)", lambda m: r"$\sqrt{" + m[1] + "}$", s)
+    s = re.sub("[" + re.escape("".join(_TEX_MATH)) + "]", lambda m: "$" + _TEX_MATH[m[0]] + "$", s)
+    s = s.replace("$$", "")            # neighbouring math runs join: ±√3 is one formula
+    s = s.replace("–", "--").replace("…", r"\dots{}")
+    s = re.sub(r"  +", lambda m: " " + r"\ " * (len(m[0]) - 1), s)
+    if bold:
+        s = r"\textbf{" + s + "}"
+    return Tex(s, font_size=size, color=color)
+
+
 def mono(s, size=24, color=C_TEXT, **kw) -> Text:
+    if TEXT_FONT == "latex":   # tick labels and other numbers
+        return MathTex(tr(s).replace("−", "-"), font_size=22, color=color)
     s = tr(s)
     # Name the CJK font for CJK runs: Pango on Windows does not fall back from
     # the monospace font the way fontconfig does on Linux (you'd get boxes).
@@ -285,6 +314,8 @@ def mono(s, size=24, color=C_TEXT, **kw) -> Text:
 
 def txt(s, size=30, color=C_TEXT, **kw) -> Text:
     """Prose text in the caption font (handles Latin and CJK)."""
+    if TEXT_FONT == "latex":
+        return tex_text(s, TEX_LABEL if size <= 32 else size, color, bold=kw.get("weight") == BOLD)
     return crisp_text(s, SANS, size, color, **kw)
 
 
@@ -935,6 +966,11 @@ def reading_time(text: str, cps: float = 5.2) -> float:
     return max(1.8, 0.5 + cjk / cps + other * 0.28)
 
 
+def sentences(text: str) -> list[str]:
+    """The sentences of one paragraph of narration."""
+    return [x for x in re.split(r"(?<=[.?!。？！])\s+(?=[A-Z\"“(]|[^\x00-\x7f])", text.strip()) if x]
+
+
 def split_cue(text: str, max_chars: int = 84) -> list[str]:
     """Cut one narration line into subtitle-sized cues: whole sentences where
     they fit, otherwise at commas, otherwise between words."""
@@ -957,7 +993,7 @@ def split_cue(text: str, max_chars: int = 84) -> list[str]:
     return pack(cues)
 
 
-class NarratedScene(Scene):
+class NarratedScene(MovingCameraScene):
     """Scene with timed captions (burned in unless BURN_CAPTIONS is off, and
     always exported as .srt), an optional voice-over, and title / end cards."""
 
@@ -973,6 +1009,8 @@ class NarratedScene(Scene):
         self._cap_t0 = 0.0
         self._cap_need = 0.0
         self._cap_span = 0.0
+        self._sched = []
+        self._home = (self.camera.frame.get_center().copy(), self.camera.frame.width)
         name = type(self).__name__
         self.episode = _BY_SCENE.get(name)
         m = re.match(r"Ep(\d+)", name)
@@ -1028,17 +1066,45 @@ class NarratedScene(Scene):
 
     def _close_sub(self):
         if self._cap_text is not None:
-            dur = self.time - self._cap_t0
-            if dur > 0:
-                # one cue per sentence or so, each with its share of the time
-                cues = split_cue(self._cap_text)
+            now = self.time
+            # one cue per sentence (long ones cut at commas), at the time it is spoken
+            for k, (_, _, sent, t, d) in enumerate(self._sched):
+                end = self._sched[k + 1][3] if k + 1 < len(self._sched) else max(t + d, now - self._cap_t0)
+                end = min(end, t + d + 1.5)
+                cues = split_cue(sent)
                 total = sum(len(c) for c in cues)
-                t = -dur
+                whole = end - t
                 for c in cues:
-                    d = dur * len(c) / total
-                    self.add_subcaption(c, duration=d, offset=t)
-                    t += d
+                    span = whole * len(c) / total
+                    self.add_subcaption(c, duration=span, offset=self._cap_t0 + t - now)
+                    t += span
             self._cap_text = None
+            self._sched = []
+
+    def _speak(self, paras, speak):
+        """Schedule the voice-over of one beat sentence by sentence, with a
+        pause after each, and return (schedule, seconds of talking). The
+        schedule holds (first char, last char, sentence, start, duration),
+        with character positions in the beat's text: cue() reads it."""
+        sents = [(x, k == len(ss) - 1) for ss in map(sentences, paras) for k, x in enumerate(ss)]
+        said = [x for sp in (speak.split("\n") if speak else []) for x in sentences(sp)]
+        if len(said) != len(sents):
+            if said:
+                print(f"[narration] speak: has {len(said)} sentences, the text {len(sents)}; "
+                      f"using the text", file=sys.stderr)
+            said = [None] * len(sents)
+        sched, t, pos = [], 0.15, 0
+        for (x, last), sp in zip(sents, said):
+            if TTS:
+                import tts
+                path, dur = tts.synth(x, LANG, speak=tr(sp) if sp else None)
+                self.add_sound(str(path), time_offset=t)
+            else:
+                dur = 0.3 + 0.42 * len(re.findall(r"[A-Za-z0-9_]+", x))
+            sched.append((pos, pos + len(x), x, t, dur))
+            pos += len(x) + 1
+            t += dur + PACE["paragraph" if last else "sentence"]
+        return sched, (sched[-1][3] + sched[-1][4] if sched else 0.0)
 
     def voice(self, text, speak=None, delay=0.15) -> float:
         """Start speaking `text` now (no-op unless KIT_TTS=1) and return how
@@ -1052,8 +1118,9 @@ class NarratedScene(Scene):
         return delay + dur
 
     def say(self, text, *anims, need=None, extra=0.0, run_time=None, speak=None):
-        """Show caption `text` (after the previous one has been readable, and
-        spoken, long enough) while playing `anims`."""
+        """Start the beat `text` (after the previous one has been spoken, plus a
+        pause) while playing `anims`. The voice reads it sentence by sentence;
+        a line break in the text is a paragraph and gets a longer pause."""
         if run_time is not None:
             for a in anims:
                 a.run_time = run_time
@@ -1062,7 +1129,8 @@ class NarratedScene(Scene):
             text, speak = narration.apply(sys._getframe(1), text, speak)
         except ImportError:
             pass
-        text = tr(text)
+        paras = [x.strip() for x in tr(text).split("\n") if x.strip()]
+        text = " ".join(paras)
         self._flush()
         self._close_sub()
         new = self._make_caption(text) if BURN_CAPTIONS else None
@@ -1073,18 +1141,17 @@ class NarratedScene(Scene):
         if self._ff:   # fast-forward: put the beat's end state on stage, silently, in no time
             self.play(*anims)
             return
-        talk = self.voice(text, speak)
+        self._sched, talk = self._speak(paras, speak)
         if swap or anims:
             self.play(*swap, *anims)
         self._cap, self._cap_text = new, text
-        need = reading_time(text) if need is None else need
-        self._cap_need = max(need, talk + 0.35 if talk else 0.0) + extra
-        self._cap_span = talk if talk else need
+        self._cap_need = (talk + PACE["beat"] if need is None else need) + extra
+        self._cap_span = talk
 
     def cue(self, phrase, *anims, run_time=None, lead=0.3):
-        """Play `anims` when the narration of the current beat reaches `phrase`
-        (found in the beat's text; its position in the text gives the time).
-        For long beats: say() starts the line, cue() adds each step as it is said."""
+        """Play `anims` when the voice reaches `phrase` (words of the current
+        beat). For long beats: say() starts the line, cue() adds each step as
+        it is said."""
         text = self._cap_text or ""
         i = 0 if self._ff else text.find(phrase)
         if self._ff:
@@ -1092,11 +1159,44 @@ class NarratedScene(Scene):
         elif i < 0:
             print(f"[cue] phrase not in the current line: {phrase!r}", file=sys.stderr)
         else:
-            dt = self._cap_t0 + self._cap_span * i / len(text) - lead - self.time
+            c0, c1, _, t, d = next((x for x in self._sched if x[0] <= i < x[1]), self._sched[-1])
+            dt = self._cap_t0 + t + d * (i - c0) / max(1, c1 - c0) - lead - self.time
             if dt > 0.05:
                 self.wait(dt)
         if anims:
             self.play(*anims, **({} if run_time is None else {"run_time": run_time}))
+
+    # -- camera
+    def zoom_to(self, target, *anims, width=None, margin=1.6, run_time=2.0):
+        """Move the camera onto `target` (a mobject or a point). `width` is the
+        frame width to end with; by default what the target needs, times `margin`."""
+        fr = self.camera.frame
+        if isinstance(target, Mobject):
+            c = target.get_center()
+            w = width or max(target.width * margin, target.height * margin * 16 / 9, 1.0)
+        else:
+            c, w = np.array(target, dtype=float), width or 4.0
+        self.play(fr.animate.set(width=w).move_to(c), *anims, run_time=run_time)
+
+    def zoom_back(self, *anims, run_time=1.6):
+        c, w = self._home
+        self.play(self.camera.frame.animate.set(width=w).move_to(c), *anims, run_time=run_time)
+
+    def pin(self, mob):
+        """Keep `mob` where it is on the screen while the camera moves."""
+        fr = self.camera.frame
+        mob._pin = [mob.get_center() - fr.get_center(), fr.width, 1.0]
+
+        def stay(m):
+            rel, w0, cur = m._pin
+            k = fr.width / w0
+            if abs(k - cur) > 1e-9:
+                m.scale(k / cur)
+                m._pin[2] = k
+            m.move_to(fr.get_center() + rel * k)
+
+        mob.add_updater(stay)
+        return mob
 
     def hold(self, extra=0.0):
         """Wait until the current caption has been read (and spoken), plus `extra`."""

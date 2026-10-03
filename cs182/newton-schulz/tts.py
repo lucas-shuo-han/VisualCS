@@ -37,13 +37,25 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 CACHE = Path(os.environ.get("KIT_TTS_CACHE") or HERE / ".tts_cache")
-RATE = os.environ.get("KIT_TTS_RATE", "+0%")
+
+
+def _series() -> dict:
+    ns: dict = {}
+    f = HERE / "series.py"
+    if f.exists():
+        exec(compile(f.read_text(encoding="utf-8"), str(f), "exec"), ns)
+    return ns.get("TTS", {})
+
+
+# series.py: TTS = {"engine": "edge", "voice": {"en": "en-US-AndrewNeural"}, "rate": "-15%"}
+_SERIES_TTS = _series()
+RATE = os.environ.get("KIT_TTS_RATE") or _SERIES_TTS.get("rate", "+0%")
 # "edge": Microsoft neural voices, online (speech.platform.bing.com).
 # "kokoro": Kokoro-82M neural voices, offline once the model files are downloaded
 #   (pip install kokoro-onnx; kokoro-v1.0.onnx + voices-v1.0.bin from
 #   github.com/thewh1teagle/kokoro-onnx/releases, in KIT_KOKORO_DIR).
 # "pico": SVOX Pico (apt install libttspico-utils): offline, robotic, last resort.
-ENGINE = os.environ.get("KIT_TTS_ENGINE", "edge")
+ENGINE = os.environ.get("KIT_TTS_ENGINE") or _SERIES_TTS.get("engine", "edge")
 KOKORO_DIR = Path(os.environ.get("KIT_KOKORO_DIR") or Path.home() / ".cache" / "kokoro")
 KOKORO_VOICES = {"en": ("af_heart", "en-us"), "zh": ("zf_xiaoxiao", "cmn"), "ja": ("jf_alpha", "ja"),
                  "es": ("ef_dora", "es"), "fr": ("ff_siwis", "fr-fr")}
@@ -57,7 +69,8 @@ VOICES = {
 
 
 def voice_for(lang: str) -> str:
-    return os.environ.get(f"KIT_VOICE_{lang.upper()}") or VOICES.get(lang, VOICES["en"])
+    return (os.environ.get(f"KIT_VOICE_{lang.upper()}") or _SERIES_TTS.get("voice", {}).get(lang)
+            or VOICES.get(lang, VOICES["en"]))
 
 
 # ---------------------------------------------------------------- course vocabulary
@@ -169,7 +182,7 @@ def _key(text: str, lang: str) -> str:
 
 def _kokoro_voice(lang: str):
     v, code = KOKORO_VOICES.get(lang, KOKORO_VOICES["en"])
-    return os.environ.get(f"KIT_VOICE_{lang.upper()}") or v, code
+    return os.environ.get(f"KIT_VOICE_{lang.upper()}") or _SERIES_TTS.get("kokoro_voice", {}).get(lang) or v, code
 
 
 _KOKORO = None

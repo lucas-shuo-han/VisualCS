@@ -1,0 +1,1416 @@
+1
+00:00:07,650 --> 00:00:12,731
+We are following one number as we apply p again and again.
+
+2
+00:00:12,731 --> 00:00:17,024
+p of x is three halves x, minus one half x cubed.
+
+3
+00:00:17,124 --> 00:00:19,226
+Here is what we know so far.
+
+4
+00:00:19,226 --> 00:00:24,626
+A negative value moves exactly like its positive twin, with the sign flipped.
+
+5
+00:00:24,626 --> 00:00:27,418
+We called that the mirror rule.
+
+6
+00:00:27,518 --> 00:00:33,936
+Past square root of three, p of x is negative, so a step flips the sign.
+
+7
+00:00:34,036 --> 00:00:39,390
+And one step multiplies the size of the value by the size factor,
+
+8
+00:00:39,390 --> 00:00:42,026
+x squared minus three, over two.
+
+9
+00:00:45,250 --> 00:00:49,372
+So below square root of three, everything goes to one,
+
+10
+00:00:49,372 --> 00:00:53,342
+and beyond square root of five, everything explodes.
+
+11
+00:00:53,342 --> 00:00:55,622
+That leaves the gap between them.
+
+12
+00:00:55,622 --> 00:00:59,516
+In the gap, every step flips the sign.
+
+13
+00:00:59,616 --> 00:01:01,388
+What about the size?
+
+14
+00:01:01,388 --> 00:01:07,476
+One step multiplies it by the size factor, x squared minus three, over two.
+
+15
+00:01:07,476 --> 00:01:12,656
+At the left end of the gap, x squared is three, so the factor is zero.
+
+16
+00:01:12,656 --> 00:01:17,288
+At the right end, x squared is five, so the factor is one.
+
+17
+00:01:17,288 --> 00:01:21,453
+In between, x squared is between three and five,
+
+18
+00:01:21,453 --> 00:01:24,752
+so the factor is between zero and one.
+
+19
+00:01:24,852 --> 00:01:29,926
+Multiplying by a number between zero and one makes a size smaller.
+
+20
+00:01:29,926 --> 00:01:34,860
+So in the gap, the size of p of x is less than the size of x.
+
+21
+00:01:34,860 --> 00:01:39,124
+Every step brings the value closer to zero.
+
+22
+00:01:40,550 --> 00:01:42,422
+That suggests a plan.
+
+23
+00:01:42,422 --> 00:01:47,420
+Suppose the size shrinks far enough to drop below square root of three.
+
+24
+00:01:47,420 --> 00:01:51,282
+Inside square root of three we already know everything.
+
+25
+00:01:51,282 --> 00:01:53,980
+A positive value goes to plus one.
+
+26
+00:01:53,980 --> 00:01:58,804
+By the mirror rule, a negative value goes to minus one.
+
+27
+00:01:58,904 --> 00:02:02,936
+So we only have to follow a start until it gets inside,
+
+28
+00:02:02,936 --> 00:02:05,356
+and see on which side it arrives.
+
+29
+00:02:06,783 --> 00:02:08,995
+Try it on the cobweb picture.
+
+30
+00:02:08,995 --> 00:02:11,147
+Start at two point zero.
+
+31
+00:02:11,147 --> 00:02:14,507
+Go down to the curve, which gives minus one.
+
+32
+00:02:14,507 --> 00:02:16,801
+Then across to the diagonal.
+
+33
+00:02:16,801 --> 00:02:22,339
+Minus one is inside, on the negative side, and it is already a fixed point.
+
+34
+00:02:22,339 --> 00:02:27,285
+So two point zero ends at minus one, after one flip.
+
+35
+00:02:27,716 --> 00:02:29,498
+Now two point two.
+
+36
+00:02:29,498 --> 00:02:33,248
+Down to the curve, at minus two point zero two.
+
+37
+00:02:33,248 --> 00:02:38,668
+That is smaller in size than two point two, but it is still outside.
+
+38
+00:02:38,768 --> 00:02:42,176
+So go across to the diagonal and step again.
+
+39
+00:02:42,176 --> 00:02:46,206
+This time the curve sends it up, to plus one point one one.
+
+40
+00:02:46,206 --> 00:02:51,720
+Now it is inside, on the positive side, and from there it settles at plus one.
+
+41
+00:02:51,720 --> 00:02:55,002
+Two flips, and a different ending.
+
+42
+00:02:55,450 --> 00:02:58,846
+And two point two three, just a little further out.
+
+43
+00:02:58,846 --> 00:03:01,266
+Minus two point two zero.
+
+44
+00:03:01,266 --> 00:03:03,946
+Then plus two point zero two.
+
+45
+00:03:03,946 --> 00:03:06,760
+Then minus one point one zero.
+
+46
+00:03:06,760 --> 00:03:12,059
+It takes three flips to get inside, it arrives on the negative side,
+
+47
+00:03:12,059 --> 00:03:14,008
+and it ends at minus one.
+
+48
+00:03:14,450 --> 00:03:18,382
+So the starts in the gap do not all end the same way.
+
+49
+00:03:18,382 --> 00:03:21,828
+What matters is how many flips it takes to get inside.
+
+50
+00:03:21,828 --> 00:03:26,316
+Every start here is positive, and each flip changes the sign.
+
+51
+00:03:26,316 --> 00:03:31,668
+After an odd number of flips the value arrives negative, and ends at minus one.
+
+52
+00:03:31,668 --> 00:03:36,796
+After an even number it arrives positive, and ends at plus one.
+
+53
+00:03:38,016 --> 00:03:42,798
+Three starts are not the whole story, so here is every start at once.
+
+54
+00:03:42,798 --> 00:03:47,281
+Take each start from zero to two point four, run the iteration,
+
+55
+00:03:47,281 --> 00:03:49,416
+and color it by where it ends.
+
+56
+00:03:49,416 --> 00:03:56,036
+Teal means plus one, gold means minus one, and red means it explodes.
+
+57
+00:03:57,483 --> 00:04:01,683
+Below square root of three it is all teal, as we showed.
+
+58
+00:04:01,683 --> 00:04:03,755
+The gap begins gold.
+
+59
+00:04:03,755 --> 00:04:07,615
+That is where two point zero sits, with its one flip.
+
+60
+00:04:07,615 --> 00:04:11,657
+Then comes a thin teal stripe, which holds two point two.
+
+61
+00:04:11,657 --> 00:04:15,680
+And then more stripes, each thinner than the last,
+
+62
+00:04:15,680 --> 00:04:18,899
+squeezed up against square root of five.
+
+63
+00:04:20,816 --> 00:04:23,366
+So each stripe is a flip count.
+
+64
+00:04:23,366 --> 00:04:27,608
+One flip, two flips, three flips, and so on.
+
+65
+00:04:27,608 --> 00:04:29,480
+Two things are still open.
+
+66
+00:04:29,480 --> 00:04:34,152
+Where exactly does one flip turn into two, and two into three?
+
+67
+00:04:34,152 --> 00:04:37,603
+And do these stripes really fill the whole gap,
+
+68
+00:04:37,603 --> 00:04:40,392
+all the way up to square root of five?
+
+69
+00:04:43,116 --> 00:04:47,374
+Following the sign and the size together on this picture gets messy.
+
+70
+00:04:47,374 --> 00:04:50,388
+But the mirror rule lets us take them apart.
+
+71
+00:04:50,388 --> 00:04:56,538
+A negative value moves exactly like its positive twin, with the sign flipped.
+
+72
+00:04:56,638 --> 00:04:59,440
+So the size follows a rule of its own.
+
+73
+00:04:59,440 --> 00:05:02,554
+The next size is the size of p of x.
+
+74
+00:05:02,554 --> 00:05:05,016
+And the sign we can simply count.
+
+75
+00:05:05,016 --> 00:05:10,236
+Every step that starts outside square root of three is one flip.
+
+76
+00:05:10,683 --> 00:05:12,559
+So fold the picture.
+
+77
+00:05:12,559 --> 00:05:16,263
+We only need positive sizes, so look at the right half.
+
+78
+00:05:16,263 --> 00:05:20,379
+Wherever the curve dips below the axis, flip that part up.
+
+79
+00:05:20,379 --> 00:05:23,599
+This folded curve answers one question.
+
+80
+00:05:23,599 --> 00:05:28,335
+If the size is x now, what is the size after one step?
+
+81
+00:05:28,783 --> 00:05:32,971
+Now compare it with the diagonal, where the size would stay the same.
+
+82
+00:05:32,971 --> 00:05:36,657
+Between square root of three and square root of five,
+
+83
+00:05:36,657 --> 00:05:39,369
+the folded curve is below the diagonal.
+
+84
+00:05:39,369 --> 00:05:43,247
+The size after the step is smaller than the size before.
+
+85
+00:05:43,247 --> 00:05:49,151
+Beyond square root of five it is above the diagonal, and the size grows.
+
+86
+00:05:49,251 --> 00:05:53,191
+They meet exactly at square root of five.
+
+87
+00:05:53,650 --> 00:05:56,786
+And the cobweb works on the folded picture too.
+
+88
+00:05:56,786 --> 00:05:58,738
+Start at two point two.
+
+89
+00:05:58,738 --> 00:06:02,392
+Up to the folded curve, at two point zero two.
+
+90
+00:06:02,392 --> 00:06:08,324
+Across to the diagonal, and then to the curve again, at one point one one.
+
+91
+00:06:08,424 --> 00:06:12,174
+Now we are inside, and the size climbs to one.
+
+92
+00:06:12,174 --> 00:06:16,192
+Two of these steps started outside square root of three.
+
+93
+00:06:16,192 --> 00:06:20,514
+So two flips, and the sign ends up positive.
+
+94
+00:06:20,950 --> 00:06:25,180
+Now zoom in on the gap, and stretch it sideways so we can see.
+
+95
+00:06:25,180 --> 00:06:27,508
+Start with the simplest case.
+
+96
+00:06:27,508 --> 00:06:30,284
+Which starts get inside in a single step?
+
+97
+00:06:30,284 --> 00:06:34,792
+Those whose size after one step is below square root of three.
+
+98
+00:06:34,792 --> 00:06:38,670
+So draw that level as a horizontal line.
+
+99
+00:06:38,770 --> 00:06:42,214
+How often does the folded curve cross this line?
+
+100
+00:06:42,214 --> 00:06:45,910
+Look at its formula, x times the size factor.
+
+101
+00:06:45,910 --> 00:06:49,560
+As x moves to the right through the gap, x gets bigger,
+
+102
+00:06:49,560 --> 00:06:51,950
+and the size factor gets bigger too.
+
+103
+00:06:51,950 --> 00:06:54,246
+So their product only goes up.
+
+104
+00:06:54,246 --> 00:06:57,528
+It starts at height zero, at square root of three,
+
+105
+00:06:57,528 --> 00:07:00,286
+and it ends at height square root of five.
+
+106
+00:07:00,286 --> 00:07:03,262
+Our line lies between those two heights.
+
+107
+00:07:03,262 --> 00:07:07,072
+And a curve that only goes up passes each height once.
+
+108
+00:07:07,072 --> 00:07:11,096
+So it crosses the line at exactly one point.
+
+109
+00:07:11,196 --> 00:07:14,384
+Call that start b one, b for boundary.
+
+110
+00:07:14,384 --> 00:07:18,714
+Its size after one step is exactly square root of three.
+
+111
+00:07:18,714 --> 00:07:21,376
+And in the gap, p is negative.
+
+112
+00:07:21,376 --> 00:07:26,000
+So p of b one is minus square root of three.
+
+113
+00:07:26,100 --> 00:07:30,568
+Now take any start between square root of three and b one.
+
+114
+00:07:30,568 --> 00:07:35,097
+It is to the left of the crossing, so its step lands below the line,
+
+115
+00:07:35,097 --> 00:07:36,496
+on the negative side.
+
+116
+00:07:36,496 --> 00:07:40,582
+That is somewhere between minus square root of three and zero.
+
+117
+00:07:40,582 --> 00:07:45,098
+It is inside, and it is negative, so it ends at minus one.
+
+118
+00:07:45,098 --> 00:07:46,420
+One flip.
+
+119
+00:07:46,420 --> 00:07:49,112
+This is the first stripe.
+
+120
+00:07:49,550 --> 00:07:51,552
+Where is b one exactly?
+
+121
+00:07:51,552 --> 00:07:55,542
+Its size after one step must be square root of three.
+
+122
+00:07:55,542 --> 00:08:01,298
+With the size factor, that is b, times b squared minus three, over two,
+
+123
+00:08:01,298 --> 00:08:03,568
+equals square root of three.
+
+124
+00:08:03,568 --> 00:08:07,739
+Multiply by two, and we get b cubed, minus three b,
+
+125
+00:08:07,739 --> 00:08:13,874
+equals two times square root of three, which is about three point four six.
+
+126
+00:08:13,974 --> 00:08:18,190
+There is an exact formula for this b, built from cube roots,
+
+127
+00:08:18,190 --> 00:08:20,228
+but it does not tell us much.
+
+128
+00:08:20,228 --> 00:08:22,120
+So just try values.
+
+129
+00:08:22,120 --> 00:08:26,392
+Two point one gives two point nine six, which is too small.
+
+130
+00:08:26,392 --> 00:08:30,698
+Two point two gives four point zero five, which is too big.
+
+131
+00:08:30,698 --> 00:08:35,432
+Closing in between them gives about two point one four eight.
+
+132
+00:08:35,883 --> 00:08:37,645
+That fits what we saw.
+
+133
+00:08:37,645 --> 00:08:43,192
+One point eight and two point zero are both below b one, in the first stripe,
+
+134
+00:08:43,192 --> 00:08:45,209
+and both ended at minus one.
+
+135
+00:08:45,209 --> 00:08:47,901
+Two point two is above b one.
+
+136
+00:08:47,901 --> 00:08:52,977
+Its first step did not get inside, and it needed a second flip.
+
+137
+00:08:55,716 --> 00:08:57,982
+Now the starts above b one.
+
+138
+00:08:57,982 --> 00:09:00,650
+Their first step does not get inside.
+
+139
+00:09:00,650 --> 00:09:03,478
+But we do not have to follow them all the way.
+
+140
+00:09:03,478 --> 00:09:08,692
+Suppose the first step lands, in size, somewhere in the first stripe.
+
+141
+00:09:08,692 --> 00:09:10,992
+We already know the first stripe.
+
+142
+00:09:10,992 --> 00:09:14,000
+From there it takes one more flip to get inside.
+
+143
+00:09:14,000 --> 00:09:17,778
+So such a start flips exactly twice.
+
+144
+00:09:18,216 --> 00:09:19,998
+Which starts are those?
+
+145
+00:09:19,998 --> 00:09:21,800
+Read it off the picture.
+
+146
+00:09:21,800 --> 00:09:23,268
+On the vertical axis,
+
+147
+00:09:23,268 --> 00:09:28,578
+the first stripe is the band of sizes from square root of three up to b one.
+
+148
+00:09:28,578 --> 00:09:33,358
+The folded curve only goes up, so it passes through that band once.
+
+149
+00:09:33,358 --> 00:09:37,708
+It enters at b one, where its height is square root of three.
+
+150
+00:09:37,708 --> 00:09:41,082
+And it leaves where its height is exactly b one.
+
+151
+00:09:41,082 --> 00:09:43,714
+Call that point b two.
+
+152
+00:09:43,814 --> 00:09:47,222
+So the size of p of b two is b one.
+
+153
+00:09:47,222 --> 00:09:53,756
+The start is positive and the step flips it, so p of b two is minus b one.
+
+154
+00:09:53,856 --> 00:09:57,650
+Now take any start between b one and b two.
+
+155
+00:09:57,650 --> 00:10:02,686
+Its step lands between minus b one and minus square root of three.
+
+156
+00:10:02,686 --> 00:10:05,340
+That is the first stripe, mirrored.
+
+157
+00:10:05,340 --> 00:10:10,474
+From there it takes one more flip, so two flips in all, an even number.
+
+158
+00:10:10,474 --> 00:10:12,246
+It ends at plus one.
+
+159
+00:10:12,246 --> 00:10:14,978
+This is the second stripe.
+
+160
+00:10:15,416 --> 00:10:17,572
+Check it with two point two.
+
+161
+00:10:17,572 --> 00:10:20,602
+It sits between b one and b two.
+
+162
+00:10:20,602 --> 00:10:24,232
+Its first step has size two point zero two.
+
+163
+00:10:24,232 --> 00:10:29,760
+And two point zero two lies between square root of three and b one,
+
+164
+00:10:29,760 --> 00:10:31,410
+in the first stripe.
+
+165
+00:10:31,510 --> 00:10:34,370
+So one more flip, and it is inside.
+
+166
+00:10:34,370 --> 00:10:39,040
+That is the two flips we counted, and it ended at plus one.
+
+167
+00:10:39,483 --> 00:10:41,731
+And the same step works again.
+
+168
+00:10:41,731 --> 00:10:47,138
+Starts that land in the second stripe need one flip more than the second stripe
+
+169
+00:10:47,138 --> 00:10:48,575
+does, so three flips.
+
+170
+00:10:48,575 --> 00:10:52,339
+The curve leaves that band where its height is b two.
+
+171
+00:10:52,339 --> 00:10:54,281
+Call that point b three.
+
+172
+00:10:54,281 --> 00:10:57,555
+So p of b three is minus b two.
+
+173
+00:10:57,555 --> 00:11:02,278
+The starts between b two and b three are the third stripe,
+
+174
+00:11:02,278 --> 00:11:04,395
+and they end at minus one.
+
+175
+00:11:04,495 --> 00:11:11,190
+Put the three edges next to each other. p of b one is minus square root of three.
+
+176
+00:11:11,190 --> 00:11:15,737
+p of b two is minus b one. p of b three is minus b two.
+
+177
+00:11:15,737 --> 00:11:21,621
+One step sends each edge to the edge before it, with the sign flipped.
+
+178
+00:11:21,721 --> 00:11:24,163
+And nothing stops us from going on.
+
+179
+00:11:24,163 --> 00:11:26,539
+So we get a whole list of edges.
+
+180
+00:11:26,539 --> 00:11:32,475
+Square root of three, then b one, b two, b three, and so on.
+
+181
+00:11:32,475 --> 00:11:36,574
+Each new stripe is carried onto the stripe before it,
+
+182
+00:11:36,574 --> 00:11:39,203
+so it needs exactly one more flip.
+
+183
+00:11:39,650 --> 00:11:43,129
+Each edge is found like b one, by trying values.
+
+184
+00:11:43,129 --> 00:11:48,783
+b one is about two point one four eight. b two is about two point two two one.
+
+185
+00:11:48,783 --> 00:11:51,828
+b three is about two point two three four.
+
+186
+00:11:51,828 --> 00:11:58,136
+They creep up toward square root of five, which is two point two three six.
+
+187
+00:11:59,383 --> 00:12:01,979
+So here are all the stripes on one line.
+
+188
+00:12:01,979 --> 00:12:05,113
+Stripe number n flips n times.
+
+189
+00:12:05,113 --> 00:12:10,529
+An odd n ends at minus one, and an even n ends at plus one.
+
+190
+00:12:10,529 --> 00:12:13,651
+That is the striped picture we saw.
+
+191
+00:12:14,083 --> 00:12:17,595
+The stripes pile up against square root of five.
+
+192
+00:12:17,595 --> 00:12:22,585
+Zoom in, and the same pattern shows up again and again.
+
+193
+00:12:23,016 --> 00:12:25,642
+Why do the stripes get thin so quickly?
+
+194
+00:12:25,642 --> 00:12:29,530
+Near square root of five the folded curve is steep.
+
+195
+00:12:29,530 --> 00:12:36,106
+From two point two to two point two three, the start moves by zero point zero three.
+
+196
+00:12:36,206 --> 00:12:41,448
+But the size after the step moves from two point zero two to two point two zero,
+
+197
+00:12:41,448 --> 00:12:43,414
+which is zero point one eight.
+
+198
+00:12:43,414 --> 00:12:46,366
+That is six times as far.
+
+199
+00:12:46,466 --> 00:12:51,198
+So one step stretches a stripe to about six times its width.
+
+200
+00:12:51,298 --> 00:12:53,320
+Where does the six come from?
+
+201
+00:12:53,320 --> 00:12:55,978
+Do what we did at zero and at one.
+
+202
+00:12:55,978 --> 00:12:59,514
+Put square root of five plus a small e into p,
+
+203
+00:12:59,514 --> 00:13:03,050
+and drop the terms with e squared and e cubed.
+
+204
+00:13:03,050 --> 00:13:07,332
+Out comes minus square root of five, minus six e.
+
+205
+00:13:07,332 --> 00:13:14,134
+So next to square root of five, one step multiplies a small distance by six,
+
+206
+00:13:14,134 --> 00:13:14,850
+exactly.
+
+207
+00:13:14,950 --> 00:13:18,888
+And the stretched stripe has to fit onto the stripe before it.
+
+208
+00:13:18,888 --> 00:13:23,345
+So each stripe is about a sixth as wide as the one before,
+
+209
+00:13:23,345 --> 00:13:28,648
+and the closer to square root of five, the closer to exactly a sixth.
+
+210
+00:13:31,383 --> 00:13:33,555
+One question is still open.
+
+211
+00:13:33,555 --> 00:13:36,207
+Do the stripes really fill the whole gap?
+
+212
+00:13:36,207 --> 00:13:41,123
+Or is there a last piece, right next to square root of five,
+
+213
+00:13:41,123 --> 00:13:43,417
+that no stripe ever reaches?
+
+214
+00:13:43,517 --> 00:13:45,993
+The stripes end at the edges.
+
+215
+00:13:45,993 --> 00:13:52,414
+So this is a question about our list of edges, square root of three, b one, b two,
+
+216
+00:13:52,414 --> 00:13:53,197
+and so on.
+
+217
+00:13:53,197 --> 00:13:57,493
+Do the edges get all the way up to square root of five?
+
+218
+00:13:57,593 --> 00:13:59,365
+Look at how we found them.
+
+219
+00:13:59,365 --> 00:14:03,413
+Here is the corner of the picture next to square root of five.
+
+220
+00:14:03,413 --> 00:14:08,493
+Start at the height square root of three, and go across to the folded curve.
+
+221
+00:14:08,493 --> 00:14:10,085
+That is b one.
+
+222
+00:14:10,085 --> 00:14:13,881
+Go up to the diagonal, and across to the curve again.
+
+223
+00:14:13,881 --> 00:14:15,503
+That is b two.
+
+224
+00:14:15,503 --> 00:14:21,235
+The edges are a staircase, squeezed between the curve and the diagonal.
+
+225
+00:14:22,883 --> 00:14:26,835
+First, can an edge ever reach square root of five?
+
+226
+00:14:26,835 --> 00:14:28,727
+The folded curve only goes up,
+
+227
+00:14:28,727 --> 00:14:33,647
+and it gets to the height square root of five only at the very end of the gap.
+
+228
+00:14:33,647 --> 00:14:38,409
+Each new edge is where the curve reaches the height of the edge before.
+
+229
+00:14:38,409 --> 00:14:41,308
+If that height is below square root of five,
+
+230
+00:14:41,308 --> 00:14:44,405
+the curve reaches it before the end of the gap.
+
+231
+00:14:44,405 --> 00:14:48,341
+So the new edge is below square root of five as well.
+
+232
+00:14:48,341 --> 00:14:52,283
+The list starts at square root of three, which is below.
+
+233
+00:14:52,283 --> 00:14:56,699
+So every edge stays below square root of five.
+
+234
+00:14:56,799 --> 00:14:59,571
+Next, does the list always go up?
+
+235
+00:14:59,571 --> 00:15:03,751
+One step takes each edge to the size of the edge before it.
+
+236
+00:15:03,751 --> 00:15:08,915
+Every edge is in the gap, and in the gap a step makes the size smaller.
+
+237
+00:15:08,915 --> 00:15:11,833
+So the edge before is the smaller one.
+
+238
+00:15:11,833 --> 00:15:15,013
+Each edge is bigger than the last.
+
+239
+00:15:15,113 --> 00:15:20,025
+So the edges keep rising, and they can never pass square root of five.
+
+240
+00:15:20,025 --> 00:15:24,949
+A list of numbers that only rises, under a ceiling it cannot pass,
+
+241
+00:15:24,949 --> 00:15:27,337
+has to settle toward some value.
+
+242
+00:15:27,337 --> 00:15:29,909
+Call that value L.
+
+243
+00:15:30,009 --> 00:15:31,371
+Where is L?
+
+244
+00:15:31,371 --> 00:15:36,989
+Far down the list, an edge and the one after it are both as close to L as we like.
+
+245
+00:15:36,989 --> 00:15:40,875
+One step takes the later one to the size of the earlier one.
+
+246
+00:15:40,875 --> 00:15:42,531
+Now p is a polynomial,
+
+247
+00:15:42,531 --> 00:15:47,727
+so a tiny change in the input makes only a tiny change in the output.
+
+248
+00:15:47,727 --> 00:15:53,151
+So one step from L itself lands as close as we like to a value of size L.
+
+249
+00:15:53,151 --> 00:15:57,471
+And a fixed number that is as close as we like to L can only be L.
+
+250
+00:15:57,471 --> 00:16:01,671
+So one step takes L to a value of the same size, L.
+
+251
+00:16:01,671 --> 00:16:05,323
+That means the size factor at L is exactly one.
+
+252
+00:16:05,323 --> 00:16:07,235
+We have met that before.
+
+253
+00:16:07,235 --> 00:16:13,199
+L squared minus three, over two, equals one, so L squared is five.
+
+254
+00:16:13,199 --> 00:16:15,521
+L is square root of five.
+
+255
+00:16:15,521 --> 00:16:20,663
+On the picture, that is where the folded curve meets the diagonal.
+
+256
+00:16:20,763 --> 00:16:24,727
+So the edges come as close to square root of five as we like.
+
+257
+00:16:24,727 --> 00:16:29,009
+Every start below square root of five is passed by some edge,
+
+258
+00:16:29,009 --> 00:16:30,835
+so it lies in some stripe.
+
+259
+00:16:30,835 --> 00:16:33,035
+The stripes fill the whole gap.
+
+260
+00:16:33,035 --> 00:16:37,185
+We now know where every start in the gap ends up.
+
+261
+00:16:39,616 --> 00:16:42,064
+And what about the edges themselves?
+
+262
+00:16:42,064 --> 00:16:43,546
+Take b one.
+
+263
+00:16:43,546 --> 00:16:48,150
+Its first step lands exactly on minus square root of three.
+
+264
+00:16:48,150 --> 00:16:51,242
+And we know what happens at square root of three.
+
+265
+00:16:51,242 --> 00:16:53,576
+The next step gives exactly zero,
+
+266
+00:16:53,576 --> 00:16:58,456
+and by the mirror rule the same holds for minus square root of three.
+
+267
+00:16:58,456 --> 00:17:02,412
+So b one ends on zero, and stays there.
+
+268
+00:17:02,850 --> 00:17:04,864
+b two lands on minus b one,
+
+269
+00:17:04,864 --> 00:17:09,790
+and from there it follows the path of b one with the sign flipped.
+
+270
+00:17:09,790 --> 00:17:11,962
+So it takes one step more.
+
+271
+00:17:11,962 --> 00:17:14,928
+And b three takes one step more again.
+
+272
+00:17:14,928 --> 00:17:20,725
+Every edge reaches plus or minus square root of three after a few steps,
+
+273
+00:17:20,725 --> 00:17:23,382
+and then it sits on zero forever.
+
+274
+00:17:23,482 --> 00:17:27,520
+An edge never reaches one or minus one.
+
+275
+00:17:27,983 --> 00:17:29,755
+Should that worry us?
+
+276
+00:17:29,755 --> 00:17:31,197
+Not much.
+
+277
+00:17:31,197 --> 00:17:35,527
+Each edge is a single point, and zero is the top of the hill.
+
+278
+00:17:35,527 --> 00:17:38,294
+Move the start by the tiniest amount,
+
+279
+00:17:38,294 --> 00:17:42,109
+and it is inside a stripe on one side or the other,
+
+280
+00:17:42,109 --> 00:17:45,325
+and it rolls down to plus one or minus one.
+
+281
+00:17:47,050 --> 00:17:49,734
+Now we can answer the question we started with.
+
+282
+00:17:49,734 --> 00:17:54,640
+Where does a positive sigma end up when we apply p again and again?
+
+283
+00:17:54,640 --> 00:18:01,096
+Here is the full answer to part (e), from left to right along the number line.
+
+284
+00:18:01,550 --> 00:18:06,714
+Below square root of three, the first step lands between zero and one,
+
+285
+00:18:06,714 --> 00:18:09,666
+and from there sigma climbs to plus one.
+
+286
+00:18:09,666 --> 00:18:15,634
+Exactly at square root of three, it lands on zero and stays there.
+
+287
+00:18:16,083 --> 00:18:19,807
+Between square root of three and square root of five,
+
+288
+00:18:19,807 --> 00:18:23,039
+each step flips the sign and shrinks the size,
+
+289
+00:18:23,039 --> 00:18:26,341
+until the value is inside square root of three.
+
+290
+00:18:26,341 --> 00:18:31,741
+An odd number of flips ends at minus one, and an even number ends at plus one.
+
+291
+00:18:31,741 --> 00:18:33,663
+That gives the stripes.
+
+292
+00:18:33,663 --> 00:18:37,553
+Their edges are single points that end on zero.
+
+293
+00:18:38,016 --> 00:18:40,291
+Exactly at square root of five,
+
+294
+00:18:40,291 --> 00:18:44,914
+sigma jumps between plus and minus square root of five forever.
+
+295
+00:18:44,914 --> 00:18:51,678
+And beyond square root of five, each step flips and grows, so it explodes.
+
+296
+00:18:51,778 --> 00:18:56,834
+Out of all these cases, only the first one is what we wanted.
+
+297
+00:18:58,883 --> 00:19:01,936
+We wanted every singular value to end at one,
+
+298
+00:19:01,936 --> 00:19:06,007
+and that only happens for starts below square root of three.
+
+299
+00:19:06,007 --> 00:19:09,781
+But a real W can have singular values anywhere,
+
+300
+00:19:09,781 --> 00:19:13,235
+some of them far above square root of five.
+
+301
+00:19:13,683 --> 00:19:17,393
+This one, at two point nine, would explode.
+
+302
+00:19:17,393 --> 00:19:21,473
+And one that sits in a gold stripe would end at minus one,
+
+303
+00:19:21,473 --> 00:19:23,443
+with its direction reversed.
+
+304
+00:19:23,443 --> 00:19:28,853
+So before we iterate, we have to bring every singular value down.
+
+305
+00:19:28,953 --> 00:19:30,755
+That is easy to do.
+
+306
+00:19:30,755 --> 00:19:36,505
+Divide W by a number, and every singular value is divided by that number,
+
+307
+00:19:36,505 --> 00:19:40,129
+while U and V transpose stay exactly the same.
+
+308
+00:19:40,129 --> 00:19:45,405
+Our target, U times V transpose, does not change at all.
+
+309
+00:19:45,850 --> 00:19:47,212
+Which number?
+
+310
+00:19:47,212 --> 00:19:51,160
+Dividing by the largest singular value would be ideal,
+
+311
+00:19:51,160 --> 00:19:54,304
+because then everything is at one or below.
+
+312
+00:19:54,304 --> 00:20:00,982
+But finding the largest singular value takes the very SVD we are trying to avoid.
+
+313
+00:20:01,082 --> 00:20:04,710
+There is a cheap stand-in, called the Frobenius norm.
+
+314
+00:20:04,710 --> 00:20:10,004
+Square every entry of W, add them all up, and take the square root.
+
+315
+00:20:10,004 --> 00:20:14,814
+That only needs the entries, so it costs almost nothing.
+
+316
+00:20:14,914 --> 00:20:16,616
+And it is big enough.
+
+317
+00:20:16,616 --> 00:20:18,028
+Here is why.
+
+318
+00:20:18,028 --> 00:20:23,254
+The sum of the squared entries of a matrix is the sum of the squared lengths of its
+
+319
+00:20:23,254 --> 00:20:23,758
+columns.
+
+320
+00:20:23,758 --> 00:20:28,519
+A rotation on the left turns every column without changing its length,
+
+321
+00:20:28,519 --> 00:20:30,356
+so that sum stays the same.
+
+322
+00:20:30,356 --> 00:20:33,932
+A rotation on the right does the same to the rows.
+
+323
+00:20:33,932 --> 00:20:42,016
+So W, which is U, sigma, V transpose, has the same sum as sigma alone.
+
+324
+00:20:42,116 --> 00:20:44,913
+And sigma holds only the singular values,
+
+325
+00:20:44,913 --> 00:20:50,372
+so the sum of the squared entries equals the sum of the squared singular values.
+
+326
+00:20:50,372 --> 00:20:54,946
+That sum already contains the largest one squared, plus more.
+
+327
+00:20:54,946 --> 00:20:58,212
+So its square root, the Frobenius norm,
+
+328
+00:20:58,212 --> 00:21:02,316
+is never smaller than the largest singular value.
+
+329
+00:21:02,750 --> 00:21:06,855
+Here the Frobenius norm comes out to about three point four five,
+
+330
+00:21:06,855 --> 00:21:10,582
+a bit more than our largest singular value, two point nine.
+
+331
+00:21:10,582 --> 00:21:13,690
+Divide every sigma by it.
+
+332
+00:21:14,150 --> 00:21:19,478
+Two point nine becomes zero point eight four, and the others are smaller still.
+
+333
+00:21:19,478 --> 00:21:24,000
+Now every singular value sits between zero and one,
+
+334
+00:21:24,000 --> 00:21:27,016
+safely below square root of three.
+
+335
+00:21:27,450 --> 00:21:35,129
+Now apply our matrix step, three halves W, minus one half W, W transpose, W,
+
+336
+00:21:35,129 --> 00:21:36,746
+again and again.
+
+337
+00:21:36,746 --> 00:21:39,664
+It needs nothing but matrix products.
+
+338
+00:21:39,664 --> 00:21:45,002
+And each time, every singular value goes through p once.
+
+339
+00:21:45,102 --> 00:21:48,572
+So each singular value climbs to plus one.
+
+340
+00:21:48,572 --> 00:21:50,445
+The small ones start slowly,
+
+341
+00:21:50,445 --> 00:21:55,063
+growing by about one and a half times per step as zero point one did,
+
+342
+00:21:55,063 --> 00:21:56,402
+but they all arrive.
+
+343
+00:21:56,402 --> 00:22:00,660
+The one exception is a singular value of exactly zero.
+
+344
+00:22:00,660 --> 00:22:05,150
+Zero is a fixed point, so it stays at zero.
+
+345
+00:22:05,250 --> 00:22:09,270
+And all along, U and V transpose never changed.
+
+346
+00:22:09,270 --> 00:22:15,011
+So when no singular value is zero, the middle is now all ones,
+
+347
+00:22:15,011 --> 00:22:18,438
+and W has become U times V transpose.
+
+348
+00:22:18,883 --> 00:22:21,321
+The ellipse has become a circle.
+
+349
+00:22:21,321 --> 00:22:27,225
+All it took was matrix products, and a cubic built from two simple wishes.
+
+350
+00:22:29,250 --> 00:22:31,778
+So the whole method is two lines.
+
+351
+00:22:31,778 --> 00:22:35,828
+Divide W by its Frobenius norm, once.
+
+352
+00:22:35,828 --> 00:22:39,842
+Then apply the step, again and again.
+
+353
+00:22:40,283 --> 00:22:42,809
+And where does a singular value go?
+
+354
+00:22:42,809 --> 00:22:47,447
+After that first division, every one of them goes to one.
+

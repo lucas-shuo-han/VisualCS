@@ -33,16 +33,21 @@
 
 | 集 | Title | 内容 |
 |---|---|---|
-| 1 | Newton–Schulz: Where Does a Singular Value Go? | 从“椭圆变圆”讲起：为什么要把奇异值推到 1；p(W) = U p(Σ) Vᵀ；先试简单的数，再看蛛网图、不动点与斜率；追问“σ 能多大”发现 √3，追问“更大会怎样”发现 √5；(√3, √5) 里按翻号次数交替通向 −1、+1 的吸引区及分界点 bn；√5 周期为 2；迭代前先按 Frobenius 范数缩放 |
+| 1 | Newton–Schulz: You Could Have Invented It | 从“椭圆变圆”讲起：为什么要把每个奇异值推到 1；SVD 太慢，只用矩阵乘法能做什么；Wᵀ W 丢了 U、W Wᵀ W 保住两个旋转；两个愿望定出 p(σ) = 3/2 σ − 1/2 σ³ |
+| 2 | Newton–Schulz: Where Does a Singular Value Go? | 先试简单的数，再看蛛网图、不动点与斜率；追问“σ 能多大”发现 √3，追问“更大会怎样”发现 size factor 和 √5 |
+| 3 | Newton–Schulz: Between √3 and √5 | 缺口里每步翻号且变小；按翻号次数交替通向 −1、+1 的条纹；边界点 p(b_{n+1}) = −b_n，单调有界收敛到 √5，条纹铺满缺口；总表；迭代前先按 Frobenius 范数缩放 |
 
-这一集只做英文版（英文撰写，英文配音）。成片在 [`videos/cs182-newton-schulz/`](videos/cs182-newton-schulz/)（1080p30，烧录字幕 + `.srt`）。
-代码在 `cs182/newton-schulz/`（基于 skill 的 `manim_kit.py`），剧情与覆盖清单见 [`cs182/newton-schulz/PLAN.md`](cs182/newton-schulz/PLAN.md)，旁白脚本见 `SCRIPT.md`。
+只做英文版（英文撰写，英文配音）。成片在 [`videos/cs182-newton-schulz/`](videos/cs182-newton-schulz/)（1080p30，字幕在同名 `.srt` 里，不烧进画面）。
+代码在 `cs182/newton-schulz/`：三集各一个 `epNN_*.py`，共用的数学、颜色和画图辅助在 `ns_common.py`，kit 是 `manim_kit.py`。
 
-配音：`tts.py` 默认用 edge-tts（需能访问 `speech.platform.bing.com`）；设 `KIT_TTS_ENGINE=pico` 改用离线的 SVOX Pico（`apt install libttspico-utils`）。设 `KIT_TTS_ENGINE=kokoro` 用离线神经网络语音 Kokoro-82M（见 skill 的 bilingual-and-voice.md §4）。现有成片用的是 Kokoro（af_heart）。
+本系列的设置都在 `cs182/newton-schulz/series.py`：
+- `TTS`：配音引擎、音色、语速。现在是 edge-tts 的 `en-US-AndrewNeural`，语速 −10%。换音色前可以用 `python audition.py` 生成候选试听（`preview/voices/`）。
+- `PACE`：句间、段间、拍间的停顿秒数。配音是逐句合成的，narration.md 里一拍正文的换行就是一段，段间停顿更长。
+- `TEXT_FONT = "latex"`：画面上的文字、数字、公式全部由 LaTeX 排版，只有一种字体。
 
 ```bash
-KIT_TTS_ENGINE=kokoro .venv/bin/python .claude/skills/notes-to-3b1b-video/scripts/render.py cs182/newton-schulz --out videos/cs182-newton-schulz # 离线神经网络配音
-.venv/bin/python .claude/skills/notes-to-3b1b-video/scripts/render.py cs182/newton-schulz --out videos/cs182-newton-schulz                       # edge-tts 神经网络语音
+.venv/bin/python .claude/skills/notes-to-3b1b-video/scripts/render.py cs182/newton-schulz --out videos/cs182-newton-schulz   # 三集成片
+.venv/bin/python cs182/newton-schulz/preview.py 9            # 单场带配音预览（场景编号 1–14，或名字，或 ep2、all）
 ```
 
 **改旁白和叙事逻辑（不用碰动画代码）**：所有字幕/配音文字都在 [`cs182/newton-schulz/narration.md`](cs182/newton-schulz/narration.md)。
@@ -53,11 +58,11 @@ KIT_TTS_ENGINE=kokoro .venv/bin/python .claude/skills/notes-to-3b1b-video/script
 - 改完先检查，再出预览（只有改过的句子会重新配音）：
 
 ```bash
-.venv/bin/python cs182/newton-schulz/narration.py check
-KIT_TTS_ENGINE=kokoro .venv/bin/python .claude/skills/notes-to-3b1b-video/scripts/render.py cs182/newton-schulz 1 --preview --voice
+.venv/bin/python cs182/newton-schulz/narration.py check      # 也会检查 cue() 等待的那几个词还在不在
+.venv/bin/python cs182/newton-schulz/preview.py why_p
 ```
 
-调整场景顺序、增删一个节拍要改动画代码：把想法写在该场景的注释里，让 Claude 来改，改完 Claude 会运行 `narration.py sync` 把新句子合并进 narration.md，不会覆盖你已改的文字。
+调整场景顺序、增删一个节拍要改动画代码：把想法写在该场景的注释里，让 Claude 来改。代码里故意改了某句 say() 的文字之后，运行 `narration.py rebind` 让 narration.md 的标题重新对上代码（保留文件里的措辞）；不要运行 `narration.py sync`。
 
 ## 目录结构
 
