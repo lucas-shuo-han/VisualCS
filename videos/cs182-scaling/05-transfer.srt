@@ -1,0 +1,152 @@
+1
+00:00:06,200 --> 00:00:07,761
+What's a parameterization?
+
+2
+00:00:07,761 --> 00:00:12,685
+It's really a choice of units, and the reason it matters is hyperparameter search.
+
+3
+00:00:12,685 --> 00:00:17,966
+Search hurts most on a big network, where every single experiment costs a fortune.
+
+4
+00:00:17,966 --> 00:00:19,383
+So here's a tempting idea.
+
+5
+00:00:19,383 --> 00:00:24,616
+Why not tune on a small network, where it's cheap, and then copy the answer over to the big one?
+
+6
+00:00:24,616 --> 00:00:30,066
+Whether that works depends entirely on the scaling.
+
+7
+00:00:30,066 --> 00:00:31,329
+Let's try it for real.
+
+8
+00:00:31,329 --> 00:00:37,702
+We'll train a three-layer network with Adam, using one learning rate for every layer, at five different widths.
+
+9
+00:00:37,702 --> 00:00:41,100
+And the best learning rate doesn't stay put.
+
+10
+00:00:41,100 --> 00:00:44,709
+At width thirty-two, the best rate is two to the minus six.
+
+11
+00:00:44,709 --> 00:00:48,685
+At width five hundred twelve, it's down to two to the minus nine.
+
+12
+00:00:48,685 --> 00:00:53,273
+Yang and coauthors saw the same drift in Transformers in twenty twenty-two.
+
+13
+00:00:53,273 --> 00:00:58,033
+With this scaling, each width wants its own setting.
+
+14
+00:00:58,033 --> 00:01:00,129
+Let's warm up with something simpler.
+
+15
+00:01:00,129 --> 00:01:03,302
+Add up n random numbers with mean zero and variance one.
+
+16
+00:01:03,302 --> 00:01:05,766
+How should we scale that sum?
+
+17
+00:01:05,766 --> 00:01:07,880
+Watch the spread of each version.
+
+18
+00:01:07,880 --> 00:01:14,156
+If we divide by root n, it stays at one whatever n is, and the sum settles into a standard normal.
+
+19
+00:01:14,156 --> 00:01:20,400
+If we divide by n, it shrinks to nothing, and if we don't divide at all, it blows up.
+
+20
+00:01:20,400 --> 00:01:22,814
+So one over root n is the right scaling.
+
+21
+00:01:22,814 --> 00:01:29,466
+It's the only choice that lands on something interesting, neither zero nor infinity.
+
+22
+00:01:29,466 --> 00:01:32,477
+Now turn that scale into a knob, and call it c.
+
+23
+00:01:32,477 --> 00:01:40,200
+We tune c to minimize the average of some bounded function f, and we'll call that average F sub n of c.
+
+24
+00:01:40,200 --> 00:01:44,156
+Here's that average for n from four up to two hundred fifty-six.
+
+25
+00:01:44,156 --> 00:01:49,410
+The best c slides from zero point six three all the way down to zero point zero nine.
+
+26
+00:01:49,410 --> 00:01:54,833
+So if you tune at a small n, you miss badly at a large one.
+
+27
+00:01:54,833 --> 00:01:56,359
+Now let's change units.
+
+28
+00:01:56,359 --> 00:02:01,071
+Write c as alpha over root n, and suddenly the best alpha barely moves.
+
+29
+00:02:01,071 --> 00:02:02,332
+That's no accident.
+
+30
+00:02:02,332 --> 00:02:08,533
+The curves settle onto a single limit curve, whose best alpha is the square root of two.
+
+31
+00:02:08,533 --> 00:02:13,408
+So you can copy the best alpha from a small n to a large one, and it just works.
+
+32
+00:02:13,408 --> 00:02:17,766
+Copying the best c never could.
+
+33
+00:02:17,766 --> 00:02:21,562
+Can we pull the same trick with a real network's hyperparameters?
+
+34
+00:02:21,562 --> 00:02:22,730
+Here's a sneak peek.
+
+35
+00:02:22,730 --> 00:02:28,200
+For Adam-like updates, we set the learning rate to gamma divided by the fan-in.
+
+36
+00:02:28,200 --> 00:02:30,884
+The one over fan-in part handles the width.
+
+37
+00:02:30,884 --> 00:02:35,816
+Gamma is still a hyperparameter, but you tune it just once, on a small network.
+
+38
+00:02:35,816 --> 00:02:39,033
+Next time, we'll see why that works.
+

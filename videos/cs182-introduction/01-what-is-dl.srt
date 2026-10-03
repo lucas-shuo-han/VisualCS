@@ -1,0 +1,148 @@
+1
+00:00:06,200 --> 00:00:09,915
+So what is deep learning, really, underneath all the excitement?
+
+2
+00:00:09,915 --> 00:00:16,300
+The definition this course runs on is simulated analog circuits, which just means circuits with knobs on them.
+
+3
+00:00:16,300 --> 00:00:18,448
+And nobody turns those knobs by hand.
+
+4
+00:00:18,448 --> 00:00:22,866
+An optimization algorithm sets them, and it's driven by training data.
+
+5
+00:00:22,866 --> 00:00:27,065
+The whole point is that the circuit captures a pattern in its training data.
+
+6
+00:00:27,065 --> 00:00:32,866
+So when new data arrives, the same circuit still gives a useful answer.
+
+7
+00:00:32,866 --> 00:00:36,369
+Let's start small, with Rosenblatt's adaptive neuron.
+
+8
+00:00:36,369 --> 00:00:40,731
+Each input passes through a knob, called a weight, that scales it.
+
+9
+00:00:40,731 --> 00:00:43,705
+Then we add everything up, along with a bias.
+
+10
+00:00:43,705 --> 00:00:49,653
+Feed in two and one, and we get one point six, minus zero point five, plus zero point two,
+
+11
+00:00:49,653 --> 00:00:52,066
+which comes to one point three.
+
+12
+00:00:52,066 --> 00:00:55,151
+Then a threshold turns that number into an answer.
+
+13
+00:00:55,151 --> 00:00:57,866
+It's positive, so the circuit says plus one.
+
+14
+00:00:57,866 --> 00:00:59,964
+Now flip the sign of both weights.
+
+15
+00:00:59,964 --> 00:01:08,633
+With the same wires and the same input, the circuit says minus one instead, so the knobs really are the program.
+
+16
+00:01:08,633 --> 00:01:10,779
+So where does the word deep come in?
+
+17
+00:01:10,779 --> 00:01:13,223
+It comes from chaining elements together,
+
+18
+00:01:13,223 --> 00:01:18,469
+so that the signal passes through several of them in a row before it reaches the output.
+
+19
+00:01:18,469 --> 00:01:27,166
+Each element is still just multiply, add, and take a max, which is the same pattern as before, repeated in sequence.
+
+20
+00:01:27,166 --> 00:01:30,608
+If nobody sets the knobs by hand, then the data has to do it.
+
+21
+00:01:30,608 --> 00:01:35,009
+Here are twenty labeled points, and a line drawn from a random starting guess.
+
+22
+00:01:35,009 --> 00:01:40,425
+The line is where the weighted sum hits zero, and every point on the wrong side gets a red ring.
+
+23
+00:01:40,425 --> 00:01:43,900
+Right now that's ten mistakes.
+
+24
+00:01:43,900 --> 00:01:45,617
+The fix is almost too simple.
+
+25
+00:01:45,617 --> 00:01:51,362
+We grab one mistake, add its label times its input to the weights, and add its label to the bias.
+
+26
+00:01:51,362 --> 00:01:56,733
+The line swings toward that point, and the mistakes drop from ten to four.
+
+27
+00:01:56,733 --> 00:01:58,796
+Do it again and we're down to two.
+
+28
+00:01:58,796 --> 00:02:03,711
+But the next update jumps back up to six, so a single step can make things worse.
+
+29
+00:02:03,711 --> 00:02:07,715
+Keep going anyway, and after four updates there are zero mistakes.
+
+30
+00:02:07,715 --> 00:02:12,333
+Nobody chose those knob settings, the data did.
+
+31
+00:02:12,333 --> 00:02:15,185
+But we never really cared about those twenty points.
+
+32
+00:02:15,185 --> 00:02:20,945
+So let's draw a hundred fresh points from the same source, and the circuit gets ninety-two of them right.
+
+33
+00:02:20,945 --> 00:02:28,166
+The misses all hug the boundary, because the learned line is close to the real rule, just not exactly on it.
+
+34
+00:02:28,166 --> 00:02:30,383
+Now change the rule behind the labels.
+
+35
+00:02:30,383 --> 00:02:37,150
+The same circuit gets only fifty-three right, which is a coin flip, because it learned one pattern and not this one.
+
+36
+00:02:37,150 --> 00:02:39,950
+That's why the definition says relevant pattern.
+
+37
+00:02:39,950 --> 00:02:44,466
+Learning only pays off if the new data follows the same rule.
+

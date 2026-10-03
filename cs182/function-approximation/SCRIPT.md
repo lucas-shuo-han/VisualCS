@@ -1,0 +1,210 @@
+# CS182 · Function Approximation — narration
+
+Generated from the episode subtitles (.srt).
+
+
+## 01-samples
+
+- `00:06` How do you learn a function that nobody will show you?
+- `00:09` Somewhere there's a target function f that turns each input x into an output y, and we never get to see it.
+- `00:15` All we ever get is a handful of samples, where each one is an input paired with a slightly noisy output.
+- `00:23` So we build a function of our own, called N of theta, with parameters we can adjust.
+- `00:28` We want it to pass close to these samples and still behave sensibly everywhere else.
+- `00:33` Between the samples it has to interpolate, and past the last one it has to extrapolate, which is where the real test is.
+- `00:41` Calculus already has one trick for this.
+- `00:43` We chop the input into intervals and hold a flat value on each one.
+- `00:47` With three intervals the fit is crude, and somewhere inside a step we miss the curve by about one point two.
+- `00:55` Double that to six intervals, and the steps start to hug the curve.
+- `00:59` Go up to twelve, and the worst miss roughly halves again.
+- `01:02` So the finer we chop, the better the fit gets.
+- `01:07` But there's a catch, and we can see it if we take a single step, slide it along x,
+- `01:12` and ask how the loss changes as its location, tau, moves.
+- `01:15` For a hard step the loss is a staircase, which is dead flat between samples and then makes a sudden jump.
+- `01:23` Flat means the derivative is zero almost everywhere, so backpropagation has no idea which way to push the step.
+- `01:29` A layer on top could still learn how tall each step is, but it can't learn where the steps should sit.
+- `01:36` Now swap the step for a ramp, which is ReLU of x minus tau.
+- `01:39` It's the same loss, but now it's a curve with a real slope.
+- `01:43` Watch what happens as tau slides across the gap between two samples.
+- `01:47` The step's loss doesn't budge, while the ramp's loss keeps moving.
+- `01:53` At tau equals two point four, the step's slope is exactly zero.
+- `01:57` The ramp's slope there is minus one point three nine, and that gives us a direction to walk.
+- `02:02` So a ramp is just a step that tilts, and that tilt is what makes its location learnable.
+- `02:10` And there's a second catch, which is that lots of different curves pass through exactly the same samples.
+- `02:15` Here's the obvious one, where we just connect them with straight lines.
+- `02:19` And here's a strange one, which wanders off in between but still hits every single sample.
+- `02:25` Both of them get zero error on the training set, so the samples alone can't tell us which one to trust.
+- `02:31` The hidden target function, drawn dashed, turns out to be smooth.
+- `02:35` But betting on smooth curves is an inductive bias, and only fresh data can check that bet.
+
+## 02-relu-ramps
+
+- `00:06` What's the simplest bend you can put in a straight line?
+- `00:09` It's this one, called ReLU, which stays at zero on the left and then just copies its input.
+- `00:15` Now feed it w times x plus b instead of the plain input, and we get one ramp, which is a single ReLU unit.
+- `00:23` So where does the ramp bend?
+- `00:24` It bends right where the inside hits zero, and that happens at x equals minus b over w.
+- `00:30` We'll call that point the knot.
+- `00:33` If we turn up the weight, the ramp gets steeper, and with the same bias the knot slides in toward zero.
+- `00:39` If we make the weight negative, the ramp flips over, so now it switches on to the left of its knot.
+- `00:46` You might wonder why we use ReLU and not the older sigmoid or hyperbolic tangent.
+- `00:51` Those curves flatten out for big inputs, so their gradients shrink, and after enough layers the gradient fades away.
+- `00:58` ReLU's slope is exactly one wherever the unit is on, so gradients pass straight through.
+- `01:05` The idea is that any curve made of straight pieces is just a starting height, a starting slope,
+- `01:11` and a slope change at each knot.
+- `01:13` The notes write this as equation one point six.
+- `01:16` It's a straight line plus one ramp per knot, and each ramp is scaled by how much the slope changes there.
+- `01:23` Let's build this curve one bend at a time, starting with just the straight line.
+- `01:27` It begins at one half and climbs with a gentle slope of zero point two.
+- `01:32` At x equals one, the slope jumps from zero point two to one point four, so we add a ramp that starts right there,
+- `01:38` scaled by one point two.
+- `01:42` At two point five, the slope drops from one point four to minus zero point eight,
+- `01:46` so the next ramp gets a negative weight, minus two point two.
+- `01:50` And at four the slope climbs back up to zero point six, which takes one last ramp with weight one point four.
+- `01:58` And the reason this works is that a ramp is exactly zero before its knot.
+- `02:02` So adding a new ramp can never disturb the part of the curve we've already built.
+- `02:09` There's one loose end, because the straight-line piece doesn't look like a ReLU at all.
+- `02:15` But it can be written as two of them.
+- `02:17` Any number x equals ReLU of x, minus ReLU of minus x.
+- `02:21` So one ramp covers the right side and the other covers the left.
+- `02:25` Now every term is a scaled ReLU of w times x plus b, and that shape has a name.
+- `02:31` It's called a one-hidden-layer network.
+- `02:33` Ours needs five hidden units, two for the line and one for each knot, and every weight is read straight off the picture.
+- `02:41` Add the five units up, and out comes exactly the same curve.
+- `02:45` Nothing was learned here.
+- `02:46` We just took the spline and wrote it down as a network.
+- `02:52` But real targets curve smoothly, so can straight pieces keep up?
+- `02:55` On a closed interval they can, as long as we keep adding knots.
+- `03:00` With three knots, which means five hidden units, the fit is pretty rough.
+- `03:04` With six knots it's already hugging the curve.
+- `03:07` And with twelve, the worst miss is down to zero point zero three, so more ramps really do mean a better fit.
+- `03:14` But be careful about what this says.
+- `03:16` It's a statement about existence, which means some wide enough network can draw the curve.
+- `03:21` It doesn't say your network is wide enough, and it doesn't say gradient descent will ever find those weights.
+
+## 03-layer
+
+- `00:06` To see what one ramp actually computes, let's draw it as a little pipeline.
+- `00:10` The input is scaled by its weight, then a bias is added, and then we take the max with zero.
+- `00:17` Feed in one point five.
+- `00:18` Doubling it gives three, and subtracting one leaves two.
+- `00:22` That's positive, so it passes straight through, and the output is two.
+- `00:27` Now try a smaller input, zero point two.
+- `00:30` Doubling it gives zero point four, and subtracting one leaves minus zero point six.
+- `00:35` That's negative, so the max with zero wipes it out, and the output is zero.
+- `00:41` So one unit is three cheap operations, and only the last one bends anything.
+- `00:46` That matters in practice, because hardware built for multiplying and adding can run huge numbers of these at once.
+- `00:55` There's no reason to stop at one ramp, so let's put four of them side by side.
+- `01:00` Each ramp is now a hidden unit with its own weight and bias, and all of them read the same input x.
+- `01:06` Then a readout adds them up, each with its own output weight, plus one more bias.
+- `01:11` The notes call this equation one point seven.
+- `01:15` Let's push one point five through it.
+- `01:17` Each unit first computes its weight times x, plus its bias, and we'll call that number z.
+- `01:23` ReLU then lets three of them through and sets the second one to zero.
+- `01:27` Finally the readout weighs each output, adds them up with its bias, and out comes three point five.
+- `01:35` Going unit by unit gets tedious, so we stack the weights into a matrix and the biases into a vector,
+- `01:42` and then one multiply does all the units at once.
+- `01:45` This first matrix is tall and skinny.
+- `01:47` It has d rows and a single column, because our input is just one number.
+- `01:52` ReLU then acts on each entry separately.
+- `01:55` After that the second matrix, which is a single row, squashes the four activations back down to one number.
+- `02:02` So the whole layer costs just eight multiply-adds, and with vector inputs or outputs only the shapes change.
+- `02:11` Here's the whole layer from before, drawn as a function of its input x.
+- `02:15` You can see it bend at the knots, which sit at zero, one half, and one.
+- `02:20` But what if we deleted the ReLUs?
+- `02:22` Then two affine maps in a row just multiply out into a single one, with one matrix and one bias.
+- `02:29` With our numbers, the weights multiply out to four and the biases add up to minus two, so what's left is just a line.
+- `02:37` We used four units and two layers, and all we got was a straight line.
+- `02:41` Without the bend, depth buys us nothing.
+- `02:44` And that's why deep networks alternate, going affine, ReLU, affine, ReLU.
+- `02:50` The ReLUs in between are what stop the layers from merging into one.
+
+## 04-risk
+
+- `00:06` We train a model to do well, but well at what?
+- `00:08` There are really four different things hiding in that one word.
+- `00:12` For a classifier, what we want is good decisions, and what we measure is accuracy.
+- `00:17` But what we train on is cross-entropy, and each update is estimated from one mini-batch.
+- `00:24` You might ask why we don't just train on accuracy itself.
+- `00:27` Here are four predictions,
+- `00:29` where the probability given to the true class goes from zero point four five up to zero point nine.
+- `00:35` Accuracy only asks whether that number is past one half.
+- `00:38` From zero point four five to zero point four nine, accuracy doesn't move at all.
+- `00:43` Cross-entropy does, dropping from zero point eight to zero point seven one, and that gives training something to follow.
+- `00:50` That's the job of a training surrogate.
+- `00:53` It points where we care, gives a signal nearby, stays stable, and is cheap to compute.
+- `01:00` So we pick a loss, and training averages it over the training set and pushes that average down.
+- `01:05` That average is called the empirical risk.
+- `01:08` Let's take four points and squared error, and start with a line through the origin with slope one.
+- `01:13` It misses each point by one of these red gaps.
+- `01:16` Square the gaps and average them, and this line scores zero point zero four five.
+- `01:22` Now try a flatter line instead.
+- `01:23` That one scores zero point two seven, which is six times worse, so training picks the first line.
+- `01:31` But what we really want is low loss on fresh data, and that's called the population risk.
+- `01:37` Here are ten samples, along with the hidden target function.
+- `01:40` A degree-nine polynomial threads through all ten of them, so its training error is zero.
+- `01:46` On fresh data, though, its error is three point two.
+- `01:50` Make the model more flexible and the training error can only go down,
+- `01:54` because a bigger family always fits at least as well.
+- `01:57` But the error on fresh data bottoms out at degree three and then climbs, and that turnaround is overfitting.
+- `02:04` We can only optimize what we can see, which is the training set, so we're looking where the light is.
+- `02:11` To rein in a model that flexible, we add a second pressure, called regularization.
+- `02:16` Ridge regression charges a price for big weights, and lambda sets how high that price is.
+- `02:22` Even a tiny lambda calms down those wild swings between the points.
+- `02:27` At lambda equals zero point one, the curve follows the trend and misses some points on purpose,
+- `02:33` and the test error drops to zero point four.
+- `02:35` Turn it up too far, though, and the weights get squeezed flat, so now the model underfits.
+- `02:41` So regularization is a dial, not a cure.
+- `02:44` We fit the data, but not too tightly, and even then nothing guarantees it will generalize.
+- `02:51` That leaves one question, which is who gets to pick lambda.
+- `02:55` The training set decides the parameters, meaning the weights and biases.
+- `02:59` A hyperparameter like lambda gets chosen on a separate validation set.
+- `03:03` So we sweep lambda over powers of ten, and each dot here is a whole training run, scored on the validation set.
+- `03:11` The lowest dot tells us to set lambda to zero point one.
+- `03:14` But be careful, because every peek at the validation set spends a little of its honesty.
+- `03:20` Only now, with every choice made, do we open the test set, and we do it exactly once.
+- `03:25` Even that number assumes the test set looks like the real world.
+- `03:29` Show a model trained on cats and dogs a dinosaur, and its test score tells you nothing.
+- `03:34` That's called distribution shift, and spotting it is hard.
+
+## 05-holdout
+
+- `00:06` Can a model get top marks on labels that are pure noise?
+- `00:09` Watch this.
+- `00:10` We have forty patients with five scans each, and every patient's label comes from a coin flip.
+- `00:15` On the left we shuffle all the scans and hold out half of them,
+- `00:19` and on the right we hold out half of the patients instead.
+- `00:24` Now take the laziest model there is, where each test scan just copies the label of the closest training scan.
+- `00:30` On the left, the closest scan belongs to the same patient, so it scores one hundred percent on coin flips.
+- `00:36` Split by patient and the trick falls apart.
+- `00:39` We get fifty-eight percent, which is about chance, and that's the honest number.
+- `00:45` Here's a sneakier version of the same problem, with two hospitals and a hundred chest scans each.
+- `00:51` At the first one thirty-four patients are sick, and at the second only one is.
+- `00:56` Now ignore the pixels and guess from the hospital name alone.
+- `01:00` The area under the ROC curve, where one half is chance, comes out at zero point seven nine.
+- `01:07` And this really happened, to a published pneumonia detector built on a convolutional network.
+- `01:13` It scored zero point nine three on scans from its own hospitals.
+- `01:16` At a new hospital it fell to zero point eight two.
+- `01:19` It was the same model and the same disease, just in a different building.
+- `01:24` And what about the hospital name alone?
+- `01:26` That scores zero point eight six on the pooled test set, because the sick rates differed from site to site.
+- `01:32` So the network was reading scanner quirks, patient positioning, and stamped text, instead of the lungs.
+- `01:38` A random split can't catch this, because the shortcut sits on both sides.
+- `01:42` You have to hold out the hospital.
+- `01:46` So the rule is to hold out whatever will be new in deployment.
+- `01:50` That might be a patient, a document, a time period, or a molecule scaffold.
+- `01:54` But match deployment and no more, because a test set that differs in unrelated ways misleads you just as much.
+- `02:01` And none of this is rare, because surveys across many fields keep finding leakage like this,
+- `02:07` and it keeps inflating published results.
+- `02:11` Before building any model, there are four things to check.
+- `02:14` A pattern has to exist, and it has to matter for some decision.
+- `02:17` It also has to show up in the features we record, and a model has to be able to pull it out.
+- `02:23` The hospital shortcut passed the last three checks and still missed the point, because it wasn't medicine.
+- `02:31` Now let's zoom out for a moment and name the kinds of learning.
+- `02:35` Everything so far was supervised learning, where labels drive regression or classification.
+- `02:41` Take the labels away and you're finding structure instead, with embeddings or density estimation.
+- `02:46` And foundation models learn from broad data first and then get prompted or adapted,
+- `02:51` which is the same ideas at a bigger scale.
+- `02:56` So here's the whole unit one more time, in five moves.
+- `02:59` Samples alone don't pin down a function.
+- `03:01` Ramps are flexible pieces, and a layer runs many of them at once.
+- `03:05` What we train on isn't what we actually want, and an honest test holds out exactly what will be new.

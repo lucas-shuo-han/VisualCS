@@ -113,3 +113,29 @@ python tools/beats_apply.py 5 --list                               # 列出可�
 - 英文版旁白由离线神经网络语音 Kokoro-82M（`af_heart`）合成；中文版成片（`videos/cs61c-riscv/zh/`）是早先用 edge-tts（`zh-CN-YunxiNeural`）合成的，中文旁白还没有按新的“旁白段 + cue”写法重做，代码已按新结构合并，下次渲染中文时会按新结构出片。
 - 字幕停留时间取阅读时间与语音时长中较长者；长旁白按句切换，同步的 `.srt` 与烧录字幕同一套时间。
 - 内容按 CS61C Fall 2026 课程笔记中 RISC-V 部分的知识点和 RISC-V 规范整理；各集示例里的机器码、地址和寄存器值都在代码里用断言核对过。
+
+## CS182 · Function Approximation 系列
+
+依据 CS182 Note 1（Function Approximation）制作，5 集，英文字幕 + 英文配音（edge-tts）。成片和 `.srt` 在 [`videos/cs182-function-approximation/`](videos/cs182-function-approximation/)，旁白全文见 [`cs182/function-approximation/SCRIPT.md`](cs182/function-approximation/SCRIPT.md)，资料覆盖清单见 [`COVERAGE.md`](cs182/function-approximation/COVERAGE.md)，术语表见 [`GLOSSARY.md`](cs182/function-approximation/GLOSSARY.md)。
+
+| # | 标题 | 内容 |
+|---|---|---|
+| 1 | Learning a Function from Samples | 只有样本点时要学什么；分段常数逼近；为什么 0/1 阶跃函数没有梯度、ReLU 斜坡才有 |
+| 2 | ReLU Ramps Are a Spline Basis | 一组 ReLU 斜坡叠加恰好画出任意分段线性曲线（5 个隐藏单元的算例）；存在性 ≠ 训练得到 |
+| 3 | From Ramps to a Layer | 一个单元怎么算；affine → ReLU → affine 的一层网络；去掉 ReLU 两层塌缩成一条直线 |
+| 4 | Looking Where the Light Is | 指标、代理损失；经验风险与总体风险；过拟合；ridge 正则；用验证集选 λ，测试集只看一次 |
+| 5 | Hold Out What Will Be New | 按行划分 vs 按患者划分（1-NN 记忆器 ≈100% vs ≈50%）；医院捷径与 Zech 等人的胸片结果；问题是否自洽的四问；术语地图 |
+
+重新渲染：`source cs182/env.sh`（Windows 路径与环境变量），然后 `python .claude/skills/notes-to-3b1b-video/scripts/render.py cs182/function-approximation --out videos/cs182-function-approximation`。
+
+## CS182 其余单元（课程网站公开的 notes 和 iPad notes）
+
+来源：<https://berkeley-cs182.github.io/fa26/schedule/> 上已经公开的全部 notes / iPad notes（讲座 6 只有 Google Drive 幻灯片，第 4、5、9–12 讲尚无 notes，未做）。英文字幕 + 英文配音，每个单元都有 `COVERAGE.md`（资料覆盖清单）、`GLOSSARY.md`、`SCRIPT.md`（旁白全文）。
+
+| 单元 | 视频 | 代码 | 资料 | 集数 |
+|---|---|---|---|---|
+| Introduction | [`videos/cs182-introduction/`](videos/cs182-introduction/) | [`cs182/introduction/`](cs182/introduction/) | Lecture 0 notes | 2：What Is Deep Learning? · Engineering or Alchemy? |
+| Optimization | [`videos/cs182-optimization/`](videos/cs182-optimization/) | [`cs182/optimization/`](cs182/optimization/) | Least Squares/Ridge、GD/SGD、Momentum/Adam notes + Lecture 2、3 iPad notes | 9：梯度下降与最小二乘 → 零空间 → Ridge → 早停 → SGD → Momentum → 阻尼与稳定性 → Adam/AdamW → 标准化与初始化 |
+| Scaling and μP | [`videos/cs182-scaling/`](videos/cs182-scaling/) | [`cs182/scaling/`](cs182/scaling/) | Lecture 7、8 iPad notes | 6：Steepest Descent Under a Norm → Spectral Norm → RMS Norm → Muon → Transfer → μP |
+
+重新渲染某个单元：`source cs182/env.sh`，然后 `python .claude/skills/notes-to-3b1b-video/scripts/render.py cs182/<单元> --out videos/cs182-<单元>`。

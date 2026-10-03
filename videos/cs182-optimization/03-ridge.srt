@@ -1,0 +1,168 @@
+1
+00:00:06,500 --> 00:00:09,367
+What if we simply charge a price for big weights?
+
+2
+00:00:09,367 --> 00:00:12,644
+That's ridge regression, and the price is called lambda.
+
+3
+00:00:12,644 --> 00:00:18,866
+With that penalty in place there's always exactly one answer, even when the data alone can't decide.
+
+4
+00:00:18,866 --> 00:00:26,038
+Set the gradient to zero and a closed form pops out, which inverts X transpose X with lambda added on the diagonal.
+
+5
+00:00:26,038 --> 00:00:31,214
+There's also a second form, which inverts a matrix with one row per sample instead.
+
+6
+00:00:31,214 --> 00:00:36,833
+Both give the same answer, so we use whichever matrix is smaller.
+
+7
+00:00:36,833 --> 00:00:39,709
+So what does ridge actually do to the solution?
+
+8
+00:00:39,709 --> 00:00:43,748
+Take the SVD, and each singular direction gets its own multiplier.
+
+9
+00:00:43,748 --> 00:00:49,195
+The pseudoinverse would use one over sigma there, so ridge keeps only a fraction of that,
+
+10
+00:00:49,195 --> 00:00:53,200
+and this fraction is the ridge filter.
+
+11
+00:00:53,200 --> 00:00:58,162
+Let's plot that fraction against the singular value, for three values of lambda.
+
+12
+00:00:58,162 --> 00:01:03,249
+Strong directions are left almost alone, while weak ones get squashed toward zero.
+
+13
+00:01:03,249 --> 00:01:09,018
+The cutoff sits where sigma equals the square root of lambda, and there exactly half is kept.
+
+14
+00:01:09,018 --> 00:01:13,600
+So a bigger lambda slides the cutoff to the right.
+
+15
+00:01:13,600 --> 00:01:15,720
+Now here's the multiplier itself.
+
+16
+00:01:15,720 --> 00:01:20,798
+With no ridge it's one over sigma, which explodes as sigma shrinks toward zero.
+
+17
+00:01:20,798 --> 00:01:29,500
+Ridge tames that, so the curve rises, peaks where sigma equals the square root of lambda, and then falls again.
+
+18
+00:01:29,500 --> 00:01:30,960
+There's a bonus as well.
+
+19
+00:01:30,960 --> 00:01:37,167
+Adding lambda lifts every eigenvalue by the same amount, so the tiny ones gain the most in proportion.
+
+20
+00:01:37,167 --> 00:01:40,696
+Take the ravine from episode one, where kappa was sixteen.
+
+21
+00:01:40,696 --> 00:01:47,766
+A ridge lambda of one quarter cuts that to eight and a half, and a ridge lambda of one brings it down to four.
+
+22
+00:01:47,766 --> 00:01:50,443
+So the steps we need drop from thirty-seven to ten.
+
+23
+00:01:50,443 --> 00:01:58,000
+The catch is that we're now solving a different problem, and it has a different answer.
+
+24
+00:01:58,000 --> 00:02:00,906
+But why should we distrust weak directions at all?
+
+25
+00:02:00,906 --> 00:02:05,032
+Let's put a small true signal in each direction and add a little noise.
+
+26
+00:02:05,032 --> 00:02:10,147
+Without ridge we divide by sigma, so the weakest direction blows its noise up ten times,
+
+27
+00:02:10,147 --> 00:02:12,833
+and you can see those estimates scatter.
+
+28
+00:02:12,833 --> 00:02:13,977
+Now turn ridge on.
+
+29
+00:02:13,977 --> 00:02:18,810
+The weak directions collapse toward zero, while the strong ones barely move.
+
+30
+00:02:18,810 --> 00:02:22,942
+Averaged over the noise, the total error drops about twelve-fold.
+
+31
+00:02:22,942 --> 00:02:31,533
+So overfitting is really trusting noisy directions too much, and ridge is a judgment call to trust them less.
+
+32
+00:02:31,533 --> 00:02:34,880
+Inside gradient descent, ridge turns out to be simple.
+
+33
+00:02:34,880 --> 00:02:39,157
+We shrink the weights a little, and then we take the usual data step.
+
+34
+00:02:39,157 --> 00:02:43,310
+On its own, that shrink keeps ninety percent of a weight each step.
+
+35
+00:02:43,310 --> 00:02:47,633
+It's called weight decay, and here it's the same thing as ridge.
+
+36
+00:02:47,633 --> 00:02:49,878
+There's a Bayesian view of this too.
+
+37
+00:02:49,878 --> 00:02:56,799
+Assume Gaussian noise on the labels and a Gaussian prior on the weights, and the MAP estimate is exactly ridge.
+
+38
+00:02:56,799 --> 00:03:03,866
+The ridge lambda is then the noise variance divided by the prior variance.
+
+39
+00:03:03,866 --> 00:03:06,958
+So why not let the optimizer choose lambda as well?
+
+40
+00:03:06,958 --> 00:03:11,928
+Because the objective only grows with lambda, so it would just slide down to zero.
+
+41
+00:03:11,928 --> 00:03:17,020
+That makes lambda a hyperparameter, which we pick on held-out data, and that's next,
+
+42
+00:03:17,020 --> 00:03:20,966
+along with two more hyperparameters.
+

@@ -1,0 +1,152 @@
+1
+00:00:06,200 --> 00:00:07,361
+Remember the ravine?
+
+2
+00:00:07,361 --> 00:00:12,122
+A step that's small enough for the stiff direction just crawls along the soft one,
+
+3
+00:00:12,122 --> 00:00:15,896
+and a bigger step makes the stiff direction overshoot and bounce.
+
+4
+00:00:15,896 --> 00:00:21,200
+So what if we averaged the recent gradients, instead of trusting only the newest one?
+
+5
+00:00:21,200 --> 00:00:22,952
+So we keep a running average.
+
+6
+00:00:22,952 --> 00:00:28,754
+At each step we shrink the old average by beta, and then mix in a little of the newest gradient.
+
+7
+00:00:28,754 --> 00:00:32,319
+Unroll that and it's a weighted sum of every past gradient,
+
+8
+00:00:32,319 --> 00:00:38,600
+where each step back in time shrinks the weight by another factor of beta.
+
+9
+00:00:38,600 --> 00:00:43,711
+With beta at zero point nine, the newest gradient gets a weight of zero point one.
+
+10
+00:00:43,711 --> 00:00:50,006
+The one before it gets zero point zero nine, and so on down, yet a single stored vector holds it all.
+
+11
+00:00:50,006 --> 00:00:51,938
+Why not weigh them all equally?
+
+12
+00:00:51,938 --> 00:00:59,733
+Because then a huge, stale gradient would hang around for ages, while exponential weights forget it.
+
+13
+00:00:59,733 --> 00:01:02,140
+An electric circuit does the same thing.
+
+14
+00:01:02,140 --> 00:01:07,255
+A resistor and a capacitor hold one stored state, and that state charges up smoothly.
+
+15
+00:01:07,255 --> 00:01:12,009
+Momentum is the step-by-step version, so if the gradient suddenly jumps to one,
+
+16
+00:01:12,009 --> 00:01:14,900
+the average creeps up toward it like this.
+
+17
+00:01:14,900 --> 00:01:19,170
+With beta at zero point nine, the memory is about nine and a half steps.
+
+18
+00:01:19,170 --> 00:01:25,333
+That's roughly how long the average takes to catch up with a change.
+
+19
+00:01:25,333 --> 00:01:30,843
+Now feed in a steady gradient of one, with a bounce on top that flips sign at every step,
+
+20
+00:01:30,843 --> 00:01:32,763
+the way a stiff direction does.
+
+21
+00:01:32,763 --> 00:01:40,433
+The average settles on the steady value, and the bounce nearly vanishes, which is exactly what a low-pass filter does.
+
+22
+00:01:40,433 --> 00:01:42,016
+We can put numbers on that.
+
+23
+00:01:42,016 --> 00:01:47,647
+A steady gradient passes straight through, while an alternating one gets cut down by this ratio.
+
+24
+00:01:47,647 --> 00:01:55,666
+For beta at zero point nine that's about five percent, so the trend survives and the bounce is basically gone.
+
+25
+00:01:55,666 --> 00:01:57,296
+Here's a trap to watch for.
+
+26
+00:01:57,296 --> 00:02:02,306
+Many libraries drop the factor of one minus beta and just add up the raw gradients,
+
+27
+00:02:02,306 --> 00:02:04,539
+which is the unnormalized convention.
+
+28
+00:02:04,539 --> 00:02:08,523
+With beta at zero point nine that running sum is ten times bigger,
+
+29
+00:02:08,523 --> 00:02:12,400
+so its learning rate has to be ten times smaller to match.
+
+30
+00:02:12,400 --> 00:02:17,864
+So a learning rate of zero point one in the first form is zero point zero one in the second.
+
+31
+00:02:17,864 --> 00:02:23,466
+Always convert before you compare learning rates across libraries.
+
+32
+00:02:23,466 --> 00:02:27,082
+Let's go back to a ravine, steep across and shallow along.
+
+33
+00:02:27,082 --> 00:02:29,825
+Plain gradient descent zigzags its way down.
+
+34
+00:02:29,825 --> 00:02:35,186
+Now average the gradients, and the bounces across cancel while the push along adds up,
+
+35
+00:02:35,186 --> 00:02:38,533
+so it takes fifteen steps instead of forty-nine.
+
+36
+00:02:38,533 --> 00:02:40,612
+A word of caution before we move on.
+
+37
+00:02:40,612 --> 00:02:42,344
+What we've shown is filtering,
+
+38
+00:02:42,344 --> 00:02:49,766
+and the famous square root of kappa speed-up needs tuned parameters and a strongly convex loss.
+

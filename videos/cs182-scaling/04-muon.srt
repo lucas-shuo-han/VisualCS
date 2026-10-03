@@ -1,0 +1,236 @@
+1
+00:00:06,200 --> 00:00:08,601
+Last time we found the step we want.
+
+2
+00:00:08,601 --> 00:00:15,538
+It's U V transpose, scaled by the square root of d_out over d_in, and that's the first key idea of Muon.
+
+3
+00:00:15,538 --> 00:00:22,900
+The catch is that getting U V transpose means an SVD of the gradient at every step, and that's expensive.
+
+4
+00:00:22,900 --> 00:00:24,639
+There are two ways out of this.
+
+5
+00:00:24,639 --> 00:00:30,025
+First, we don't need the exact direction, because one that's approximately right is good enough.
+
+6
+00:00:30,025 --> 00:00:37,800
+And second, a trick called the Newton-Schulz iteration gets us there cheaply, which is Muon's second key idea.
+
+7
+00:00:37,800 --> 00:00:38,997
+So here's the goal.
+
+8
+00:00:38,997 --> 00:00:44,352
+We want a cheap function that takes U sigma V transpose and hands back U V transpose.
+
+9
+00:00:44,352 --> 00:00:49,966
+In other words, it should replace every singular value with one.
+
+10
+00:00:49,966 --> 00:00:52,418
+Let's try odd polynomials of a matrix.
+
+11
+00:00:52,418 --> 00:00:56,869
+They're built from X, then X times X transpose times X, and so on up.
+
+12
+00:00:56,869 --> 00:01:03,100
+Here's one example, with three halves on the first term and minus one half on the second.
+
+13
+00:01:03,100 --> 00:01:04,514
+Now plug in the SVD.
+
+14
+00:01:04,514 --> 00:01:09,040
+In the middle, V transpose meets V and then U transpose meets U.
+
+15
+00:01:09,040 --> 00:01:13,072
+Both pairs cancel, because their columns are orthonormal.
+
+16
+00:01:13,072 --> 00:01:18,100
+What's left is U, then p of the singular values, then V transpose.
+
+17
+00:01:18,100 --> 00:01:19,379
+So here's the trick.
+
+18
+00:01:19,379 --> 00:01:24,560
+The polynomial acts on the whole matrix, but it only touches the singular values.
+
+19
+00:01:24,560 --> 00:01:26,670
+The singular vectors don't budge.
+
+20
+00:01:26,670 --> 00:01:33,100
+That means we can reshape the singular values without ever computing an SVD.
+
+21
+00:01:33,100 --> 00:01:38,955
+Now we need a polynomial that, applied over and over, drives every singular value to one.
+
+22
+00:01:38,955 --> 00:01:43,866
+Let's try this cubic, which is three halves x minus one half x cubed.
+
+23
+00:01:43,866 --> 00:01:48,389
+Start at zero point three, and bounce between the curve and the diagonal.
+
+24
+00:01:48,389 --> 00:01:54,647
+You get zero point four four, then zero point six one, then zero point eight, creeping up toward one.
+
+25
+00:01:54,647 --> 00:02:03,166
+That's because one is a fixed point that pulls its neighbors in, so anything between zero and one climbs up to it.
+
+26
+00:02:03,166 --> 00:02:05,348
+But zoom out, and there's a danger.
+
+27
+00:02:05,348 --> 00:02:12,018
+Start at two point five, and it jumps to minus four point one, then to about twenty-seven, and off it goes.
+
+28
+00:02:12,018 --> 00:02:15,633
+So the singular values have to start between zero and one.
+
+29
+00:02:15,633 --> 00:02:20,333
+Dividing by the Frobenius norm makes sure of that.
+
+30
+00:02:20,333 --> 00:02:24,161
+Let's run it on a real gradient, five by three and normalized.
+
+31
+00:02:24,161 --> 00:02:30,533
+Its singular values start at zero point eight four, zero point five one and zero point one eight.
+
+32
+00:02:30,533 --> 00:02:35,084
+After one iteration, the small values get the biggest boost in proportion.
+
+33
+00:02:35,084 --> 00:02:38,281
+After another, the gap between them keeps shrinking.
+
+34
+00:02:38,281 --> 00:02:45,300
+And after three, the top two are nearly one, while the smallest is still catching up at zero point five six.
+
+35
+00:02:45,300 --> 00:02:52,317
+By iteration six, even the smallest has reached zero point nine nine, which is practically U V transpose.
+
+36
+00:02:52,317 --> 00:02:58,465
+The slow case is a tiny value, since it only grows about one and a half times per iteration.
+
+37
+00:02:58,465 --> 00:03:05,166
+Starting from zero point zero one, it takes fourteen iterations to get close.
+
+38
+00:03:05,166 --> 00:03:07,589
+But who says it has to be this cubic?
+
+39
+00:03:07,589 --> 00:03:12,041
+Higher powers can converge faster, though each iteration costs more.
+
+40
+00:03:12,041 --> 00:03:17,766
+The NanoGPT speedrun uses a fifth-degree polynomial with these tuned coefficients.
+
+41
+00:03:17,766 --> 00:03:19,916
+And look at what it does at one.
+
+42
+00:03:19,916 --> 00:03:25,289
+It gives zero point seven, not one, so this iteration never settles down at one.
+
+43
+00:03:25,289 --> 00:03:32,208
+Yet five rounds of it lift every input, even one as small as zero point zero one, into a band near one.
+
+44
+00:03:32,208 --> 00:03:36,400
+It runs from zero point six eight to one point one three.
+
+45
+00:03:36,400 --> 00:03:38,091
+So does it need to converge?
+
+46
+00:03:38,091 --> 00:03:40,930
+Not really, because roughly one is good enough.
+
+47
+00:03:40,930 --> 00:03:43,588
+And it gets there far faster than the cubic.
+
+48
+00:03:43,588 --> 00:03:51,066
+After five iterations, the cubic has only brought zero point zero one up to zero point zero eight.
+
+49
+00:03:51,066 --> 00:03:52,811
+Now let's put it all together.
+
+50
+00:03:52,811 --> 00:03:58,393
+Muon stands for momentum, orthogonalized by Newton-Schulz, and that name is the whole algorithm.
+
+51
+00:03:58,393 --> 00:04:06,500
+We keep a momentum buffer, orthogonalize it with a few Newton-Schulz iterations, then step the weights against it.
+
+52
+00:04:06,500 --> 00:04:07,664
+So is it worth it?
+
+53
+00:04:07,664 --> 00:04:12,648
+Per step, Muon costs about what Adam does, and far less than Shampoo or SOAP.
+
+54
+00:04:12,648 --> 00:04:20,400
+And each step cuts the validation loss more, so it reaches a target loss in less wall-clock time.
+
+55
+00:04:20,400 --> 00:04:22,979
+Here's the record on the NanoGPT speedrun.
+
+56
+00:04:22,979 --> 00:04:27,893
+Back in May of twenty twenty-four, the record stood at about forty-five minutes.
+
+57
+00:04:27,893 --> 00:04:32,633
+Muon helped bring that down, and by December it was about four minutes.
+
+58
+00:04:32,633 --> 00:04:39,804
+Then in February of twenty twenty-five, Moonshot and UCLA showed that Muon holds up for large language models.
+
+59
+00:04:39,804 --> 00:04:47,333
+So the recipe we started with, a linearized loss inside a norm ball, has turned into a real optimizer.
+

@@ -1,0 +1,180 @@
+1
+00:00:06,200 --> 00:00:08,859
+We train a model to do well, but well at what?
+
+2
+00:00:08,859 --> 00:00:12,502
+There are really four different things hiding in that one word.
+
+3
+00:00:12,502 --> 00:00:17,243
+For a classifier, what we want is good decisions, and what we measure is accuracy.
+
+4
+00:00:17,243 --> 00:00:24,100
+But what we train on is cross-entropy, and each update is estimated from one mini-batch.
+
+5
+00:00:24,100 --> 00:00:27,545
+You might ask why we don't just train on accuracy itself.
+
+6
+00:00:27,545 --> 00:00:29,116
+Here are four predictions,
+
+7
+00:00:29,116 --> 00:00:35,101
+where the probability given to the true class goes from zero point four five up to zero point nine.
+
+8
+00:00:35,101 --> 00:00:38,866
+Accuracy only asks whether that number is past one half.
+
+9
+00:00:38,866 --> 00:00:43,709
+From zero point four five to zero point four nine, accuracy doesn't move at all.
+
+10
+00:00:43,709 --> 00:00:50,973
+Cross-entropy does, dropping from zero point eight to zero point seven one, and that gives training something to follow.
+
+11
+00:00:50,973 --> 00:00:53,334
+That's the job of a training surrogate.
+
+12
+00:00:53,334 --> 00:01:00,200
+It points where we care, gives a signal nearby, stays stable, and is cheap to compute.
+
+13
+00:01:00,200 --> 00:01:05,681
+So we pick a loss, and training averages it over the training set and pushes that average down.
+
+14
+00:01:05,681 --> 00:01:08,105
+That average is called the empirical risk.
+
+15
+00:01:08,105 --> 00:01:13,759
+Let's take four points and squared error, and start with a line through the origin with slope one.
+
+16
+00:01:13,759 --> 00:01:16,933
+It misses each point by one of these red gaps.
+
+17
+00:01:16,933 --> 00:01:22,035
+Square the gaps and average them, and this line scores zero point zero four five.
+
+18
+00:01:22,035 --> 00:01:23,988
+Now try a flatter line instead.
+
+19
+00:01:23,988 --> 00:01:31,766
+That one scores zero point two seven, which is six times worse, so training picks the first line.
+
+20
+00:01:31,766 --> 00:01:37,156
+But what we really want is low loss on fresh data, and that's called the population risk.
+
+21
+00:01:37,156 --> 00:01:40,790
+Here are ten samples, along with the hidden target function.
+
+22
+00:01:40,790 --> 00:01:46,119
+A degree-nine polynomial threads through all ten of them, so its training error is zero.
+
+23
+00:01:46,119 --> 00:01:50,833
+On fresh data, though, its error is three point two.
+
+24
+00:01:50,833 --> 00:01:54,885
+Make the model more flexible and the training error can only go down,
+
+25
+00:01:54,885 --> 00:01:57,998
+because a bigger family always fits at least as well.
+
+26
+00:01:57,998 --> 00:02:04,341
+But the error on fresh data bottoms out at degree three and then climbs, and that turnaround is overfitting.
+
+27
+00:02:04,341 --> 00:02:11,933
+We can only optimize what we can see, which is the training set, so we're looking where the light is.
+
+28
+00:02:11,933 --> 00:02:16,940
+To rein in a model that flexible, we add a second pressure, called regularization.
+
+29
+00:02:16,940 --> 00:02:22,375
+Ridge regression charges a price for big weights, and lambda sets how high that price is.
+
+30
+00:02:22,375 --> 00:02:27,133
+Even a tiny lambda calms down those wild swings between the points.
+
+31
+00:02:27,133 --> 00:02:33,165
+At lambda equals zero point one, the curve follows the trend and misses some points on purpose,
+
+32
+00:02:33,165 --> 00:02:35,959
+and the test error drops to zero point four.
+
+33
+00:02:35,959 --> 00:02:41,674
+Turn it up too far, though, and the weights get squeezed flat, so now the model underfits.
+
+34
+00:02:41,674 --> 00:02:44,214
+So regularization is a dial, not a cure.
+
+35
+00:02:44,214 --> 00:02:51,600
+We fit the data, but not too tightly, and even then nothing guarantees it will generalize.
+
+36
+00:02:51,600 --> 00:02:55,220
+That leaves one question, which is who gets to pick lambda.
+
+37
+00:02:55,220 --> 00:02:59,638
+The training set decides the parameters, meaning the weights and biases.
+
+38
+00:02:59,638 --> 00:03:03,934
+A hyperparameter like lambda gets chosen on a separate validation set.
+
+39
+00:03:03,934 --> 00:03:11,100
+So we sweep lambda over powers of ten, and each dot here is a whole training run, scored on the validation set.
+
+40
+00:03:11,100 --> 00:03:14,616
+The lowest dot tells us to set lambda to zero point one.
+
+41
+00:03:14,616 --> 00:03:20,142
+But be careful, because every peek at the validation set spends a little of its honesty.
+
+42
+00:03:20,142 --> 00:03:25,833
+Only now, with every choice made, do we open the test set, and we do it exactly once.
+
+43
+00:03:25,833 --> 00:03:29,555
+Even that number assumes the test set looks like the real world.
+
+44
+00:03:29,555 --> 00:03:34,614
+Show a model trained on cats and dogs a dinosaur, and its test score tells you nothing.
+
+45
+00:03:34,614 --> 00:03:39,766
+That's called distribution shift, and spotting it is hard.
+
