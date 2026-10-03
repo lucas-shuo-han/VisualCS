@@ -20,6 +20,7 @@ series; they save most of the trial and error.
 | `scripts/render.py` | Renders a unit's episodes × languages in parallel, collects `mp4` + `srt`. `--preview` 480p, `--voice`, `--lang`. |
 | `scripts/preview.py` | Copied next to the episode. Renders single scenes (methods listed in the episode's `SCENES`) in parallel with voice and sentence subtitles drawn on the frame: `python preview.py 9 10`, `all --join`. The fast loop when one long episode is being polished scene by scene. |
 | `scripts/narration.py` | Copied next to the episode. Keeps the script in an editable `narration.md` (body vs notes); `say()` swaps the text in at render time; `narration.py check` reports lines that no longer match the code. |
+| `scripts/bind_scene.py` | Replaces a scene's code with a rewrite whose `say()` texts are `__Tnn__` tokens: fills them from `narration.md`, checks every `cue()` phrase is in its beat, rebinds the hashes. |
 | `scripts/contact_sheet.py` | One frame per caption tiled into numbered PNG sheets. This is how you *see* the video. |
 | `scripts/captions.py` | Dumps an episode's narration in order, all languages side by side, `--spoken` shows what the voice will say. For proofreading without rendering. |
 | `scripts/narration_lint.py` | Lints the script before rendering: split sentences, choppy runs, terms the voice will misread; `--audition` synthesizes them to listen to. |
@@ -33,6 +34,7 @@ series; they save most of the trial and error.
 | `assets/agent_brief_template.md` | Brief for per-episode agents when working in parallel. |
 | `references/visual-patterns.md` | Design principles, layout budget, snippets for code, bits, math, deep learning. |
 | `references/production.md` | Coverage map, planning, parallel agents, the review pass, keeping the user in the loop, delivery. |
+| `references/derivation-episodes.md` | One long argument as an episode, and polishing a rough video with the user: derive-don't-announce story rules, explaining hard steps, cue-timed animation, the editable script, the fast voiced review loop, hand-over checks. **Read when the episode is a derivation or the user calls a video rough.** |
 | `references/narration-writing.md` | Writing a script that sounds spoken, not read: sentence rules, `speak=`, before/after, what other Manim skills do. **Read before writing captions.** |
 | `references/bilingual-and-voice.md` | Translation tables, layout across languages, voice-over, pronunciation of math and technical terms, TTS engines, timing. |
 | `references/pitfalls.md` | Every bug hit in production (incl. Windows) and how to avoid it. Read before rendering. |
@@ -59,7 +61,7 @@ Decide from the request (ask only if it is truly ambiguous):
 Episodes of one coherent idea each, ordered so each builds on the last: 3–4 min for a
 single idea, 6–8 min when covering a chapter fully; split anything longer. For each
 episode: the question it answers, a worked example with concrete numbers, the "aha"
-beat, the notes items it covers, 4–5 recap bullets. Save `PLAN.md`, `series.py` (from
+beat, the notes items it covers, 4–5 recap bullets. A single long derivation is the exception: keep it as one episode of named scenes, each renderable alone, and expect a derived (not announced) script to be about three times as long (`references/derivation-episodes.md`). Save `PLAN.md`, `series.py` (from
 `assets/series_template.py`) and a `GLOSSARY.md` of terms. Commit and continue without
 waiting unless the user asked to approve the plan.
 
@@ -123,6 +125,8 @@ empty frames, numbers that don't match the narration. The frame number is the ca
 index. Fix, re-render, look again: budget two or three rounds per episode, and look at
 **every language** (translations break layouts). Never edit a file whose render is
 still running.
+
+For one long episode, preview scene by scene instead: `python preview.py 9 10` (copied next to the episode) renders the named scenes in parallel with voice and subtitles on the frame, and `all --join` glues them. After every voiced render, check that audio and video durations match.
 
 **Long beats: tie each step to the words.** The narration is the baseline and is always spoken in full. Start the line with `self.say(text, ...)`, then add each step with `self.cue("a few words from the line", anims...)`: it waits until the voice reaches that phrase. If the animation is shorter than the words it waits; if longer, shorten its `run_time`, or play a pure demonstration silently between two lines. A beat of 20+ seconds with one animation is a frozen frame: split it into cues. When scenes share a stage (one graph built up over several scenes), `self.fast_forward(self.scene_a, self.scene_b)` puts their end state on stage without rendering, so a later scene can be previewed alone.
 

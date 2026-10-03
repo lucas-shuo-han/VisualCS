@@ -101,6 +101,8 @@ Run it per episode (or per pair) after the episode renders cleanly:
 - When the user asks for "something to watch quickly", render 480p previews with
   `--voice` in one language only, `--jobs` ≈ cores / 2, and send each video as it
   finishes rather than waiting for the batch.
+- Review clips always have the voice and the subtitles on the frame, and are short: one scene per clip. Give the exact path of every file. A silent clip with a separate subtitle file is not reviewable.
+- For a large rework, write the task list first and report against it; decide details yourself and list them, ask only what the user alone can decide. See `derivation-episodes.md` §5.
 - Final renders (1080p30, every language, voice) take a long time; run them in the
   background once, after the review pass, and tell the user where the files will land.
 
