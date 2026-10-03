@@ -63,40 +63,46 @@ KIT_TTS_ENGINE=kokoro .venv/bin/python .claude/skills/notes-to-3b1b-video/script
 
 ```
 cs61c/riscv/series.py      剧集列表：顺序、中英文标题、输出文件名
-cs61c/riscv/common.py      共享组件：带字幕计时与配音的 NarratedScene、代码高亮、寄存器、内存、指令位字段……
-cs61c/riscv/epNN_*.py      每集一个 Scene（中文撰写）
-cs61c/riscv/i18n/epNN.py   每集的英文对照表：{中文字符串: English}
-cs61c/riscv/tts.py         语音旁白：把字幕改写成适合朗读的形式，再用 edge-tts 合成（缓存在 media/tts/）
-tools/render.py            渲染剧集（中/英、预览/成片），把 mp4 + srt 收集到 videos/
-tools/i18n_check.py        检查英文对照表是否完整
-tools/captions.py          按顺序列出每集的中英文字幕，方便校对
-tools/contact_sheet.py     按字幕时间点截帧、拼成联系表，用来快速检查排版
-tools/srt_to_script.py     从字幕生成旁白脚本 SCRIPT.md / SCRIPT.en.md
-tools/win_fonts.py         Windows：在当前登录会话里注册字体
+cs61c/riscv/manim_kit.py   共享组件：带字幕计时与配音的 NarratedScene、cue()、代码高亮、寄存器、内存、指令位字段……（skill 的副本）
+cs61c/riscv/epNN_*.py      每集一个 Scene（中文撰写；一个 say() 是一段 2–4 句的旁白，cue() 在语音念到某个短语时播放动画）
+cs61c/riscv/i18n/epNN.py   每集的英文：{中文字符串: English}，旁白按“念出来”的英文改写，不是逐句翻译
+cs61c/riscv/tts.py         语音旁白：把字幕改写成适合朗读的形式，再合成（skill 的副本，缓存在 media/tts/）
+cs61c/riscv/say_as.py      本课程的读法：寄存器、指令名、十六进制、人名、文件名……
+tools/beats_apply.py       把逐句的 say() 合并成旁白段（beat），并把后面几句的动画改成 cue()
+tools/cue_tables.py        把 L("中文短语", "English phrase") 形式的 cue 短语写进英文对照表
+tools/en_set.py            只改对照表里的英文值（片尾小结要写成能念出来的句子）
+.claude/skills/notes-to-3b1b-video/scripts/   渲染、i18n 检查、旁白检查（narration_lint.py）、逐帧联系表、台词导出
 ```
 
 ## 自己渲染
 
 系统依赖：`ffmpeg`、Cairo 与 Pango（Ubuntu 上是 `libcairo2-dev`、`libpango1.0-dev`、`pkg-config`），以及字体 Noto Sans CJK SC 和 DejaVu Sans Mono。
-Windows 上装好字体后运行一次 `python tools/win_fonts.py`。配音需要联网（首次合成后会缓存）。
+Windows 上装好字体后运行一次 `python .claude/skills/notes-to-3b1b-video/scripts/win_fonts.py`。
+配音：默认 edge-tts（需联网）；离线用 Kokoro（`KIT_TTS_ENGINE=kokoro`，模型文件放在 `KIT_KOKORO_DIR`，见 skill 的 bilingual-and-voice.md）。**现有的英文成片用的是 Kokoro（af_heart）。**
 
 ```bash
 python -m venv .venv && .venv/bin/pip install -r requirements.txt
-.venv/bin/python tools/render.py --manim .venv/bin/manim                     # 全部 14 集，中英文，1080p30，带配音
-.venv/bin/python tools/render.py --manim .venv/bin/manim --lang en 3 5       # 只渲染第 3、5 集的英文版
-.venv/bin/python tools/render.py --manim .venv/bin/manim --preview 3         # 480p 快速预览（默认无配音，加 --voice 开启）
+R=.claude/skills/notes-to-3b1b-video/scripts
+KIT_TTS_ENGINE=kokoro .venv/bin/python $R/render.py cs61c/riscv --lang en --out videos/cs61c-riscv --manim .venv/bin/manim   # 14 集英文版，1080p30，带配音
+.venv/bin/python $R/render.py cs61c/riscv 3 5 --lang en --manim .venv/bin/manim                                              # 只渲染第 3、5 集
+KIT_TTS_ENGINE=kokoro .venv/bin/python $R/render.py cs61c/riscv 3 --lang en --preview --voice --manim .venv/bin/manim        # 480p 预览，只配音、不收集成片
 ```
 
-## 翻译流程
+## 旁白与翻译流程
 
-剧集用中文撰写；`VCS_LANG=en` 时，画面上的每个中文字符串（字幕、标签、代码注释）都会在 `i18n/epNN.py` 里查找英文。
-缺少条目会直接报错，所以英文版里不会漏出中文。改了中文字符串之后：
+剧集用中文撰写；渲染英文时，画面上的每个中文字符串（字幕、标签、代码注释）都会在 `i18n/epNN.py` 里查找英文，缺条目会直接报错。
+英文旁白不是逐句翻译，而是为“听”重新写的：一段旁白（2–4 句）一次配音，`cue("短语", 动画…)` 让动画在语音念到那个短语时才出现。
+改了旁白或中文字符串之后：
 
 ```bash
-python tools/i18n_check.py 5              # 第 5 集的对照表是否完整
-python tools/i18n_check.py 5 --skeleton   # 打印缺失条目，可直接粘贴补全
-python tools/captions.py 5                # 中英文字幕逐条对照
+R=.claude/skills/notes-to-3b1b-video/scripts
+python $R/i18n_check.py cs61c/riscv 5                              # 第 5 集的对照表是否完整
+KIT_TTS_ENGINE=kokoro python $R/narration_lint.py cs61c/riscv 5 --lang en   # 句子过长、拼读风险、冒号式小标题……
+KIT_TTS_ENGINE=kokoro python $R/captions.py cs61c/riscv 5 --lang en --spoken # 逐条列出字幕和实际念出来的读法
+python tools/beats_apply.py 5 --list                               # 列出可合并的 say()；`beats_apply.py 5 spec.py` 应用一份合并方案
 ```
+
+英文对照表里片尾小结等条目要写成能念出来的句子（数字拼成单词，不用冒号和括号）；读错的词在 `say_as.py` 里加读法。
 
 ## 用 skill 做新课程
 
@@ -104,5 +110,6 @@ python tools/captions.py 5                # 中英文字幕逐条对照
 
 ## 说明
 
-- 旁白由 Microsoft 神经网络语音合成（中文 `zh-CN-YunxiNeural`，英文 `en-US-AndrewNeural`）；字幕停留时间取阅读时间与语音时长中较长者。
+- 英文版旁白由离线神经网络语音 Kokoro-82M（`af_heart`）合成；中文版成片（`videos/cs61c-riscv/zh/`）是早先用 edge-tts（`zh-CN-YunxiNeural`）合成的，中文旁白还没有按新的“旁白段 + cue”写法重做，代码已按新结构合并，下次渲染中文时会按新结构出片。
+- 字幕停留时间取阅读时间与语音时长中较长者；长旁白按句切换，同步的 `.srt` 与烧录字幕同一套时间。
 - 内容按 CS61C Fall 2026 课程笔记中 RISC-V 部分的知识点和 RISC-V 规范整理；各集示例里的机器码、地址和寄存器值都在代码里用断言核对过。

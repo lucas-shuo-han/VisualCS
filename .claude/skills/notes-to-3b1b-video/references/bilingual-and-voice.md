@@ -85,6 +85,14 @@ lines need the network.
      override with `KIT_VOICE_EN=am_michael` etc. About 4x faster than real time on CPU.
   3. `pico`: SVOX Pico (`apt install libttspico-utils`). Works anywhere but sounds
      robotic; users notice. Use only when neither of the above is reachable, and say so.
+- Kokoro reads a bare capital "A" or a variable "a" as the article ("uh"), and "ay" as
+  "eye". tts.py therefore spells the letter A as "eigh" for Kokoro (`A_NAME`, and
+  `LETTER_A` inside say_as.py): "a0" is "eigh 0", "ISA" is "I S eigh". `math_letters`
+  also treats a lone `a` followed by a verb or preposition ("sets a to five", "a is a
+  variable") as the letter, and leaves "by a register" or "a load" alone. Check
+  `captions.py --spoken` for stray "uh"s, and look at the phonemes of risky words, which stands in for listening:
+  `Kokoro(model, voices).tokenizer.phonemize("risk five", "en-us")` (kokoro_onnx) prints
+  what the model will say.
 - Check which hosts are reachable before choosing (a proxy may block the edge host but
   allow GitHub); try a sample line with `python tts.py --say "..." --synth`.
 - Behind a TLS-inspecting proxy, tts.py adds `SSL_CERT_FILE` to edge-tts's CA list.
