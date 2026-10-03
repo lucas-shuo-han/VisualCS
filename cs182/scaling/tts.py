@@ -1,5 +1,8 @@
-"""Voice-over for the captions: Microsoft's neural voices via the `edge-tts`
-package (needs network access, no API key), cached as trimmed .wav files.
+"""Voice-over for the captions, cached as trimmed .wav files. Engines
+(KIT_TTS_ENGINE): "edge" = Microsoft's neural voices via the `edge-tts` package
+(default; needs network access to speech.platform.bing.com, no API key);
+"kokoro" = Kokoro-82M, a local neural model (near edge quality, fully offline);
+"pico" = SVOX Pico, robotic, only when nothing else is available.
 
 Copy this file next to manim_kit.py; the kit calls `synth()` for every caption
 when KIT_TTS=1. Check what the voice will say with the skill's captions.py
@@ -35,6 +38,16 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 CACHE = Path(os.environ.get("KIT_TTS_CACHE") or HERE / ".tts_cache")
 RATE = os.environ.get("KIT_TTS_RATE", "+0%")
+# "edge": Microsoft neural voices, online (speech.platform.bing.com).
+# "kokoro": Kokoro-82M neural voices, offline once the model files are downloaded
+#   (pip install kokoro-onnx; kokoro-v1.0.onnx + voices-v1.0.bin from
+#   github.com/thewh1teagle/kokoro-onnx/releases, in KIT_KOKORO_DIR).
+# "pico": SVOX Pico (apt install libttspico-utils): offline, robotic, last resort.
+ENGINE = os.environ.get("KIT_TTS_ENGINE", "edge")
+KOKORO_DIR = Path(os.environ.get("KIT_KOKORO_DIR") or Path.home() / ".cache" / "kokoro")
+KOKORO_VOICES = {"en": ("af_heart", "en-us"), "zh": ("zf_xiaoxiao", "cmn"), "ja": ("jf_alpha", "ja"),
+                 "es": ("ef_dora", "es"), "fr": ("ff_siwis", "fr-fr")}
+PICO_LANG = {"en": "en-US", "de": "de-DE", "fr": "fr-FR", "es": "es-ES", "it": "it-IT"}
 
 VOICES = {
     "en": "en-US-AndrewNeural", "zh": "zh-CN-YunxiNeural", "ja": "ja-JP-KeitaNeural",
@@ -96,6 +109,54 @@ _WORDS = {
 }
 
 
+# Greek letters by name (a voice may skip them or read "alpha" in another language).
+GREEK = {"α": "alpha", "β": "beta", "γ": "gamma", "δ": "delta", "ε": "epsilon", "ζ": "zeta",
+         "η": "eta", "θ": "theta", "λ": "lambda", "μ": "mu", "π": "pi", "ρ": "rho",
+         "σ": "sigma", "τ": "tau", "φ": "phi", "χ": "chi", "ψ": "psi", "ω": "omega",
+         "Δ": "delta", "Σ": "sigma", "Π": "pi", "Ω": "omega", "∇": "the gradient of ",
+         "∂": "partial ", "∑": "the sum of ", "∈": " in ", "∞": "infinity", "√": "root "}
+
+# A lone letter used as a math variable is read as a *word* by neural voices:
+# "scalar a times vector v" comes out as the article "uh", "I" as the pronoun,
+# Chinese voices read a lone "a" as the interjection 啊. Spell such letters out.
+LETTER_NAMES = {"en": {"a": "ay", "A": "ay", "e": "ee", "o": "oh", "u": "you", "y": "why"},
+                "zh": {c: c.upper() for c in "abcdefghijklmnopqrstuvwxyz"}}
+MATH_NOUNS = {"en": r"scalar|vector|matrix|variable|constant|element|entry|point|set|node|"
+                    r"vertex|function|parameter|coefficient|register|array|value|number|"
+                    r"integer|input|output|weight|bias|term|letter|index|basis",
+              "zh": r"标量|向量|矩阵|变量|常数|元素|点|集合|节点|函数|参数|系数|寄存器|数组|值|数|下标"}
+_OPS = set("=+×·*/^<>≤≥≈∈−-") | {"times", "plus", "minus", "over", "equals", "by",
+                                  "乘", "加", "减", "除以", "等于"}
+_TOK = re.compile(r"[A-Za-z]+|\d+|[一-鿿]+|[^\sA-Za-z\d一-鿿]")
+
+
+def math_letters(s: str, lang: str) -> str:
+    """Spell out single-letter variables in a math context: after a math noun
+    ("vector a", "向量 a"), next to an operator ("a · v", "a = 3", "v times a"),
+    after a digit ("2a") or in a list of letters ("a, b and c"). Ordinary
+    words ("a dog") are left alone."""
+    names = LETTER_NAMES.get(lang[:2])
+    if not names:
+        return s
+    nouns = re.compile(rf"(?:{MATH_NOUNS.get(lang[:2], MATH_NOUNS['en'])})$", re.I)
+    toks = [(m.start(), m.end(), m[0]) for m in _TOK.finditer(s)]
+    single = lambda t: len(t) == 1 and t.isalpha() and t.isascii()
+    out, last = [], 0
+    for i, (a, b, t) in enumerate(toks):
+        if t not in names:
+            continue
+        prev = toks[i - 1][2] if i else ""
+        nxt = toks[i + 1][2] if i + 1 < len(toks) else ""
+        glued_digit = i and toks[i - 1][1] == a and prev.isdigit()
+        if nxt in ("'", "’"):
+            continue
+        listy = (prev == "," and i > 1 and single(toks[i - 2][2])) or                 (nxt == "," and i + 2 < len(toks) and single(toks[i + 2][2]))
+        if nouns.search(prev) or prev in _OPS or nxt in _OPS or glued_digit or listy:
+            out += [s[last:a], names[t]]
+            last = b
+    return "".join(out) + s[last:]
+
+
 def spoken(text: str, lang: str) -> str:
     """What the voice should say for caption `text`."""
     w = _WORDS.get(lang, _WORDS["en"])
@@ -112,6 +173,9 @@ def spoken(text: str, lang: str) -> str:
     s = sub(r"^[…\s]+", "", s)
     s = sub(r"[…]+|——|—", w["pause"], s)
     s = s.replace("“", "").replace("”", "").replace('"', "")
+    if lang[:2] == "en":
+        for g, name in GREEK.items():
+            s = s.replace(g, f" {name} ")
     # hex constants, digit by digit; long 0/1 strings (bit patterns) likewise
     s = sub(r"\b0x([0-9A-Fa-f]+)\b", lambda m: w["hex"] + " ".join(m[1].upper()), s)
     s = sub(r"\b(0[01]{3,}|[01]{5,})\b", lambda m: " ".join(m[1]), s)
@@ -126,6 +190,9 @@ def spoken(text: str, lang: str) -> str:
     # course vocabulary
     if _SAY_RE is not None:
         s = _SAY_RE.sub(lambda m: _say_as(m[0], lang), s)
+    # "a · v", "2 · x": a spaced dot between single letters/numbers is a product
+    s = sub(r"(?<![\w.])([A-Za-z]|\d+) · (?=(?:[A-Za-z]|\d+)(?![\w.]))", r"\1 × ", s)
+    s = math_letters(s, lang)
     s = sub(r"\b([01])s\b", lambda m: w[m[0]], s)          # "0s" -> zeros
     s = sub(r"\b(\d)([a-rt-z])\b", r"\1 \2", s)            # 4i
     # a chain of arrows is a sequence of steps; a single one is "to"
@@ -150,7 +217,32 @@ def spoken(text: str, lang: str) -> str:
 
 
 def _key(text: str, lang: str) -> str:
-    return hashlib.sha1(f"{voice_for(lang)}|{RATE}|{text}".encode()).hexdigest()[:16]
+    voice = {"pico": "pico", "kokoro": f"kokoro:{_kokoro_voice(lang)[0]}"}.get(ENGINE) or voice_for(lang)
+    return hashlib.sha1(f"{voice}|{RATE}|{text}".encode()).hexdigest()[:16]
+
+
+def _kokoro_voice(lang: str):
+    v, code = KOKORO_VOICES.get(lang, KOKORO_VOICES["en"])
+    return os.environ.get(f"KIT_VOICE_{lang.upper()}") or v, code
+
+
+_KOKORO = None
+
+
+def _kokoro(text: str, lang: str, out: Path):
+    global _KOKORO
+    import numpy as np
+    from kokoro_onnx import Kokoro
+    if _KOKORO is None:
+        _KOKORO = Kokoro(str(KOKORO_DIR / "kokoro-v1.0.onnx"), str(KOKORO_DIR / "voices-v1.0.bin"))
+    voice, code = _kokoro_voice(lang)
+    m = re.match(r"([+-]\d+)%", RATE)
+    samples, sr = _KOKORO.create(text, voice=voice, lang=code, speed=1 + int(m[1]) / 100 if m else 1.0)
+    with wave.open(str(out), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(sr)
+        w.writeframes((np.clip(samples, -1, 1) * 32767).astype("<i2").tobytes())
 
 
 def _duration(path: Path) -> float:
@@ -160,6 +252,13 @@ def _duration(path: Path) -> float:
 
 async def _edge(text: str, voice: str, out: Path):
     import edge_tts
+    import edge_tts.communicate as _comm
+    # edge-tts pins certifi's CA list; behind a TLS-inspecting proxy, also trust
+    # the CA named by SSL_CERT_FILE (a no-op everywhere else)
+    ca = os.environ.get("SSL_CERT_FILE")
+    if ca and os.path.exists(ca) and not getattr(_comm, "_kit_ca", False):
+        _comm._SSL_CTX.load_verify_locations(ca)
+        _comm._kit_ca = True
     await edge_tts.Communicate(text, voice, rate=RATE).save(str(out))
 
 
@@ -172,7 +271,14 @@ def synth(caption: str, lang: str, speak: str | None = None) -> tuple[Path, floa
         return wav, _duration(wav)
     d.mkdir(parents=True, exist_ok=True)
     mp3 = wav.with_suffix(f".{os.getpid()}.mp3")
-    for attempt in range(5):
+    if ENGINE == "kokoro":
+        mp3 = mp3.with_suffix(".kokoro.wav")
+        _kokoro(text, lang, mp3)
+    elif ENGINE == "pico":
+        import subprocess
+        mp3 = mp3.with_suffix(".pico.wav")
+        subprocess.run(["pico2wave", "-l", PICO_LANG.get(lang, "en-US"), "-w", str(mp3), text], check=True)
+    for attempt in range(5 if ENGINE == "edge" else 0):
         try:
             asyncio.run(_edge(text, voice_for(lang), mp3))
             break

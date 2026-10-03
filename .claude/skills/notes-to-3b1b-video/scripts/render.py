@@ -45,12 +45,13 @@ def render(unit, ep, lang, a, voice):
         env["KIT_I18N_LAX"] = "1"
     log = media_root / lang / f"ep{n:02d}.log"
     with open(log, "w", encoding="utf-8") as fh:
+        # no animation cache: on a cache hit Manim's clock does not advance and the voice-over drifts
         # MANIM_CWD: run from another directory (Windows: MiKTeX's dvisvgm fails when the cwd
         # is on a D: drive; point it at a C: folder).
         cwd = os.environ.get("MANIM_CWD")
         if cwd:
             env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(unit.src), os.environ.get("PYTHONPATH")]))
-        rc = subprocess.run([a.manim, *quality, "--media_dir", str(media),
+        rc = subprocess.run([a.manim, *quality, "--disable_caching", "--media_dir", str(media),
                              str(Path(unit.src) / ep["file"]) if cwd else ep["file"], scene],
                             cwd=cwd or unit.src, stdout=fh, stderr=subprocess.STDOUT, env=env).returncode
     if rc != 0:

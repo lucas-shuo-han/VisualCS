@@ -1,72 +1,136 @@
 1
-00:00:06,200 --> 00:00:16,533
-Last time, every ramp was ReLU of a weight times x plus a bias. As a computation graph: multiply, add, then take the max with zero.
+00:00:06,200 --> 00:00:10,770
+To see what one ramp actually computes, let's draw it as a little pipeline.
 
 2
-00:00:16,533 --> 00:00:28,333
-Feed in x = 1.5: 2 × 1.5 = 3, then 3 − 1 = 2, and the max with zero keeps it: h = 2.
+00:00:10,770 --> 00:00:17,533
+The input is scaled by its weight, then a bias is added, and then we take the max with zero.
 
 3
-00:00:28,333 --> 00:00:42,833
-Feed in x = 0.2: 2 × 0.2 = 0.4, then 0.4 − 1 = −0.6, and the max with zero clips it: h = 0.
+00:00:17,533 --> 00:00:18,960
+Feed in one point five.
 
 4
-00:00:42,833 --> 00:00:51,633
-Three cheap operations; only the last is nonlinear. Multiply-accumulate hardware runs many units at once.
+00:00:18,960 --> 00:00:22,434
+Doubling it gives three, and subtracting one leaves two.
 
 5
-00:00:51,633 --> 00:01:00,800
-Run d units side by side, each one a ramp; here d = 4. Each has its own weight and bias, and all see the same x.
+00:00:22,434 --> 00:00:27,933
+That's positive, so it passes straight through, and the output is two.
 
 6
-00:01:00,800 --> 00:01:09,600
-A linear readout adds the units up with output weights plus one more bias: exactly the sum in Equation 1.7.
+00:00:27,933 --> 00:00:30,518
+Now try a smaller input, zero point two.
 
 7
-00:01:09,600 --> 00:01:17,400
-Feed in x = 1.5. Each unit forms its pre-activation z: weight times x, plus bias.
+00:00:30,518 --> 00:00:35,883
+Doubling it gives zero point four, and subtracting one leaves minus zero point six.
 
 8
-00:01:17,400 --> 00:01:27,066
-ReLU keeps 3 of the four and clips the second to zero, so the activations are 1.5, 0, 2, 0.25.
+00:00:35,883 --> 00:00:41,900
+That's negative, so the max with zero wipes it out, and the output is zero.
 
 9
-00:01:27,066 --> 00:01:34,633
-The readout multiplies each activation by its output weight, adds them, and adds the bias.
+00:00:41,900 --> 00:00:46,600
+So one unit is three cheap operations, and only the last one bends anything.
 
 10
-00:01:34,633 --> 00:01:42,866
-Stack the weights into a matrix and the biases into a vector: one matrix multiply gives all d pre-activations.
+00:00:46,600 --> 00:00:55,333
+That matters in practice, because hardware built for multiplying and adding can run huge numbers of these at once.
 
 11
-00:01:42,866 --> 00:01:48,400
-Here W one has d rows and one column, because the input is a single number.
+00:00:55,333 --> 00:01:00,214
+There's no reason to stop at one ramp, so let's put four of them side by side.
 
 12
-00:01:48,400 --> 00:01:57,166
-ReLU acts entrywise. Then W two, a row vector with d columns, reads the activations out into one number.
+00:01:00,214 --> 00:01:06,408
+Each ramp is now a hidden unit with its own weight and bias, and all of them read the same input x.
 
 13
-00:01:57,166 --> 00:02:06,133
-Every step is a multiply-accumulate, and this layer needs only 8. Vector inputs and outputs work the same way.
+00:01:06,408 --> 00:01:11,477
+Then a readout adds them up, each with its own output weight, plus one more bias.
 
 14
-00:02:06,133 --> 00:02:14,233
-Here is the whole layer as a function of x. Its bends sit at the units' elbows: x = 0, 0.5, 1.
+00:01:11,477 --> 00:01:15,666
+The notes call this equation one point seven.
 
 15
-00:02:14,233 --> 00:02:23,833
-Now delete every ReLU. Two affine maps in a row multiply out into one: a single matrix times x, plus a single vector.
+00:01:15,666 --> 00:01:17,958
+Let's push one point five through it.
 
 16
-00:02:23,833 --> 00:02:31,666
-With our numbers the weights multiply to 4 and the biases combine to −2: just the line 4x − 2.
+00:01:17,958 --> 00:01:23,470
+Each unit first computes its weight times x, plus its bias, and we'll call that number z.
 
 17
-00:02:31,666 --> 00:02:39,433
-Four units, two layers, and all we can draw is a line. Without the nonlinearity, extra depth adds nothing.
+00:01:23,470 --> 00:01:27,744
+ReLU then lets three of them through and sets the second one to zero.
 
 18
-00:02:39,433 --> 00:02:48,500
-Deeper networks repeat affine, ReLU, affine, ReLU; the ReLUs keep the layers from merging.
+00:01:27,744 --> 00:01:35,633
+Finally the readout weighs each output, adds them up with its bias, and out comes three point five.
+
+19
+00:01:35,633 --> 00:01:42,204
+Going unit by unit gets tedious, so we stack the weights into a matrix and the biases into a vector,
+
+20
+00:01:42,204 --> 00:01:45,424
+and then one multiply does all the units at once.
+
+21
+00:01:45,424 --> 00:01:47,855
+This first matrix is tall and skinny.
+
+22
+00:01:47,855 --> 00:01:52,966
+It has d rows and a single column, because our input is just one number.
+
+23
+00:01:52,966 --> 00:01:55,530
+ReLU then acts on each entry separately.
+
+24
+00:01:55,530 --> 00:02:02,388
+After that the second matrix, which is a single row, squashes the four activations back down to one number.
+
+25
+00:02:02,388 --> 00:02:11,066
+So the whole layer costs just eight multiply-adds, and with vector inputs or outputs only the shapes change.
+
+26
+00:02:11,066 --> 00:02:15,884
+Here's the whole layer from before, drawn as a function of its input x.
+
+27
+00:02:15,884 --> 00:02:20,701
+You can see it bend at the knots, which sit at zero, one half, and one.
+
+28
+00:02:20,701 --> 00:02:22,940
+But what if we deleted the ReLUs?
+
+29
+00:02:22,940 --> 00:02:29,833
+Then two affine maps in a row just multiply out into a single one, with one matrix and one bias.
+
+30
+00:02:29,833 --> 00:02:37,000
+With our numbers, the weights multiply out to four and the biases add up to minus two, so what's left is just a line.
+
+31
+00:02:37,000 --> 00:02:41,288
+We used four units and two layers, and all we got was a straight line.
+
+32
+00:02:41,288 --> 00:02:44,866
+Without the bend, depth buys us nothing.
+
+33
+00:02:44,866 --> 00:02:50,147
+And that's why deep networks alternate, going affine, ReLU, affine, ReLU.
+
+34
+00:02:50,147 --> 00:02:56,833
+The ReLUs in between are what stop the layers from merging into one.
 

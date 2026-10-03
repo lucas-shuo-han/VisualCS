@@ -1,92 +1,164 @@
 1
-00:00:06,200 --> 00:00:13,000
-Implicit regularization is a feature and a bug: it resists noise but is slow on weak directions.
+00:00:06,200 --> 00:00:08,695
+Why would we normalize every coordinate?
 
 2
-00:00:13,000 --> 00:00:19,333
-Dividing by each singular value would fix that, but an SVD of a large model is prohibitive.
+00:00:08,695 --> 00:00:15,371
+Well, gradient descent is slow along weak directions, which helps it resist noise, but it's also just slow.
 
 3
-00:00:19,333 --> 00:00:27,033
-So do the next best thing: make steps in ordinary coordinates about the same size in every coordinate.
+00:00:15,371 --> 00:00:22,421
+The ideal fix would divide each direction by its singular value, but an SVD of a huge model is far too expensive.
 
 4
-00:00:27,033 --> 00:00:33,100
-Set the average to the gradient and the second moment to its square. Dividing gives just the sign.
+00:00:22,421 --> 00:00:30,100
+So we do the next best thing, and make the steps about the same size in every ordinary coordinate.
 
 5
-00:00:33,100 --> 00:00:42,733
-Gradients of 100, 0.01 and minus 3 all become steps of plus or minus eta. Coordinate scale no longer matters.
+00:00:30,100 --> 00:00:32,195
+What's the crudest way to do that?
 
 6
-00:00:42,733 --> 00:00:48,966
-Try it in the ravine. It races to the valley floor, since every coordinate moves at full speed.
+00:00:32,195 --> 00:00:37,189
+Divide each gradient coordinate by its own size, and all that's left is the sign.
 
 7
-00:00:48,966 --> 00:00:56,366
-Then it cannot settle: a fixed-size step overshoots, bouncing between two points near the minimum.
+00:00:37,189 --> 00:00:42,984
+Gradients of one hundred, one hundredth and minus three all become steps of plus or minus eta,
 
 8
-00:00:56,366 --> 00:01:03,700
-Adam keeps two exponential averages: of the gradient, the first moment, and of its square, the second moment.
+00:00:42,984 --> 00:00:46,733
+so the scale just stops mattering.
 
 9
-00:01:03,700 --> 00:01:11,433
-Both start at zero, so early on they are too small: with beta 0.9, the first average is a tenth of the gradient.
+00:00:46,733 --> 00:00:48,319
+Let's try it in the ravine.
 
 10
-00:01:11,433 --> 00:01:18,366
-Bias correction divides by one minus beta to the power of the step count. That scales the early moments back up.
+00:00:48,319 --> 00:00:52,724
+It races to the valley floor, because every coordinate moves at full speed.
 
 11
-00:01:18,366 --> 00:01:24,533
-The update divides the corrected first moment by the root of the corrected second moment, per coordinate.
+00:00:52,724 --> 00:00:56,776
+But then it's stuck, because a step of fixed size keeps overshooting,
 
 12
-00:01:24,533 --> 00:01:32,666
-Without the second correction, the first step would be over three times too large; with both, exactly one.
+00:00:56,776 --> 00:01:01,766
+so it bounces between two points near the minimum forever.
 
 13
-00:01:32,666 --> 00:01:39,700
-Same ravine, same step size. SignSGD is drawn thin: its cycle around the minimum.
+00:01:01,766 --> 00:01:03,730
+Adam smooths both of those pieces.
 
 14
-00:01:39,700 --> 00:01:45,033
-Adam's moments bend and smooth the path, so the iterate settles instead of cycling.
+00:01:03,730 --> 00:01:09,795
+It keeps a running average of the gradient, called the first moment, and a running average of its square,
 
 15
-00:01:45,033 --> 00:01:54,233
-Why discarding magnitude helps is not fully understood. The original analysis had gaps; Adam is robust anyway.
+00:01:09,795 --> 00:01:10,835
+the second moment.
 
 16
-00:01:54,233 --> 00:02:01,200
-In plain gradient descent, a ridge penalty is exactly the same as shrinking the weights by a fixed factor.
+00:01:10,835 --> 00:01:18,200
+The catch is that both start at zero, so with beta at zero point nine the first average is only a tenth of the gradient.
 
 17
-00:02:01,200 --> 00:02:07,700
-Put the penalty gradient inside Adam and it is averaged and divided by the second moment like everything else.
+00:01:18,200 --> 00:01:19,862
+Bias correction fixes that.
 
 18
-00:02:07,700 --> 00:02:15,533
-With weights of one and gradient sizes 10 and 0.05, the penalty shrinks the two coordinates very differently.
+00:01:19,862 --> 00:01:28,566
+We divide each average by one minus its beta raised to the step count, and that scales the early averages back up.
 
 19
-00:02:15,533 --> 00:02:22,400
-AdamW shrinks the weights separately and forms the moments from the data gradient only. All decay alike.
+00:01:28,566 --> 00:01:35,173
+The update then divides the corrected first moment by the square root of the second, one coordinate at a time.
 
 20
-00:02:22,400 --> 00:02:31,200
-Mind the convention: decay sits inside one minus eta times lambda wd, so it is not the ridge lambda.
+00:01:35,173 --> 00:01:40,158
+If we skip the corrections, the very first step comes out over three times too big,
 
 21
-00:02:31,200 --> 00:02:38,300
-Compare optimizers on three axes: how fast training falls, which solution they favor, and what they cost.
+00:01:40,158 --> 00:01:44,166
+and with them the ratio is exactly one.
 
 22
-00:02:38,300 --> 00:02:45,833
-Extra state costs memory: momentum stores one more vector, Adam two. Gradients and activations add more.
+00:01:44,166 --> 00:01:47,808
+Now back to the same ravine, with the same step size.
 
 23
-00:02:45,833 --> 00:02:56,300
-Neither Adam nor momentum SGD always wins. Optimizers seek low loss; deep learning also needs generalization.
+00:01:47,808 --> 00:01:50,901
+The thin line is SignSGD, stuck in its cycle.
+
+24
+00:01:50,901 --> 00:01:56,133
+Adam's averages smooth the path, so it settles down instead of cycling.
+
+25
+00:01:56,133 --> 00:02:02,196
+Why throwing away the size of the gradient helps isn't fully understood, and the original proof had gaps.
+
+26
+00:02:02,196 --> 00:02:05,800
+Adam works well in practice anyway.
+
+27
+00:02:05,800 --> 00:02:07,104
+Now for weight decay.
+
+28
+00:02:07,104 --> 00:02:14,434
+In plain gradient descent, a ridge penalty is the same as shrinking the weights by the same fixed factor at each step.
+
+29
+00:02:14,434 --> 00:02:21,000
+Put that penalty inside Adam, though, and it gets divided by the second moment like everything else.
+
+30
+00:02:21,000 --> 00:02:26,911
+Take two weights that both equal one, with typical gradient sizes of ten and zero point zero five.
+
+31
+00:02:26,911 --> 00:02:33,800
+The penalty ends up shrinking the second weight two hundred times harder than the first.
+
+32
+00:02:33,800 --> 00:02:40,331
+AdamW takes the shrink out and does it as a separate step, so the moments only ever see the data.
+
+33
+00:02:40,331 --> 00:02:42,284
+Now both weights decay alike.
+
+34
+00:02:42,284 --> 00:02:48,681
+Watch the convention, though, because lambda wd sits inside the factor one minus eta lambda wd,
+
+35
+00:02:48,681 --> 00:02:52,366
+and it's not the ridge lambda.
+
+36
+00:02:52,366 --> 00:02:54,058
+So which optimizer is best?
+
+37
+00:02:54,058 --> 00:03:00,702
+We can compare them on three axes, namely training speed, where you end up, and how much memory they need.
+
+38
+00:03:00,702 --> 00:03:04,713
+On memory, momentum stores one extra vector and Adam stores two,
+
+39
+00:03:04,713 --> 00:03:08,766
+and the gradients and activations cost more on top of that.
+
+40
+00:03:08,766 --> 00:03:11,086
+And no optimizer wins on every axis.
+
+41
+00:03:11,086 --> 00:03:19,733
+They all chase a low training loss, but what we really want is generalization, so measure on your own task.
 

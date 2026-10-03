@@ -77,6 +77,7 @@ assert ERR_SMOOTH < ERR_ZIG
 
 class Ep01Samples(NarratedScene):
     series = SERIES
+    SCENES = ["samples", "steps", "gradients", "interpolants"]
 
     def construct(self):
         self.title_card()
@@ -85,10 +86,10 @@ class Ep01Samples(NarratedScene):
         self.gradients()
         self.interpolants()
         self.end_card(
-            ["We only see samples (x, y) of an unknown f",
-             "Constant steps improve with finer intervals, but give zero gradient",
-             "A ramp is a step with a slope: something to learn from",
-             "Fitting the samples is not enough. Smoothness is a bet."],
+            ["We never see f itself, just a few samples (x, y)",
+             "Finer steps fit better, but a step's loss is flat: zero gradient",
+             "A ramp is a step that tilts, so gradients can move it",
+             "Many curves hit every sample. Picking smooth is a bet, so test it"],
         )
 
     # ---------------------------------------------------------------- helpers
@@ -102,24 +103,28 @@ class Ep01Samples(NarratedScene):
     def samples(self):
         head = self.heading("The setup")
         ax, labels = self.base_axes()
-        self.say("Somewhere there is a function f that turns inputs x into outputs y. We are never given its formula.",
-                 Write(head), Create(ax), FadeIn(labels))
         d = dots(ax, XS, YS)
         eq = mt(r"\mathcal{D}_{\text{train}}=\{(x_1,y_1),\dots,(x_n,y_n)\},\quad y_i\approx f(x_i)", 0.7)
         eq.to_corner(UR, buff=0.45).shift(DOWN * 0.1)
-        self.say("All we get are sample pairs: a handful of inputs with their noisy outputs.",
-                 LaggedStart(*[GrowFromCenter(p) for p in d], lag_ratio=0.15), Write(eq))
+        self.say("How do you learn a function that nobody will show you? Somewhere there's a target function f "
+                 "that turns each input x into an output y, and we never get to see it. All we ever get is a "
+                 "handful of samples, where each one is an input paired with a slightly noisy output.",
+                 Write(head), Create(ax), FadeIn(labels))
+        self.cue("All we ever get", LaggedStart(*[GrowFromCenter(p) for p in d], lag_ratio=0.15), Write(eq))
         self.hold()
         curve = plot(ax, model, C_MODEL, [0, 7])
         nlabel = mt(r"\hat y = N_\theta(x)", 0.8, C_MODEL).move_to(ax.c2p(1.3, 2.9))
-        self.say("We want a parameterized function N of theta that fits these pairs, and behaves sensibly in between and beyond them.",
-                 Create(curve, run_time=2.5), FadeIn(nlabel))
         between = Line(ax.c2p(XS[0], -0.5), ax.c2p(XS[-1], -0.5), color=YELLOW_D, stroke_width=4).shift(DOWN * 0.3)
         beyond = Line(ax.c2p(XS[-1], -0.5), ax.c2p(7, -0.5), color=RED_C, stroke_width=4).shift(DOWN * 0.3)
         lb = txt("between samples", 22, YELLOW_D).next_to(between, DOWN, buff=0.1)
         le = txt("beyond", 22, RED_C).next_to(beyond, DOWN, buff=0.1)
-        self.say("Between the samples we interpolate. Beyond them we extrapolate, and that is where the real test lies.",
-                 Create(between), Create(beyond), FadeIn(lb), FadeIn(le))
+        self.say("So we build a function of our own, called N of theta, with parameters we can adjust. We want it "
+                 "to pass close to these samples and still behave sensibly everywhere else. Between the samples "
+                 "it has to interpolate, and past the last one it has to extrapolate, which is where the real "
+                 "test is.",
+                 Create(curve, run_time=2.5), FadeIn(nlabel))
+        self.cue("Between the samples", Create(between), FadeIn(lb))
+        self.cue("past the last one", Create(beyond), FadeIn(le))
         self.hold()
         self.clear_stage()
 
@@ -130,21 +135,28 @@ class Ep01Samples(NarratedScene):
         target = plot(ax, f, C_TARGET, [0, 6], width=3).set_stroke(opacity=0.9)
         target = DashedVMobject(target, num_dashes=60)
         d = dots(ax, XS, YS)
-        self.say("From calculus we know one way to approximate a function: chop the input into intervals and hold a constant value on each.",
-                 Write(head), Create(ax), FadeIn(labels), Create(target), FadeIn(d))
         px, py, _ = step_approx(3)
         cur = polyline(ax, px, py, C_MODEL, 4)
         err = txt(f"3 intervals   max error = {ERR[3]:.2f}", 26, C_LOSS).to_corner(UR, buff=0.5).shift(DOWN * 0.1)
-        self.say("With three intervals the fit is crude. The error can be large anywhere inside a step.",
-                 Create(cur, run_time=1.8), FadeIn(err))
-        for n in (6, 12):
+        assert f"{ERR[3]:.1f}" == "1.2"                       # spoken: "about one point two"
+        self.say("Calculus already has one trick for this. We chop the input into intervals and hold a flat value "
+                 "on each one. With three intervals the fit is crude, and somewhere inside a step we miss the "
+                 "curve by about one point two.",
+                 Write(head), Create(ax), FadeIn(labels), Create(target), FadeIn(d))
+        self.cue("With three intervals", Create(cur, run_time=1.8), FadeIn(err))
+        self.hold(0.4)
+        assert 0.45 < ERR[12] / ERR[6] < 0.55                 # spoken: "roughly halves again"
+
+        def refine(n):
             px, py, e = step_approx(n)
             new_err = txt(f"{n} intervals   max error = {e:.2f}", 26, C_LOSS).move_to(err, aligned_edge=RIGHT)
-            cap = ("Refine to six intervals and the steps hug the curve much better."
-                   if n == 6 else
-                   "Twelve intervals shrink the worst-case error again. Refining the intervals keeps improving the fit.")
-            self.say(cap, Transform(cur, polyline(ax, px, py, C_MODEL, 4)), Transform(err, new_err))
-            self.hold(0.4)
+            return Transform(cur, polyline(ax, px, py, C_MODEL, 4)), Transform(err, new_err)
+
+        self.say("Double that to six intervals, and the steps start to hug the curve. Go up to twelve, and the "
+                 "worst miss roughly halves again. So the finer we chop, the better the fit gets.",
+                 *refine(6))
+        self.cue("Go up to twelve", *refine(12))
+        self.hold(0.4)
         self.clear_stage()
 
     # ---------------------------------------------------------------- 3. why steps can't be learned
@@ -161,29 +173,33 @@ class Ep01Samples(NarratedScene):
             lab.shift(RIGHT * 0.5)
         cL = polyline(axL, TAUS, L_STEP, C_LOSS, 4)
         cR = polyline(axR, TAUS, L_RAMP, C_LOSS, 4)
-        self.say("Now the catch. Slide a step of fixed height along x: how does the loss change with its location tau?",
+        self.say("But there's a catch, and we can see it if we take a single step, slide it along x, and ask how "
+                 "the loss changes as its location, tau, moves. For a hard step the loss is a staircase, which is dead flat between "
+                 "samples and then makes a sudden jump.",
                  Write(head), Create(axL), Create(axR), FadeIn(tl), FadeIn(tr), FadeIn(xl), FadeIn(yl))
-        self.say("For a hard step the loss is a staircase: perfectly flat between neighboring samples, with sudden jumps.",
-                 Create(cL, run_time=2.0))
-        self.say("Its derivative is zero almost everywhere, so backpropagation gives no signal about which way to move the step.",
+        self.cue("For a hard step", Create(cL, run_time=2.0))
+        self.say("Flat means the derivative is zero almost everywhere, so backpropagation has no idea which way "
+                 "to push the step. A layer on top could still learn how tall each step is, but it can't learn "
+                 "where the steps should sit.",
                  Indicate(cL, color=YELLOW_D, scale_factor=1.0))
-        self.say("A final linear layer over fixed steps can still learn their heights, but it cannot learn the locations at the same time.",
-                 Indicate(tl, color=YELLOW_D))
-        self.say("Now swap the step for a ramp: one ReLU unit, ReLU of x minus tau. The same loss becomes a curve with a slope.",
-                 Create(cR, run_time=2.0))
+        self.cue("A layer on top", Indicate(tl, color=YELLOW_D))
         tau = ValueTracker(2.1)
         dotL = always_redraw(lambda: Dot(axL.c2p(tau.get_value(), best_loss(hard_step, tau.get_value())), color=YELLOW_D, radius=0.1))
         dotR = always_redraw(lambda: Dot(axR.c2p(tau.get_value(), best_loss(relu, tau.get_value())), color=YELLOW_D, radius=0.1))
-        self.play(FadeIn(dotL), FadeIn(dotR))
-        self.say("Slide tau across the gap between two samples. The step's loss does not move at all, while the ramp's loss keeps changing.",
-                 tau.animate.set_value(2.7), run_time=2.5)
+        self.say("Now swap the step for a ramp, which is ReLU of x minus tau. It's the same loss, but now it's a "
+                 "curve with a real slope. Watch what happens as tau slides across the gap between two samples. "
+                 "The step's loss doesn't budge, while the ramp's loss keeps moving.",
+                 Create(cR, run_time=2.0))
+        self.cue("Watch what happens", FadeIn(dotL), FadeIn(dotR))
+        self.cue("slides across the gap", tau.animate.set_value(2.7), run_time=2.5)
         gl = txt(f"slope = {slope_step:.2f}", 26, WHITE).next_to(axL, DOWN, buff=0.7)
         gr = txt(f"slope = {slope_ramp:.2f}", 26, C_RAMP).next_to(axR, DOWN, buff=0.7)
-        self.say(f"At tau = {T0} the step's slope is exactly zero. The ramp's slope is {slope_ramp:.2f}: a direction to follow.",
+        assert T0 == 2.4 and f"{slope_ramp:.2f}" == "-1.39"    # spoken below
+        self.say("At tau equals two point four, the step's slope is exactly zero. The ramp's slope there is minus "
+                 "one point three nine, and that gives us a direction to walk. So a ramp is just a step that "
+                 "tilts, and that tilt is what makes its location learnable.",
                  FadeIn(gl), FadeIn(gr))
-        self.hold(0.6)
-        self.say("A ramp is a step with a slope. That makes the locations learnable, and it seeds piecewise-linear models.",
-                 Indicate(tr, color=C_RAMP), Indicate(gr, color=C_RAMP))
+        self.cue("So a ramp is just", Indicate(tr, color=C_RAMP), Indicate(gr, color=C_RAMP))
         self.hold(0.6)
         self.clear_stage()
 
@@ -194,18 +210,21 @@ class Ep01Samples(NarratedScene):
         d = dots(ax, XS, YS)
         smooth = polyline(ax, XS, YS, C_MODEL, 4)
         zig = polyline(ax, ZX, ZY, C_RAMP, 4)
-        self.say("There is a second catch: many different curves pass through exactly the same samples.",
+        self.say("And there's a second catch, which is that lots of different curves pass through exactly the "
+                 "same samples. Here's the obvious one, where we just connect them with straight lines. And "
+                 "here's a strange one, which wanders off in between but still hits every single sample.",
                  Write(head), Create(ax), FadeIn(labels), FadeIn(d))
-        self.say("Here is a plain piecewise-linear curve that simply connects the dots.", Create(smooth, run_time=1.8))
-        self.say("And here is a very different piecewise-linear curve that detours between the dots but still hits every one.",
-                 Create(zig, run_time=2.2))
-        self.say("Both have zero error on the training set, so the samples alone cannot tell us which one is right.")
+        self.cue("Here's the obvious one", Create(smooth, run_time=1.8))
+        self.cue("here's a strange one", Create(zig, run_time=2.2))
         self.hold(0.4)
         target = DashedVMobject(plot(ax, f, C_TARGET, [XS[0], XS[-1]], width=3), num_dashes=50)
         e1 = txt(f"plain: mean error {ERR_SMOOTH:.2f}", 24, C_MODEL)
         e2 = txt(f"detour: mean error {ERR_ZIG:.2f}", 24, C_RAMP)
         VGroup(e1, e2).arrange(DOWN, aligned_edge=LEFT, buff=0.15).to_corner(UR, buff=0.5).shift(DOWN * 0.1)
-        self.say("The hidden f, drawn dashed, was smooth. Preferring smoothness is an inductive bias: a bet, which we must test on fresh data.",
-                 Create(target, run_time=1.6), FadeIn(e1), FadeIn(e2))
+        self.say("Both of them get zero error on the training set, so the samples alone can't tell us which one "
+                 "to trust. The hidden target function, drawn dashed, turns out to be smooth. But betting on "
+                 "smooth curves is an inductive bias, and only fresh data can check that bet.",
+                 Indicate(smooth, color=YELLOW_D, scale_factor=1.0), Indicate(zig, color=YELLOW_D, scale_factor=1.0))
+        self.cue("The hidden target function", Create(target, run_time=1.6), FadeIn(e1), FadeIn(e2))
         self.hold(0.6)
         self.clear_stage()

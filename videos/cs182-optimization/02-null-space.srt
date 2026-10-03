@@ -1,64 +1,112 @@
 1
-00:00:06,200 --> 00:00:12,600
-Usually more data than parameters gives one answer. Not here: one equation, two unknowns.
+00:00:06,200 --> 00:00:09,042
+What if there are more unknowns than equations?
 
 2
-00:00:12,600 --> 00:00:18,466
-Every point on this line fits perfectly, with loss zero. Which one will gradient descent pick?
+00:00:09,042 --> 00:00:12,972
+Let's take the smallest case, with one equation and two unknowns.
 
 3
-00:00:18,466 --> 00:00:26,466
-The row of X is (1, 2). Moving along the null direction, (2, minus 1), changes no prediction.
+00:00:12,972 --> 00:00:17,991
+Every point on this line fits the data perfectly, so the loss is zero all along it,
 
 4
-00:00:26,466 --> 00:00:33,800
-The two are perpendicular and span the whole space: the fundamental theorem of linear algebra.
+00:00:17,991 --> 00:00:22,033
+and the question is which of them gradient descent will pick.
 
 5
-00:00:33,800 --> 00:00:40,233
-The gradient step is X transpose times the residual, so every update lies in the row space.
+00:00:22,033 --> 00:00:24,979
+Here's the row of X, which points along one, two.
 
 6
-00:00:40,233 --> 00:00:45,966
-So the null-space part of the starting point is preserved forever; only the row space changes.
+00:00:24,979 --> 00:00:30,872
+The null direction runs along the line instead, and sliding that way changes no prediction at all.
 
 7
-00:00:45,966 --> 00:00:52,666
-Start at zero: the iterates walk along (1, 2) and stop where they meet the solution line.
+00:00:30,872 --> 00:00:35,622
+These two directions are perpendicular, and together they fill the whole plane,
 
 8
-00:00:52,666 --> 00:01:00,800
-That is the minimum-norm solution, X transpose (X X transpose) inverse y. Here it is (1, 2).
+00:00:35,622 --> 00:00:40,366
+which is the fundamental theorem of linear algebra.
 
 9
-00:01:00,800 --> 00:01:13,466
-Why closest? Any other solution is w min plus a perpendicular null vector: at (5, 0), 25 = 5 + 20.
+00:00:40,366 --> 00:00:42,229
+Now look at the gradient step.
 
 10
-00:01:13,466 --> 00:01:22,100
-Start elsewhere, at (3, minus 2). The path is still parallel to (1, 2) but lands on another solution.
+00:00:42,229 --> 00:00:46,762
+It's X transpose times something, so every update lives in the row space.
 
 11
-00:01:22,100 --> 00:01:30,000
-The null part of the start, (3.2, minus 1.6), stayed frozen. The limit is w min plus that part.
+00:00:46,762 --> 00:00:52,400
+That means the null-space part of w never moves, and only the row-space part changes.
 
 12
-00:01:30,000 --> 00:01:37,000
-So gradient descent finds the solution closest to where it began. Only a zero start gives minimum norm.
+00:00:52,400 --> 00:00:54,320
+So let's start at zero and watch.
 
 13
-00:01:37,000 --> 00:01:44,633
-Here initialization matters: the loss cannot tell the solutions apart, so the start decides.
+00:00:54,320 --> 00:00:59,559
+We walk straight along the row direction, and we stop the moment we hit the solution line.
 
 14
-00:01:44,633 --> 00:01:51,200
-In higher dimensions it is the same. In the SVD basis, each weight coordinate evolves on its own.
+00:00:59,559 --> 00:01:07,033
+That stopping point is special, since it's the minimum-norm solution, and in this problem it's the point one, two.
 
 15
-00:01:51,200 --> 00:01:59,033
-Two coordinates converge to their targets, at rates 0.4 and 0.8. The null coordinate never moves.
+00:01:07,033 --> 00:01:08,785
+Why is that one the smallest?
 
 16
-00:01:59,033 --> 00:02:06,433
-Real networks have far more parameters than data: the optimizer and its start pick the solution.
+00:01:08,785 --> 00:01:14,644
+Every other solution is this one with a perpendicular null piece added, so it can only be longer.
+
+17
+00:01:14,644 --> 00:01:23,466
+Take the solution at five, zero, where the squared length is twenty-five, which is five plus twenty.
+
+18
+00:01:23,466 --> 00:01:26,839
+Now start somewhere else, at the point three, minus two.
+
+19
+00:01:26,839 --> 00:01:32,200
+We travel in the same direction as before, but this time we land on a different solution.
+
+20
+00:01:32,200 --> 00:01:39,200
+The null part of the start just rode along, frozen, so we end up at the minimum-norm solution plus that piece.
+
+21
+00:01:39,200 --> 00:01:46,070
+So gradient descent lands on the solution nearest its start, and starting at zero is what gives the minimum-norm one.
+
+22
+00:01:46,070 --> 00:01:53,433
+The loss can't tell these solutions apart, so here the starting point is what makes the choice.
+
+23
+00:01:53,433 --> 00:01:56,286
+With more dimensions the story is the same.
+
+24
+00:01:56,286 --> 00:02:03,054
+Here are two equations and three unknowns, and in the SVD basis each coordinate of w moves on its own,
+
+25
+00:02:03,054 --> 00:02:07,300
+so let's just watch them.
+
+26
+00:02:07,300 --> 00:02:12,738
+Two of the coordinates settle, keeping forty percent and eighty percent of their error per step,
+
+27
+00:02:12,738 --> 00:02:14,551
+while the null one never budges.
+
+28
+00:02:14,551 --> 00:02:22,833
+Real networks have far more parameters than data, so the optimizer and its starting point are what pick the answer.
 

@@ -118,6 +118,7 @@ def marker(ax, p, y, color=C_DATA, s=0.15):
 
 class Ep02Alchemy(NarratedScene):
     series = SERIES
+    SCENES = ["timeline", "limit", "pile", "learning_rate", "course", "reading"]
 
     def construct(self):
         self.title_card()
@@ -128,10 +129,10 @@ class Ep02Alchemy(NarratedScene):
         self.course()
         self.reading()
         self.end_card(
-            ["Learned circuits are an old idea: 55 years from perceptron to AlexNet",
-             "One element draws one line; stacked elements do more",
-             "Alchemy stirs the pile; engineering explains the knob",
-             "This course: design, visualize and understand deep networks"],
+            [f"Learned circuits are old: {GAP_PA} years from perceptron to AlexNet",
+             "One element draws one line. Stack two and you get exclusive or",
+             "Alchemy stirs the pile. Engineering knows why the knob works",
+             "This course: design deep networks, look inside, know why they work"],
         )
 
     # ---------------------------------------------------------------- 1. timeline
@@ -174,23 +175,37 @@ class Ep02Alchemy(NarratedScene):
         span = Rectangle(width=0.14, height=year_y(1990) - year_y(2006), fill_color=GREY_C, fill_opacity=0.5, stroke_width=0
                          ).move_to([ax_x + 0.12, (year_y(1990) + year_y(2006)) / 2, 0])
 
-        def show(*ix, cap, extra=()):
-            self.say(cap, *[FadeIn(items[i], shift=RIGHT * 0.2) for i in ix], *extra)
+        def show(*ix):
+            return [FadeIn(items[i], shift=RIGHT * 0.2) for i in ix]
 
-        self.say("The idea is old. In 1950, Turing describes learning as a path to machine intelligence.",
-                 Write(head), Create(axis), FadeIn(ticks), FadeIn(items[0], shift=RIGHT * 0.2))
-        show(1, cap="In 1957 Rosenblatt proposes the perceptron. In the same years, L M S appears in adaptive signal processing.")
-        show(2, cap="In 1969, Minsky and Papert publish a book on the fundamental limitations of neural networks.")
-        show(3, 4, cap="In 1986, backpropagation becomes a practical way to train deep networks, and in 1989 LeNet reads handwriting.")
-        show(5, cap="Then attention shifted to probabilistic methods and convex optimization, mostly on shallow models.",
-             extra=(FadeIn(span),))
-        show(6, 7, cap="Around 2006 deep networks regain attention; in 2012 Krizhevsky's AlexNet beats all methods on ImageNet.")
+        assert [e[1] for e in events] == [1950, 1957, 1969, 1986, 1989, 1998, 2006, 2012]      # years spoken below
+        self.say("Is deep learning really as new as it feels? Back in nineteen fifty, Turing was already "
+                 "picturing machines that learn their way to intelligence. In nineteen fifty-seven, Rosenblatt "
+                 "built the perceptron, and around the same time the least mean squares rule showed up in "
+                 "adaptive signal processing.",
+                 Write(head), Create(axis), FadeIn(ticks))
+        self.cue("Back in nineteen fifty", *show(0))
+        self.cue("In nineteen fifty-seven", *show(1))
+        self.say("Then in nineteen sixty-nine, Minsky and Papert wrote a whole book about what these networks "
+                 "can't do. In nineteen eighty-six, backpropagation made deep networks trainable, and by "
+                 "nineteen eighty-nine a network called LeNet was reading handwriting.",
+                 *show(2))
+        self.cue("In nineteen eighty-six", *show(3))
+        self.cue("nineteen eighty-nine", *show(4))
+        self.say("After that the field drifted toward probabilistic and convex methods, with mostly shallow "
+                 "models. Around two thousand six, deep networks started creeping back. And in "
+                 "twenty twelve, Krizhevsky's AlexNet beat every other method on ImageNet.",
+                 *show(5), FadeIn(span))
+        self.cue("Around two thousand six", *show(6))
+        self.cue("And in twenty twelve", *show(7))
         x_arrow = 6.0
         y57, y12 = year_y(1957), year_y(2012)
         dbl = DoubleArrow([x_arrow, y57, 0], [x_arrow, y12, 0], buff=0, color=YELLOW_D, stroke_width=3, tip_length=0.2)
         lab = txt(f"{GAP_PA} years", 26, YELLOW_D).rotate(PI / 2).move_to([x_arrow + 0.45, (y57 + y12) / 2, 0])
         assert lab.get_right()[0] < 7.0
-        self.say(f"From the perceptron to AlexNet is {GAP_PA} years. The idea of a learned circuit is old; the breakthrough is recent.",
+        assert GAP_PA == 55                                   # spoken: "fifty-five years"
+        self.say("From the perceptron to AlexNet is fifty-five years. So learned circuits are an old idea, and "
+                 "what's new is that they finally work this well.",
                  Create(dbl), FadeIn(lab))
         self.hold(0.6)
         self.clear_stage()
@@ -206,8 +221,6 @@ class Ep02Alchemy(NarratedScene):
                         for k, p in enumerate(XOR_PTS)])
         rule = txt("+1 exactly when one input is on", 24, GREY_A).next_to(ax, RIGHT, buff=0.5).align_to(ax, UP).shift(DOWN * 0.3)
         assert rule.get_right()[0] < 7.0
-        self.say("What limit was 1969 about? Take four points labeled exclusive or: plus one when exactly one input is on.",
-                 Write(head), Create(ax), LaggedStart(*[FadeIn(p) for p in pts], lag_ratio=0.15), FadeIn(tags), FadeIn(rule))
 
         def ln(i):
             w, b = LINES[i]
@@ -221,10 +234,14 @@ class Ep02Alchemy(NarratedScene):
         verdict = VGroup(txt("best any single line can do:", 24, GREY_B), txt("3 of 4 correct", 34, C_LOSS)
                          ).arrange(DOWN, aligned_edge=LEFT, buff=0.2).next_to(rule, DOWN, buff=0.6).align_to(rule, LEFT)
         assert verdict.get_right()[0] < 7.0
-        self.say("One element draws one line. Try every line: some get three points right, none gets all four.",
-                 Create(cur), FadeIn(rg), FadeIn(verdict))
-        for i in range(1, 4):
-            self.play(Transform(cur, ln(i)), Transform(rg, ring(i)), run_time=0.9)
+        self.say("So what was the complaint back in nineteen sixty-nine? Take four points labeled by exclusive "
+                 "or, which is plus one when exactly one input is on. One element can only draw one line. Try "
+                 "any line you like, and you can get three of the points right, but never all four.",
+                 Write(head), Create(ax), LaggedStart(*[FadeIn(p) for p in pts], lag_ratio=0.15), FadeIn(tags), FadeIn(rule))
+        self.cue("One element can only draw", Create(cur), FadeIn(rg))
+        self.cue("Try any line you like", Transform(cur, ln(1)), Transform(rg, ring(1)), run_time=0.9)
+        self.play(Transform(cur, ln(2)), Transform(rg, ring(2)), run_time=0.9)
+        self.play(Transform(cur, ln(3)), Transform(rg, ring(3)), FadeIn(verdict), run_time=0.9)
         self.hold(0.3)
         self.clear_stage()
         # two ramps and a readout
@@ -248,11 +265,17 @@ class Ep02Alchemy(NarratedScene):
                      mts([r"h_2=\mathrm{ReLU}(x_1+x_2-1)"], 0.7, {0: C_RAMP}),
                      mts([r"y=h_1-2\,h_2"], 0.7, {0: C_MODEL})).arrange(DOWN, aligned_edge=LEFT, buff=0.2).move_to([3.7, -1.0, 0])
         assert eqs.get_right()[0] < 6.9 and eqs.get_bottom()[1] > -2.4 and net.get_right()[0] < 6.9
-        self.say("Stack two ramps on x1 plus x2, the second bending at 1, and read out first minus twice the second.",
-                 Write(head), FadeIn(net), Write(eqs))
-        self.say("Compute the four rows: y comes out 0, 0, 1, 1. That is exclusive or, exactly, with no line in sight.",
-                 FadeIn(hd), LaggedStart(*[FadeIn(r) for r in rows], lag_ratio=0.4))
-        self.say("One element cannot, a stack can. Making stacks trainable is what backpropagation did in 1986.",
+        assert [int(t[4]) for t in TABLE] == [0, 0, 1, 1]     # spoken: "zero, zero, one, one"
+        self.say("But stack two elements and the problem goes away. Put two ramps on the sum of the inputs, "
+                 "where the second one only switches on once the sum passes one. Then take the first ramp "
+                 "minus twice the second. Run the four rows through, and out comes zero, zero, one, one, which "
+                 "is exactly exclusive or.",
+                 Write(head), FadeIn(net))
+        self.cue("Put two ramps", Write(eqs[0]), Write(eqs[1]))
+        self.cue("Then take the first ramp", Write(eqs[2]))
+        self.cue("Run the four rows", FadeIn(hd), LaggedStart(*[FadeIn(r) for r in rows], lag_ratio=0.4))
+        self.say("So one element can't do it, but a stack can. And making stacks trainable is exactly what "
+                 "backpropagation did in nineteen eighty-six.",
                  *[Indicate(r[4], color=GREEN_C) for r in rows])
         self.hold(0.6)
         self.clear_stage()
@@ -279,13 +302,20 @@ class Ep02Alchemy(NarratedScene):
         stir = CurvedArrow([-0.9, 0.75, 0], [0.5, 0.75, 0], angle=-PI * 0.8, color=YELLOW_D, stroke_width=4)
         stirt = txt("stir until the answers look right", 26, YELLOW_D).move_to([0, 2.3, 0])
         assert stirt.get_right()[0] < 6.9 and pile.get_bottom()[1] > -2.4 and dlab.get_left()[0] > -6.9
-        self.say("Is deep learning engineering, or alchemy? The lecture puts that question next to a famous xkcd comic.",
-                 Write(head), speak="Is deep learning engineering, or alchemy? The lecture puts that question next to a famous X K C D comic.")
-        self.say("The comic's machine learning system: pour the data into a big pile of linear algebra, collect the answers on the other side.",
-                 FadeIn(funnel), FadeIn(dlab), Create(a_in), FadeIn(pile, shift=UP * 0.2), Create(a_out), FadeIn(crate))
-        self.say("What if the answers are wrong? Just stir the pile until they start looking right. That is the alchemist's method.",
+        self.say("Now for an awkward question, which is whether deep learning is engineering or alchemy. "
+                 "There's a famous xkcd comic about exactly this. Its machine learning system is a big pile of "
+                 "linear algebra, where you pour data in on one side and collect answers on the other.",
+                 Write(head),
+                 speak="Now for an awkward question, which is whether deep learning is engineering or alchemy. "
+                       "There's a famous X K C D comic about exactly this. Its machine learning system is a big "
+                       "pile of linear algebra, where you pour data in on one side and collect answers on the other.")
+        self.cue("Its machine learning system", FadeIn(pile, shift=UP * 0.2))
+        self.cue("where you pour data in", FadeIn(funnel), FadeIn(dlab), Create(a_in))
+        self.cue("collect answers", Create(a_out), FadeIn(crate))
+        self.say("And if the answers come out wrong, you just stir the pile until they start looking right. "
+                 "That's what alchemy looks like.",
                  FadeIn(paddle), Create(stir), Write(stirt))
-        self.play(Wiggle(paddle, run_time=1.6))
+        self.cue("That's what alchemy", Wiggle(paddle, run_time=1.6))
         self.hold(0.4)
         self.clear_stage()
 
@@ -303,7 +333,8 @@ class Ep02Alchemy(NarratedScene):
         dots_ = VGroup(*[Dot(ax.c2p(0, 1), radius=0.08, color=WHITE)])
         eq = mts([r"L(w)=2w^2,\quad w\leftarrow w-", r"\eta", r"L'(w)=(1-4", r"\eta", r")\,w"], 0.62, {1: C_LR, 3: C_LR}).move_to([3.5, 2.55, 0])
         assert eq.get_right()[0] < 6.95 and eq.get_left()[0] > 0.0, (eq.get_left()[0], eq.get_right()[0])
-        self.say("The learning rate decides whether training works. Try a bowl, starting from w equals 1.",
+        self.say("So what would engineering look like instead of stirring? Take a single knob, the learning "
+                 "rate, and run gradient descent on a simple bowl, starting from w equals one.",
                  Write(head), Create(ax), FadeIn(ticks), FadeIn(xl), FadeIn(yl), Write(eq), FadeIn(dots_))
         panel = VGroup()
         for i, e in enumerate(ETAS):
@@ -312,20 +343,25 @@ class Ep02Alchemy(NarratedScene):
             panel.add(row)
         panel.arrange(DOWN, aligned_edge=LEFT, buff=0.3).move_to([3.4, 0.35, 0]).shift(DOWN * 0.15)
         assert panel.get_right()[0] < 6.95 and panel.get_left()[0] > 0.2, (panel.get_left()[0], panel.get_right()[0])
-        self.say("Try four learning rates. 0.1 and 0.4 settle to zero, 0.5 bounces forever, and 0.6 blows up.",
-                 LaggedStart(*[Create(curves[e]) for e in ETAS], lag_ratio=0.35, run_time=3.0), FadeIn(panel, lag_ratio=0.3))
         up = Arrow(ax.c2p(3.0, -2.2), ax.c2p(3.4, -2.95), buff=0, color=C_LOSS, stroke_width=4)
         blow = txt(f"w = {TRAJ[0.6][10]:.0f} at step 10", 22, C_LOSS).next_to(up, RIGHT, buff=0.1)
         assert blow.get_right()[0] < 0.5 and blow.get_bottom()[1] > -2.5
-        self.play(FadeIn(up), FadeIn(blow))
+        assert ETAS == [0.1, 0.4, 0.5, 0.6]                   # spoken below
+        self.say("Here are four settings of that knob. At zero point one and at zero point four, w settles down "
+                 "to zero. At zero point five it bounces back and forth forever, and at zero point six it "
+                 "blows up.",
+                 FadeIn(panel[0]), FadeIn(panel[1]), Create(curves[0.1], run_time=1.5), Create(curves[0.4], run_time=1.5))
+        self.cue("At zero point five", FadeIn(panel[2]), Create(curves[0.5], run_time=1.2))
+        self.cue("at zero point six", FadeIn(panel[3]), Create(curves[0.6], run_time=1.0), FadeIn(up), FadeIn(blow))
         rule = mts([r"\text{settles iff }", r"\eta", r"<\tfrac{2}{4}=0.5"], 0.8, {1: C_LR}
                    ).move_to([3.4, -1.85, 0]).align_to(panel, LEFT)
         assert rule.get_right()[0] < 6.95 and rule.get_bottom()[1] > -2.45
-        self.say("No magic: each step multiplies w by one minus four eta. It shrinks only while eta stays below two over four, which is 0.5.",
+        assert ETA_MAX == 0.5
+        self.say("The reason is that each step multiplies w by one minus four eta, and that factor only shrinks "
+                 "w while eta stays under one half. That's engineering, not stirring. It's a knob with a reason "
+                 "behind it, so you know where it works and where it breaks.",
                  Write(rule), Indicate(curves[0.5], color=YELLOW_D))
-        self.hold(0.5)
-        self.say("That is engineering: a knob with a reason, which predicts where it works and where it fails.",
-                 Indicate(rule, color=YELLOW_D))
+        self.cue("That's engineering", Indicate(rule, color=YELLOW_D))
         self.hold(0.5)
         self.clear_stage()
 
@@ -340,17 +376,21 @@ class Ep02Alchemy(NarratedScene):
         bots = VGroup(*[box_label(t, GREY_B, w=4.1, h=1.2, font_size=22).move_to([x, -0.9, 0]) for t, x in zip(bot_t, xs)])
         arrows = VGroup(*[Arrow(b.get_top(), t.get_bottom(), buff=0.12, color=GREY_B, stroke_width=3) for b, t in zip(bots, tops)])
         assert tops.get_right()[0] < 6.9 and bots.get_left()[0] > -6.9
-        self.say("Three earlier courses feed this one, and they line up with the definition.",
+        self.say("This course sits on top of three earlier ones, and they line up with the three parts of the "
+                 "definition. Machine learning brings the patterns, optimization brings the circuits and their "
+                 "knobs, and probability tells us about new data.",
                  Write(head), LaggedStart(*[FadeIn(t, shift=DOWN * 0.2) for t in tops], lag_ratio=0.25), FadeIn(bots, lag_ratio=0.25), Create(arrows))
-        self.say("Machine learning brings the patterns, optimization the circuits and knobs, probability the new data.",
-                 *[Indicate(a, color=YELLOW_D) for a in arrows])
+        self.cue("Machine learning brings", Indicate(arrows[0], color=YELLOW_D), Indicate(bots[0], color=YELLOW_D, scale_factor=1.05))
+        self.cue("optimization brings", Indicate(arrows[1], color=YELLOW_D), Indicate(bots[1], color=YELLOW_D, scale_factor=1.05))
+        self.cue("probability tells us", Indicate(arrows[2], color=YELLOW_D), Indicate(bots[2], color=YELLOW_D, scale_factor=1.05))
         self.hold(0.4)
         self.clear_stage()
         goals = VGroup(*[box_label(t, c, w=3.8, h=1.0, font_size=32) for t, c in
                          [("designing", C_MODEL), ("visualizing", C_RAMP), ("understanding", C_NEW)]]).arrange(RIGHT, buff=0.5).move_to([0, 1.2, 0])
         sub = txt("deep neural networks", 34, WHITE).move_to([0, -0.35, 0])
         assert goals.get_right()[0] < 6.9
-        self.say("So the course is about designing, visualizing and understanding deep networks, and knowing why they work.",
+        self.say("So that's the plan for the course. We'll design deep networks, look inside them, and "
+                 "understand why they work.",
                  FadeIn(goals, lag_ratio=0.3), FadeIn(sub))
         self.hold(0.5)
         self.clear_stage()
@@ -368,8 +408,12 @@ class Ep02Alchemy(NarratedScene):
         q2 = txt("Set the tools' capabilities aside: what are the goals\nand values of the research itself?", 26, GREY_A, line_spacing=0.9)
         qs = VGroup(q1, q2).arrange(DOWN, aligned_edge=LEFT, buff=0.7).next_to(card, RIGHT, buff=0.5)
         assert qs.get_right()[0] < 7.0, qs.get_right()[0]
-        self.say("A companion reading: Terence Tao's essay, Mathematics in the Age of AI.",
-                 Write(head), FadeIn(card), FadeIn(lines), FadeIn(q1))
-        self.say("It sets aside what AI tools can do and asks what the goals and values of a field are. We can ask the same of deep learning.",
-                 FadeIn(q2))
+        self.say("There's one last thing to read alongside this, which is Terence Tao's essay, Mathematics in "
+                 "the Age of AI. He sets aside what the tools can do, and asks what a field is actually for. "
+                 "That's a question worth asking of deep learning too.",
+                 Write(head), FadeIn(card), FadeIn(lines), FadeIn(q1),
+                 speak="There's one last thing to read alongside this, which is Terence Tao's essay, Mathematics in "
+                       "the Age of A I. He sets aside what the tools can do, and asks what a field is actually "
+                       "for. That's a question worth asking of deep learning too.")
+        self.cue("He sets aside", FadeIn(q2))
         self.hold(0.6)

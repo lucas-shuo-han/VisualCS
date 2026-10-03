@@ -20,6 +20,7 @@ UA, SA, VAt = np.linalg.svd(AM)
 th = np.linspace(0, 2 * np.pi, 20001)
 lens = np.linalg.norm(AM @ np.stack([np.cos(th), np.sin(th)]), axis=0)
 assert abs(lens.max() - SA[0]) < 1e-6 and abs(lens.min() - SA[1]) < 1e-6
+assert [f"{v:.2f}" for v in SA] == ["2.14", "0.69"]            # spoken in spectral_norm()
 
 # (c) steepest descent in the spectral-norm ball
 rng = np.random.RandomState(0)
@@ -38,6 +39,9 @@ assert BEST < NUC and FRO < BEST < NUC          # random feasible matrices never
 assert np.linalg.norm(GG / FRO, 2) < 1            # the Frobenius step is feasible in the spectral ball, but inside it
 COND = float(S[0] / S[-1])
 assert abs(S[0] - 3.5379) < 1e-3 and abs(NUC - 6.4557) < 1e-3 and abs(FRO - 4.2102) < 1e-3
+# the numbers as they are spoken in solve() and flatten()
+assert [f"{v:.2f}" for v in S] == ["3.54", "2.15", "0.77"]
+assert (f"{NUC:.2f}", f"{FRO:.2f}", f"{BEST:.2f}", f"{COND:.1f}") == ("6.46", "4.21", "4.80", "4.6")
 # Shampoo-style preconditioning (no accumulation) gives the same U V^T
 
 
@@ -59,6 +63,7 @@ def mat_tex(M, fmt="{:g}"):
 
 class Ep02Spectral(NarratedScene):
     series = SERIES
+    SCENES = ["matrices", "spectral_norm", "solve", "flatten"]
 
     def construct(self):
         self.title_card()
@@ -67,10 +72,10 @@ class Ep02Spectral(NarratedScene):
         self.solve()
         self.flatten()
         self.end_card(
-            ["Weights live in matrices, so measure a step ΔW as a matrix",
-             "The spectral norm is the largest singular value",
-             "Steepest descent in the spectral ball: minus eta times U Vᵀ",
-             "That flattens every singular value of the gradient to one (Shampoo)"],
+            ["Weights are matrices, so measure a step as a matrix too",
+             "Spectral norm: the most a matrix can stretch a unit vector",
+             "Steepest descent in the spectral ball: minus eta times U V transpose",
+             "U V transpose keeps the gradient's directions and sets every singular value to one (Shampoo)"],
         )
 
     # ---------------------------------------------------------------- 1
@@ -82,21 +87,27 @@ class Ep02Spectral(NarratedScene):
             mts([r"\vec y=\mathrm{ReLU}\big[\vec b_k+W_k\,\vec h_k\big]"], 0.8),
         ).arrange(DOWN, buff=0.3).move_to([-2.6, 1.3, 0])
         box = SurroundingRectangle(eqs, color=C_MODEL, buff=0.25, stroke_width=2)
-        self.say("Until now we treated the parameters theta as one long vector. But network parameters live in matrices, one per layer.",
-                 Write(head), LaggedStart(*[Write(e) for e in eqs], lag_ratio=0.4))
-        self.say("Recall from Xavier initialization: scaling problems come from the weight matrices.", Create(box))
-        self.say("So let's measure the change ΔW in weight-matrix space instead.")
+        self.say("So far we've treated theta as one long vector. But a network's weights come as matrices, one for "
+                 "each layer. And every scaling problem we met in Xavier initialization came from those weight "
+                 "matrices. So let's measure a step as what it really is, which is a matrix.")
+        self.play(Write(head), LaggedStart(*[Write(e) for e in eqs], lag_ratio=0.4))
+        self.cue("And every scaling problem", Create(box))
+        self.hold(0.2)
         # inner product of matrices
         self.play(FadeOut(eqs), FadeOut(box))
         gm = mt(r"G=" + mat_tex(GM), 0.9)
         dm = mt(r"\Delta W=" + mat_tex(DM), 0.9)
         mats = VGroup(gm, dm).arrange(RIGHT, buff=1.0).move_to([0, 1.5, 0])
         assert mats.width < 12
-        self.say("The matching inner product multiplies entries in the same position and adds them up.", FadeIn(mats))
         prods = mt(r"\langle G,\Delta W\rangle_F=2\cdot1+(-1)\cdot0+0\cdot2+1\cdot3=5", 0.85).move_to([0, 0.0, 0])
         tr = mt(r"=\mathrm{trace}(G^{\top}\Delta W)=\mathrm{trace}" + mat_tex(GM.T @ DM) + r"=5", 0.85).move_to([0, -1.2, 0])
         assert tr.width < 13
-        self.say("That number is the trace of G transpose times ΔW. Here both ways give five.", Write(prods), Write(tr))
+        self.say("First we need an inner product for matrices. Multiply the entries in matching spots and add "
+                 "everything up, which here gives five. That's the same number you get from the trace of G transpose "
+                 "times the step.")
+        self.play(FadeIn(mats))
+        self.cue("Multiply the entries", Write(prods))
+        self.cue("That's the same number", Write(tr))
         self.hold(0.5)
         self.clear_stage()
 
@@ -109,23 +120,28 @@ class Ep02Spectral(NarratedScene):
         circ = Circle(radius=1.0, color=GREY_A, stroke_width=4).move_to(ctr)
         clab = txt("unit circle ‖x‖₂ = 1", 24, GREY_A).next_to(circ, DOWN, buff=1.35).shift(LEFT * 0.0)
         eqA = mt(r"A=" + mat_tex(AM), 0.85).move_to([2.8, 2.3, 0])
-        self.say("Here is a 2 by 2 matrix A. Feed it every input of length one, the unit circle.",
-                 Write(head), Create(ax), Create(circ), Write(eqA))
         pts = [ctr + np.array([*(AM @ np.array([np.cos(t), np.sin(t)])), 0.0]) for t in th[::100]]
         ell = VMobject(stroke_color=C_MODEL, stroke_width=4).set_points_as_corners(pts + [pts[0]])
-        self.say("It maps the circle to an ellipse.", ReplacementTransform(circ.copy(), ell), run_time=2.0)
+        self.say("How big is a matrix? Take this two by two matrix, and feed it every input of length one, which is "
+                 "the whole unit circle. What comes out the other side is an ellipse.")
+        self.play(Write(head), Create(ax), Create(circ), Write(eqA))
+        self.cue("What comes out", ReplacementTransform(circ.copy(), ell), run_time=2.0)
         s1 = Arrow(ctr, ctr + np.array([*(SA[0] * UA[:, 0]), 0.0]), buff=0, color=C_SV, stroke_width=6, max_tip_length_to_length_ratio=0.15)
         s2 = Arrow(ctr, ctr + np.array([*(SA[1] * UA[:, 1]), 0.0]), buff=0, color=C_SV, stroke_width=6, max_tip_length_to_length_ratio=0.25)
         assert (ctr + np.array([*(SA[0] * UA[:, 0]), 0.0]))[1] < 2.6
         l1 = txt(f"σ₁ = {SA[0]:.2f}", 26, C_SV).next_to(s1.get_end(), UR if UA[1, 0] > 0 else DL, buff=0.03)
         l2 = txt(f"σ₂ = {SA[1]:.2f}", 26, C_SV).next_to(s2.get_end(), UP, buff=0.25).shift(LEFT*0.5)
-        self.say(f"The longest stretch is the largest singular value, {SA[0]:.2f}. The shortest is {SA[1]:.2f}.",
-                 GrowArrow(s1), GrowArrow(s2), FadeIn(l1), FadeIn(l2))
         defn = VGroup(mt(r"\|A\|_2=\sigma_{\max}=\max_{\|\vec x\|_2=1}\|A\vec x\|_2", 0.8)).move_to([3.0, 0.9, 0])
         assert defn.get_right()[0] < 7.0 and defn.get_left()[0] > -0.4
-        self.say("The spectral norm of a matrix is exactly this: the largest amount it can stretch a unit vector.", Write(defn))
         bound = mt(r"\|\Delta W\|_2\le\eta", 0.9, ).move_to([3.0, -0.4, 0])
-        self.say("So a spectral-norm ball of radius eta contains every matrix that stretches no input by more than eta.", Write(bound))
+        self.say("Its longest stretch is two point one four, and that's the largest singular value. The shortest is "
+                 "zero point six nine. The biggest stretch is what we call the spectral norm, so it's the most the "
+                 "matrix can stretch a unit vector. That makes the spectral ball of radius eta the set of steps that "
+                 "stretch no input by more than eta.")
+        self.play(GrowArrow(s1), FadeIn(l1))
+        self.cue("The shortest is", GrowArrow(s2), FadeIn(l2))
+        self.cue("The biggest stretch", Write(defn))
+        self.cue("That makes the spectral ball", Write(bound))
         self.hold(0.5)
         self.clear_stage()
 
@@ -136,9 +152,11 @@ class Ep02Spectral(NarratedScene):
         goal.move_to([0, 2.3, 0])
         svd = mts([r"\nabla_W\mathcal L=U\Sigma V^{\top}=\sum_i", r"\sigma_i", r"\vec u_i\vec v_i^{\top}"], 0.85, {1: C_SV})
         svd.move_to([0, 1.3, 0])
-        self.say("Now the same question as before, for a matrix: the step of spectral size eta that lowers the linearized loss most.",
-                 Write(head), Write(goal))
-        self.say("Write the gradient's singular value decomposition: left vectors U, singular values sigma, right vectors V.", Write(svd))
+        self.say("Now ask our question for a matrix. Which step of spectral size eta lowers the linearized loss the "
+                 "most? To answer it, break the gradient into its singular value decomposition. That gives us output "
+                 "directions U, input directions V, and a stretch sigma for each pair.")
+        self.play(Write(head), Write(goal))
+        self.cue("To answer it", Write(svd))
         a = mts([r"\max_{\|B\|_2\le1}\mathrm{trace}(A^{\top}B)=\max_{\|B\|_2\le1}\sum_i", r"\sigma_i", r"\,\vec u_i^{\top}B\,\vec v_i"], 0.8, {1: C_SV})
         a.move_to([0, 0.15, 0])
         b = mts([r"\big|\vec u_i^{\top}B\,\vec v_i\big|\le\|B\|_2\le1", r"\ \Rightarrow\ \le\sum_i", r"\sigma_i"], 0.8, {2: C_SV})
@@ -146,10 +164,14 @@ class Ep02Spectral(NarratedScene):
         c = mts([r"\text{equality at }B=UV^{\top}", r"\ \Rightarrow\ ", r"\Delta W^{*}=-\eta\,UV^{\top}"], 0.85, {2: C_STEP})
         c.move_to([0, -1.85, 0])
         assert max(x.width for x in (a, b, c)) < 13.0 and c.get_bottom()[1] > -2.4
-        self.say("Trace is linear, so the inner product becomes a sum: each singular value times one small scalar.", Write(a))
-        self.say("Each scalar is at most one, because B cannot stretch anything past one. So the total is at most the sum of singular values.", Write(b))
-        self.say("And B equals U V transpose reaches that bound. So the best step is minus eta times U V transpose.", Write(c),
-                 Indicate(c[2], color=C_STEP))
+        self.say("The trace is linear, so the inner product splits into a sum, with each singular value times one "
+                 "number. Each of those numbers is at most one, because B can't stretch anything past one. So the sum "
+                 "of the sigmas is a ceiling, and choosing B to be U V transpose hits it exactly. That makes the best "
+                 "step minus eta times U V transpose.")
+        self.play(Write(a))
+        self.cue("Each of those numbers", Write(b))
+        self.cue("and choosing B", Write(c))
+        self.cue("That makes the best step", Indicate(c[2], color=C_STEP))
         self.hold(0.4)
         self.clear_stage()
         # numbers
@@ -168,12 +190,17 @@ class Ep02Spectral(NarratedScene):
             bars.add(VGroup(r, val, nm))
         assert max(b[0].get_top()[1] for b in bars) < 3.0 and min(b[2].get_bottom()[1] for b in bars) > -2.5
         sub = mt(r"\text{decrease }\ -\langle G,\Delta W\rangle/\eta\ \text{ for a }5\times3\text{ gradient}", 0.65).move_to([0, 2.7, 0])
-        self.say(f"Take a random 5 by 3 gradient. Its singular values are {S[0]:.2f}, {S[1]:.2f}, {S[2]:.2f}, which sum to {NUC:.2f}.",
-                 Write(head), FadeIn(sub), FadeIn(bars[2]))
-        self.say(f"Normalized G gains only {FRO:.2f}. Twenty thousand random steps never beat {BEST:.2f}.",
-                 FadeIn(bars[0]), FadeIn(bars[1]))
-        self.say("Only U V transpose reaches the full sum. The larger ball of allowed steps buys a larger predicted decrease.",
-                 Indicate(bars[2][0], color=C_STEP))
+        self.say("Let's check that with numbers. Take a random five by three gradient. Its singular values are three "
+                 "point five four, two point one five and zero point seven seven. Together they add up to six point "
+                 "four six.")
+        self.play(Write(head), FadeIn(sub))
+        self.cue("Together they add up", FadeIn(bars[2]))
+        self.say("The gradient step collects only four point two one. And twenty thousand random tries never get past "
+                 "four point eight. Only U V transpose collects the full sum. So a bigger ball of allowed steps buys "
+                 "us a bigger predicted drop.")
+        self.play(FadeIn(bars[0]))
+        self.cue("And twenty thousand", FadeIn(bars[1]))
+        self.cue("Only U V transpose", Indicate(bars[2][0], color=C_STEP))
         self.hold(0.4)
         self.clear_stage()
 
@@ -192,8 +219,6 @@ class Ep02Spectral(NarratedScene):
         for lb in labs:
             lb.scale(0.85)
         title = txt("gradient  G = U Σ Vᵀ", 26, C_GRAD).move_to([-3.6, 2.2, 0])
-        self.say("Look at what this step does to the gradient. The gradient has three very different singular values.",
-                 Write(head), FadeIn(title), FadeIn(old), FadeIn(labs))
         new = VGroup()
         for x in xs:
             r = Rectangle(width=0.8, height=1.0 * sc, stroke_color=C_STEP, fill_color=C_STEP, fill_opacity=0.3, stroke_width=3)
@@ -203,27 +228,36 @@ class Ep02Spectral(NarratedScene):
         title2 = txt("spectral step  U Vᵀ", 26, C_STEP).move_to([3.0, 2.2, 0])
         arr = Arrow([-1.2, 0.0, 0], [0.6, 0.0, 0], buff=0, color=GREY_B, stroke_width=4)
         assert new[-1].get_right()[0] < 7.0
-        self.say("U V transpose keeps the singular vectors, the directions, and replaces every singular value by one.",
-                 Create(arr), FadeIn(title2), *[TransformFromCopy(o, n) for o, n in zip(old, new)], FadeIn(nlabs))
+        self.say("Now look at what this step does. The gradient has three very different singular values. But U V "
+                 "transpose keeps the directions and throws the stretches away, so every singular value becomes one.")
+        self.play(Write(head), FadeIn(title), FadeIn(old), FadeIn(labs))
+        self.cue("keeps the directions", Create(arr), FadeIn(title2), *[TransformFromCopy(o, n) for o, n in zip(old, new)], FadeIn(nlabs))
         info = VGroup(txt(f"condition number  σ₁ / σ₃ = {COND:.1f}  →  1", 26, C_TEXT),
                       txt("every direction gets the same size of step", 26, GREY_A)
                       ).arrange(DOWN, aligned_edge=LEFT, buff=0.2).move_to([0, -1.85, 0])
         assert info.width < 12 and info.get_bottom()[1] > -2.5
-        self.say(f"Such a matrix is semi-orthogonal. Its condition number is one, versus {COND:.1f} for the gradient.", FadeIn(info[0]))
-        self.say("Uniform step in all directions, and no domination by the largest singular values.", FadeIn(info[1]))
+        self.say("A matrix like that is called semi-orthogonal. Its condition number drops from four point six all the "
+                 "way down to one. That means every direction gets the same size of step, and the big singular values "
+                 "don't get to hog it.")
+        self.play(FadeIn(info[0]))
+        self.cue("That means every direction", FadeIn(info[1]))
         self.hold(0.3)
         self.clear_stage()
         # shampoo
         head = self.heading("This is Shampoo")
         eq = mts([r"(GG^{\top})^{-1/4}\;G\;(G^{\top}G)^{-1/4}", r"=UV^{\top}"], 0.95, {1: C_STEP}).move_to([0, 1.5, 0])
-        self.say("This is the Shampoo optimizer of Gupta and coauthors, 2017 and 2018.", Write(head))
-        self.say("Shampoo scales the gradient on both sides by inverse fourth roots. That also gives U V transpose.",
-                 Write(eq))
+        self.say("And this isn't new. It's the Shampoo optimizer, from Gupta and coauthors in twenty seventeen and "
+                 "twenty eighteen. Shampoo squeezes the gradient from both sides with inverse fourth roots, and out "
+                 "comes U V transpose again.")
+        self.play(Write(head))
+        self.cue("Shampoo squeezes", Write(eq))
         award = VGroup(txt("A variant of Shampoo (Dahl et al., 2023)", 28, C_TEXT),
                        txt("won the AlgoPerf training-algorithm competition", 28, C_TEXT)
                        ).arrange(DOWN, buff=0.15).move_to([0, -0.3, 0])
-        self.say("A variant of Shampoo, by Dahl and coauthors in 2023, won AlgoPerf, a competition for training algorithms.", FadeIn(award))
         nxt = txt("But an SVD every step is expensive, and what should the step size be?", 28, GREY_A).move_to([0, -1.7, 0])
-        self.say("Two questions remain: how to avoid computing the SVD every step, and how to set the step size for layers of different shapes.",
-                 FadeIn(nxt))
+        self.say("A variant of it, from Dahl and coauthors, won the AlgoPerf contest in twenty twenty-three. There are "
+                 "two catches, though. An SVD at every step is expensive, and we still don't know what step size fits "
+                 "layers of different shapes.")
+        self.play(FadeIn(award))
+        self.cue("There are two catches", FadeIn(nxt))
         self.hold(0.6)

@@ -126,6 +126,7 @@ assert np.linalg.norm(_w) < 0.05
 
 class Ep07Damping(NarratedScene):
     series = SERIES
+    SCENES = ["recurrence", "stability", "regimes", "tuning", "nesterov"]
 
     def construct(self):
         self.title_card()
@@ -135,11 +136,11 @@ class Ep07Damping(NarratedScene):
         self.tuning()
         self.nesterov()
         self.end_card(
-            ["On one curvature mode, momentum is a two-state linear system with a single number s, eta times one minus beta times lambda",
-             "It is stable exactly when s lies between zero and two times one plus beta, a range wider by one plus beta over one minus beta",
-             "Inside the underdamped band every root has the same size, square root of beta, so slow modes and fast modes converge together",
-             "One learning rate must serve every eigenvalue: tuning is a minimax problem, and a tuned method pays square root of kappa",
-             "Nesterov momentum measures the gradient at the look-ahead point"],
+            ["On one mode, momentum hangs on one number: s, eta times one minus beta times lambda",
+             "It's stable for s between zero and two times one plus beta",
+             "In the underdamped band every mode converges at root beta, slow and fast alike",
+             "Tuned momentum pays root kappa, where gradient descent pays kappa",
+             "Nesterov measures the gradient at the look-ahead point"],
         )
 
     # ---------------------------------------------------------------- 1. recurrence
@@ -151,14 +152,16 @@ class Ep07Damping(NarratedScene):
         sec = mts([r"w_{t+1}=a\,w_t-\beta\,w_{t-1}", r",\qquad a=1+\beta-s", r",\quad s=\eta(1-\beta)\lambda"], 0.8, {1: C_LOSS, 2: C_ETA}).move_to([0, -0.6, 0])
         poly = mts([r"p(q)=q^2-a\,q+\beta", r",\qquad q_\pm=\frac{a\pm\sqrt{a^2-4\beta}}{2}"], 0.8, {}).move_to([0, -1.9, 0])
         assert_on_screen(loss, mat, sec, poly)
-        self.say("In the Hessian's eigenbasis a quadratic decouples, so study one scalar mode with curvature lambda.",
+        self.say("Momentum sometimes rings and sometimes creeps, and we'd like to know why. So let's zoom in on a "
+                 "single direction, with curvature lambda. Plug in its gradient, and the weight and the running "
+                 "average get tangled into a two-by-two system.",
                  Write(head), Write(loss))
-        self.say("Plugging in its gradient couples the weight and the average into a two-by-two linear system.",
-                 Write(mat))
-        self.say("Eliminating the average gives a second-order recurrence with one number: s, eta times one minus beta times lambda.",
+        self.cue("Plug in its gradient", Write(mat))
+        self.say("Untangle that system and everything hangs on one number, which is eta, times one minus beta, "
+                 "times lambda. The recurrence has two roots, and a step mixes their powers. So both roots "
+                 "have to stay inside the unit circle.",
                  Write(sec))
-        self.say("Its polynomial has two roots. The mode mixes their powers, so both must lie inside the unit circle.",
-                 Write(poly))
+        self.cue("The recurrence has two roots", Write(poly))
         self.hold(0.4)
         self.clear_stage()
 
@@ -169,16 +172,22 @@ class Ep07Damping(NarratedScene):
         p2 = mts([r"p(-1)=2(1+\beta)-s>0"], 0.8, {}).move_to([0.6, 2.3, 0])
         p3 = mts([r"|q_+q_-|=|\beta|<1"], 0.8, {}).move_to([4.7, 2.3, 0])
         assert_on_screen(p1, p2, p3)
-        self.say("The Schur test needs three checks: no root at plus one, none at minus one, and a root product below one.",
-                 Write(head), Write(p1), Write(p2), Write(p3))
-        res = mts([r"0<\eta(1-\beta)\lambda<2(1+\beta)"], 1.0, {}).move_to([0, 0.9, 0])
+        res =mts([r"0<\eta(1-\beta)\lambda<2(1+\beta)"], 1.0, {}).move_to([0, 0.9, 0])
         cmp_ = mts([r"\beta=0:\ \ 0<\eta\lambda<2", r"\qquad\beta=0.9:\ \ 0<\eta\lambda<38"], 0.8, {}).move_to([0, -0.4, 0])
         wide = mts([r"\text{stable range wider by }\frac{1+\beta}{1-\beta}=19\text{ for }\beta=0.9"], 0.8, {}).move_to([0, -1.5, 0])
         assert_on_screen(res, cmp_, wide)
-        self.say("So it is stable exactly for s between zero and two times one plus beta. At beta zero, eta lambda is below two.",
-                 Write(res), Write(cmp_))
-        self.say("With beta of 0.9, the stable learning-rate range is nineteen times wider. The real gain is speed, not range.",
-                 Write(wide))
+        self.say("Are both roots inside? The Schur test checks that with three conditions, which are no root at one, "
+                 "no root at minus one, and a product below one. Put together, they say that our one number has "
+                 "to lie between zero and two times one plus beta.",
+                 Write(head), Write(p1), run_time=1.0)
+        self.cue("no root at minus one", Write(p2))
+        self.cue("and a product", Write(p3))
+        self.cue("Put together", Write(res))
+        self.say("Without momentum, that means eta times lambda has to stay below two. With beta at zero point "
+                 "nine, the stable range is nineteen times wider. But the real win from momentum is speed, "
+                 "not range.",
+                 Write(cmp_))
+        self.cue("the stable range is", Write(wide))
         self.hold(0.5)
         self.clear_stage()
 
@@ -203,22 +212,25 @@ class Ep07Damping(NarratedScene):
         dots_ = always_redraw(lambda: VGroup(*[Dot(cax.c2p(r.real, r.imag), radius=0.09, color=C_ITER) for r in roots(tr_.get_value())]))
         mark = always_redraw(lambda: Dot(rax.c2p(tr_.get_value(), min(rate(tr_.get_value()), 1.2)), radius=0.09, color=C_ITER))
         assert_on_screen(VGroup(cax, unit, clab), VGroup(rax, rx, ry, rxl, ryl))
-        self.say("Fix beta at one half and slide s up from zero. The larger root's size sets the convergence rate.",
-                 Write(head), Create(cax), Create(unit), Create(inner), FadeIn(clab), Create(rax), FadeIn(rx), FadeIn(ry), FadeIn(rxl), FadeIn(ryl), Create(one), Create(rc),
-                 FadeIn(dots_), FadeIn(mark))
+        self.say("Now fix beta at one half and slide that number up from zero, while we watch the two roots on the "
+                 "left. The bigger root sets the speed, and its size is what the curve on the right plots.",
+                 Write(head), Create(cax), Create(unit), Create(inner), FadeIn(clab), FadeIn(dots_))
+        self.cue("The bigger root", Create(rax), FadeIn(rx), FadeIn(ry), FadeIn(rxl), FadeIn(ryl), Create(one), Create(rc), FadeIn(mark))
         b1 = txt("overdamped: two real roots, the slower one limits", 22, C_SOFT).move_to([2.6, -2.1, 0])
         assert_on_screen(b1)
-        self.say("Small s: both roots are real and positive, and the slow one sits near one. Smooth, but slow.",
-                 tr_.animate(run_time=0.3, rate_func=linear).set_value(S_LO * 0.5), FadeIn(b1))
         b2 = txt("critical: repeated root", 22, GREEN_C).move_to([2.6, -2.1, 0])
-        self.say("The roots meet and merge at s equal to one minus root beta, squared: the fastest non-oscillating decay.",
-                 tr_.animate(run_time=1.5).set_value(S_LO), FadeOut(b1), FadeIn(b2))
+        self.say("At the small end, both roots are real and positive, and the slow one sits close to one. That's "
+                 "smooth but slow, and it's called overdamped. Slide further and the two roots collide, which is "
+                 "critical damping, the fastest decay without any wobble.",
+                 tr_.animate(run_time=0.3, rate_func=linear).set_value(S_LO * 0.5), FadeIn(b1))
+        self.cue("Slide further", tr_.animate(run_time=1.5).set_value(S_LO), FadeOut(b1), FadeIn(b2))
         b3 = txt("underdamped: complex pair, both of size √β", 22, C_MOM).move_to([2.6, -2.1, 0])
-        self.say("Beyond that the roots split into a complex pair, both of size root beta. The rate stays flat: a plateau.",
-                 tr_.animate(run_time=4, rate_func=linear).set_value(S_HI), FadeOut(b2), FadeIn(b3))
         b4 = txt("negative roots: rings, then leaves the circle at s = 2(1+β)", 22, C_LOSS).move_to([2.6, -2.1, 0])
-        self.say("Near the far end both roots turn real and negative. At s equal to three one reaches minus one: unstable.",
-                 tr_.animate(run_time=2.5, rate_func=linear).set_value(3.1), FadeOut(b3), FadeIn(b4))
+        self.say("Past that point they split into a complex pair, both of size root beta, and the rate goes flat "
+                 "into a plateau. Near the far end they both turn real and negative. Then at three, one of them "
+                 "reaches minus one, and the mode goes unstable.",
+                 tr_.animate(run_time=4, rate_func=linear).set_value(S_HI), FadeOut(b2), FadeIn(b3))
+        self.cue("Near the far end", tr_.animate(run_time=2.5, rate_func=linear).set_value(3.1), FadeOut(b3), FadeIn(b4))
         self.hold(0.4)
         self.clear_stage()
         # time-domain examples
@@ -235,14 +247,19 @@ class Ep07Damping(NarratedScene):
         lc = txt(f"critical, s = {S_CRIT:.3f}", 22, GREEN_C).move_to([4.6, 0.8, 0])
         lu = txt(f"underdamped, s = {S_UNDER:g}", 22, C_MOM).move_to([4.6, 0.1, 0])
         assert_on_screen(VGroup(ax, xt, yt, xl), lo, lc, lu)
-        self.say("Start the mode at one and watch. Overdamped creeps toward zero; critical gets there quickly without crossing.",
-                 Write(head), Create(ax), FadeIn(xt), FadeIn(yt), FadeIn(xl), Create(zero), Create(co), FadeIn(lo), Create(cc), FadeIn(lc))
-        self.say("Underdamped overshoots and rings, but inside an envelope shrinking like root beta to the t. Still fast.",
-                 Create(cu), FadeIn(lu))
+        self.say("Start the mode at one and watch it over time. The overdamped run creeps toward zero, and the "
+                 "critical one gets there fast without ever crossing. The underdamped run overshoots and rings, "
+                 "but the ringing shrinks by root beta at every step, so it's still fast.",
+                 Write(head), Create(ax), FadeIn(xt), FadeIn(yt), FadeIn(xl), Create(zero))
+        self.cue("The overdamped run", Create(co), FadeIn(lo))
+        self.cue("critical one", Create(cc), FadeIn(lc))
+        self.cue("The underdamped run", Create(cu), FadeIn(lu))
         note = txt("Note: with β = 0 the two boundaries coincide and the distinction disappears.", 22, YELLOW_D).move_to([0, 2.6, 0])
         assert_on_screen(note)
-        self.say("So oscillation is not the enemy; only the size of the roots counts. With beta zero, the regimes coincide.",
-                 FadeIn(note))
+        self.say("So oscillation isn't the enemy here, and only the size of the roots matters. And when beta is "
+                 "zero, the two boundaries coincide and the regimes merge into one.",
+                 Indicate(lu, color=C_MOM))
+        self.cue("And when beta", FadeIn(note))
         self.hold(0.4)
         self.clear_stage()
 
@@ -262,32 +279,37 @@ class Ep07Damping(NarratedScene):
         t1 = txt("λ = 1: soft", 22, C_SOFT).next_to(d1, DOWN, buff=0.3).shift(RIGHT * 0.9)
         t2 = txt("λ = 20: stiff", 22, C_STIFF).next_to(d2, DOWN, buff=0.3)
         arr = DoubleArrow(ax.c2p(s1, 0.05), ax.c2p(s2, 0.05), buff=0, color=YELLOW_D, stroke_width=3)
-        ratio = txt("s values differ by the condition number κ = 20", 22, YELLOW_D).next_to(ax, DOWN, buff=0.7)
+        ratio = txt("s values differ by the condition number κ = 20", 22, YELLOW_D).next_to(rxl, DOWN, buff=0.15)
         assert_on_screen(VGroup(ax, rx, ry, rxl), t1, t2, ratio)
-        self.say("A single eta must serve every eigenvalue. Each mode lands at its own s, the same curve scaled by its curvature.",
-                 Write(head), Create(ax), FadeIn(rx), FadeIn(ry), FadeIn(rxl), Create(one), Create(curve), FadeIn(d1), FadeIn(t1), FadeIn(d2), FadeIn(t2))
-        self.say("A soft mode wants a big step to leave the overdamped zone; a stiff one nears the edge. Their s differ by kappa.",
-                 Create(arr), FadeIn(ratio))
-        self.play(FadeOut(ax), FadeOut(rx), FadeOut(ry), FadeOut(rxl), FadeOut(one), FadeOut(curve), FadeOut(d1), FadeOut(d2),
-                  FadeOut(t1), FadeOut(t2), FadeOut(arr), FadeOut(ratio))
+        self.say("Now for the real problem. One eta has to serve every eigenvalue, so each mode sits at its own "
+                 "place on this curve. A soft mode wants a bigger step, while a stiff one is already near the "
+                 "edge, and their positions are a factor of kappa apart.",
+                 Write(head), Create(ax), FadeIn(rx), FadeIn(ry), FadeIn(rxl), Create(one), Create(curve), run_time=1.1)
+        self.cue("so each mode", FadeIn(d1), FadeIn(t1), FadeIn(d2), FadeIn(t2))
+        self.cue("and their positions", Create(arr), FadeIn(ratio))
+        self.hold(0.3)
         rule = mts([r"\kappa\le\Big(\frac{1+\sqrt\beta}{1-\sqrt\beta}\Big)^2\ \Rightarrow\ \text{every mode has rate }\sqrt\beta"], 0.8, {}).move_to([0, 2.3, 0])
-        best = mts([r"\sqrt\beta=\frac{\sqrt\kappa-1}{\sqrt\kappa+1}", r"\ \Rightarrow\ \text{rate }\frac{\sqrt\kappa-1}{\sqrt\kappa+1}"], 0.85, {1: C_MOM}).move_to([0, 1.0, 0])
-        gd = mts([r"\text{plain gradient descent: }\frac{\kappa-1}{\kappa+1}"], 0.8, {}).move_to([0, 0.15, 0])
+        best = mts([r"\sqrt\beta=\frac{\sqrt\kappa-1}{\sqrt\kappa+1}", r"\ \Rightarrow\ \text{rate }\frac{\sqrt\kappa-1}{\sqrt\kappa+1}"], 0.85, {1: C_MOM}).move_to([0, 1.1, 0])
+        gd = mts([r"\text{plain gradient descent: }\frac{\kappa-1}{\kappa+1}"], 0.8, {}).move_to([0, 0.0, 0])
         assert_on_screen(rule, best, gd)
-        self.say("Tuning is a minimax problem: make the worst rate over all modes as small as possible, using the plateau.",
-                 Write(rule))
-        self.say("This works below a kappa bound set by beta. At the limit, the rate is root kappa minus one over root kappa plus one.",
-                 Write(best))
-        self.say("Plain gradient descent pays kappa minus one over kappa plus one. This is the standard tuned heavy-ball result.",
-                 Write(gd))
+        self.say("So tuning is a minimax game, where we make the slowest mode as fast as we can, and the plateau "
+                 "is the trick. Pick beta so the plateau covers every mode. Then they all converge at one rate, "
+                 "which is set by the square root of kappa.",
+                 FadeOut(ax), FadeOut(rx), FadeOut(ry), FadeOut(rxl), FadeOut(one), FadeOut(curve), FadeOut(d1), FadeOut(d2),
+                 FadeOut(t1), FadeOut(t2), FadeOut(arr), FadeOut(ratio))
+        self.cue("and the plateau", Write(rule))
+        self.cue("Then they all converge", Write(best))
         tab = VGroup(*[VGroup(txt(f"κ = {int(k)}", 26, WHITE),
                               txt(f"gradient descent: {round(STEPS((k - 1) / (k + 1)))} steps", 26, C_LOSS),
                               txt(f"tuned momentum: {round(STEPS((np.sqrt(k) - 1) / (np.sqrt(k) + 1)))} steps", 26, C_MOM)).arrange(RIGHT, buff=0.6)
                        for k in (20.0, 100.0)]).arrange(DOWN, buff=0.35).move_to([0, -1.75, 0])
         sub = txt("steps to shrink the error 100×", 22, GREY_B).next_to(tab, UP, buff=0.3)
         assert_on_screen(tab, sub)
-        self.say("To shrink the error a hundredfold: kappa 20 takes 46 steps against 10; kappa 100, 230 against 23.",
-                 FadeIn(sub), FadeIn(tab))
+        self.say("Plain gradient descent pays kappa where momentum pays root kappa, and that's the tuned heavy-ball "
+                 "result. How big a deal is that? At kappa twenty, forty-six steps become ten. At kappa one "
+                 "hundred, two hundred and thirty become twenty-three.",
+                 Write(gd))
+        self.cue("How big a deal", FadeIn(sub), FadeIn(tab))
         self.hold(0.5)
         self.clear_stage()
 
@@ -304,11 +326,13 @@ class Ep07Damping(NarratedScene):
         gl = txt("gradient is evaluated here", 22, C_GRAD).next_to(la, DOWN, buff=0.35)
         nt = txt("Other forms flip the sign of v or fold constants into the rate: compare complete recurrences.", 22, YELLOW_D).move_to([0, -1.6, 0])
         assert_on_screen(rec, VGroup(ln, w, wl, la, lal, gl), nt)
-        self.say("Nesterov evaluates the gradient where the momentum is about to carry the iterate, then steps from here.",
+        self.say("There's one more trick, and it comes from Nesterov. Measure the gradient where momentum is about "
+                 "to take you, not where you are now. So we look ahead first and check the slope there, and "
+                 "tuned right, this provably needs only about root kappa steps.",
                  Write(head), Write(rec), Create(ln), FadeIn(w), FadeIn(wl))
-        self.say("Look ahead, then measure the slope there. Tuned Nesterov provably needs about root kappa steps.",
-                 GrowArrow(arr), FadeIn(la), FadeIn(lal), FadeIn(gl))
-        self.say("Conventions differ between books and libraries. Never mix one line from one convention with another's update.",
+        self.cue("So we look ahead", GrowArrow(arr), FadeIn(la), FadeIn(lal), FadeIn(gl))
+        self.say("Be careful, though, because books and libraries write this in different ways. Never mix a line "
+                 "from one form with an update from another.",
                  FadeIn(nt))
         self.hold(0.6)
         self.clear_stage()

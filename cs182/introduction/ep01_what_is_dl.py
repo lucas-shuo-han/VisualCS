@@ -95,6 +95,7 @@ def fmt(v):
 
 class Ep01WhatIsDL(NarratedScene):
     series = SERIES
+    SCENES = ["definition", "one_element", "deep", "learning", "new_data"]
 
     def construct(self):
         self.title_card()
@@ -104,10 +105,10 @@ class Ep01WhatIsDL(NarratedScene):
         self.learning()
         self.new_data()
         self.end_card(
-            ["Deep learning: circuits whose settings are learned from data",
-             "Change the parameters and the same circuit computes something else",
-             "Deep means many elements in sequence between input and output",
-             "The goal is a pattern that carries over to new data"],
+            ["Deep learning: circuits with knobs, and data turns the knobs",
+             "Same circuit, new knob settings, a different answer. The knobs are the program",
+             "Deep just means many elements in a row",
+             "Fitting the training data is easy. The real test is new data"],
         )
 
     # ---------------------------------------------------------------- 1. definition
@@ -123,10 +124,13 @@ class Ep01WhatIsDL(NarratedScene):
         l2 = txt("sets", 22, GREY_B).next_to(a2, UP, buff=0.08)
         for m in (data, opt, circ, sub):
             assert m.get_right()[0] < 6.9 and m.get_left()[0] > -6.9
-        self.say("Here is the definition this course is built on. Deep learning uses simulated analog circuits to process information.",
+        self.say("So what is deep learning, really, underneath all the excitement? The definition this course "
+                 "runs on is simulated analog circuits, which just means circuits with knobs on them. And nobody "
+                 "turns those knobs by hand. An optimization algorithm sets them, and it's driven by training "
+                 "data.",
                  Write(head), FadeIn(circ, shift=UP * 0.2), FadeIn(sub))
-        self.say("The parameters of those circuits, their settings, are chosen by an optimization algorithm that is driven by data.",
-                 FadeIn(data, shift=RIGHT * 0.2), Create(a1), FadeIn(l1), FadeIn(opt, shift=RIGHT * 0.2), Create(a2), FadeIn(l2))
+        self.cue("An optimization algorithm", FadeIn(opt, shift=RIGHT * 0.2), Create(a2), FadeIn(l2))
+        self.cue("it's driven by", FadeIn(data, shift=RIGHT * 0.2), Create(a1), FadeIn(l1))
         newd = box_label("new data", C_NEW, w=2.5, h=0.9, font_size=26).move_to([-5.0, -0.9, 0])
         circ2 = circ.copy().set_y(-0.9).set_x(-0.35)
         ans = box_label("answer", GREY_A, w=2.2, h=0.9, font_size=26).move_to([4.2, -0.9, 0])
@@ -134,8 +138,10 @@ class Ep01WhatIsDL(NarratedScene):
         b2 = Arrow(circ2.get_right(), ans.get_left(), buff=0.08, color=GREY_B, stroke_width=3)
         note = txt("the pattern it captured still applies", 24, C_NEW).next_to(VGroup(newd, ans), DOWN, buff=0.45).set_x(0)
         assert circ2.get_right()[0] < b2.get_start()[0] + 0.2
-        self.say("The goal: the learned circuit has captured the relevant pattern in its training data, so it can solve problems on new data.",
-                 FadeIn(newd, shift=RIGHT * 0.2), Create(b1), TransformFromCopy(circ, circ2), Create(b2), FadeIn(ans), FadeIn(note))
+        self.say("The whole point is that the circuit captures a pattern in its training data. So when new data "
+                 "arrives, the same circuit still gives a useful answer.",
+                 TransformFromCopy(circ, circ2))
+        self.cue("So when new data arrives", FadeIn(newd, shift=RIGHT * 0.2), Create(b1), Create(b2), FadeIn(ans), FadeIn(note))
         self.hold(0.6)
         self.clear_stage()
 
@@ -177,19 +183,26 @@ class Ep01WhatIsDL(NarratedScene):
         eq = zt(KNOBS_A, BIAS_A, ZA)
         for m in (ins, kb, sig, thr, out, eq):
             assert m.get_right()[0] < 6.9 and m.get_left()[0] > -6.9 and m.get_bottom()[1] > -2.4
-        self.say("Start with the smallest circuit, Rosenblatt's adaptive neuron. Each input passes a knob, a weight, that scales it.",
+        # spoken below: inputs two and one; 1.6 - 0.5 + 0.2 = 1.3
+        assert X_IN == (2.0, 1.0) and abs(KNOBS_A[0] * X_IN[0] - 1.6) < 1e-9 and KNOBS_A[1] * X_IN[1] == -0.5 and BIAS_A == 0.2
+        self.say("Let's start small, with Rosenblatt's adaptive neuron. Each input passes through a knob, called "
+                 "a weight, that scales it. Then we add everything up, along with a bias. Feed in two and one, "
+                 "and we get one point six, minus zero point five, plus zero point two, which comes to one "
+                 "point three.",
                  Write(head), FadeIn(ins), FadeIn(xv), FadeIn(xl), Create(w1), FadeIn(kb, lag_ratio=0.3))
-        self.say("Add the scaled inputs and a bias. With these settings, the input 2 and 1 gives 0.8 times 2, minus 0.5 times 1, plus 0.2.",
-                 Create(w2), FadeIn(sig), FadeIn(sigt), FadeIn(pr), FadeIn(bias), Create(bwire), Write(eq))
-        self.say("A threshold turns the sum into an answer: 1.3 is positive, so the circuit says plus one.",
-                 Create(w_thr), FadeIn(thr), Create(w_out), FadeIn(out), FadeIn(outt))
+        self.cue("Then we add everything up", Create(w2), FadeIn(sig), FadeIn(sigt), FadeIn(bias), Create(bwire))
+        self.cue("Feed in two and one", FadeIn(pr), Write(eq))
         kb2 = knobs(KNOBS_B)
         pr2 = prods(KNOBS_B)
         eq2 = zt(KNOBS_B, BIAS_B, ZB)
         outt2 = txt("−1", 30, RED_C).move_to(out)
-        self.say("Turn the knobs and the same circuit says minus one instead. The parameters are the program.",
-                 Transform(kb, kb2), Transform(pr, pr2), Transform(eq, eq2), Transform(outt, outt2),
-                 out.animate.set_color(RED_C))
+        assert KNOBS_B == (-KNOBS_A[0], -KNOBS_A[1]) and BIAS_B == BIAS_A      # "flip the sign of both weights"
+        self.say("Then a threshold turns that number into an answer. It's positive, so the circuit says plus "
+                 "one. Now flip the sign of both weights. With the same wires and the same input, the circuit "
+                 "says minus one instead, so the knobs really are the program.",
+                 Create(w_thr), FadeIn(thr), Create(w_out), FadeIn(out), FadeIn(outt))
+        self.cue("Now flip the sign", Transform(kb, kb2), Transform(pr, pr2), Transform(eq, eq2))
+        self.cue("the circuit says minus one", Transform(outt, outt2), out.animate.set_color(RED_C))
         self.hold(0.6)
         self.clear_stage()
 
@@ -198,14 +211,17 @@ class Ep01WhatIsDL(NarratedScene):
         head = self.heading("Why deep?")
         g, layers, edges = nn_diagram((2, 4, 4, 1), layer_gap=2.6, node_gap=0.85, r=0.24)
         g.move_to([0, 1.0, 0])
-        self.say("Deep means that information flows through several such elements, one after another, before it reaches the output.",
-                 Write(head), Create(edges), FadeIn(layers, lag_ratio=0.2))
-        self.play(ShowPassingFlash(edges.copy().set_color(YELLOW_D).set_stroke(width=3), time_width=0.6, run_time=2.4))
         pat = VGroup(mt(r"\text{affine}\to\text{ReLU}\to\text{affine}", 0.85, C_MODEL)).move_to([0, -1.2, 0])
         why = txt("the pattern from the function-approximation unit", 24, GREY_B).next_to(pat, DOWN, buff=0.2)
         assert why.get_bottom()[1] > -2.45
-        self.say("Each element still just multiplies, adds, and takes a max: the earlier unit's pattern, repeated in sequence.",
-                 FadeIn(pat), FadeIn(why))
+        self.say("So where does the word deep come in? It comes from chaining elements together, so that the "
+                 "signal passes through several of them in a row before it reaches the output. Each element "
+                 "is still just multiply, add, and take a max, which is the same pattern as before, repeated "
+                 "in sequence.",
+                 Write(head), Create(edges), FadeIn(layers, lag_ratio=0.2))
+        self.cue("so that the signal passes",
+                 ShowPassingFlash(edges.copy().set_color(YELLOW_D).set_stroke(width=3), time_width=0.6, run_time=2.4))
+        self.cue("Each element is still", FadeIn(pat), FadeIn(why))
         self.hold(0.6)
         self.clear_stage()
 
@@ -233,31 +249,38 @@ class Ep01WhatIsDL(NarratedScene):
             wr = np.sign(XS @ h["w"] + h["b"]) != YS
             return VGroup(*[Circle(0.26, color=C_LOSS, stroke_width=4).move_to(ax.c2p(*XS[i])) for i in np.where(wr)[0]])
 
+        def update(h):
+            return Transform(ln, line(h)), Transform(pan, panel(h)), Transform(rg, rings(h))
+
         pan, ln, rg = panel(HIST[0]), line(HIST[0]), rings(HIST[0])
         legend = txt("circle: +1     cross: −1", 22, GREY_B).move_to([3.7, -0.8, 0])
         assert pan.get_right()[0] < 6.9 and legend.get_bottom()[1] > -2.6
-        self.say("Who sets the knobs? Data does. Twenty labeled points and a line from a random start.",
-                 Write(head), Create(ax), LaggedStart(*[FadeIn(p) for p in pts], lag_ratio=0.05), FadeIn(legend), Create(ln), FadeIn(pan))
-        self.say("The line is where the sum is zero. Points on its wrong side are circled in red: ten mistakes.",
-                 Create(rg))
+        assert len(XS) == 20 and [h["wrong"] for h in HIST] == [10, 4, 2, 6, 0]      # all spoken below
+        self.say("If nobody sets the knobs by hand, then the data has to do it. Here are twenty labeled points, "
+                 "and a line drawn from a random starting guess. The line is where the weighted sum hits zero, "
+                 "and every point on the wrong side gets a red ring. Right now that's ten mistakes.",
+                 Write(head), Create(ax), LaggedStart(*[FadeIn(p) for p in pts], lag_ratio=0.05), FadeIn(legend))
+        self.cue("a line drawn from", Create(ln), FadeIn(pan))
+        self.cue("every point on the wrong side", Create(rg))
         rule = VGroup(mt(r"w\leftarrow w+y\,x", 0.8, C_MODEL), mt(r"b\leftarrow b+y", 0.8, C_MODEL)
                       ).arrange(RIGHT, buff=0.6).move_to([3.7, -1.6, 0])
         assert rule.get_right()[0] < 6.9
         h1 = HIST[1]
         i1 = h1["idx"]
-        self.say("The perceptron update: take a mistake, add its label times its input to the weights, and its label to the bias.",
+        self.say("The fix is almost too simple. We grab one mistake, add its label times its input to the "
+                 "weights, and add its label to the bias. The line swings toward that point, and the mistakes "
+                 "drop from ten to four.",
                  Indicate(pts[i1], color=YELLOW_D, scale_factor=2.0), Write(rule))
-        self.say("The line swings toward that point, and the mistakes drop from ten to four.",
-                 Transform(ln, line(h1)), Transform(pan, panel(h1)), Transform(rg, rings(h1)))
+        self.cue("The line swings", *update(h1))
         self.hold(0.3)
         h2, h3 = HIST[2], HIST[3]
-        self.say("Repeat. Now two mistakes. A step can also make things worse, and here the count jumps to six, but the updates keep correcting.",
-                 Indicate(pts[h2["idx"]], color=YELLOW_D, scale_factor=2.0), Transform(ln, line(h2)), Transform(pan, panel(h2)), Transform(rg, rings(h2)))
-        self.play(Indicate(pts[h3["idx"]], color=YELLOW_D, scale_factor=2.0), Transform(ln, line(h3)),
-                  Transform(pan, panel(h3)), Transform(rg, rings(h3)), run_time=1.6)
         h4 = HIST[4]
-        self.say("After four updates, no point is misclassified. The knob settings came from the data, not from a person.",
-                 Transform(ln, line(h4)), Transform(pan, panel(h4)), Transform(rg, rings(h4)))
+        self.say("Do it again and we're down to two. But the next update jumps back up to six, so a single step "
+                 "can make things worse. Keep going anyway, and after four updates there are zero mistakes. "
+                 "Nobody chose those knob settings, the data did.",
+                 Indicate(pts[h2["idx"]], color=YELLOW_D, scale_factor=2.0), *update(h2))
+        self.cue("But the next update", Indicate(pts[h3["idx"]], color=YELLOW_D, scale_factor=2.0), *update(h3), run_time=1.6)
+        self.cue("Keep going anyway", *update(h4))
         self.hold(0.6)
         self.pts, self.ln, self.rule = pts, ln, rule
         self.clear_stage(ax, ln)
@@ -275,10 +298,13 @@ class Ep01WhatIsDL(NarratedScene):
                       txt(f"correct: {round(ACC1 * 100)} of 100", 34, GREEN_C),
                       txt(f"wrong: {k1}", 28, C_LOSS)).arrange(DOWN, aligned_edge=LEFT, buff=0.25).move_to([3.7, 0.9, 0])
         assert stat.get_right()[0] < 6.9
-        self.say("But the goal was never these twenty points. Draw a hundred fresh points from the same source, and the circuit gets most of them right.",
-                 Write(head), LaggedStart(*[FadeIn(p) for p in fresh], lag_ratio=0.01, run_time=1.8), FadeIn(stat))
-        self.say("The few mistakes sit near the boundary: the learned line is close to the true rule, not identical to it.",
-                 Create(ring1))
+        assert round(ACC1 * 100) == 92 and round(ACC2 * 100) == 53      # spoken below
+        self.say("But we never really cared about those twenty points. So let's draw a hundred fresh points "
+                 "from the same source, and the circuit gets ninety-two of them right. The misses all hug the "
+                 "boundary, because the learned line is close to the real rule, just not exactly on it.",
+                 Write(head), LaggedStart(*[FadeIn(p) for p in fresh], lag_ratio=0.01, run_time=1.8), FadeIn(stat[0]))
+        self.cue("the circuit gets ninety-two", FadeIn(stat[1:]))
+        self.cue("The misses all hug", Create(ring1))
         fresh2 = VGroup(*[marker(ax, p, y, C_NEW, 0.1) for p, y in zip(XF, YF2)])
         ring2 = VGroup(*[Circle(0.2, color=C_LOSS, stroke_width=3).move_to(ax.c2p(*XF[i])) for i in np.where(WRONG2)[0]])
         k2 = int(WRONG2.sum())
@@ -286,8 +312,9 @@ class Ep01WhatIsDL(NarratedScene):
                        txt(f"correct: {round(ACC2 * 100)} of 100", 34, GREEN_C),
                        txt(f"wrong: {k2}", 28, C_LOSS)).arrange(DOWN, aligned_edge=LEFT, buff=0.25).move_to([3.7, 0.9, 0])
         assert stat2.get_right()[0] < 6.9
-        self.say("Now let the labels follow a different pattern. The same circuit is right about half the time: it captured one pattern, not every pattern.",
+        self.say("Now change the rule behind the labels. The same circuit gets only fifty-three right, which is "
+                 "a coin flip, because it learned one pattern and not this one. That's why the definition says "
+                 "relevant pattern. Learning only pays off if the new data follows the same rule.",
                  FadeOut(ring1), Transform(fresh, fresh2), Transform(stat, stat2), FadeIn(ring2))
-        self.say("That is why the definition says a relevant pattern: learning is only as good as the match to new data.",
-                 Indicate(stat2[0], color=C_NEW))
+        self.cue("That's why the definition", Indicate(stat[0], color=C_NEW))
         self.hold(0.6)

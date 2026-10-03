@@ -100,6 +100,7 @@ assert abs(P_GD[1][1] + 0.8) < 1e-12 and abs(P_GD[2][1] - 0.64) < 1e-12        #
 
 class Ep06Momentum(NarratedScene):
     series = SERIES
+    SCENES = ["averaging", "rc", "signals", "conventions", "ravine"]
 
     def construct(self):
         self.title_card()
@@ -109,11 +110,11 @@ class Ep06Momentum(NarratedScene):
         self.conventions()
         self.ravine()
         self.end_card(
-            ["Momentum keeps one running average of past gradients: an exponentially weighted history in a single vector",
-             "It acts as a low-pass filter: a persistent gradient passes through, an alternating one is squashed",
-             "For beta of 0.9 an alternating gradient is cut to about five percent",
-             "Libraries differ in convention: match the effective step before comparing learning rates",
-             "Filtering calms the zigzag across a ravine; a proven speed-up needs more structure and tuning"],
+            ["Momentum is one running average of past gradients, with fading weights",
+             "It's a low-pass filter. Steady gradients pass, bouncing ones get squashed",
+             "At beta zero point nine, an alternating gradient shrinks to about five percent",
+             "Libraries disagree about the factor of one minus beta. Convert before comparing learning rates",
+             "It calms the zigzag in a ravine. A guaranteed speed-up needs more"],
         )
 
     # ---------------------------------------------------------------- 1. averaging
@@ -122,18 +123,21 @@ class Ep06Momentum(NarratedScene):
         prob = txt("A learning rate safe for the stiff direction crawls along the soft one.", 26, GREY_B).move_to([0, 2.5, 0])
         prob2 = txt("A larger one makes the stiff direction overshoot and bounce.", 26, C_LOSS).move_to([0, 1.8, 0])
         assert_on_screen(prob, prob2)
-        self.say("Poor conditioning forces a trade-off. A step small enough for the stiff direction crawls along the soft one.",
-                 Write(head), FadeIn(prob))
-        self.say("A larger step makes the stiff direction overshoot and bounce. Averaging recent gradients could calm it.",
-                 FadeIn(prob2))
-        rec = mts([r"z_{t+1}=", r"\beta z_t", r"+", r"(1-\beta)\nabla f(w_t)", r",\quad w_{t+1}=w_t-\eta z_{t+1}"], 0.8,
+        self.say("Remember the ravine? A step that's small enough for the stiff direction just crawls along the soft "
+                 "one, and a bigger step makes the stiff direction overshoot and bounce. So what if we averaged "
+                 "the recent gradients, instead of trusting only the newest one?",
+                 Write(head), FadeIn(prob), run_time=0.8)
+        self.cue("and a bigger step", FadeIn(prob2))
+        rec =mts([r"z_{t+1}=", r"\beta z_t", r"+", r"(1-\beta)\nabla f(w_t)", r",\quad w_{t+1}=w_t-\eta z_{t+1}"], 0.8,
                   {1: C_MOM, 3: C_GRAD}).move_to([0, 0.5, 0])
         unroll = mts([r"z_{t+1}=(1-\beta)\sum_{k=0}^{t}\beta^{\,t-k}\,\nabla f(w_k)"], 0.8, {}).move_to([0, -0.7, 0])
         assert_on_screen(rec, unroll)
-        self.say("Keep a running average: shrink the old average by beta, and add a small dose of the newest gradient.",
-                 FadeOut(prob), FadeOut(prob2), Write(rec))
-        self.say("Unrolled, that is a weighted sum of all past gradients, weights falling by a factor beta each step back.",
-                 Write(unroll))
+        self.say("So we keep a running average. At each step we shrink the old average by beta, and then mix in a "
+                 "little of the newest gradient. Unroll that and it's a weighted sum of every past gradient, where "
+                 "each step back in time shrinks the weight by another factor of beta.",
+                 FadeOut(prob), FadeOut(prob2), Write(rec), run_time=1.2)
+        self.cue("Unroll that", Write(unroll))
+        self.hold(0.3)
         self.play(FadeOut(rec), FadeOut(unroll))
         ax = Axes(x_range=[0, 10.5, 1], y_range=[0, 0.12, 0.05], x_length=8.0, y_length=2.6,
                   axis_config={"color": GREY_B, "include_tip": False, "stroke_width": 2}).move_to([-1.5, 0.3, 0])
@@ -145,35 +149,40 @@ class Ep06Momentum(NarratedScene):
         yl = txt("weight on that gradient, β = 0.9", 22, GREY_B).next_to(ax, UP, buff=0.12).align_to(ax, LEFT)
         note = txt("after ten steps the weight is\nstill 35% of the newest", 22, C_MOM).move_to([4.6, 0.6, 0])
         assert_on_screen(VGroup(ax, xt, xl, yt, yl), note)
-        self.say("For beta of 0.9, the newest gradient gets weight 0.1, the one before 0.09, and so on. One vector holds it all.",
-                 Create(ax), FadeIn(xt), FadeIn(xl), FadeIn(yt), FadeIn(yl), LaggedStart(*[FadeIn(b, shift=UP * 0.1) for b in bars], lag_ratio=0.1, run_time=2.5))
         rm = txt("Equal weights would fade old gradients only like 1/t.", 24, YELLOW_D).move_to([0, -2.25, 0])
         assert_on_screen(rm)
-        self.say("Why not average everything equally? A stale, huge gradient would linger for ages; exponential weights forget.",
-                 FadeIn(note), FadeIn(rm))
+        self.say("With beta at zero point nine, the newest gradient gets a weight of zero point one. The one before "
+                 "it gets zero point zero nine, and so on down, yet a single stored vector holds it all. Why not "
+                 "weigh them all equally? Because then a huge, stale gradient would hang around for ages, while "
+                 "exponential weights forget it.",
+                 Create(ax), FadeIn(xt), FadeIn(xl), FadeIn(yt), FadeIn(yl), LaggedStart(*[FadeIn(b, shift=UP * 0.1) for b in bars], lag_ratio=0.1, run_time=2.5))
+        self.cue("Why not", FadeIn(rm))
+        self.cue("while exponential", FadeIn(note))
         self.hold(0.4)
         self.clear_stage()
 
     # ---------------------------------------------------------------- 2. RC circuit
     def rc(self):
         head = self.heading("The RC circuit analogy")
-        ax = Axes(x_range=[0, 40, 10], y_range=[0, 1.1, 0.5], x_length=8.0, y_length=3.0,
-                  axis_config={"color": GREY_B, "include_tip": False, "stroke_width": 2}).move_to([-1.7, -0.1, 0])
+        ax = Axes(x_range=[0, 40, 10], y_range=[0, 1.1, 0.5], x_length=7.0, y_length=3.0,
+                  axis_config={"color": GREY_B, "include_tip": False, "stroke_width": 2}).move_to([-2.6, -0.1, 0])
         xt = VGroup(*[txt(f"{v}", 20, GREY_B).next_to(ax.c2p(v, 0), DOWN, buff=0.12) for v in (0, 10, 20, 30, 40)])
         yt = VGroup(*[txt(f"{v:g}", 20, GREY_B).next_to(ax.c2p(0, v), LEFT, buff=0.12) for v in (0, 0.5, 1)])
         xl = txt("steps t", 22, GREY_B).next_to(ax.x_axis, DOWN, buff=0.45)
         yl = txt("average after the gradient jumps to 1", 22, GREY_B).next_to(ax, UP, buff=0.12).align_to(ax, LEFT)
         one = DashedLine(ax.c2p(0, 1), ax.c2p(40, 1), color=GREY_A, stroke_width=2)
         curve = polyline(ax, T_STEP, ZSTEP, C_MOM, 4)
-        lab = mts([r"1-\beta^{t}", r"\ \leftrightarrow\ ", r"V\,(1-e^{-t/RC})"], 0.75, {0: C_MOM}).move_to([4.5, 0.9, 0])
-        sub = txt("charging a capacitor: one stored state", 22, GREY_B).move_to([4.5, 0.1, 0])
-        tau = txt(f"time constant ≈ {RC:.1f} steps", 22, C_MOM).move_to([4.5, -0.6, 0])
+        lab = mts([r"1-\beta^{t}", r"\ \leftrightarrow\ ", r"V\,(1-e^{-t/RC})"], 0.75, {0: C_MOM}).move_to([4.1, 0.9, 0])
+        sub = txt("charging a capacitor: one stored state", 22, GREY_B).move_to([4.1, 0.1, 0])
+        tau = txt(f"time constant ≈ {RC:.1f} steps", 22, C_MOM).move_to([4.1, -0.6, 0])
         assert_on_screen(VGroup(ax, xt, yt, xl, yl), lab, sub, tau)
-        self.say("An electrical low-pass filter, a resistor and a capacitor, stores one state. A sudden step charges it smoothly.",
-                 Write(head), Create(ax), FadeIn(xt), FadeIn(yt), FadeIn(xl), FadeIn(yl), Create(one), FadeIn(sub))
-        self.say("Momentum is the discrete version. If the gradient jumps to one, the average becomes one minus beta to the t.",
-                 Create(curve, run_time=2.5), Write(lab))
-        self.say(f"With beta of 0.9 the memory is about {RC:.0f} steps: the average needs around ten steps to catch up.",
+        self.say("An electric circuit does the same thing. A resistor and a capacitor hold one stored state, and "
+                 "that state charges up smoothly. Momentum is the step-by-step version, so if the gradient "
+                 "suddenly jumps to one, the average creeps up toward it like this.",
+                 Write(head), Create(ax), FadeIn(xt), FadeIn(yt), FadeIn(xl), FadeIn(yl), Create(one), FadeIn(sub), run_time=1.5)
+        self.cue("Momentum is the", Create(curve, run_time=2.5), Write(lab))
+        self.say("With beta at zero point nine, the memory is about nine and a half steps. That's roughly how long "
+                 "the average takes to catch up with a change.",
                  FadeIn(tau))
         self.hold(0.4)
         self.clear_stage()
@@ -193,19 +202,22 @@ class Ep06Momentum(NarratedScene):
         l1 = txt("gradient: 1 plus a bounce of ±3", 22, C_NOISE).move_to([4.5, 2.0, 0])
         l2 = txt("momentum average", 22, C_MOM).move_to([4.5, 1.3, 0])
         assert_on_screen(VGroup(ax, xt, yt, xl), l1, l2)
-        self.say("Feed in a gradient with a steady part, one, plus a bounce that flips sign each step, like a stiff direction.",
+        self.say("Now feed in a steady gradient of one, with a bounce on top that flips sign at every step, the way "
+                 "a stiff direction does. The average settles on the steady value, and the bounce nearly vanishes, "
+                 "which is exactly what a low-pass filter does.",
                  Write(head), Create(ax), FadeIn(xt), FadeIn(yt), FadeIn(xl), Create(pers), Create(gin), FadeIn(gdot), FadeIn(l1))
-        self.say("The average rises to the steady value and the bounce nearly disappears. That is a low-pass filter at work.",
-                 Create(zl, run_time=3), FadeIn(l2))
+        self.cue("The average settles", Create(zl, run_time=3), FadeIn(l2))
         g1 = mts([r"g_t=c"], 0.75, {}).move_to([5.0, 0.3, 0])
         g2 = mts([r"z_\infty=c"], 0.75, {}).move_to([5.0, -0.3, 0])
         g3 = mts([r"g_t=(-1)^t c"], 0.75, {}).move_to([5.0, -0.85, 0])
         g4 = mts([r"\frac{|z|}{|c|}=\frac{1-\beta}{1+\beta}\approx0.05"], 0.75, {0: C_MOM}).move_to([5.0, -1.9, 0])
         assert_on_screen(g1, g2, g3, g4)
-        self.say("A persistent gradient passes with gain one. An alternating one is cut to one minus beta over one plus beta.",
-                 Write(g1), Write(g2), Write(g3), Write(g4))
-        self.say("For beta of 0.9, that is five percent. The trial form A times minus one to the t confirms the ratio.",
-                 Indicate(g4, color=YELLOW_D))
+        self.say("We can put numbers on that. A steady gradient passes straight through, while an alternating one "
+                 "gets cut down by this ratio. For beta at zero point nine that's about five percent, so the "
+                 "trend survives and the bounce is basically gone.",
+                 Write(g1), Write(g2), run_time=1.2)
+        self.cue("while an alternating", Write(g3), Write(g4))
+        self.cue("For beta at", Indicate(g4, color=YELLOW_D))
         self.hold(0.4)
         self.clear_stage()
 
@@ -218,11 +230,15 @@ class Ep06Momentum(NarratedScene):
         ex = mts([r"\beta=0.9:\ \ \eta=0.1\ \Longleftrightarrow\ \alpha=0.01"], 0.8, {}).move_to([0, -1.1, 0])
         st = mts([r"\text{constant gradient }c:\ \ z_\infty=c,\ \ v_\infty=\frac{c}{1-\beta}=10\,c"], 0.7, {}).move_to([0, -2.1, 0])
         assert_on_screen(n, u, rel, ex, st, ymin=-2.5)
-        self.say("Many libraries omit the one minus beta factor and accumulate an unnormalized velocity instead.",
-                 Write(head), Write(n), Write(u))
-        self.say("That velocity is bigger by exactly one over one minus beta, so its learning rate must shrink by the same factor.",
-                 Write(rel))
-        self.say("With beta of 0.9, a rate of 0.1 in one form matches 0.01 in the other. Match before comparing rates.",
+        assert abs(1 / (1 - BETA) - 10) < 1e-9
+        self.say("Here's a trap to watch for. Many libraries drop the factor of one minus beta and just add up the "
+                 "raw gradients, which is the unnormalized convention. With beta at zero point nine that running "
+                 "sum is ten times bigger, so its learning rate has to be ten times smaller to match.",
+                 Write(head), Write(n), run_time=1.2)
+        self.cue("Many libraries", Write(u))
+        self.cue("With beta at", Write(rel))
+        self.say("So a learning rate of zero point one in the first form is zero point zero one in the second. "
+                 "Always convert before you compare learning rates across libraries.",
                  Write(ex), Write(st))
         self.hold(0.5)
         self.clear_stage()
@@ -241,13 +257,16 @@ class Ep06Momentum(NarratedScene):
         l2 = VGroup(txt(f"momentum, β = {BETA_M}, η = {ETA_M}", 22, C_MOM), txt(f"{N_M} steps to shrink the distance 100×", 20, C_MOM)).arrange(DOWN, aligned_edge=LEFT, buff=0.08)
         lg = VGroup(l1, l2).arrange(DOWN, aligned_edge=LEFT, buff=0.35).move_to([4.6, 1.0, 0])
         assert_on_screen(VGroup(ax, cont), lg)
-        self.say("Here is a ravine: steep across, shallow along. Plain gradient descent with a stable step zigzags across.",
-                 Write(head), Create(ax), Create(cont), Create(gd, run_time=3), FadeIn(gdd), FadeIn(l1))
-        self.say("With the averaged gradient, the bounces across the ravine cancel while the steady push along it accumulates.",
-                 Create(mm, run_time=2), FadeIn(mmd), FadeIn(l2))
+        self.say("Let's go back to a ravine, steep across and shallow along. Plain gradient descent zigzags its way "
+                 "down. Now average the gradients, and the bounces across cancel while the push along adds up, so "
+                 "it takes fifteen steps instead of forty-nine.",
+                 Write(head), Create(ax), Create(cont))
+        self.cue("Plain gradient descent", Create(gd, run_time=3), FadeIn(gdd), FadeIn(l1))
+        self.cue("Now average", Create(mm, run_time=2), FadeIn(mmd), FadeIn(l2))
         cav = txt("Filtering is not acceleration: speed-up guarantees need tuned parameters.", 22, YELLOW_D).move_to([0, -2.15, 0])
         assert_on_screen(cav)
-        self.say("Caution: this shows filtering. A square-root-of-kappa guarantee needs tuning and a smooth, strongly convex loss.",
+        self.say("A word of caution before we move on. What we've shown is filtering, and the famous square root "
+                 "of kappa speed-up needs tuned parameters and a strongly convex loss.",
                  FadeIn(cav))
         self.hold(0.6)
         self.clear_stage()

@@ -102,6 +102,7 @@ def signed(v):
 
 class Ep02ReluRamps(NarratedScene):
     series = SERIES
+    SCENES = ["one_ramp", "build_spline", "as_network", "refine"]
 
     def construct(self):
         self.title_card()
@@ -111,9 +112,9 @@ class Ep02ReluRamps(NarratedScene):
         self.refine()
         self.end_card(
             ["A ramp is one ReLU unit: flat, then a slope",
-             "An affine map inside ReLU puts the knot at negative b over w",
-             "Each ramp adds exactly one slope change",
-             "The whole spline is a one-hidden-layer ReLU network"],
+             "ReLU(w x + b) bends at x = minus b over w",
+             "Each ramp adds one slope change and leaves everything left of its knot alone",
+             "Any spline is already a one-hidden-layer ReLU net. Existence, not training"],
         )
 
     # ---------------------------------------------------------------- 1. one ramp
@@ -124,9 +125,6 @@ class Ep02ReluRamps(NarratedScene):
         eq = mt(r"\mathrm{ReLU}(z)=\max(0,z)=\begin{cases} z & z\ge 0\\ 0 & z<0\end{cases}", 0.8, C_RAMP)
         eq.scale(0.85).to_edge(RIGHT, buff=0.4).shift(UP * 1.9)
         c = plot(ax, relu, C_RAMP, [-3, 3])
-        self.say("The rectified linear unit is the simplest bend there is: zero for negative inputs, and the input itself for positive ones.",
-                 Write(head), Create(ax), FadeIn(xl), Create(c), Write(eq))
-        self.hold(0.3)
         w, b = STAGES[0]
         ramp = ramp_curve(ax, w, b)
         elbow = Dot(ax.c2p(ELBOWS[0], 0), color=YELLOW_D, radius=0.11)
@@ -140,22 +138,29 @@ class Ep02ReluRamps(NarratedScene):
             ).arrange(DOWN, aligned_edge=LEFT, buff=0.3).to_edge(RIGHT, buff=0.6).shift(DOWN * 0.7)
 
         lab = label(w, b, ELBOWS[0])
-        self.say("Put an affine function inside: multiply x by a weight w and add a bias b. That is one ramp, a single ReLU unit.",
-                 ReplacementTransform(c, ramp), FadeIn(elbow), FadeIn(lab))
-        self.say("The bend, called the knot, sits where the inside is zero: x equals minus b over w.",
+        self.say("What's the simplest bend you can put in a straight line? It's this one, called ReLU, which "
+                 "stays at zero on the left and then just copies its input. Now feed it w times x plus b "
+                 "instead of the plain input, and we get one ramp, which is a single ReLU unit.",
+                 Write(head), Create(ax), FadeIn(xl), Create(c), Write(eq))
+        self.cue("Now feed it", ReplacementTransform(c, ramp), FadeIn(elbow), FadeIn(lab))
+        self.say("So where does the ramp bend? It bends right where the inside hits zero, and that happens at x "
+                 "equals minus b over w. We'll call that point the knot.",
                  Indicate(elbow, color=RED_C, scale_factor=2.0))
+        self.hold(0.3)
         w, b = STAGES[1]
-        self.say("A bigger weight makes the ramp steeper and, with the same bias, pulls the knot closer to zero.",
+        w2, b2 = STAGES[2]
+        self.say("If we turn up the weight, the ramp gets steeper, and with the same bias the knot slides in "
+                 "toward zero. If we make the weight negative, the ramp flips over, so now it switches on to "
+                 "the left of its knot.",
                  Transform(ramp, ramp_curve(ax, w, b)),
                  elbow.animate.move_to(ax.c2p(ELBOWS[1], 0)), Transform(lab, label(w, b, ELBOWS[1])))
-        w, b = STAGES[2]
-        self.say("A negative weight flips the ramp: it now switches on to the left of its knot.",
-                 Transform(ramp, ramp_curve(ax, w, b)),
-                 elbow.animate.move_to(ax.c2p(ELBOWS[2], 0)), Transform(lab, label(w, b, ELBOWS[2])))
-        self.say("Why ReLU, and not the sigmoid or tanh of older networks? Those flatten out for large inputs, so their gradients shrink.",
+        self.cue("If we make the weight negative", Transform(ramp, ramp_curve(ax, w2, b2)),
+                 elbow.animate.move_to(ax.c2p(ELBOWS[2], 0)), Transform(lab, label(w2, b2, ELBOWS[2])))
+        self.say("You might wonder why we use ReLU and not the older sigmoid or hyperbolic tangent. Those curves flatten out "
+                 "for big inputs, so their gradients shrink, and after enough layers the gradient fades away. "
+                 "ReLU's slope is exactly one wherever the unit is on, so gradients pass straight through.",
                  Indicate(ramp, color=YELLOW_D, scale_factor=1.0))
-        self.say("Stack many of them and the gradient vanishes. ReLU has slope one wherever it is active, so gradients pass through intact.",
-                 Indicate(ramp, color=YELLOW_D, scale_factor=1.0))
+        self.cue("ReLU's slope is exactly one", Indicate(ramp, color=YELLOW_D, scale_factor=1.0))
         self.hold(0.5)
         self.clear_stage()
 
@@ -167,17 +172,17 @@ class Ep02ReluRamps(NarratedScene):
         target = DashedVMobject(polyline(ax, NODES_X, NODES_Y, C_TARGET, 3), num_dashes=70)
         knots = VGroup(*[Dot(ax.c2p(x, y), radius=0.07, color=C_TARGET) for x, y in zip(NODES_X[1:-1], NODES_Y[1:-1])])
         ticks = VGroup(*[txt(f"τ{i + 1}={fmt(t)}", 20, GREY_B).next_to(ax.c2p(t, 0), DOWN, buff=0.15) for i, t in enumerate(TAUS)])
-        self.say("The upgrade: a piecewise-linear function is an intercept, a starting slope, and a slope change at each knot.",
-                 Write(head), Create(ax), FadeIn(xl), Create(target), FadeIn(knots), FadeIn(ticks))
         eq = mt(r"g(x)=c+s_0x+\sum_{i=1}^{K}(s_i-s_{i-1})\,\mathrm{ReLU}(x-\tau_i)", 0.75)
         eq.move_to([0, 2.95, 0])
         eq.shift(RIGHT * 0.9)
-        self.say("Equation 1.6: a straight line plus one shifted ReLU per knot, each scaled by its slope change.",
-                 Write(eq))
+        self.say("The idea is that any curve made of straight pieces is just a starting height, a starting slope, "
+                 "and a slope change at each knot. The notes write this as equation one point six. It's a "
+                 "straight line plus one ramp per knot, and each ramp is scaled by how much the slope changes "
+                 "there.",
+                 Write(head), Create(ax), FadeIn(xl), Create(target), FadeIn(knots), FadeIn(ticks))
+        self.cue("The notes write this", Write(eq))
         cur = clip_poly(ax, XG, partial(0)(XG), 3.5)
         seg_lab = VGroup(mt(rf"c={fmt(C0)},\ s_0={fmt(SLOPES[0])}", 0.7, C_MODEL)).move_to(ax.c2p(4.7, 3.2))
-        self.say(f"Start with the straight line c plus s zero times x. Here c is {fmt(C0)} and the first slope is {fmt(SLOPES[0])}.",
-                 Create(cur), FadeIn(seg_lab))
         # mini axes for each ramp term
         minis, term_curves = [], []
         for i in range(3):
@@ -188,18 +193,33 @@ class Ep02ReluRamps(NarratedScene):
             mx.move_to([4.9, 1.05 - i * 1.4, 0])
             minis.append(mx)
             term_curves.append(polyline(mx, XG, vals, C_RAMP, 3))
-        for i in range(3):
+
+        def add_ramp(i):
             d, t = DELTAS[i], TAUS[i]
             lab = mt(rf"{signed(d)}\cdot\mathrm{{ReLU}}(x-{fmt(t)})", 0.6, C_RAMP).next_to(minis[i], UP, buff=0.08)
             new = clip_poly(ax, XG, partial(i + 1)(XG), 3.5)
-            s_from, s_to = SLOPES[i], SLOPES[i + 1]
-            cap = (f"At knot {i + 1}, x = {fmt(t)}, the slope goes from {fmt(s_from)} to {fmt(s_to)}: a change of {signed(d)[1:] if d > 0 else '−' + fmt(abs(d))}. "
-                   f"Add {'' if d > 0 else 'minus '}{fmt(abs(d))} times ReLU(x − {fmt(t)}).")
-            self.say(cap, Create(minis[i]), Create(term_curves[i]), FadeIn(lab),
-                     Transform(cur, new), Flash(ax.c2p(t, float(partial(i + 1)(t))), color=YELLOW_D, flash_radius=0.3))
-            self.hold(0.3)
+            return (Create(minis[i]), Create(term_curves[i]), FadeIn(lab), Transform(cur, new),
+                    Flash(ax.c2p(t, float(partial(i + 1)(t))), color=YELLOW_D, flash_radius=0.3))
+
+        # spoken numbers below
+        assert (C0, SLOPES[0], SLOPES[1], TAUS[0]) == (0.5, 0.2, 1.4, 1.0) and np.isclose(DELTAS[0], 1.2)
+        self.say("Let's build this curve one bend at a time, starting with just the straight line. It begins at "
+                 "one half and climbs with a gentle slope of zero point two. At x equals one, the slope jumps "
+                 "from zero point two to one point four, so we add a ramp that starts right there, scaled "
+                 "by one point two.",
+                 Create(cur), FadeIn(seg_lab))
+        self.cue("At x equals one", *add_ramp(0))
+        self.hold(0.3)
+        assert (TAUS[1], SLOPES[2], TAUS[2], SLOPES[3]) == (2.5, -0.8, 4.0, 0.6) and np.allclose(DELTAS[1:], [-2.2, 1.4])
+        self.say("At two point five, the slope drops from one point four to minus zero point eight, so the next "
+                 "ramp gets a negative weight, minus two point two. And at four the slope climbs back up to "
+                 "zero point six, which takes one last ramp with weight one point four.",
+                 *add_ramp(1))
+        self.cue("And at four", *add_ramp(2))
+        self.hold(0.3)
         assert np.allclose(partial(3)(XG), T["g"](XG))
-        self.say("Before its knot a ramp is zero, so earlier pieces stay put. After it, the slope bends exactly as needed.",
+        self.say("And the reason this works is that a ramp is exactly zero before its knot. So adding a new ramp "
+                 "can never disturb the part of the curve we've already built.",
                  Circumscribe(cur, color=YELLOW_D, time_width=1.2))
         self.hold(0.6)
         self.clear_stage()
@@ -208,14 +228,14 @@ class Ep02ReluRamps(NarratedScene):
     def as_network(self):
         head = self.heading("It is already a neural network")
         eq1 = mt(r"g(x)=c+s_0\,x+\sum_i \Delta_i\,\mathrm{ReLU}(x-\tau_i)", 0.9).move_to([0, 2.3, 0])
-        self.say("One loose end: that straight-line term s zero times x is not a ReLU. Or is it?", Write(head), Write(eq1))
         eq2 = mt(r"x=\mathrm{ReLU}(x)-\mathrm{ReLU}(-x)", 1.0, C_RAMP).move_to([0, 1.1, 0])
-        self.say("It is: x equals ReLU of x, minus ReLU of negative x. Positive x survives the first ramp, negative x survives the second.",
-                 Write(eq2))
+        self.say("There's one loose end, because the straight-line piece doesn't look like a ReLU at all. But "
+                 "it can be written as two of them. Any number x equals ReLU of x, minus ReLU of minus x. So "
+                 "one ramp covers the right side and the other covers the left.",
+                 Write(head), Write(eq1))
+        self.cue("Any number x equals", Write(eq2))
         self.hold(0.3)
         eq3 = mt(r"N_\theta(x)=b^{(2)}+\sum_{i=1}^{d} w^{(2)}_i\,\mathrm{ReLU}\!\left(w^{(1)}_i x+b^{(1)}_i\right)", 0.9).move_to([0, 2.3, 0])
-        self.say("Every term is a scaled ReLU of a weight times x plus a bias. That is Equation 1.7, a one-hidden-layer network.",
-                 ReplacementTransform(eq1, eq3), FadeOut(eq2))
         cols_x = [0.0, 1.5, 3.0, 4.5]
         table = VGroup()
         for j, h in enumerate(["unit", "w1", "b1", "w2"]):
@@ -227,12 +247,17 @@ class Ep02ReluRamps(NarratedScene):
         table.move_to([-4.0, -0.15, 0])
         b2 = mono(f"b2 = {B2:.1f}", 26, GREY_A).next_to(table, DOWN, buff=0.25).align_to(table, LEFT)
         assert b2.get_bottom()[1] > -2.85
-        self.say(f"{len(UNITS)} hidden units suffice: two for the straight line, one per knot, all read off the slopes and knot locations.",
-                 FadeIn(table), FadeIn(b2))
+        assert len(UNITS) == 5                               # spoken: "five hidden units"
+        self.say("Now every term is a scaled ReLU of w times x plus b, and that shape has a name. It's called a "
+                 "one-hidden-layer network. Ours needs five hidden units, two for the line and one for each "
+                 "knot, and every weight is read straight off the picture.",
+                 ReplacementTransform(eq1, eq3), FadeOut(eq2))
+        self.cue("Ours needs five hidden units", FadeIn(table), FadeIn(b2))
         ax = make_axes([0, 6, 1], [0, 3.5, 1], 5.6, 2.9).move_to([3.4, -0.35, 0])
         tgt = DashedVMobject(polyline(ax, XG, T["g"](XG), C_TARGET, 3), num_dashes=70)
         out = polyline(ax, XG, net(XG), C_MODEL, 4)
-        self.say("Add up these five units and we recover the spline exactly: same curve, now written as a network.",
+        self.say("Add the five units up, and out comes exactly the same curve. Nothing was learned here. We "
+                 "just took the spline and wrote it down as a network.",
                  Create(ax), Create(tgt), Create(out, run_time=2.2))
         self.hold(0.6)
         self.clear_stage()
@@ -242,33 +267,38 @@ class Ep02ReluRamps(NarratedScene):
         head = self.heading("Any continuous curve, given enough ramps")
         ax = make_axes([0, 6, 1], [-0.5, 3, 1], 7.6, 3.4).move_to([-1.6, -0.1, 0])
         tgt = plot(ax, f, C_TARGET, [0, 6], width=3)
-        self.say("Real targets are smooth. On a closed interval, a piecewise-linear curve with many knots can approximate one.",
+        self.say("But real targets curve smoothly, so can straight pieces keep up? On a closed interval they "
+                 "can, as long as we keep adding knots.",
                  Write(head), Create(ax), Create(DashedVMobject(tgt, num_dashes=60)))
-        cur = None
-        info = None
-        for K in (3, 6, 12):
+
+        def stage(K):
             sp, e = REFINE[K]
             new = polyline(ax, XG, sp["g"](XG), C_MODEL, 4)
             new_info = VGroup(txt(f"knots K = {K}", 26, C_TEXT), txt(f"hidden units d = {K + 2}", 26, C_RAMP),
                               txt(f"max error = {e:.2f}", 26, C_LOSS)).arrange(DOWN, aligned_edge=LEFT, buff=0.2).to_edge(RIGHT, buff=0.6).shift(UP * 1.4)
-            cap = {3: f"With {K} knots and {K + 2} hidden units the fit is rough.",
-                   6: f"With {K} knots the curve already hugs the target much better.",
-                   12: f"With {K} knots the worst-case error is down to {e:.2f}. More ramps, better fit."}[K]
-            if cur is None:
-                cur, info = new, new_info
-                self.say(cap, Create(cur, run_time=1.6), FadeIn(info))
-            else:
-                self.say(cap, Transform(cur, new), Transform(info, new_info))
-            self.hold(0.3)
+            return new, new_info
+
+        cur, info = stage(3)
+        assert f"{REFINE[12][1]:.2f}" == "0.03"               # spoken: "zero point zero three"
+        self.say("With three knots, which means five hidden units, the fit is pretty rough. With six knots it's "
+                 "already hugging the curve. And with twelve, the worst miss is down to zero point zero three, "
+                 "so more ramps really do mean a better fit.",
+                 Create(cur, run_time=1.6), FadeIn(info))
+        new, new_info = stage(6)
+        self.cue("With six knots", Transform(cur, new), Transform(info, new_info))
+        new, new_info = stage(12)
+        self.cue("And with twelve", Transform(cur, new), Transform(info, new_info))
+        self.hold(0.3)
         info.generate_target()
         remark = VGroup(*[txt(t, 24, YELLOW_D if k == 0 else C_TEXT) for k, t in enumerate(
             ["Existence, not training:", "a wide enough network can", "represent the curve, but", "a finite net may fall short,", "and descent may miss it."])]
         ).arrange(DOWN, aligned_edge=LEFT, buff=0.14).to_edge(RIGHT, buff=0.5)
         remark.to_edge(RIGHT, buff=0.6).set_y(-1.05)
         assert remark.get_bottom()[1] > -2.85 and remark.get_right()[0] <= 6.7 and info.get_right()[0] <= 6.7
-        self.say("A caution: this is a statement about existence. A wide enough network can represent the curve.",
+        self.say("But be careful about what this says. It's a statement about existence, which means some wide "
+                 "enough network can draw the curve. It doesn't say your network is wide enough, and it doesn't "
+                 "say gradient descent will ever find those weights.",
                  FadeIn(remark))
-        self.say("It does not say a given finite network fits every function equally well, or that gradient descent will find these weights.",
-                 Indicate(remark, color=YELLOW_D, scale_factor=1.0))
+        self.cue("It doesn't say your network", Indicate(remark, color=YELLOW_D, scale_factor=1.0))
         self.hold(0.6)
         self.clear_stage()

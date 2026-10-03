@@ -1,80 +1,148 @@
 1
-00:00:06,200 --> 00:00:13,700
-A training loss averages over n examples, so its gradient is a sum of n terms. Costly for huge n.
+00:00:06,200 --> 00:00:08,195
+What if we have a billion examples?
 
 2
-00:00:13,700 --> 00:00:21,033
-Instead draw a random batch of b examples and average those gradients. On average, this is the full gradient.
+00:00:08,195 --> 00:00:13,214
+The full gradient sums over every one of them, which is a lot of work for a single step.
 
 3
-00:00:21,033 --> 00:00:27,333
-Six examples have these gradients at one point. Their average, the full gradient, is two thirds.
+00:00:13,214 --> 00:00:22,133
+So instead we grab a random mini-batch and average its gradients, and on average we get the full gradient back.
 
 4
-00:00:27,333 --> 00:00:34,000
-Now list every batch of two. Their averages scatter widely, from minus two to three and a quarter.
+00:00:22,133 --> 00:00:28,454
+Here are six per-example gradients at one point, and their average, the full gradient, is two thirds.
 
 5
-00:00:34,000 --> 00:00:43,000
-Their average over all 15 batches is exactly two thirds. Unbiased, yet five batches would step the wrong way.
+00:00:28,454 --> 00:00:30,708
+Now try every possible batch of two.
 
 6
-00:00:43,000 --> 00:00:48,300
-On a bumpy loss surface, the noise may shake the iterate out of a shallow valley.
+00:00:30,708 --> 00:00:36,533
+Those batch averages land all over the place, from minus two up to three and a quarter.
 
 7
-00:00:48,300 --> 00:00:54,800
-That is a possibility, not a guarantee: the same noise can just as well push it toward a worse region.
+00:00:36,533 --> 00:00:41,888
+Average all fifteen of them and you get exactly two thirds, which is what unbiased means.
 
 8
-00:00:54,800 --> 00:01:02,933
-Far from a solution, a rough direction already helps. Near it, the variance of the estimate is the limit.
+00:00:41,888 --> 00:00:46,433
+And yet five of the fifteen point the wrong way.
 
 9
-00:01:02,933 --> 00:01:10,133
-Take the overparameterized case again: more parameters than examples, and every example can be fit exactly.
+00:00:46,433 --> 00:00:48,069
+So is the noise a bad thing?
 
 10
-00:01:10,133 --> 00:01:17,366
-Use one random example per step, starting from zero. Its update is the gradient of that example's squared loss.
+00:00:48,069 --> 00:00:52,509
+On a bumpy surface like this one, it might shake us out of a shallow valley.
 
 11
-00:01:17,366 --> 00:01:24,866
-Measure the distance to the minimum-norm solution. Since the fit is exact, the error updates alike.
+00:00:52,509 --> 00:00:58,526
+But the same noise can just as easily kick us somewhere worse, so it's a possibility and not a promise.
 
 12
-00:01:24,866 --> 00:01:32,133
-Expand the squared norm of the next error. This identity is exact: a good step subtracts a positive amount.
+00:00:58,526 --> 00:01:07,466
+Far from the answer a rough direction is plenty, but close to it the noise is what holds us back.
 
 13
-00:01:32,133 --> 00:01:39,266
-Replace the per-example factor by its worst case, with a step below one over rho squared: an upper bound.
+00:01:07,466 --> 00:01:10,428
+So when does SGD converge with a constant step?
 
 14
-00:01:39,266 --> 00:01:46,466
-Average over the random example: each has probability one over n, so the sum becomes the norm of X q.
+00:01:10,428 --> 00:01:14,145
+Let's take the case where every example can be fit exactly.
 
 15
-00:01:46,466 --> 00:01:55,800
-The error stays in the row space, where X q is at least sigma min times q: a contraction factor alpha below one.
+00:01:14,145 --> 00:01:20,800
+We start from zero, and each step picks one random example and follows just that example's gradient.
 
 16
-00:01:55,800 --> 00:02:06,866
-Try two equations, three unknowns: rho squared is 1.25, sigma min squared is 0.75, so alpha is 0.7.
+00:01:20,800 --> 00:01:23,801
+Now track the error from the minimum-norm solution.
 
 17
-00:02:06,866 --> 00:02:15,166
-Single runs jitter but all fall. The average of many runs sits just under the bound: a line on a log scale.
+00:01:23,801 --> 00:01:29,566
+Because the fit is exact, that error follows the very same random update.
 
 18
-00:02:15,166 --> 00:02:21,866
-The reason: at the interpolating solution every example has zero gradient, so the noise vanishes there.
+00:01:29,566 --> 00:01:32,530
+Zoom in on one step and expand the squared error.
 
 19
-00:02:21,866 --> 00:02:29,566
-A special case: it needs exact fit, full row rank and a small step. With noisy labels a constant step stalls.
+00:01:32,530 --> 00:01:37,309
+This first line is exact, and it says a good step subtracts something positive.
 
 20
-00:02:29,566 --> 00:02:38,633
-Strict decrease alone is not enough: a decreasing sequence can stall above zero. The factor alpha does the work.
+00:01:37,309 --> 00:01:44,200
+Swap that factor for its worst case, and as long as eta is below one over rho squared we get an upper bound.
+
+21
+00:01:44,200 --> 00:01:46,676
+Now average over which example we drew.
+
+22
+00:01:46,676 --> 00:01:52,708
+Every example is equally likely, so the sum turns into the squared length of X times the error.
+
+23
+00:01:52,708 --> 00:01:56,708
+The error lives in the row space, so that length can't be tiny.
+
+24
+00:01:56,708 --> 00:02:03,266
+On average, then, each step keeps at most a fraction alpha of the squared error.
+
+25
+00:02:03,266 --> 00:02:06,319
+Let's try it with two equations and three unknowns.
+
+26
+00:02:06,319 --> 00:02:09,612
+With these numbers alpha comes out as zero point seven,
+
+27
+00:02:09,612 --> 00:02:14,102
+so on average at most seventy percent of the squared error survives a step.
+
+28
+00:02:14,102 --> 00:02:16,377
+Single runs jitter, but they all fall.
+
+29
+00:02:16,377 --> 00:02:22,966
+Their average sits just under the bound, which is a straight line on this log scale.
+
+30
+00:02:22,966 --> 00:02:24,883
+Why does a fixed step work here?
+
+31
+00:02:24,883 --> 00:02:30,994
+At the solution every example's gradient is zero, so the noise vanishes exactly where we want to stop.
+
+32
+00:02:30,994 --> 00:02:32,612
+But this is a special case.
+
+33
+00:02:32,612 --> 00:02:36,267
+It needs an exact fit, full row rank and a small enough step,
+
+34
+00:02:36,267 --> 00:02:41,133
+and with noisy labels a constant step stalls some distance from the answer.
+
+35
+00:02:41,133 --> 00:02:43,511
+There's one last subtlety in the proof.
+
+36
+00:02:43,511 --> 00:02:49,366
+Shrinking at every step isn't enough on its own, because the error could still stall above zero.
+
+37
+00:02:49,366 --> 00:02:55,233
+The fixed factor alpha, strictly below one, is what rules that out.
 

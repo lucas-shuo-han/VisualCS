@@ -76,6 +76,7 @@ assert abs(2 / (DW + DW) - 1 / DW) < 1e-15
 
 class Ep09StandardizeInit(NarratedScene):
     series = SERIES
+    SCENES = ["conditioning", "corners", "rank", "init_intro", "deep"]
 
     def construct(self):
         self.title_card()
@@ -85,10 +86,10 @@ class Ep09StandardizeInit(NarratedScene):
         self.init_intro()
         self.deep()
         self.end_card(
-            ["Standardize features to zero mean and unit variance: better conditioning and fewer numerical problems",
-             "A ReLU kink at minus b over w is Cauchy distributed: it rarely lands in data far from zero, and expressive power is lost",
-             "Inspect the rank or singular values of the feature matrix when a model seems unexpectedly weak",
-             "Initialize so each layer's inputs look standardized: Xavier one over d, He two over d for ReLU, Glorot two over d in plus d out"],
+            ["Standardize features to zero mean, unit variance. Better kappa, fewer numerical problems",
+             "A ReLU kink lands at minus b over w, which is Cauchy. Data far from zero gets almost no kinks",
+             "Model oddly weak? Check the rank of its feature matrix",
+             "Initialize so every layer's inputs look standardized. Xavier: one over d. He, for ReLU: two over d"],
         )
 
     # ---------------------------------------------------------------- 1. conditioning
@@ -98,11 +99,13 @@ class Ep09StandardizeInit(NarratedScene):
         b2 = box_label("otherwise large features dominate the prediction", C_LOSS, w=8.6, h=0.9, font_size=26).move_to([0, 1.1, 0])
         b3 = box_label("and numbers of very different sizes lose precision", C_SOFT, w=8.6, h=0.9, font_size=26).move_to([0, -0.1, 0])
         assert_on_screen(b1, b2, b3)
-        self.say("Why standardize? First, features should have similar sizes; else one in the thousands dominates one near one.",
-                 Write(head), FadeIn(b1, shift=UP * 0.2), FadeIn(b2, shift=UP * 0.2))
-        self.say("Second, there are numerical issues: mixing huge and tiny values wastes floating-point precision.",
-                 FadeIn(b3, shift=UP * 0.2))
-        self.play(FadeOut(b1), FadeOut(b2), FadeOut(b3))
+        self.say("Why bother standardizing the inputs? The first reason is scale, because a feature in the thousands "
+                 "drowns out one that's near one. The second is numerics, because mixing huge and tiny numbers "
+                 "throws away floating-point precision.",
+                 Write(head), FadeIn(b1, shift=UP * 0.2))
+        self.cue("because a feature", FadeIn(b2, shift=UP * 0.2))
+        self.cue("The second is", FadeIn(b3, shift=UP * 0.2))
+        self.hold(0.3)
         setup = mts([r"X=[\,x\ \ 1\,],\quad x\in[100,200]"], 0.8, {}).move_to([-3.4, 2.4, 0])
         raw = VGroup(txt("raw", 26, C_LOSS), mt(rf"\kappa(X^\top X)\approx{KAP_RAW / 1e5:.1f}\times10^5", 0.85, C_LOSS),
                      txt(f"about {N_RAW / 1e6:.1f} million steps to shrink the error 100×", 22, C_LOSS)).arrange(DOWN, buff=0.25, aligned_edge=LEFT).move_to([-3.2, 0.9, 0])
@@ -113,10 +116,14 @@ class Ep09StandardizeInit(NarratedScene):
         ax2 = Axes(x_range=[100, 200, 50], y_range=[0, 1, 1], x_length=3.0, y_length=0.3,
                    axis_config={"color": GREY_B, "include_tip": False, "stroke_width": 2}).move_to([4.2, -1.8, 0])
         assert_on_screen(setup, raw, std, ax, ax2)
-        self.say("Take a feature that runs from 100 to 200, plus an intercept column. The two columns nearly point the same way.",
-                 Write(setup), FadeIn(raw))
-        self.say("The condition number is about six hundred thousand. Subtract the mean, divide by the deviation: exactly one.",
-                 FadeIn(std))
+        assert round(KAP_RAW, -5) == 600000 and N_RAW > 1e6
+        self.say("Here's how bad it can get. Take one feature that runs from one hundred to two hundred, plus an "
+                 "intercept column, and those two columns point almost the same way. Kappa comes out around six "
+                 "hundred thousand, which means more than a million gradient steps. Subtract the mean and divide by "
+                 "the spread, and kappa is exactly one.",
+                 FadeOut(b1), FadeOut(b2), FadeOut(b3), Write(setup), run_time=1.1)
+        self.cue("Kappa comes out", FadeIn(raw))
+        self.cue("Subtract the mean", FadeIn(std))
         self.hold(0.5)
         self.clear_stage()
 
@@ -125,34 +132,42 @@ class Ep09StandardizeInit(NarratedScene):
         head = self.heading("Why the kink must land in the data")
         net = mts([r"h=\max(0,\ wx+b)"], 0.9, {}).move_to([-4.2, 2.3, 0])
         init = mts([r"w,\,b\sim\mathcal N(0,1)"], 0.8, {}).move_to([-4.2, 1.4, 0])
-        cor = mts([r"\text{kink at }x=-\frac bw\ \sim\ \text{Cauchy}"], 0.85, {}).move_to([-2.9, 0.2, 0])
+        cor = mts([r"\text{kink at }x=-\frac bw\ \sim\ \text{Cauchy}"], 0.85, {}).move_to([-3.4, 0.2, 0])
         pdf = mts([r"\text{pdf}=\frac1\pi\,\frac1{x^2+1}"], 0.75, {}).move_to([-3.7, -0.9, 0])
         ax = Axes(x_range=[-8, 8, 4], y_range=[0, 0.35, 0.1], x_length=6.0, y_length=2.6,
                   axis_config={"color": GREY_B, "include_tip": False, "stroke_width": 2}).move_to([3.0, 1.0, 0])
         cauchy = plot(ax, lambda x: 1 / (math.pi * (x ** 2 + 1)), C_RAMP, [-8, 8], 4)
         xt = VGroup(*[txt(f"{v}", 20, GREY_B).next_to(ax.c2p(v, 0), DOWN, buff=0.12) for v in (-8, -4, 0, 4, 8)])
         assert_on_screen(net, init, cor, pdf, VGroup(ax, xt))
-        self.say("A ReLU unit bends at x equal to minus b over w. With standard normal w and b, that kink is a Cauchy variable.",
-                 Write(head), Write(net), Write(init), Write(cor), Write(pdf), Create(ax), FadeIn(xt), Create(cauchy))
-        rows = VGroup(*[VGroup(txt(f"|kink| < {a}", 22, WHITE), txt(f"{CAUCHY(a) * 100:.0f}%", 22, C_RAMP)).arrange(RIGHT, buff=0.3) for a in (1, 2, 3, 7)]).arrange_in_grid(2, 2, buff=(0.6, 0.15)).move_to([2.2, -1.95, 0])
+        rows =VGroup(*[VGroup(txt(f"|kink| < {a}", 22, WHITE), txt(f"{CAUCHY(a) * 100:.0f}%", 22, C_RAMP)).arrange(RIGHT, buff=0.3) for a in (1, 2, 3, 7)]).arrange_in_grid(2, 2, buff=(0.6, 0.15)).move_to([2.2, -1.95, 0])
         hv = txt("mean zero, infinite variance, yet mostly near zero", 22, GREY_B).move_to([3.0, -1.0, 0])
         assert_on_screen(rows, hv)
-        self.say("Its variance is infinite, yet half its mass lies within one of zero, and ninety percent within seven.",
-                 FadeIn(rows), FadeIn(hv))
-        self.play(FadeOut(net), FadeOut(init), FadeOut(cor), FadeOut(pdf), FadeOut(ax), FadeOut(xt), FadeOut(cauchy), FadeOut(rows), FadeOut(hv))
+        self.say("Now for a subtler reason. A ReLU unit bends where its input crosses zero, at minus the bias over "
+                 "the weight. When both of those are standard normal, that kink follows a Cauchy distribution. It "
+                 "has infinite variance, and yet half the time the kink lands within one of zero, and ninety-one "
+                 "percent of the time within seven.",
+                 Write(head), Write(net), Write(init), run_time=1.1)
+        self.cue("at minus the bias", Write(cor))
+        self.cue("that kink follows", Write(pdf), Create(ax), FadeIn(xt), Create(cauchy))
+        self.cue("It has infinite", FadeIn(rows), FadeIn(hv))
+        self.hold(0.3)
         ln = NumberLine(x_range=[-100, 300, 100], length=10.0, color=GREY_B, include_numbers=False, tick_size=0.1).move_to([0, 1.2, 0])
         lab = VGroup(*[txt(f"{v}", 20, GREY_B).next_to(ln.n2p(v), DOWN, buff=0.12) for v in (-100, 0, 100, 200, 300)])
         band = Rectangle(width=ln.n2p(200)[0] - ln.n2p(100)[0], height=0.7, color=C_DATA, fill_opacity=0.35, stroke_width=1).move_to(ln.n2p(150) + UP * 0.35)
         bl = txt("data: 100 to 200", 22, C_DATA).next_to(band, UP, buff=0.1)
         res = mts([rf"P(\text{{kink in }}[100,200])\approx{P_IN * 100:.2f}\%", rf"\ \Rightarrow\ \approx{D_H * P_IN:.1f}\text{{ of }}1000\text{{ units}}"], 0.75, {}).move_to([0, -0.4, 0])
         assert_on_screen(VGroup(ln, lab, band, bl), res)
-        self.say("Now suppose the data live between 100 and 200. A kink lands there with chance about 0.16 percent per unit.",
-                 FadeIn(ln), FadeIn(lab), FadeIn(band), FadeIn(bl), Write(res[0]))
-        self.say("Among a thousand hidden units, only one or two bend inside the data. The rest are zero or straight lines.",
-                 Write(res[1]))
+        self.play(FadeOut(net), FadeOut(init), FadeOut(cor), FadeOut(pdf), FadeOut(ax), FadeOut(xt), FadeOut(cauchy), FadeOut(rows), FadeOut(hv))
+        self.say("Now put the data between one hundred and two hundred. A kink lands in that range with a chance "
+                 "of about zero point one six percent. So out of a thousand hidden units, only one or two bend "
+                 "inside the data, and the rest are just flat or straight there.",
+                 FadeIn(ln), FadeIn(lab), FadeIn(band), FadeIn(bl))
+        self.cue("A kink lands", Write(res[0]))
+        self.cue("So out of", Write(res[1]))
         cn = txt("We want the data to sit where the nonlinearity is interesting: true for tanh and sigmoid too.", 24, YELLOW_D).move_to([0, -1.7, 0])
         assert_on_screen(cn)
-        self.say("Non-standardized data thus wastes the nonlinearity's expressive power. The same holds for tanh and sigmoid.",
+        self.say("And that's the real point. Unstandardized data wastes the whole nonlinearity, and the same thing "
+                 "happens with tanh and sigmoid units.",
                  FadeIn(cn))
         self.hold(0.5)
         self.clear_stage()
@@ -163,9 +178,7 @@ class Ep09StandardizeInit(NarratedScene):
         form = mts([r"h_i(x)=\begin{cases}0\\ \alpha_i x+\beta_i\end{cases}\ \text{ for all }x\text{ in the data, if no kink there}"], 0.7, {}).move_to([0, 2.4, 0])
         sm = mts([r"H=\sum\ \text{(rank-one matrices)}\ \Rightarrow\ \text{rank}\ \approx 3"], 0.75, {}).move_to([0, 1.5, 0])
         assert_on_screen(form, sm)
-        self.say("A unit with no kink in the data is zero or a straight line there. All thousand stack into a few rank-one pieces.",
-                 Write(head), Write(form), Write(sm))
-        ax1 = Axes(x_range=[0, 6, 1], y_range=[-8, 5, 4], x_length=5.0, y_length=2.0,
+        ax1 =Axes(x_range=[0, 6, 1], y_range=[-8, 5, 4], x_length=5.0, y_length=2.0,
                    axis_config={"color": GREY_B, "include_tip": False, "stroke_width": 2}).move_to([-3.5, -0.2, 0])
         ax2 = ax1.copy().move_to([3.2, -0.2, 0])
         k = 6
@@ -177,11 +190,18 @@ class Ep09StandardizeInit(NarratedScene):
         t2 = txt(f"standardized: rank {RANK_STD}", 22, C_TRAIN).next_to(ax2, UP, buff=0.15)
         sv = txt("first six singular values (log scale)", 20, GREY_B).next_to(VGroup(ax1, ax2), DOWN, buff=0.3).set_x(-0.2)
         assert_on_screen(VGroup(ax1, t1), VGroup(ax2, t2), sv)
-        self.say("Take 50 data points. The raw feature matrix has only three singular values above zero; standardized, all fifty.",
-                 Create(ax1), Create(ax2), FadeIn(b1), FadeIn(b2), FadeIn(t1), FadeIn(t2), FadeIn(sv))
+        assert len(XR) == 50
+        self.say("With no kink inside the data, each unit is either zero or a straight line there. So all thousand "
+                 "units add up to just a few rank-one pieces. Take fifty data points, and the raw features have "
+                 "only three nonzero singular values, while the standardized ones have all fifty.",
+                 Write(head), Write(form))
+        self.cue("So all thousand", Write(sm))
+        self.cue("Take fifty", Create(ax1), FadeIn(b1), FadeIn(t1), FadeIn(sv))
+        self.cue("while the standardized", Create(ax2), FadeIn(b2), FadeIn(t2))
         tip = txt("Oddly weak network? Check the rank of its features.", 24, YELLOW_D).move_to([0, -2.15, 0])
         assert_on_screen(tip)
-        self.say("That gives a cheap debugging check: when a model seems weak, look at the rank of its features.",
+        self.say("That gives us a cheap debugging trick. If a model seems oddly weak, check the rank of its "
+                 "feature matrix.",
                  FadeIn(tip))
         self.hold(0.5)
         self.clear_stage()
@@ -194,52 +214,60 @@ class Ep09StandardizeInit(NarratedScene):
         key = txt("Key observation: the outputs of one layer are the inputs of the next.", 24, YELLOW_D).move_to([0, 1.1, 0])
         goal = txt("Goal: every layer's inputs start out roughly zero-mean, unit-variance.", 24, C_TRAIN).move_to([0, 0.2, 0])
         assert_on_screen(rows, key, goal)
-        self.say("How to initialize? All zeros fails: everything is multiplied by zero, gradients vanish, nothing moves.",
+        self.say("So how should we initialize the weights? All zeros fails, because everything gets multiplied by "
+                 "zero and nothing ever moves. The key observation is that one layer's outputs are the next "
+                 "layer's inputs. So we want every layer's inputs to start out looking standardized.",
                  Write(head), FadeIn(rows))
-        self.say("Key observation: one layer's outputs feed the next, so every layer's inputs should look standardized.",
-                 FadeIn(key), FadeIn(goal))
-        self.play(FadeOut(rows), FadeOut(key), FadeOut(goal))
+        self.cue("The key observation", FadeIn(key))
+        self.cue("So we want", FadeIn(goal))
+        self.hold(0.3)
         xa = mts([r"\mathrm{Var}\Big(\sum_{i=1}^{d}w_ih_i\Big)=\sum_{i=1}^d\mathbb E[w_i^2]\,\mathbb E[h_i^2]=d\,\mathbb E[w^2]"], 0.8, {}).move_to([0, 2.3, 0])
         xb = mts([r"\text{unit-variance inputs}\ \Rightarrow\ ", r"w_i\sim\mathcal N\!\Big(0,\frac1d\Big)", r"\quad d=\text{fan-in}"], 0.85, {1: C_MODEL}).move_to([0, 1.1, 0])
         xc = txt("Xavier initialization", 28, C_MODEL).move_to([0, 0.1, 0])
         assert_on_screen(xa, xb, xc)
-        self.say("For d independent, zero-mean, unit-variance inputs, the output variance is d times the weight variance.",
-                 Write(xa))
-        self.say("Choose weight variance one over d, the fan-in, and the output is unit-variance too: Xavier initialization.",
-                 Write(xb), FadeIn(xc))
+        self.say("A unit adds up its inputs, each with variance one, so the output variance is the fan-in times "
+                 "the weight variance. That tells us to give the weights a variance of one over the fan-in, and "
+                 "then the output keeps variance one. This is Xavier initialization.",
+                 FadeOut(rows), FadeOut(key), FadeOut(goal), Write(xa))
+        self.cue("That tells us", Write(xb))
+        self.cue("This is Xavier", FadeIn(xc))
         self.hold(0.4)
         self.clear_stage()
 
     # ---------------------------------------------------------------- 5. deep net
     def deep(self):
         head = self.heading("Does it keep the signal alive?")
-        ax = Axes(x_range=[1, LAYERS, 1], y_range=[-4, 22, 5], x_length=7.6, y_length=3.4,
-                  axis_config={"color": GREY_B, "include_tip": False, "stroke_width": 2}).move_to([-1.9, 0.2, 0])
+        ax = Axes(x_range=[1, LAYERS, 1], y_range=[-4, 22, 5], x_length=7.0, y_length=3.4,
+                  axis_config={"color": GREY_B, "include_tip": False, "stroke_width": 2}).move_to([-2.2, 0.2, 0])
         xt = VGroup(*[txt(f"{v}", 20, GREY_B).next_to(ax.c2p(v, -4), DOWN, buff=0.12) for v in (1, 4, 7, 10)])
         yt = VGroup(*[txt(lb, 20, GREY_B).next_to(ax.c2p(1, v), LEFT, buff=0.12) for v, lb in ((0, "1"), (10, "10¹⁰"), (20, "10²⁰"))])
         xl = txt("layer", 22, GREY_B).next_to(ax.x_axis, DOWN, buff=0.45)
         yl = txt("mean square of the activations", 22, GREY_B).next_to(ax, UP, buff=0.12).align_to(ax, LEFT)
         one = DashedLine(ax.c2p(1, 0), ax.c2p(LAYERS, 0), color=GREY_A, stroke_width=2)
         curves = {n: polyline(ax, np.arange(1, LAYERS + 1), LOGMS[n], c, 4) for n, _, c in INITS}
-        labs = VGroup(*[txt(n, 22, c) for n, _, c in INITS]).arrange(DOWN, aligned_edge=LEFT, buff=0.25).move_to([4.9, 1.2, 0])
-        setup = txt(f"ReLU network, width {DW}, {LAYERS} layers", 22, GREY_B).move_to([4.6, 2.35, 0])
+        labs = VGroup(*[txt(n, 22, c) for n, _, c in INITS]).arrange(DOWN, aligned_edge=LEFT, buff=0.25).move_to([4.1, 1.2, 0])
+        setup = txt(f"ReLU network, width {DW}, {LAYERS} layers", 22, GREY_B).move_to([3.9, 2.35, 0])
         assert_on_screen(VGroup(ax, xt, yt, xl, yl), labs, setup)
-        self.say("Push standardized inputs through ten ReLU layers of width 256, with three weight choices, tracking size.",
-                 Write(head), Create(ax), FadeIn(xt), FadeIn(yt), FadeIn(xl), FadeIn(yl), Create(one), FadeIn(setup))
-        self.say("Standard normal weights make the signal explode by two orders of magnitude every layer.",
-                 Create(curves["N(0, 1)"], run_time=2), FadeIn(labs[0]))
-        self.say("Xavier suits a linear layer, but a ReLU zeroes half its outputs, so the signal halves each layer and fades.",
-                 Create(curves["Xavier: N(0, 1/d)"], run_time=2), FadeIn(labs[1]))
-        he = mts([r"\text{He: }\mathcal N\!\Big(0,\frac{1}{d/2}\Big)=\mathcal N\!\Big(0,\frac2d\Big)"], 0.75, {}).move_to([4.7, -0.5, 0])
-        glo = mts([r"\text{Glorot: }\mathcal N\!\Big(0,\frac{2}{d_{\rm in}+d_{\rm out}}\Big)"], 0.75, {}).move_to([4.7, -1.5, 0])
+        assert (LAYERS, DW) == (10, 256)
+        self.say("Does that actually keep the signal alive? Let's push standardized inputs through ten ReLU layers "
+                 "of width two hundred fifty-six, with three choices of weights. Standard normal weights blow the "
+                 "signal up by about two orders of magnitude at every single layer.",
+                 Write(head), Create(ax), FadeIn(xt), FadeIn(yt), FadeIn(xl), FadeIn(yl), Create(one), FadeIn(setup), run_time=1.5)
+        self.cue("Standard normal weights", Create(curves["N(0, 1)"], run_time=2), FadeIn(labs[0]))
+        he = mts([r"\text{He: }\mathcal N\!\Big(0,\frac{1}{d/2}\Big)=\mathcal N\!\Big(0,\frac2d\Big)"], 0.75, {}).move_to([3.9, -0.5, 0])
+        glo = mts([r"\text{Glorot: }\mathcal N\!\Big(0,\frac{2}{d_{\rm in}+d_{\rm out}}\Big)"], 0.75, {}).move_to([3.9, -1.5, 0])
         assert_on_screen(he, glo)
-        self.say("He initialization compensates: half the inputs are alive, so use variance two over d. The signal stays level.",
-                 Create(curves["He: N(0, 2/d)"], run_time=2), FadeIn(labs[2]), Write(he))
-        self.say("Glorot uses two over fan-in plus fan-out, balancing forward and backward passes. For equal widths it is Xavier.",
-                 Write(glo))
+        self.say("Xavier suits a linear layer, but a ReLU zeroes half of its outputs, so the signal halves at each "
+                 "layer and fades away. He initialization fixes that. Since half the inputs are dead, it doubles "
+                 "the variance, and the signal stays level.",
+                 Create(curves["Xavier: N(0, 1/d)"], run_time=2), FadeIn(labs[1]))
+        self.cue("He initialization", Create(curves["He: N(0, 2/d)"], run_time=2), FadeIn(labs[2]), Write(he))
         bias = txt("Biases: start at 0, or at a small number like 0.01.", 22, YELLOW_D).move_to([0, -2.35, 0])
         assert_on_screen(bias)
-        self.say("Biases are simple: start at zero, use a small constant such as 0.01, or treat the bias as one more weight.",
-                 FadeIn(bias))
+        self.say("Glorot initialization averages the fan-in and the fan-out, to balance the forward and backward "
+                 "passes, and with equal widths it's just Xavier. Biases are easy by comparison. You start them "
+                 "at zero, or at a small constant like zero point zero one.",
+                 Write(glo))
+        self.cue("Biases are easy", FadeIn(bias))
         self.hold(0.6)
         self.clear_stage()

@@ -71,6 +71,7 @@ def xlog(ax, t):
 
 class Ep04EarlyStopping(NarratedScene):
     series = SERIES
+    SCENES = ["svd_dynamics", "compare", "u_curve", "knobs"]
 
     def construct(self):
         self.title_card()
@@ -79,10 +80,10 @@ class Ep04EarlyStopping(NarratedScene):
         self.u_curve()
         self.knobs()
         self.end_card(
-            ["In the SVD basis, gradient descent fits each direction on its own clock: strong directions first",
-             "Stopping early keeps strong directions and attenuates weak ones, much like ridge, but it is not the same estimator",
-             "In practice: checkpoint during training and keep the checkpoint that is best on validation data",
-             "Regularization strength, learning rate and stopping time are hyperparameters: search them on log scales"],
+            ["Gradient descent fits each SVD direction on its own clock. Strong ones first",
+             "Stopping early holds back weak directions, like ridge, but it's not the same estimator",
+             "In practice, save checkpoints and keep the one that's best on validation data",
+             "Lambda, eta and stopping time are hyperparameters. Search them on a log scale"],
         )
 
     # ---------------------------------------------------------------- 1. SVD dynamics
@@ -93,12 +94,16 @@ class Ep04EarlyStopping(NarratedScene):
         sol = mts([r"\tilde w_{t,i}=", r"q_t(\sigma_i)", r"\,\frac{\tilde y_i}{\sigma_i},\ \ ", r"q_t(\sigma)=1-(1-2\eta\sigma^2)^t"], 0.85, {1: C_LAM, 3: C_LAM}).move_to([0, -0.1, 0])
         pinv = mts([r"\text{fully converged: }\tilde w_i=\tilde y_i/\sigma_i\ \ (q=1)"], 0.7, {}).move_to([0, -1.3, 0])
         assert_on_screen(defs, rec, sol, pinv)
-        self.say("Rotate gradient descent into the SVD basis, with the weights and the targets rotated the same way.",
+        self.say("What is gradient descent really doing if we stop it early? To see it, we rotate everything into "
+                 "the SVD basis. Now each direction runs its own little recurrence on a single number, with the "
+                 "same shape we saw in episode one.",
                  Write(head), Write(defs))
-        self.say("Each singular direction obeys its own scalar recurrence, with factor one minus two eta sigma squared.",
-                 Write(rec))
-        self.say("Start at zero and solve it. Direction i reaches the fraction q t of the converged answer, y tilde over sigma.",
-                 Write(sol), FadeIn(pinv))
+        self.cue("Now each direction", Write(rec))
+        self.say("Start at zero and solve that recurrence. After any number of steps, each direction has gone some "
+                 "fraction of the way to its final answer, and that fraction is the early-stopping filter. Once "
+                 "the filter reaches one, the direction is fully converged.",
+                 Write(sol))
+        self.cue("Once the filter", FadeIn(pinv))
         self.hold(0.4)
         self.clear_stage()
 
@@ -126,23 +131,27 @@ class Ep04EarlyStopping(NarratedScene):
             if gap < 0.36:
                 labs[b].shift(UP * (0.36 - gap))
         assert_on_screen(VGroup(ax, deco, labs))
-        self.say("Plot q t against sigma. After a few steps only large singular values are fit; small ones have barely started.",
+        self.say("Let's plot that filter against the singular value. After a few steps only the strong directions are "
+                 "fit, and the weak ones have barely started. Keep going and the curve climbs in from the right, "
+                 "so strong directions finish first while weak ones take ages.",
                  Write(head), Create(ax), FadeIn(deco), Create(cs[0]), FadeIn(labs[0]), Create(cs[1]), FadeIn(labs[1]))
-        self.say("Keep stepping and the curve rises from the right: large singular values converge first, small ones far later.",
-                 LaggedStart(*[Create(c) for c in cs[2:]], lag_ratio=0.4, run_time=3), LaggedStart(*[FadeIn(l) for l in labs[2:]], lag_ratio=0.4, run_time=3))
-        self.play(*[FadeOut(c) for c in cs if c is not cs[2]], *[FadeOut(l) for l in labs if l is not labs[2]])
+        self.cue("Keep going", LaggedStart(*[Create(c) for c in cs[2:]], lag_ratio=0.4, run_time=3),
+                 LaggedStart(*[FadeIn(l) for l in labs[2:]], lag_ratio=0.4, run_time=3))
+        self.hold(0.2)
         rc = plot(ax, lambda s: ridge_r(s, LAM_R), C_LAM, [0, 1.5], 4)
         rl = txt(f"ridge, λ = {LAM_R}", 22, C_LAM).next_to(ax.c2p(1.5, ridge_r(1.5, LAM_R)), RIGHT, buff=0.15).shift(DOWN * 0.1)
         assert_on_screen(rl)
-        self.say("Compare with ridge. Both hold back weak directions, so stopping early regularizes without a penalty.",
-                 Create(rc), FadeIn(rl))
         pit = txt("Same lesson, not the same estimator: the shapes differ, and stopping also depends on the start and the step size.", 24, YELLOW_D).move_to([0, 2.95, 0])
         pit.scale_to_fit_width(12.6) if pit.width > 12.6 else None
         pit.move_to([0, 3.0, 0])
         head2 = head
         assert_on_screen(pit, ymax=3.7)
-        self.say("The curves need not coincide. What they share is the ordering: weak singular directions enter last.",
-                 FadeOut(head), FadeIn(pit))
+        self.say("Now put the ridge filter next to one of these curves. Both hold back the weak directions, so "
+                 "stopping early regularizes without any penalty term. They aren't the same curve, though. What "
+                 "they share is the order, with weak directions always coming in last.",
+                 *[FadeOut(c) for c in cs if c is not cs[2]], *[FadeOut(l) for l in labs if l is not labs[2]])
+        self.cue("Both hold back", Create(rc), FadeIn(rl))
+        self.cue("They aren't the same", FadeOut(head), FadeIn(pit))
         self.hold(0.4)
         self.clear_stage()
         # overshoot footnote
@@ -160,10 +169,14 @@ class Ep04EarlyStopping(NarratedScene):
         cond = mts([r"\eta\le\frac{1}{2\sigma_{\max}^2}\ \Rightarrow\ \text{monotone}"], 0.7, {}).move_to([4.2, -0.3, 0])
         cond2 = VGroup(mts([r"\frac{1}{2\sigma_{\max}^2}<\eta<\frac{1}{\sigma_{\max}^2}"], 0.7, {}), txt("stable, may overshoot", 22, C_LOSS)).arrange(DOWN, buff=0.15).move_to([4.2, -1.5, 0])
         assert_on_screen(VGroup(ax, xt, yt), lab_ok, lab_bad, cond, cond2)
-        self.say("This ordering is guaranteed only for eta up to one over two sigma max squared: here sigma is 1.5, eta 0.1.",
-                 Write(head), Create(ax), FadeIn(xt), FadeIn(yt), Create(one), Create(ok), FadeIn(okd), FadeIn(lab_ok), Write(cond))
-        self.say("Up to one over sigma max squared, the largest directions overshoot: q t goes above one, then settles.",
-                 Create(bad), FadeIn(badd), FadeIn(lab_bad), Write(cond2))
+        assert (SG, ET_OK, ET_BAD) == (1.5, 0.1, 0.3)
+        self.say("Is that order guaranteed? Only when eta is small enough. For a direction with sigma one point "
+                 "five, an eta of zero point one is safe, and the filter rises to one and stays there. Push eta to "
+                 "zero point three and it's still stable, but now the filter overshoots past one before it "
+                 "settles back.",
+                 Write(head), Create(ax), FadeIn(xt), FadeIn(yt), Create(one), run_time=1.2)
+        self.cue("For a direction", Create(ok), FadeIn(okd), FadeIn(lab_ok), Write(cond))
+        self.cue("Push eta", Create(bad), FadeIn(badd), FadeIn(lab_bad), Write(cond2))
         self.hold(0.5)
         self.clear_stage()
 
@@ -179,25 +192,30 @@ class Ep04EarlyStopping(NarratedScene):
         lt = np.log10(T_GRID)
         ctr = polyline(ax, lt, TRAIN / T0_TRAIN, C_TRAIN, 4)
         cer = polyline(ax, lt, PARAM_ERR / T0_ERR, C_TEST, 4)
-        ltr = txt("training loss", 24, C_TRAIN).move_to([4.4, 1.6, 0])
-        ler = txt("distance from the true weights", 22, C_TEST).move_to([4.5, 0.8, 0])
+        ltr = txt("training loss", 24, C_TRAIN).move_to([4.4, 1.75, 0])
+        ler = txt("distance from the true weights", 22, C_TEST).move_to([4.5, 1.2, 0])
         setup = txt("four singular directions, σ = 3, 1, 0.3, 0.1", 22, GREY_B).move_to([3.9, 2.45, 0])
         assert_on_screen(VGroup(ax, ticks, xl, yt, yl), ltr, ler, setup)
-        self.say("Now watch four directions, with singular values 3, 1, 0.3 and 0.1, noisy data, and a fixed step size.",
+        self.say("So when should we stop? Here are four directions, from a strong one with singular value three down "
+                 "to a weak one at zero point one, and the data is noisy. The training loss only ever goes down, "
+                 "and given enough steps it fits every direction, noise and all.",
                  Write(head), Create(ax), FadeIn(ticks), FadeIn(xl), FadeIn(yt), FadeIn(yl), FadeIn(setup))
-        self.say("Training loss only ever falls: given enough steps, gradient descent fits every direction, noise included.",
-                 Create(ctr, run_time=2.5), FadeIn(ltr))
+        self.cue("The training loss", Create(ctr, run_time=2.5), FadeIn(ltr))
         star = Dot(ax.c2p(np.log10(T_STAR), E_STAR / T0_ERR), radius=0.12, color=YELLOW_D)
-        pick = txt(f"best: t ≈ {T_STAR}, error {E_STAR:.2f}", 24, YELLOW_D).next_to(star, UP, buff=0.9).shift(LEFT * 0.4)
+        pick = txt(f"best: t ≈ {T_STAR}, error {E_STAR:.2f}", 24, YELLOW_D).next_to(star, UP, buff=0.9).shift(RIGHT * 0.25)
         assert_on_screen(pick)
-        self.say(f"The distance falls, then climbs as noisy weak directions are fit. Best stopping is near {T_STAR} steps.",
-                 Create(cer, run_time=2.5), FadeIn(ler), FadeIn(star), FadeIn(pick))
         end = txt(f"run to convergence: error {E_END:.2f}, {E_END / E_STAR:.0f}× worse", 24, C_LOSS).move_to([3.3, -2.3, 0]).align_to([-6.4, 0, 0], LEFT)
         end.move_to([0.2, -2.05, 0])
         assert_on_screen(end)
-        self.say("Run to convergence and the error is many times larger. Stopping early trades a little bias for much less noise.",
-                 FadeIn(end))
-        self.say("In practice, save checkpoints and keep the one with the best validation score, not an arbitrary step count.",
+        assert T_STAR == 36 and round(E_END / E_STAR) == 14
+        self.say("But the distance from the true weights falls and then climbs again, as the weak, noisy directions "
+                 "get fit. The sweet spot is near thirty-six steps. If we run all the way to convergence the error "
+                 "is about fourteen times worse, so stopping early buys a little bias for a lot less noise.",
+                 Create(cer, run_time=2.5), FadeIn(ler))
+        self.cue("The sweet spot", FadeIn(star), FadeIn(pick))
+        self.cue("If we run all the way", FadeIn(end))
+        self.say("In practice you can't see the true weights, so you save checkpoints as you train. Then you keep "
+                 "whichever checkpoint scores best on validation data.",
                  Indicate(star, color=YELLOW_D, scale_factor=2))
         self.hold(0.5)
         self.clear_stage()
@@ -208,9 +226,7 @@ class Ep04EarlyStopping(NarratedScene):
         names = [("regularization λ", C_LAM), ("learning rate η", C_ETA), ("stopping time t", BLUE_C)]
         boxes = VGroup(*[box_label(n, c, w=3.6, h=0.9, font_size=26) for n, c in names]).arrange(RIGHT, buff=0.5).move_to([0, 2.2, 0])
         assert_on_screen(boxes)
-        self.say("Regularization strength, learning rate and stopping time are hyperparameters spanning orders of magnitude.",
-                 Write(head), LaggedStart(*[FadeIn(b, shift=UP * 0.2) for b in boxes], lag_ratio=0.3))
-        ln = NumberLine(x_range=[-6, 2, 1], length=11.5, color=GREY_B, include_numbers=False, tick_size=0.1).move_to([0, 0.6, 0])
+        ln =NumberLine(x_range=[-6, 2, 1], length=11.5, color=GREY_B, include_numbers=False, tick_size=0.1).move_to([0, 0.6, 0])
         lab = VGroup(*[mt(rf"10^{{{k}}}", 0.5, GREY_B).next_to(ln.n2p(k), DOWN, buff=0.2) for k in range(-6, 3, 2)])
         vals = np.linspace(12.5, 100, 8)
         lin = VGroup(*[Dot(ln.n2p(np.log10(v)), radius=0.07, color=C_LOSS) for v in vals])
@@ -218,18 +234,27 @@ class Ep04EarlyStopping(NarratedScene):
         cap1 = txt("8 evenly spaced values, 12.5 to 100", 22, C_LOSS).next_to(ln, UP, buff=0.25).align_to(ln, LEFT)
         cap2 = txt("one value per power of ten", 22, GREEN_C).next_to(ln, UP, buff=0.25).align_to(ln, LEFT)
         assert_on_screen(VGroup(ln, lab))
-        self.say("So sweep on a log scale. Evenly spaced values bunch into one decade; one value per power of ten spans it all.",
-                 FadeIn(ln), FadeIn(lab), FadeIn(cap1), LaggedStart(*[FadeIn(d) for d in lin], lag_ratio=0.1))
-        self.play(FadeOut(cap1), FadeOut(lin), FadeIn(cap2), LaggedStart(*[FadeIn(d) for d in lg], lag_ratio=0.1))
+        self.say("That leaves us three hyperparameters to choose, which are the ridge lambda, the learning rate and "
+                 "the stopping time. Each one can range over many powers of ten, so we search on a log scale. "
+                 "Evenly spaced values bunch up inside a single decade, while one value per power of ten covers "
+                 "the whole range.",
+                 Write(head), LaggedStart(*[FadeIn(b, shift=UP * 0.2) for b in boxes], lag_ratio=0.3))
+        self.cue("Each one can range", FadeIn(ln), FadeIn(lab))
+        self.cue("Evenly spaced", FadeIn(cap1), LaggedStart(*[FadeIn(d) for d in lin], lag_ratio=0.1))
+        self.cue("while one value", FadeOut(cap1), FadeOut(lin), FadeIn(cap2), LaggedStart(*[FadeIn(d) for d in lg], lag_ratio=0.1))
         self.hold(0.3)
         self.play(FadeOut(ln), FadeOut(lab), FadeOut(cap2), FadeOut(lg))
         # roles of the sets
-        roles = VGroup(box_label("training set: fits the weights", C_TRAIN, w=5.6, h=0.8, font_size=24),
-                       box_label("validation set: picks among trained candidates", C_VAL, w=5.6, h=0.8, font_size=24),
-                       box_label("test set: reserved for the final fixed procedure", C_TEST, w=5.6, h=0.8, font_size=24)).arrange(DOWN, buff=0.3).move_to([0, 0.3, 0])
+        roles = VGroup(box_label("training set: fits the weights", C_TRAIN, w=7.6, h=0.8, font_size=24),
+                       box_label("validation set: picks among trained candidates", C_VAL, w=7.6, h=0.8, font_size=24),
+                       box_label("test set: reserved for the final fixed procedure", C_TEST, w=7.6, h=0.8, font_size=24)).arrange(DOWN, buff=0.25).move_to([0, 0.0, 0])
         assert_on_screen(roles)
-        self.say("Each candidate is trained, then scored on validation data. The test set is kept for the final procedure.",
-                 LaggedStart(*[FadeIn(r, shift=UP * 0.2) for r in roles], lag_ratio=0.3))
+        self.say("Each candidate is trained on the training set and then scored on validation data. The test set "
+                 "stays locked away until the very end, when the whole procedure is fixed.",
+                 FadeIn(roles[0], shift=UP * 0.2))
+        self.cue("then scored", FadeIn(roles[1], shift=UP * 0.2))
+        self.cue("The test set", FadeIn(roles[2], shift=UP * 0.2))
+        self.hold(0.3)
         self.play(FadeOut(roles))
         # grid vs random
         pl = Square(2.8, color=GREY_B, stroke_width=2).move_to([-3.4, -0.1, 0])
@@ -244,18 +269,23 @@ class Ep04EarlyStopping(NarratedScene):
         tab.move_to([5.0, -0.2, 0])
         thead = txt("knobs → grid runs", 22, GREY_B).next_to(tab, UP, buff=0.25)
         assert_on_screen(VGroup(pl, gl, pl2, rl), tab, thead)
-        self.say("A grid grows exponentially: five values per knob is 5, 25, 125 runs, and over fifteen thousand for six knobs.",
-                 FadeIn(thead), LaggedStart(*[FadeIn(t) for t in tab], lag_ratio=0.3))
-        self.say("Random search tries new values of every knob on every run, usually a better use of the same budget.",
-                 Create(pl), FadeIn(gpts), FadeIn(gl), Create(pl2), FadeIn(rpts.move_to(pl2.get_center())), FadeIn(rl))
+        self.say("A full grid blows up fast. With five values for each hyperparameter, that's five runs, then "
+                 "twenty-five, then a hundred and twenty-five, and with six of them it's over fifteen thousand. "
+                 "Random search draws a fresh value of every hyperparameter each run, so the same budget "
+                 "usually covers more ground.",
+                 FadeIn(thead))
+        self.cue("With five values", LaggedStart(*[FadeIn(t) for t in tab], lag_ratio=0.3, run_time=4))
+        self.cue("Random search", Create(pl), FadeIn(gpts), FadeIn(gl), Create(pl2), FadeIn(rpts.move_to(pl2.get_center())), FadeIn(rl))
+        self.hold(0.3)
         self.play(FadeOut(pl), FadeOut(gpts), FadeOut(gl), FadeOut(pl2), FadeOut(rpts), FadeOut(rl), FadeOut(tab), FadeOut(thead))
-        sup = VGroup(box_label("no budget for a broad search?", C_TEXT, w=6.2, h=0.8, font_size=24),
-                     box_label("borrow settings from a closely related paper", C_TEXT, w=6.2, h=0.8, font_size=24),
+        sup = VGroup(box_label("no budget for a broad search?", C_TEXT, w=7.4, h=0.8, font_size=24),
+                     box_label("borrow settings from a closely related paper", C_TEXT, w=7.4, h=0.8, font_size=24),
                      txt("a starting prior, not a derivation or a proof of optimality", 24, YELLOW_D)).arrange(DOWN, buff=0.35).move_to([0, -0.2, 0])
         assert_on_screen(sup)
-        self.say("With no budget for broad search, borrow settings from a closely related paper: an engineering prior, not proof.",
+        self.say("And if there's no budget to search at all, you can borrow settings from a closely related paper, "
+                 "as a starting guess rather than a proof. Could a learner tune these for us instead? "
+                 "Meta-learning can, but that's an outer loop with a cost of its own.",
                  LaggedStart(*[FadeIn(s, shift=UP * 0.2) for s in sup], lag_ratio=0.3))
-        self.say("Could another learner tune the knobs? Meta-learning can, but it is an outer loop with its own data and cost.",
-                 Indicate(sup[0], color=YELLOW_D))
+        self.cue("Could a learner", Indicate(sup[0], color=YELLOW_D))
         self.hold(0.6)
         self.clear_stage()

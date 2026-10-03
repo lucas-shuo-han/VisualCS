@@ -5,217 +5,381 @@ Generated from the episode subtitles (.srt).
 
 ## 01-gd-least-squares
 
-- `00:06` Least squares is a lamppost: the geometry is explicit, so we can watch exactly what optimization does.
-- `00:13` The loss is the squared length of the residual, and its gradient is two X transpose times the residual.
-- `00:19` A gradient step with learning rate eta subtracts eta times that gradient.
-- `00:25` Expand it and the step is a fixed linear map applied to the weights, plus a constant.
-- `00:32` Subtract the minimizer and the constant vanishes: the error is multiplied by the same matrix at every step.
-- `00:39` Optimizing a quadratic is therefore a linear dynamical system, and its eigenvalues decide everything.
-- `00:47` In the eigenbasis of X transpose X, a problem splits into scalar ones. Start with one, sigma times w equals y.
-- `00:55` Each gradient step multiplies the error by the same number, r equals one minus two eta sigma squared.
-- `01:02` A small learning rate gives r between zero and one: the error shrinks smoothly, but slowly.
-- `01:09` At eta equal to one over two sigma squared, r is zero, and a single step lands exactly on the answer.
-- `01:16` Push eta higher and r turns negative: the iterate overshoots, bounces across the answer, and still settles.
-- `01:25` Past eta equal to one over sigma squared, r falls below minus one, and every bounce is bigger than the last.
-- `01:33` So the scalar rule is simple: the iteration is stable exactly when the absolute value of r is below one.
-- `01:41` Now two directions: a ravine, steep where sigma is 2 and shallow where sigma is one half.
-- `01:48` Take eta equal to 0.2. Each step multiplies the steep coordinate by minus 0.6 and the shallow one by 0.9.
-- `01:57` The path bounces across the ravine while creeping along it: the shallow direction sets the pace.
-- `02:03` The steepest direction forbids a bigger step: eta must stay below one over lambda max, not lambda min.
-- `02:11` The best constant rate balances the two extremes, equal and opposite. Now both modes shrink by 0.88 per step.
-- `02:19` Even the best constant learning rate is still slow. The ravine itself is the problem.
-- `02:26` The ratio of the largest to the smallest eigenvalue is the condition number, kappa. Here it is 16.
-- `02:33` At the best rate the error shrinks by kappa minus one over kappa plus one per step: 15 over 17 here.
-- `02:40` Iterations grow with kappa: one for a round bowl, over two hundred at kappa 100, over two thousand at 1000.
-- `02:48` Large condition number means slow convergence even when stable. Momentum and Adam will attack exactly this.
+- `00:06` How does gradient descent actually move?
+- `00:08` On most problems that's hard to say, but least squares is the one place where we can follow every step exactly.
+- `00:15` Here's the loss, and here's its gradient, which is two X transpose times the residual.
+- `00:21` Each step walks downhill, so we take the gradient, scale it by the learning rate eta, and subtract it.
+- `00:27` Now multiply that out, and something nice appears.
+- `00:31` Every step is just one fixed matrix times w, plus some constant.
+- `00:37` If we measure from the answer instead, the constant disappears,
+- `00:40` and the error simply gets multiplied by that matrix again and again.
+- `00:44` It's the same matrix at every single step, so the whole story is hiding in its eigenvalues.
+- `00:52` Each eigen-direction behaves on its own, so let's shrink the problem down to a single number.
+- `00:57` We want two times w to equal four, and we start from zero.
+- `01:00` Every step multiplies the error by one number, which we'll call r, so let's see what the learning rate does to it.
+- `01:09` Start with a timid step.
+- `01:10` Then r is zero point eight four, so we creep toward the answer a little at a time.
+- `01:15` Raise eta to one eighth and r is exactly zero, so a single step lands on the answer.
+- `01:21` Go bigger and r turns negative.
+- `01:23` Now we overshoot and bounce back and forth, but each bounce is smaller, so we still settle down.
+- `01:29` Push a little further and r drops below minus one, and then every bounce is bigger than the last, and the run blows up.
+- `01:37` So the whole rule fits on one line.
+- `01:39` Keep r strictly between minus one and one, which means the learning rate has to stay below one over sigma squared.
+- `01:48` Real problems have many directions at once, so here are two of them.
+- `01:52` One is a steep wall and the other is a shallow floor, and together they make a ravine.
+- `01:58` A single learning rate has to serve both directions.
+- `02:01` At zero point two, the steep error flips sign and keeps sixty percent of its size,
+- `02:06` while the shallow one keeps ninety percent.
+- `02:09` So we zigzag across the ravine while barely creeping along it, and the shallow direction is the one that makes us slow.
+- `02:16` That takes forty-four steps to make the error a hundred times smaller.
+- `02:21` So why not just take bigger steps?
+- `02:23` Because the steep wall won't let us.
+- `02:25` Once eta passes one quarter, that direction blows up.
+- `02:29` The best we can do is choose eta so both directions shrink equally fast,
+- `02:33` and then each of them keeps eighty-eight percent per step.
+- `02:37` But look how little that buys us.
+- `02:39` It's thirty-seven steps instead of forty-four.
+- `02:42` So the learning rate isn't the real problem here, the ravine is.
+- `02:47` How stretched the ravine is has a name.
+- `02:49` It's called the condition number, kappa, and it's the steepest curvature divided by the flattest, which here is sixteen.
+- `02:57` Even at the best learning rate, kappa sets the speed.
+- `03:00` In our ravine each step keeps fifteen seventeenths of the error.
+- `03:04` Here's what that costs.
+- `03:05` A perfectly round bowl takes one step, but at kappa one hundred we need over two hundred steps,
+- `03:11` and at kappa one thousand, over two thousand.
+- `03:14` Stretched bowls are slow however you tune eta, and fixing that is exactly what momentum and Adam are for.
 
 ## 02-null-space
 
-- `00:06` Usually more data than parameters gives one answer. Not here: one equation, two unknowns.
-- `00:12` Every point on this line fits perfectly, with loss zero. Which one will gradient descent pick?
-- `00:18` The row of X is (1, 2). Moving along the null direction, (2, minus 1), changes no prediction.
-- `00:26` The two are perpendicular and span the whole space: the fundamental theorem of linear algebra.
-- `00:33` The gradient step is X transpose times the residual, so every update lies in the row space.
-- `00:40` So the null-space part of the starting point is preserved forever; only the row space changes.
-- `00:45` Start at zero: the iterates walk along (1, 2) and stop where they meet the solution line.
-- `00:52` That is the minimum-norm solution, X transpose (X X transpose) inverse y. Here it is (1, 2).
-- `01:00` Why closest? Any other solution is w min plus a perpendicular null vector: at (5, 0), 25 = 5 + 20.
-- `01:13` Start elsewhere, at (3, minus 2). The path is still parallel to (1, 2) but lands on another solution.
-- `01:22` The null part of the start, (3.2, minus 1.6), stayed frozen. The limit is w min plus that part.
-- `01:30` So gradient descent finds the solution closest to where it began. Only a zero start gives minimum norm.
-- `01:37` Here initialization matters: the loss cannot tell the solutions apart, so the start decides.
-- `01:44` In higher dimensions it is the same. In the SVD basis, each weight coordinate evolves on its own.
-- `01:51` Two coordinates converge to their targets, at rates 0.4 and 0.8. The null coordinate never moves.
-- `01:59` Real networks have far more parameters than data: the optimizer and its start pick the solution.
+- `00:06` What if there are more unknowns than equations?
+- `00:09` Let's take the smallest case, with one equation and two unknowns.
+- `00:12` Every point on this line fits the data perfectly, so the loss is zero all along it,
+- `00:17` and the question is which of them gradient descent will pick.
+- `00:22` Here's the row of X, which points along one, two.
+- `00:24` The null direction runs along the line instead, and sliding that way changes no prediction at all.
+- `00:30` These two directions are perpendicular, and together they fill the whole plane,
+- `00:35` which is the fundamental theorem of linear algebra.
+- `00:40` Now look at the gradient step.
+- `00:42` It's X transpose times something, so every update lives in the row space.
+- `00:46` That means the null-space part of w never moves, and only the row-space part changes.
+- `00:52` So let's start at zero and watch.
+- `00:54` We walk straight along the row direction, and we stop the moment we hit the solution line.
+- `00:59` That stopping point is special, since it's the minimum-norm solution, and in this problem it's the point one, two.
+- `01:07` Why is that one the smallest?
+- `01:08` Every other solution is this one with a perpendicular null piece added, so it can only be longer.
+- `01:14` Take the solution at five, zero, where the squared length is twenty-five, which is five plus twenty.
+- `01:23` Now start somewhere else, at the point three, minus two.
+- `01:26` We travel in the same direction as before, but this time we land on a different solution.
+- `01:32` The null part of the start just rode along, frozen, so we end up at the minimum-norm solution plus that piece.
+- `01:39` So gradient descent lands on the solution nearest its start, and starting at zero is what gives the minimum-norm one.
+- `01:46` The loss can't tell these solutions apart, so here the starting point is what makes the choice.
+- `01:53` With more dimensions the story is the same.
+- `01:56` Here are two equations and three unknowns, and in the SVD basis each coordinate of w moves on its own,
+- `02:03` so let's just watch them.
+- `02:07` Two of the coordinates settle, keeping forty percent and eighty percent of their error per step,
+- `02:12` while the null one never budges.
+- `02:14` Real networks have far more parameters than data, so the optimizer and its starting point are what pick the answer.
 
 ## 03-ridge
 
-- `00:06` Ridge adds a penalty on the size of the weights, with strength lambda. Positive lambda makes it well posed.
-- `00:13` Setting the gradient to zero gives a closed form. It inverts X transpose X plus lambda times the identity.
-- `00:20` A second form inverts an n by n matrix instead. Same estimator: use whichever matrix is smaller.
-- `00:28` Take the SVD. Then ridge weights each direction by sigma over sigma squared plus lambda.
-- `00:35` The pseudoinverse uses one over sigma. Ridge keeps the fraction sigma squared over sigma squared plus lambda.
-- `00:43` Plot it. Large singular values are nearly untouched; small ones are strongly attenuated.
-- `00:49` At sigma equal to root lambda, exactly half is kept. A bigger lambda pushes that line right.
-- `00:56` Now the actual multiplier. Without ridge it is one over sigma, which explodes for weak directions.
-- `01:03` With ridge it rises, peaks at one over two root lambda where sigma is root lambda, then falls.
-- `01:11` Adding lambda times the identity shifts every eigenvalue up by lambda. The smallest gain the most, relatively.
-- `01:18` The ravine from episode one has kappa 16. Ridge of 0.25 cuts it to 8.5, and ridge of 1 to 4.
-- `01:27` The price is a different problem and a different answer. Conditioning and overfitting improve together.
-- `01:34` Data has strong energy along strong directions. Suppose the truth is small, and each direction carries noise.
-- `01:42` Without ridge we divide by sigma, so noise grows by one over sigma: thirty times more in the weakest direction.
-- `01:49` Ridge shrinks each direction by its own factor. Weak directions collapse toward zero; strong ones barely move.
-- `01:57` Averaged over noise, the error drops about twelvefold: calibrated distrust of directions that are mostly noise.
-- `02:04` Weak directions can hold signal, so suppressing them is a judgment. Overfitting trusts the data too much.
-- `02:12` Gradient descent on the ridge objective shrinks the weights by a fixed factor, then takes the usual data step.
-- `02:19` That decay alone shrinks a weight by 0.9 each step. For plain gradient descent, ridge equals weight decay.
-- `02:27` A Gaussian prior on the weights plus Gaussian noise makes the MAP estimate a ridge solution.
-- `02:33` One trap: minimizing the objective cannot pick lambda. It only grows with lambda, so lambda collapses to zero.
-- `02:41` Lambda is a hyperparameter, chosen with held-out data. That is next, along with two other knobs.
+- `00:06` What if we simply charge a price for big weights?
+- `00:09` That's ridge regression, and the price is called lambda.
+- `00:12` With that penalty in place there's always exactly one answer, even when the data alone can't decide.
+- `00:18` Set the gradient to zero and a closed form pops out, which inverts X transpose X with lambda added on the diagonal.
+- `00:26` There's also a second form, which inverts a matrix with one row per sample instead.
+- `00:31` Both give the same answer, so we use whichever matrix is smaller.
+- `00:36` So what does ridge actually do to the solution?
+- `00:39` Take the SVD, and each singular direction gets its own multiplier.
+- `00:43` The pseudoinverse would use one over sigma there, so ridge keeps only a fraction of that,
+- `00:49` and this fraction is the ridge filter.
+- `00:53` Let's plot that fraction against the singular value, for three values of lambda.
+- `00:58` Strong directions are left almost alone, while weak ones get squashed toward zero.
+- `01:03` The cutoff sits where sigma equals the square root of lambda, and there exactly half is kept.
+- `01:09` So a bigger lambda slides the cutoff to the right.
+- `01:13` Now here's the multiplier itself.
+- `01:15` With no ridge it's one over sigma, which explodes as sigma shrinks toward zero.
+- `01:20` Ridge tames that, so the curve rises, peaks where sigma equals the square root of lambda, and then falls again.
+- `01:29` There's a bonus as well.
+- `01:30` Adding lambda lifts every eigenvalue by the same amount, so the tiny ones gain the most in proportion.
+- `01:37` Take the ravine from episode one, where kappa was sixteen.
+- `01:40` A ridge lambda of one quarter cuts that to eight and a half, and a ridge lambda of one brings it down to four.
+- `01:47` So the steps we need drop from thirty-seven to ten.
+- `01:50` The catch is that we're now solving a different problem, and it has a different answer.
+- `01:58` But why should we distrust weak directions at all?
+- `02:00` Let's put a small true signal in each direction and add a little noise.
+- `02:05` Without ridge we divide by sigma, so the weakest direction blows its noise up ten times,
+- `02:10` and you can see those estimates scatter.
+- `02:12` Now turn ridge on.
+- `02:13` The weak directions collapse toward zero, while the strong ones barely move.
+- `02:18` Averaged over the noise, the total error drops about twelve-fold.
+- `02:22` So overfitting is really trusting noisy directions too much, and ridge is a judgment call to trust them less.
+- `02:31` Inside gradient descent, ridge turns out to be simple.
+- `02:34` We shrink the weights a little, and then we take the usual data step.
+- `02:39` On its own, that shrink keeps ninety percent of a weight each step.
+- `02:43` It's called weight decay, and here it's the same thing as ridge.
+- `02:47` There's a Bayesian view of this too.
+- `02:49` Assume Gaussian noise on the labels and a Gaussian prior on the weights, and the MAP estimate is exactly ridge.
+- `02:56` The ridge lambda is then the noise variance divided by the prior variance.
+- `03:03` So why not let the optimizer choose lambda as well?
+- `03:06` Because the objective only grows with lambda, so it would just slide down to zero.
+- `03:11` That makes lambda a hyperparameter, which we pick on held-out data, and that's next,
+- `03:17` along with two more hyperparameters.
 
 ## 04-early-stopping
 
-- `00:06` Rotate gradient descent into the SVD basis, with the weights and the targets rotated the same way.
-- `00:13` Each singular direction obeys its own scalar recurrence, with factor one minus two eta sigma squared.
-- `00:20` Start at zero and solve it. Direction i reaches the fraction q t of the converged answer, y tilde over sigma.
-- `00:29` Plot q t against sigma. After a few steps only large singular values are fit; small ones have barely started.
-- `00:37` Keep stepping and the curve rises from the right: large singular values converge first, small ones far later.
-- `00:44` Compare with ridge. Both hold back weak directions, so stopping early regularizes without a penalty.
-- `00:51` The curves need not coincide. What they share is the ordering: weak singular directions enter last.
-- `00:59` This ordering is guaranteed only for eta up to one over two sigma max squared: here sigma is 1.5, eta 0.1.
-- `01:08` Up to one over sigma max squared, the largest directions overshoot: q t goes above one, then settles.
-- `01:17` Now watch four directions, with singular values 3, 1, 0.3 and 0.1, noisy data, and a fixed step size.
-- `01:27` Training loss only ever falls: given enough steps, gradient descent fits every direction, noise included.
-- `01:35` The distance falls, then climbs as noisy weak directions are fit. Best stopping is near 36 steps.
-- `01:42` Run to convergence and the error is many times larger. Stopping early trades a little bias for much less noise.
-- `01:49` In practice, save checkpoints and keep the one with the best validation score, not an arbitrary step count.
-- `01:57` Regularization strength, learning rate and stopping time are hyperparameters spanning orders of magnitude.
-- `02:04` So sweep on a log scale. Evenly spaced values bunch into one decade; one value per power of ten spans it all.
-- `02:13` Each candidate is trained, then scored on validation data. The test set is kept for the final procedure.
-- `02:19` A grid grows exponentially: five values per knob is 5, 25, 125 runs, and over fifteen thousand for six knobs.
-- `02:29` Random search tries new values of every knob on every run, usually a better use of the same budget.
-- `02:36` With no budget for broad search, borrow settings from a closely related paper: an engineering prior, not proof.
-- `02:43` Could another learner tune the knobs? Meta-learning can, but it is an outer loop with its own data and cost.
+- `00:06` What is gradient descent really doing if we stop it early?
+- `00:09` To see it, we rotate everything into the SVD basis.
+- `00:13` Now each direction runs its own little recurrence on a single number, with the same shape we saw in episode one.
+- `00:20` Start at zero and solve that recurrence.
+- `00:23` After any number of steps, each direction has gone some fraction of the way to its final answer,
+- `00:29` and that fraction is the early-stopping filter.
+- `00:32` Once the filter reaches one, the direction is fully converged.
+- `00:37` Let's plot that filter against the singular value.
+- `00:40` After a few steps only the strong directions are fit, and the weak ones have barely started.
+- `00:45` Keep going and the curve climbs in from the right, so strong directions finish first while weak ones take ages.
+- `00:53` Now put the ridge filter next to one of these curves.
+- `00:56` Both hold back the weak directions, so stopping early regularizes without any penalty term.
+- `01:01` They aren't the same curve, though.
+- `01:03` What they share is the order, with weak directions always coming in last.
+- `01:09` Is that order guaranteed?
+- `01:10` Only when eta is small enough.
+- `01:12` For a direction with sigma one point five, an eta of zero point one is safe,
+- `01:17` and the filter rises to one and stays there.
+- `01:20` Push eta to zero point three and it's still stable, but now the filter overshoots past one before it settles back.
+- `01:29` So when should we stop?
+- `01:31` Here are four directions, from a strong one with singular value three down to a weak one at zero point one,
+- `01:38` and the data is noisy.
+- `01:39` The training loss only ever goes down, and given enough steps it fits every direction, noise and all.
+- `01:46` But the distance from the true weights falls and then climbs again, as the weak, noisy directions get fit.
+- `01:53` The sweet spot is near thirty-six steps.
+- `01:55` If we run all the way to convergence the error is about fourteen times worse,
+- `02:00` so stopping early buys a little bias for a lot less noise.
+- `02:04` In practice you can't see the true weights, so you save checkpoints as you train.
+- `02:08` Then you keep whichever checkpoint scores best on validation data.
+- `02:13` That leaves us three hyperparameters to choose, which are the ridge lambda, the learning rate and the stopping time.
+- `02:20` Each one can range over many powers of ten, so we search on a log scale.
+- `02:25` Evenly spaced values bunch up inside a single decade, while one value per power of ten covers the whole range.
+- `02:33` Each candidate is trained on the training set and then scored on validation data.
+- `02:38` The test set stays locked away until the very end, when the whole procedure is fixed.
+- `02:44` A full grid blows up fast.
+- `02:46` With five values for each hyperparameter, that's five runs, then twenty-five, then a hundred and twenty-five,
+- `02:53` and with six of them it's over fifteen thousand.
+- `02:56` Random search draws a fresh value of every hyperparameter each run, so the same budget usually covers more ground.
+- `03:05` And if there's no budget to search at all, you can borrow settings from a closely related paper,
+- `03:10` as a starting guess rather than a proof.
+- `03:12` Could a learner tune these for us instead?
+- `03:15` Meta-learning can, but that's an outer loop with a cost of its own.
 
 ## 05-sgd
 
-- `00:06` A training loss averages over n examples, so its gradient is a sum of n terms. Costly for huge n.
-- `00:13` Instead draw a random batch of b examples and average those gradients. On average, this is the full gradient.
-- `00:21` Six examples have these gradients at one point. Their average, the full gradient, is two thirds.
-- `00:27` Now list every batch of two. Their averages scatter widely, from minus two to three and a quarter.
-- `00:34` Their average over all 15 batches is exactly two thirds. Unbiased, yet five batches would step the wrong way.
-- `00:43` On a bumpy loss surface, the noise may shake the iterate out of a shallow valley.
-- `00:48` That is a possibility, not a guarantee: the same noise can just as well push it toward a worse region.
-- `00:54` Far from a solution, a rough direction already helps. Near it, the variance of the estimate is the limit.
-- `01:02` Take the overparameterized case again: more parameters than examples, and every example can be fit exactly.
-- `01:10` Use one random example per step, starting from zero. Its update is the gradient of that example's squared loss.
-- `01:17` Measure the distance to the minimum-norm solution. Since the fit is exact, the error updates alike.
-- `01:24` Expand the squared norm of the next error. This identity is exact: a good step subtracts a positive amount.
-- `01:32` Replace the per-example factor by its worst case, with a step below one over rho squared: an upper bound.
-- `01:39` Average over the random example: each has probability one over n, so the sum becomes the norm of X q.
-- `01:46` The error stays in the row space, where X q is at least sigma min times q: a contraction factor alpha below one.
-- `01:55` Try two equations, three unknowns: rho squared is 1.25, sigma min squared is 0.75, so alpha is 0.7.
-- `02:06` Single runs jitter but all fall. The average of many runs sits just under the bound: a line on a log scale.
-- `02:15` The reason: at the interpolating solution every example has zero gradient, so the noise vanishes there.
-- `02:21` A special case: it needs exact fit, full row rank and a small step. With noisy labels a constant step stalls.
-- `02:29` Strict decrease alone is not enough: a decreasing sequence can stall above zero. The factor alpha does the work.
+- `00:06` What if we have a billion examples?
+- `00:08` The full gradient sums over every one of them, which is a lot of work for a single step.
+- `00:13` So instead we grab a random mini-batch and average its gradients, and on average we get the full gradient back.
+- `00:22` Here are six per-example gradients at one point, and their average, the full gradient, is two thirds.
+- `00:28` Now try every possible batch of two.
+- `00:30` Those batch averages land all over the place, from minus two up to three and a quarter.
+- `00:36` Average all fifteen of them and you get exactly two thirds, which is what unbiased means.
+- `00:41` And yet five of the fifteen point the wrong way.
+- `00:46` So is the noise a bad thing?
+- `00:48` On a bumpy surface like this one, it might shake us out of a shallow valley.
+- `00:52` But the same noise can just as easily kick us somewhere worse, so it's a possibility and not a promise.
+- `00:58` Far from the answer a rough direction is plenty, but close to it the noise is what holds us back.
+- `01:07` So when does SGD converge with a constant step?
+- `01:10` Let's take the case where every example can be fit exactly.
+- `01:14` We start from zero, and each step picks one random example and follows just that example's gradient.
+- `01:20` Now track the error from the minimum-norm solution.
+- `01:23` Because the fit is exact, that error follows the very same random update.
+- `01:29` Zoom in on one step and expand the squared error.
+- `01:32` This first line is exact, and it says a good step subtracts something positive.
+- `01:37` Swap that factor for its worst case, and as long as eta is below one over rho squared we get an upper bound.
+- `01:44` Now average over which example we drew.
+- `01:46` Every example is equally likely, so the sum turns into the squared length of X times the error.
+- `01:52` The error lives in the row space, so that length can't be tiny.
+- `01:56` On average, then, each step keeps at most a fraction alpha of the squared error.
+- `02:03` Let's try it with two equations and three unknowns.
+- `02:06` With these numbers alpha comes out as zero point seven,
+- `02:09` so on average at most seventy percent of the squared error survives a step.
+- `02:14` Single runs jitter, but they all fall.
+- `02:16` Their average sits just under the bound, which is a straight line on this log scale.
+- `02:22` Why does a fixed step work here?
+- `02:24` At the solution every example's gradient is zero, so the noise vanishes exactly where we want to stop.
+- `02:30` But this is a special case.
+- `02:32` It needs an exact fit, full row rank and a small enough step,
+- `02:36` and with noisy labels a constant step stalls some distance from the answer.
+- `02:41` There's one last subtlety in the proof.
+- `02:43` Shrinking at every step isn't enough on its own, because the error could still stall above zero.
+- `02:49` The fixed factor alpha, strictly below one, is what rules that out.
 
 ## 06-momentum
 
-- `00:06` Poor conditioning forces a trade-off. A step small enough for the stiff direction crawls along the soft one.
-- `00:12` A larger step makes the stiff direction overshoot and bounce. Averaging recent gradients could calm it.
-- `00:19` Keep a running average: shrink the old average by beta, and add a small dose of the newest gradient.
-- `00:25` Unrolled, that is a weighted sum of all past gradients, weights falling by a factor beta each step back.
-- `00:32` For beta of 0.9, the newest gradient gets weight 0.1, the one before 0.09, and so on. One vector holds it all.
-- `00:42` Why not average everything equally? A stale, huge gradient would linger for ages; exponential weights forget.
-- `00:50` An electrical low-pass filter, a resistor and a capacitor, stores one state. A sudden step charges it smoothly.
-- `00:58` Momentum is the discrete version. If the gradient jumps to one, the average becomes one minus beta to the t.
-- `01:05` With beta of 0.9 the memory is about 9 steps: the average needs around ten steps to catch up.
-- `01:13` Feed in a gradient with a steady part, one, plus a bounce that flips sign each step, like a stiff direction.
-- `01:20` The average rises to the steady value and the bounce nearly disappears. That is a low-pass filter at work.
-- `01:27` A persistent gradient passes with gain one. An alternating one is cut to one minus beta over one plus beta.
-- `01:34` For beta of 0.9, that is five percent. The trial form A times minus one to the t confirms the ratio.
-- `01:43` Many libraries omit the one minus beta factor and accumulate an unnormalized velocity instead.
-- `01:50` That velocity is bigger by exactly one over one minus beta, so its learning rate must shrink by the same factor.
-- `01:58` With beta of 0.9, a rate of 0.1 in one form matches 0.01 in the other. Match before comparing rates.
-- `02:08` Here is a ravine: steep across, shallow along. Plain gradient descent with a stable step zigzags across.
-- `02:15` With the averaged gradient, the bounces across the ravine cancel while the steady push along it accumulates.
-- `02:22` Caution: this shows filtering. A square-root-of-kappa guarantee needs tuning and a smooth, strongly convex loss.
+- `00:06` Remember the ravine?
+- `00:07` A step that's small enough for the stiff direction just crawls along the soft one,
+- `00:12` and a bigger step makes the stiff direction overshoot and bounce.
+- `00:15` So what if we averaged the recent gradients, instead of trusting only the newest one?
+- `00:21` So we keep a running average.
+- `00:22` At each step we shrink the old average by beta, and then mix in a little of the newest gradient.
+- `00:28` Unroll that and it's a weighted sum of every past gradient,
+- `00:32` where each step back in time shrinks the weight by another factor of beta.
+- `00:38` With beta at zero point nine, the newest gradient gets a weight of zero point one.
+- `00:43` The one before it gets zero point zero nine, and so on down, yet a single stored vector holds it all.
+- `00:50` Why not weigh them all equally?
+- `00:51` Because then a huge, stale gradient would hang around for ages, while exponential weights forget it.
+- `00:59` An electric circuit does the same thing.
+- `01:02` A resistor and a capacitor hold one stored state, and that state charges up smoothly.
+- `01:07` Momentum is the step-by-step version, so if the gradient suddenly jumps to one,
+- `01:12` the average creeps up toward it like this.
+- `01:14` With beta at zero point nine, the memory is about nine and a half steps.
+- `01:19` That's roughly how long the average takes to catch up with a change.
+- `01:25` Now feed in a steady gradient of one, with a bounce on top that flips sign at every step,
+- `01:30` the way a stiff direction does.
+- `01:32` The average settles on the steady value, and the bounce nearly vanishes, which is exactly what a low-pass filter does.
+- `01:40` We can put numbers on that.
+- `01:42` A steady gradient passes straight through, while an alternating one gets cut down by this ratio.
+- `01:47` For beta at zero point nine that's about five percent, so the trend survives and the bounce is basically gone.
+- `01:55` Here's a trap to watch for.
+- `01:57` Many libraries drop the factor of one minus beta and just add up the raw gradients,
+- `02:02` which is the unnormalized convention.
+- `02:04` With beta at zero point nine that running sum is ten times bigger,
+- `02:08` so its learning rate has to be ten times smaller to match.
+- `02:12` So a learning rate of zero point one in the first form is zero point zero one in the second.
+- `02:17` Always convert before you compare learning rates across libraries.
+- `02:23` Let's go back to a ravine, steep across and shallow along.
+- `02:27` Plain gradient descent zigzags its way down.
+- `02:29` Now average the gradients, and the bounces across cancel while the push along adds up,
+- `02:35` so it takes fifteen steps instead of forty-nine.
+- `02:38` A word of caution before we move on.
+- `02:40` What we've shown is filtering,
+- `02:42` and the famous square root of kappa speed-up needs tuned parameters and a strongly convex loss.
 
 ## 07-damping
 
-- `00:06` In the Hessian's eigenbasis a quadratic decouples, so study one scalar mode with curvature lambda.
-- `00:12` Plugging in its gradient couples the weight and the average into a two-by-two linear system.
-- `00:18` Eliminating the average gives a second-order recurrence with one number: s, eta times one minus beta times lambda.
-- `00:26` Its polynomial has two roots. The mode mixes their powers, so both must lie inside the unit circle.
-- `00:34` The Schur test needs three checks: no root at plus one, none at minus one, and a root product below one.
-- `00:41` So it is stable exactly for s between zero and two times one plus beta. At beta zero, eta lambda is below two.
-- `00:50` With beta of 0.9, the stable learning-rate range is nineteen times wider. The real gain is speed, not range.
-- `01:00` Fix beta at one half and slide s up from zero. The larger root's size sets the convergence rate.
-- `01:06` Small s: both roots are real and positive, and the slow one sits near one. Smooth, but slow.
-- `01:13` The roots meet and merge at s equal to one minus root beta, squared: the fastest non-oscillating decay.
-- `01:21` Beyond that the roots split into a complex pair, both of size root beta. The rate stays flat: a plateau.
-- `01:28` Near the far end both roots turn real and negative. At s equal to three one reaches minus one: unstable.
-- `01:37` Start the mode at one and watch. Overdamped creeps toward zero; critical gets there quickly without crossing.
-- `01:44` Underdamped overshoots and rings, but inside an envelope shrinking like root beta to the t. Still fast.
-- `01:51` So oscillation is not the enemy; only the size of the roots counts. With beta zero, the regimes coincide.
-- `02:00` A single eta must serve every eigenvalue. Each mode lands at its own s, the same curve scaled by its curvature.
-- `02:08` A soft mode wants a big step to leave the overdamped zone; a stiff one nears the edge. Their s differ by kappa.
-- `02:16` Tuning is a minimax problem: make the worst rate over all modes as small as possible, using the plateau.
-- `02:23` This works below a kappa bound set by beta. At the limit, the rate is root kappa minus one over root kappa plus one.
-- `02:31` Plain gradient descent pays kappa minus one over kappa plus one. This is the standard tuned heavy-ball result.
-- `02:38` To shrink the error a hundredfold: kappa 20 takes 46 steps against 10; kappa 100, 230 against 23.
-- `02:48` Nesterov evaluates the gradient where the momentum is about to carry the iterate, then steps from here.
-- `02:55` Look ahead, then measure the slope there. Tuned Nesterov provably needs about root kappa steps.
-- `03:01` Conventions differ between books and libraries. Never mix one line from one convention with another's update.
+- `00:06` Momentum sometimes rings and sometimes creeps, and we'd like to know why.
+- `00:10` So let's zoom in on a single direction, with curvature lambda.
+- `00:14` Plug in its gradient, and the weight and the running average get tangled into a two-by-two system.
+- `00:20` Untangle that system and everything hangs on one number, which is eta, times one minus beta, times lambda.
+- `00:27` The recurrence has two roots, and a step mixes their powers.
+- `00:31` So both roots have to stay inside the unit circle.
+- `00:36` Are both roots inside?
+- `00:37` The Schur test checks that with three conditions, which are no root at one, no root at minus one,
+- `00:43` and a product below one.
+- `00:45` Put together, they say that our one number has to lie between zero and two times one plus beta.
+- `00:51` Without momentum, that means eta times lambda has to stay below two.
+- `00:56` With beta at zero point nine, the stable range is nineteen times wider.
+- `01:00` But the real win from momentum is speed, not range.
+- `01:06` Now fix beta at one half and slide that number up from zero, while we watch the two roots on the left.
+- `01:12` The bigger root sets the speed, and its size is what the curve on the right plots.
+- `01:18` At the small end, both roots are real and positive, and the slow one sits close to one.
+- `01:24` That's smooth but slow, and it's called overdamped.
+- `01:27` Slide further and the two roots collide, which is critical damping, the fastest decay without any wobble.
+- `01:34` Past that point they split into a complex pair, both of size root beta, and the rate goes flat into a plateau.
+- `01:41` Near the far end they both turn real and negative.
+- `01:44` Then at three, one of them reaches minus one, and the mode goes unstable.
+- `01:51` Start the mode at one and watch it over time.
+- `01:53` The overdamped run creeps toward zero, and the critical one gets there fast without ever crossing.
+- `02:00` The underdamped run overshoots and rings, but the ringing shrinks by root beta at every step, so it's still fast.
+- `02:07` So oscillation isn't the enemy here, and only the size of the roots matters.
+- `02:12` And when beta is zero, the two boundaries coincide and the regimes merge into one.
+- `02:19` Now for the real problem.
+- `02:21` One eta has to serve every eigenvalue, so each mode sits at its own place on this curve.
+- `02:26` A soft mode wants a bigger step, while a stiff one is already near the edge,
+- `02:31` and their positions are a factor of kappa apart.
+- `02:35` So tuning is a minimax game, where we make the slowest mode as fast as we can, and the plateau is the trick.
+- `02:42` Pick beta so the plateau covers every mode.
+- `02:45` Then they all converge at one rate, which is set by the square root of kappa.
+- `02:50` Plain gradient descent pays kappa where momentum pays root kappa, and that's the tuned heavy-ball result.
+- `02:56` How big a deal is that?
+- `02:58` At kappa twenty, forty-six steps become ten.
+- `03:00` At kappa one hundred, two hundred and thirty become twenty-three.
+- `03:06` There's one more trick, and it comes from Nesterov.
+- `03:09` Measure the gradient where momentum is about to take you, not where you are now.
+- `03:14` So we look ahead first and check the slope there, and tuned right, this provably needs only about root kappa steps.
+- `03:21` Be careful, though, because books and libraries write this in different ways.
+- `03:25` Never mix a line from one form with an update from another.
 
 ## 08-adam
 
-- `00:06` Implicit regularization is a feature and a bug: it resists noise but is slow on weak directions.
-- `00:13` Dividing by each singular value would fix that, but an SVD of a large model is prohibitive.
-- `00:19` So do the next best thing: make steps in ordinary coordinates about the same size in every coordinate.
-- `00:27` Set the average to the gradient and the second moment to its square. Dividing gives just the sign.
-- `00:33` Gradients of 100, 0.01 and minus 3 all become steps of plus or minus eta. Coordinate scale no longer matters.
-- `00:42` Try it in the ravine. It races to the valley floor, since every coordinate moves at full speed.
-- `00:48` Then it cannot settle: a fixed-size step overshoots, bouncing between two points near the minimum.
-- `00:56` Adam keeps two exponential averages: of the gradient, the first moment, and of its square, the second moment.
-- `01:03` Both start at zero, so early on they are too small: with beta 0.9, the first average is a tenth of the gradient.
-- `01:11` Bias correction divides by one minus beta to the power of the step count. That scales the early moments back up.
-- `01:18` The update divides the corrected first moment by the root of the corrected second moment, per coordinate.
-- `01:24` Without the second correction, the first step would be over three times too large; with both, exactly one.
-- `01:32` Same ravine, same step size. SignSGD is drawn thin: its cycle around the minimum.
-- `01:39` Adam's moments bend and smooth the path, so the iterate settles instead of cycling.
-- `01:45` Why discarding magnitude helps is not fully understood. The original analysis had gaps; Adam is robust anyway.
-- `01:54` In plain gradient descent, a ridge penalty is exactly the same as shrinking the weights by a fixed factor.
-- `02:01` Put the penalty gradient inside Adam and it is averaged and divided by the second moment like everything else.
-- `02:07` With weights of one and gradient sizes 10 and 0.05, the penalty shrinks the two coordinates very differently.
-- `02:15` AdamW shrinks the weights separately and forms the moments from the data gradient only. All decay alike.
-- `02:22` Mind the convention: decay sits inside one minus eta times lambda wd, so it is not the ridge lambda.
-- `02:31` Compare optimizers on three axes: how fast training falls, which solution they favor, and what they cost.
-- `02:38` Extra state costs memory: momentum stores one more vector, Adam two. Gradients and activations add more.
-- `02:45` Neither Adam nor momentum SGD always wins. Optimizers seek low loss; deep learning also needs generalization.
+- `00:06` Why would we normalize every coordinate?
+- `00:08` Well, gradient descent is slow along weak directions, which helps it resist noise, but it's also just slow.
+- `00:15` The ideal fix would divide each direction by its singular value, but an SVD of a huge model is far too expensive.
+- `00:22` So we do the next best thing, and make the steps about the same size in every ordinary coordinate.
+- `00:30` What's the crudest way to do that?
+- `00:32` Divide each gradient coordinate by its own size, and all that's left is the sign.
+- `00:37` Gradients of one hundred, one hundredth and minus three all become steps of plus or minus eta,
+- `00:42` so the scale just stops mattering.
+- `00:46` Let's try it in the ravine.
+- `00:48` It races to the valley floor, because every coordinate moves at full speed.
+- `00:52` But then it's stuck, because a step of fixed size keeps overshooting,
+- `00:56` so it bounces between two points near the minimum forever.
+- `01:01` Adam smooths both of those pieces.
+- `01:03` It keeps a running average of the gradient, called the first moment, and a running average of its square,
+- `01:09` the second moment.
+- `01:10` The catch is that both start at zero, so with beta at zero point nine the first average is only a tenth of the gradient.
+- `01:18` Bias correction fixes that.
+- `01:19` We divide each average by one minus its beta raised to the step count, and that scales the early averages back up.
+- `01:28` The update then divides the corrected first moment by the square root of the second, one coordinate at a time.
+- `01:35` If we skip the corrections, the very first step comes out over three times too big,
+- `01:40` and with them the ratio is exactly one.
+- `01:44` Now back to the same ravine, with the same step size.
+- `01:47` The thin line is SignSGD, stuck in its cycle.
+- `01:50` Adam's averages smooth the path, so it settles down instead of cycling.
+- `01:56` Why throwing away the size of the gradient helps isn't fully understood, and the original proof had gaps.
+- `02:02` Adam works well in practice anyway.
+- `02:05` Now for weight decay.
+- `02:07` In plain gradient descent, a ridge penalty is the same as shrinking the weights by the same fixed factor at each step.
+- `02:14` Put that penalty inside Adam, though, and it gets divided by the second moment like everything else.
+- `02:21` Take two weights that both equal one, with typical gradient sizes of ten and zero point zero five.
+- `02:26` The penalty ends up shrinking the second weight two hundred times harder than the first.
+- `02:33` AdamW takes the shrink out and does it as a separate step, so the moments only ever see the data.
+- `02:40` Now both weights decay alike.
+- `02:42` Watch the convention, though, because lambda wd sits inside the factor one minus eta lambda wd,
+- `02:48` and it's not the ridge lambda.
+- `02:52` So which optimizer is best?
+- `02:54` We can compare them on three axes, namely training speed, where you end up, and how much memory they need.
+- `03:00` On memory, momentum stores one extra vector and Adam stores two,
+- `03:04` and the gradients and activations cost more on top of that.
+- `03:08` And no optimizer wins on every axis.
+- `03:11` They all chase a low training loss, but what we really want is generalization, so measure on your own task.
 
 ## 09-standardize-init
 
-- `00:06` Why standardize? First, features should have similar sizes; else one in the thousands dominates one near one.
-- `00:14` Second, there are numerical issues: mixing huge and tiny values wastes floating-point precision.
-- `00:20` Take a feature that runs from 100 to 200, plus an intercept column. The two columns nearly point the same way.
-- `00:27` The condition number is about six hundred thousand. Subtract the mean, divide by the deviation: exactly one.
-- `00:36` A ReLU unit bends at x equal to minus b over w. With standard normal w and b, that kink is a Cauchy variable.
-- `00:45` Its variance is infinite, yet half its mass lies within one of zero, and ninety percent within seven.
-- `00:52` Now suppose the data live between 100 and 200. A kink lands there with chance about 0.16 percent per unit.
-- `01:00` Among a thousand hidden units, only one or two bend inside the data. The rest are zero or straight lines.
-- `01:07` Non-standardized data thus wastes the nonlinearity's expressive power. The same holds for tanh and sigmoid.
-- `01:16` A unit with no kink in the data is zero or a straight line there. All thousand stack into a few rank-one pieces.
-- `01:23` Take 50 data points. The raw feature matrix has only three singular values above zero; standardized, all fifty.
-- `01:31` That gives a cheap debugging check: when a model seems weak, look at the rank of its features.
-- `01:38` How to initialize? All zeros fails: everything is multiplied by zero, gradients vanish, nothing moves.
-- `01:46` Key observation: one layer's outputs feed the next, so every layer's inputs should look standardized.
-- `01:52` For d independent, zero-mean, unit-variance inputs, the output variance is d times the weight variance.
-- `02:00` Choose weight variance one over d, the fan-in, and the output is unit-variance too: Xavier initialization.
-- `02:09` Push standardized inputs through ten ReLU layers of width 256, with three weight choices, tracking size.
-- `02:17` Standard normal weights make the signal explode by two orders of magnitude every layer.
-- `02:22` Xavier suits a linear layer, but a ReLU zeroes half its outputs, so the signal halves each layer and fades.
-- `02:30` He initialization compensates: half the inputs are alive, so use variance two over d. The signal stays level.
-- `02:38` Glorot uses two over fan-in plus fan-out, balancing forward and backward passes. For equal widths it is Xavier.
-- `02:46` Biases are simple: start at zero, use a small constant such as 0.01, or treat the bias as one more weight.
+- `00:06` Why bother standardizing the inputs?
+- `00:08` The first reason is scale, because a feature in the thousands drowns out one that's near one.
+- `00:14` The second is numerics, because mixing huge and tiny numbers throws away floating-point precision.
+- `00:21` Here's how bad it can get.
+- `00:22` Take one feature that runs from one hundred to two hundred, plus an intercept column,
+- `00:27` and those two columns point almost the same way.
+- `00:30` Kappa comes out around six hundred thousand, which means more than a million gradient steps.
+- `00:36` Subtract the mean and divide by the spread, and kappa is exactly one.
+- `00:41` Now for a subtler reason.
+- `00:43` A ReLU unit bends where its input crosses zero, at minus the bias over the weight.
+- `00:48` When both of those are standard normal, that kink follows a Cauchy distribution.
+- `00:53` It has infinite variance, and yet half the time the kink lands within one of zero,
+- `00:58` and ninety-one percent of the time within seven.
+- `01:02` Now put the data between one hundred and two hundred.
+- `01:06` A kink lands in that range with a chance of about zero point one six percent.
+- `01:10` So out of a thousand hidden units, only one or two bend inside the data, and the rest are just flat or straight there.
+- `01:18` And that's the real point.
+- `01:20` Unstandardized data wastes the whole nonlinearity, and the same thing happens with tanh and sigmoid units.
+- `01:28` With no kink inside the data, each unit is either zero or a straight line there.
+- `01:33` So all thousand units add up to just a few rank-one pieces.
+- `01:37` Take fifty data points, and the raw features have only three nonzero singular values,
+- `01:42` while the standardized ones have all fifty.
+- `01:45` That gives us a cheap debugging trick.
+- `01:47` If a model seems oddly weak, check the rank of its feature matrix.
+- `01:53` So how should we initialize the weights?
+- `01:55` All zeros fails, because everything gets multiplied by zero and nothing ever moves.
+- `02:00` The key observation is that one layer's outputs are the next layer's inputs.
+- `02:05` So we want every layer's inputs to start out looking standardized.
+- `02:09` A unit adds up its inputs, each with variance one, so the output variance is the fan-in times the weight variance.
+- `02:16` That tells us to give the weights a variance of one over the fan-in, and then the output keeps variance one.
+- `02:23` This is Xavier initialization.
+- `02:27` Does that actually keep the signal alive?
+- `02:29` Let's push standardized inputs through ten ReLU layers of width two hundred fifty-six, with three choices of weights.
+- `02:36` Standard normal weights blow the signal up by about two orders of magnitude at every single layer.
+- `02:42` Xavier suits a linear layer, but a ReLU zeroes half of its outputs, so the signal halves at each layer and fades away.
+- `02:50` He initialization fixes that.
+- `02:52` Since half the inputs are dead, it doubles the variance, and the signal stays level.
+- `02:58` Glorot initialization averages the fan-in and the fan-out, to balance the forward and backward passes,
+- `03:04` and with equal widths it's just Xavier.
+- `03:07` Biases are easy by comparison.
+- `03:09` You start them at zero, or at a small constant like zero point zero one.

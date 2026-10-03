@@ -92,6 +92,7 @@ assert OBJ(0.0) < OBJ(1.0) < OBJ(2.0)
 
 class Ep03Ridge(NarratedScene):
     series = SERIES
+    SCENES = ["objective", "filters", "conditioning", "noise", "weight_decay"]
 
     def construct(self):
         self.title_card()
@@ -101,10 +102,10 @@ class Ep03Ridge(NarratedScene):
         self.noise()
         self.weight_decay()
         self.end_card(
-            ["Ridge minimizes squared error plus lambda times the squared weight norm",
-             "In the SVD basis it keeps the fraction sigma squared over sigma squared plus lambda of each direction",
-             "It caps noise amplification in weak directions and improves conditioning",
-             "Gradient descent on the ridge objective is weight decay; lambda is chosen on held-out data, never by the objective"],
+            ["Ridge: squared error, plus lambda times the squared weight norm",
+             "It keeps strong directions and squashes weak ones toward zero",
+             "That stops noise in weak directions from blowing up, and shrinks kappa",
+             "In gradient descent it's weight decay. Pick lambda on held-out data, not the objective"],
         )
 
     # ---------------------------------------------------------------- 1. objective
@@ -116,15 +117,18 @@ class Ep03Ridge(NarratedScene):
         kern = mts([r"=X^\top(XX^\top+", r"\lambda", r"I_n)^{-1}\vec y"], 0.85, {1: C_LAM}).next_to(prim, DOWN, buff=0.35)
         kern.align_to(prim[0], LEFT).shift(RIGHT * 0.0)
         assert_on_screen(obj, prim, kern)
-        self.say("Ridge adds a penalty on the size of the weights, with strength lambda. Positive lambda makes it well posed.",
+        self.say("What if we simply charge a price for big weights? That's ridge regression, and the price is called "
+                 "lambda. With that penalty in place there's always exactly one answer, even when the data alone "
+                 "can't decide.",
                  Write(head), Write(obj))
-        self.say("Setting the gradient to zero gives a closed form. It inverts X transpose X plus lambda times the identity.",
-                 Write(prim))
         note1 = txt("d × d inverse", 24, GREY_B).next_to(prim, RIGHT, buff=0.4)
         note2 = txt("n × n inverse: cheaper when features outnumber samples", 22, GREY_B).next_to(kern, DOWN, buff=0.3)
         assert_on_screen(note1, note2)
-        self.say("A second form inverts an n by n matrix instead. Same estimator: use whichever matrix is smaller.",
-                 Write(kern), FadeIn(note1), FadeIn(note2))
+        self.say("Set the gradient to zero and a closed form pops out, which inverts X transpose X with lambda added "
+                 "on the diagonal. There's also a second form, which inverts a matrix with one row per sample "
+                 "instead. Both give the same answer, so we use whichever matrix is smaller.",
+                 Write(prim))
+        self.cue("There's also a second form", Write(kern), FadeIn(note1), FadeIn(note2))
         self.hold(0.4)
         self.clear_stage()
 
@@ -135,10 +139,12 @@ class Ep03Ridge(NarratedScene):
         svd.move_to([0, 2.5, 0])
         pinv = mts([r"\text{pseudoinverse: }\frac{1}{\sigma_i}", r"\ \ \ \text{ridge keeps }\ r_\lambda(\sigma)=\frac{\sigma^2}{\sigma^2+\lambda}"], 0.7, {1: C_LAM}).move_to([0, 1.5, 0])
         assert_on_screen(svd, pinv)
-        self.say("Take the SVD. Then ridge weights each direction by sigma over sigma squared plus lambda.",
+        self.say("So what does ridge actually do to the solution? Take the SVD, and each singular direction gets its "
+                 "own multiplier. The pseudoinverse would use one over sigma there, so ridge keeps only a fraction "
+                 "of that, and this fraction is the ridge filter.",
                  Write(head), Write(svd))
-        self.say("The pseudoinverse uses one over sigma. Ridge keeps the fraction sigma squared over sigma squared plus lambda.",
-                 Write(pinv))
+        self.cue("The pseudoinverse", Write(pinv))
+        self.hold(0.3)
         self.play(FadeOut(svd), FadeOut(pinv))
         ax = make_axes([0, 1.5, 0.5], [0, 1.0, 0.5], 8.0, 3.0).move_to([-1.6, 0.3, 0])
         xt = VGroup(*[txt(f"{v:g}", 20, GREY_B).next_to(ax.c2p(v, 0), DOWN, buff=0.15) for v in (0, 0.5, 1.0, 1.5)])
@@ -152,14 +158,17 @@ class Ep03Ridge(NarratedScene):
             lab.next_to(ax.c2p(1.5, r_filter(1.5, lam)), RIGHT, buff=0.15)
         labs[0].shift(UP * 0.05)
         assert_on_screen(VGroup(ax, xt, yt, xl, yl, labs))
-        self.say("Plot it. Large singular values are nearly untouched; small ones are strongly attenuated.",
-                 Create(ax), FadeIn(xt), FadeIn(yt), FadeIn(xl), FadeIn(yl), Create(one),
-                 LaggedStart(*[Create(c) for c in curves], lag_ratio=0.4, run_time=2.5), LaggedStart(*[FadeIn(l) for l in labs], lag_ratio=0.4, run_time=2.5))
-        half = Dot(ax.c2p(0.5, 0.5), radius=0.1, color=YELLOW_D)
+        half = Dot(ax.c2p(np.sqrt(LAMS[1]), 0.5), radius=0.1, color=YELLOW_D)
         hl = txt("σ = √λ keeps half", 21, YELLOW_D).next_to(half, DOWN, buff=0.25).shift(RIGHT * 0.9)
         assert_on_screen(hl)
-        self.say("At sigma equal to root lambda, exactly half is kept. A bigger lambda pushes that line right.",
-                 Create(curves[1].copy().set_stroke(YELLOW_D, 7)), FadeIn(half), FadeIn(hl))
+        self.say("Let's plot that fraction against the singular value, for three values of lambda. Strong directions "
+                 "are left almost alone, while weak ones get squashed toward zero. The cutoff sits where sigma "
+                 "equals the square root of lambda, and there exactly half is kept. So a bigger lambda slides the "
+                 "cutoff to the right.",
+                 Create(ax), FadeIn(xt), FadeIn(yt), FadeIn(xl), FadeIn(yl), Create(one))
+        self.cue("Strong directions", LaggedStart(*[Create(c) for c in curves], lag_ratio=0.4, run_time=2.5),
+                 LaggedStart(*[FadeIn(l) for l in labs], lag_ratio=0.4, run_time=2.5))
+        self.cue("The cutoff sits", Create(curves[1].copy().set_stroke(YELLOW_D, 7)), FadeIn(half), FadeIn(hl))
         self.hold(0.3)
         self.clear_stage()
         # coefficient multiplier
@@ -175,13 +184,15 @@ class Ep03Ridge(NarratedScene):
         xs2 = np.linspace(0.0, 1.5, 300)
         rc = VGroup(*[polyline(ax, xs2, coef(xs2, lam), col, 4) for lam, col in zip(LAMS, LAM_COL)])
         assert_on_screen(VGroup(ax, xt, yt, xl, yl))
-        self.say("Now the actual multiplier. Without ridge it is one over sigma, which explodes for weak directions.",
-                 Create(ax), FadeIn(xt), FadeIn(yt), FadeIn(xl), FadeIn(yl), Create(inv), FadeIn(invl))
         peaks = VGroup(*[Dot(ax.c2p(np.sqrt(l), 1 / (2 * np.sqrt(l))), radius=0.09, color=YELLOW_D) for l in LAMS if np.sqrt(l) <= 1.5])
         pk = txt("peak 1/(2√λ) at σ = √λ", 21, YELLOW_D).move_to([3.4, 1.8, 0])
         assert_on_screen(pk)
-        self.say("With ridge it rises, peaks at one over two root lambda where sigma is root lambda, then falls.",
-                 LaggedStart(*[Create(c) for c in rc], lag_ratio=0.4, run_time=2.5), FadeIn(peaks), FadeIn(pk))
+        self.say("Now here's the multiplier itself. With no ridge it's one over sigma, which explodes as sigma "
+                 "shrinks toward zero. Ridge tames that, so the curve rises, peaks where sigma equals the square "
+                 "root of lambda, and then falls again.",
+                 Write(head), Create(ax), FadeIn(xt), FadeIn(yt), FadeIn(xl), FadeIn(yl))
+        self.cue("With no ridge", Create(inv), FadeIn(invl))
+        self.cue("Ridge tames that", LaggedStart(*[Create(c) for c in rc], lag_ratio=0.4, run_time=2.5), FadeIn(peaks), FadeIn(pk))
         self.hold(0.4)
         self.clear_stage()
 
@@ -190,8 +201,6 @@ class Ep03Ridge(NarratedScene):
         head = self.heading("Ridge also improves conditioning")
         mat = mts([r"X^\top X+\lambda I", r"\ \text{has eigenvalues}\ \ \sigma_i^2+\lambda"], 0.85, {}).move_to([0, 2.5, 0])
         assert_on_screen(mat)
-        self.say("Adding lambda times the identity shifts every eigenvalue up by lambda. The smallest gain the most, relatively.",
-                 Write(head), Write(mat))
         colx = [-4.2, -1.4, 1.4, 4.4]
         hdr = ["ridge λ", "condition number κ", "rate (κ−1)/(κ+1)", "steps for 100×"]
         hdrs = VGroup(*[txt(h, 24, GREY_B).move_to([colx[j], 1.2, 0]) for j, h in enumerate(hdr)])
@@ -205,9 +214,14 @@ class Ep03Ridge(NarratedScene):
                             txt(f"{ITS[i]}", 30, col).move_to([colx[3], y, 0])))
         ex = txt("eigenvalues 4 and 1/4, as in episode 1", 22, GREY_B).move_to([0, -1.5, 0])
         assert_on_screen(hdrs, rows, ex)
-        self.say("The ravine from episode one has kappa 16. Ridge of 0.25 cuts it to 8.5, and ridge of 1 to 4.",
-                 FadeIn(hdrs), LaggedStart(*[FadeIn(r) for r in rows], lag_ratio=0.4), FadeIn(ex))
-        self.say("The price is a different problem and a different answer. Conditioning and overfitting improve together.",
+        self.say("There's a bonus as well. Adding lambda lifts every eigenvalue by the same amount, so the tiny ones "
+                 "gain the most in proportion. Take the ravine from episode one, where kappa was sixteen. A ridge "
+                 "lambda of one quarter cuts that to eight and a half, and a ridge lambda of one brings it down "
+                 "to four.",
+                 Write(head), Write(mat), run_time=1.0)
+        self.cue("Take the ravine", FadeIn(hdrs), LaggedStart(*[FadeIn(r) for r in rows], lag_ratio=0.4), FadeIn(ex))
+        self.say("So the steps we need drop from thirty-seven to ten. The catch is that we're now solving a "
+                 "different problem, and it has a different answer.",
                  Indicate(rows[1], color=C_LAM), Indicate(rows[2], color=C_LAM))
         self.hold(0.5)
         self.clear_stage()
@@ -223,8 +237,8 @@ class Ep03Ridge(NarratedScene):
         pos = lambda v: y0 + v * ys
         base = VGroup(*[Line([x - 1.1, pos(c), 0], [x + 1.1, pos(c), 0], color=WHITE, stroke_width=3) for x, c in zip(xs, CTRUE)])
         axis = Line([-6.4, y0, 0], [6.4, y0, 0], color=GREY_D, stroke_width=1)
-        cols = VGroup(*[txt(f"σ = {s:g}", 24, C_TEXT).move_to([x, -1.5, 0]) for x, s in zip(xs, SIGD)])
-        stds = VGroup(*[txt(f"noise ×{1 / s:.0f}" if 1 / s == round(1 / s) else f"noise ×{1 / s:.1f}", 21, C_LOSS).move_to([x, -1.74, 0]) for x, s in zip(xs, SIGD)])
+        cols = VGroup(*[txt(f"σ = {s:g}", 24, C_TEXT).move_to([x, -1.38, 0]) for x, s in zip(xs, SIGD)])
+        stds = VGroup(*[txt(f"noise ×{1 / s:.0f}" if 1 / s == round(1 / s) else f"noise ×{1 / s:.1f}", 21, C_LOSS).move_to([x, -1.72, 0]) for x, s in zip(xs, SIGD)])
         ols = VGroup(); rid = VGroup()
         for j, x in enumerate(xs):
             for k in range(TRIALS):
@@ -237,18 +251,21 @@ class Ep03Ridge(NarratedScene):
         lg2 = txt("ridge, λ = 0.1", 22, C_LAM).move_to([-1.7, 2.05, 0])
         lg3 = txt("true c", 22, WHITE).move_to([0.8, 2.05, 0])
         assert_on_screen(cols, stds, lg1, lg2, lg3)
-        self.say("Data has strong energy along strong directions. Suppose the truth is small, and each direction carries noise.",
+        assert abs(1 / SIGD[-1] - 10) < 1e-9 and round(TOT_OLS / TOT_RIDGE) == 12
+        self.say("But why should we distrust weak directions at all? Let's put a small true signal in each direction "
+                 "and add a little noise. Without ridge we divide by sigma, so the weakest direction blows its "
+                 "noise up ten times, and you can see those estimates scatter.",
                  Write(head), Write(setup), Create(axis), FadeIn(cols), Create(base), FadeIn(lg3))
-        self.say("Without ridge we divide by sigma, so noise grows by one over sigma: thirty times more in the weakest direction.",
-                 FadeIn(stds), LaggedStart(*[FadeIn(d) for d in ols], lag_ratio=0.01, run_time=2.0), FadeIn(lg1))
-        self.say("Ridge shrinks each direction by its own factor. Weak directions collapse toward zero; strong ones barely move.",
-                 LaggedStart(*[FadeIn(d) for d in rid], lag_ratio=0.01, run_time=2.0), FadeIn(lg2))
+        self.cue("Without ridge", FadeIn(stds), LaggedStart(*[FadeIn(d) for d in ols], lag_ratio=0.01, run_time=2.0), FadeIn(lg1))
         tot = txt(f"total squared error: {TOT_OLS:.2f} without ridge, {TOT_RIDGE:.2f} with", 24, YELLOW_D).move_to([0, -2.32, 0])
         assert_on_screen(tot)
-        self.say("Averaged over noise, the error drops about twelvefold: calibrated distrust of directions that are mostly noise.",
-                 FadeIn(tot))
-        self.say("Weak directions can hold signal, so suppressing them is a judgment. Overfitting trusts the data too much.",
-                 Indicate(cols[3], color=YELLOW_D))
+        self.say("Now turn ridge on. The weak directions collapse toward zero, while the strong ones barely move. "
+                 "Averaged over the noise, the total error drops about twelve-fold. So overfitting is really "
+                 "trusting noisy directions too much, and ridge is a judgment call to trust them less.",
+                 FadeIn(lg2))
+        self.cue("The weak directions", LaggedStart(*[FadeIn(d) for d in rid], lag_ratio=0.01, run_time=2.0), lead=0.6)
+        self.cue("Averaged over", FadeIn(tot))
+        self.cue("So overfitting", Indicate(cols[3], color=YELLOW_D))
         self.hold(0.5)
         self.clear_stage()
 
@@ -257,8 +274,6 @@ class Ep03Ridge(NarratedScene):
         head = self.heading("Ridge in gradient descent: weight decay")
         gd = mts([r"\vec w_{t+1}=", r"(1-2\eta\lambda)\,\vec w_t", r"-2\eta X^\top(X\vec w_t-\vec y)"], 0.85, {1: C_LAM}).move_to([0, 2.4, 0])
         assert_on_screen(gd)
-        self.say("Gradient descent on the ridge objective shrinks the weights by a fixed factor, then takes the usual data step.",
-                 Write(head), Write(gd))
         ax = make_axes([0, 15, 5], [0, 1, 0.5], 6.0, 2.4).move_to([-3.0, -0.3, 0])
         pts = [(t, WD[t]) for t in range(16)]
         cur = polyline(ax, [p[0] for p in pts], [p[1] for p in pts], C_LAM, 4)
@@ -267,15 +282,22 @@ class Ep03Ridge(NarratedScene):
         yt = VGroup(*[txt(f"{v:g}", 20, GREY_B).next_to(ax.c2p(0, v), LEFT, buff=0.15) for v in (0, 0.5, 1)])
         lab = txt(f"no data gradient: 0.9^t (η = {ETA_W}, λ = {LAM_W})", 22, C_LAM).next_to(ax, DOWN, buff=0.5)
         assert_on_screen(VGroup(ax, lab, xt, yt))
-        self.say("That decay alone shrinks a weight by 0.9 each step. For plain gradient descent, ridge equals weight decay.",
-                 Create(ax), FadeIn(xt), FadeIn(yt), Create(cur), FadeIn(dd), FadeIn(lab))
-        bay = mts([r"\vec y\mid\vec w\sim N(X\vec w,\sigma_y^2I),\ \ \vec w\sim N(0,\tau^2I)", r"\ \Rightarrow\ \lambda=\sigma_y^2/\tau^2"], 0.6, {}).move_to([3.4, 0.9, 0])
-        bay.scale_to_fit_width(6.3) if bay.width > 6.3 else None
-        bay.move_to([3.6, 0.9, 0])
+        self.say("Inside gradient descent, ridge turns out to be simple. We shrink the weights a little, and then we "
+                 "take the usual data step. On its own, that shrink keeps ninety percent of a weight each step. "
+                 "It's called weight decay, and here it's the same thing as ridge.",
+                 Write(head), Write(gd))
+        self.cue("On its own", Create(ax), FadeIn(xt), FadeIn(yt), Create(cur), FadeIn(dd), FadeIn(lab))
+        bay = mts([r"\vec y\mid\vec w\sim N(X\vec w,\sigma_y^2I),\ \ \vec w\sim N(0,\tau^2I)", r"\ \Rightarrow\ \lambda=\sigma_y^2/\tau^2"], 0.6, {}).move_to([3.1, 0.9, 0])
+        bay.scale_to_fit_width(5.8) if bay.width > 5.8 else None
+        bay.move_to([3.5, 0.9, 0])
         num = txt(f"σy² = {SIGY2}, τ² = {TAU2}  gives  λ = {SIGY2 / TAU2:g}", 22, C_LAM).next_to(bay, DOWN, buff=0.3)
         assert_on_screen(bay, num)
-        self.say("A Gaussian prior on the weights plus Gaussian noise makes the MAP estimate a ridge solution.",
-                 FadeIn(bay), FadeIn(num))
+        self.say("There's a Bayesian view of this too. Assume Gaussian noise on the labels and a Gaussian prior on "
+                 "the weights, and the MAP estimate is exactly ridge. The ridge lambda is then the noise variance "
+                 "divided by the prior variance.",
+                 FadeIn(bay))
+        self.cue("The ridge lambda is then", FadeIn(num))
+        self.hold(0.3)
         self.play(FadeOut(bay), FadeOut(num))
         self.clear_stage(head)
         # cannot learn lambda
@@ -287,9 +309,11 @@ class Ep03Ridge(NarratedScene):
         z = Dot(ax2.c2p(0, OBJ(0)), radius=0.12, color=YELLOW_D)
         zt = txt("minimized at λ = 0", 24, YELLOW_D).next_to(z, RIGHT, buff=0.3).shift(DOWN * 0.35)
         assert_on_screen(VGroup(ax2, xt, xl, yl, zt))
-        self.say("One trap: minimizing the objective cannot pick lambda. It only grows with lambda, so lambda collapses to zero.",
-                 Create(ax2), FadeIn(xt), FadeIn(xl), FadeIn(yl), Create(line), FadeIn(z), FadeIn(zt))
-        self.say("Lambda is a hyperparameter, chosen with held-out data. That is next, along with two other knobs.",
-                 Indicate(zt, color=YELLOW_D))
+        self.say("So why not let the optimizer choose lambda as well? Because the objective only grows with lambda, "
+                 "so it would just slide down to zero. That makes lambda a hyperparameter, which we pick on "
+                 "held-out data, and that's next, along with two more hyperparameters.",
+                 Create(ax2), FadeIn(xt), FadeIn(xl), FadeIn(yl), Create(line))
+        self.cue("so it would just slide", FadeIn(z), FadeIn(zt))
+        self.cue("That makes lambda", Indicate(zt, color=YELLOW_D))
         self.hold(0.6)
         self.clear_stage()

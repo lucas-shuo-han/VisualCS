@@ -1,80 +1,132 @@
 1
-00:00:06,200 --> 00:00:13,566
-Recall Xavier initialization. A neuron with d_in standard normal inputs should output a standard normal too.
+00:00:06,200 --> 00:00:08,669
+Let's flash back to Xavier initialization.
 
 2
-00:00:13,566 --> 00:00:20,566
-With independent zero-mean weights, the expected square of h is the weight variance times the sum of squared inputs.
+00:00:08,669 --> 00:00:15,430
+We feed a neuron standard normal inputs, as many as its fan-in, and we'd like the output to be standard normal too.
 
 3
-00:00:20,566 --> 00:00:28,633
-If each squared input is about one, the sum is d_in, so the weight variance should be one over d_in.
+00:00:15,430 --> 00:00:22,433
+With independent weights, the squared output averages to the weight variance times the sum of the squared inputs.
 
 4
-00:00:28,633 --> 00:00:35,300
-Feed random inputs through a layer. With unit-variance weights, outputs grow like the root of the fan-in.
+00:00:22,433 --> 00:00:27,783
+Each squared input is about one, so that sum is about the fan-in, which we write as d_in.
 
 5
-00:00:35,300 --> 00:00:45,600
-At d_in of 4096 that is about 64 times too large. With variance one over d_in, the size stays near one.
+00:00:27,783 --> 00:00:33,933
+And that means the weight variance has to be one over the fan-in.
 
 6
-00:00:45,600 --> 00:00:52,966
-Xavier quietly preserves a norm: the length divided by root d, the root-mean-square or RMS norm.
+00:00:33,933 --> 00:00:35,364
+Does that actually work?
 
 7
-00:00:52,966 --> 00:01:00,333
-Four entries of plus or minus one have length 2, sixteen have length 4. The RMS is one for both.
+00:00:35,364 --> 00:00:40,136
+With unit-variance weights, the output grows like the square root of the fan-in.
 
 8
-00:01:00,333 --> 00:01:05,200
-RMS one means every entry is about size one.
+00:00:40,136 --> 00:00:44,610
+At a fan-in of four thousand and ninety-six, it's sixty-four times too big.
 
 9
-00:01:05,200 --> 00:01:11,600
-That is what the plot showed: with Xavier scaling, output RMS size matches input RMS size.
+00:00:44,610 --> 00:00:51,566
+With a variance of one over the fan-in, it sits right near one at every width.
 
 10
-00:01:11,600 --> 00:01:18,966
-Is there a matrix version of the RMS norm, measuring how much a weight matrix changes RMS size?
+00:00:51,566 --> 00:00:54,193
+So what is Xavier really keeping steady?
 
 11
-00:01:18,966 --> 00:01:27,366
-Recall the induced matrix norm: the largest output size, measured in one norm, over inputs of size one in another.
+00:00:54,193 --> 00:01:00,758
+It's the length divided by root d, which is called the root-mean-square norm, or RMS norm for short.
 
 12
-00:01:27,366 --> 00:01:32,733
-Use RMS on both sides: how much can A grow an input of RMS size one?
+00:01:00,758 --> 00:01:06,536
+Four entries of plus or minus one have length two, and sixteen of them have length four.
 
 13
-00:01:32,733 --> 00:01:39,500
-An input of RMS one has length root d_in. An output's RMS is its length over root d_out.
+00:01:06,536 --> 00:01:08,703
+But the RMS norm is one for both.
 
 14
-00:01:39,500 --> 00:01:45,400
-So the RMS to RMS norm is the spectral norm times root of d_in over d_out.
+00:01:08,703 --> 00:01:16,633
+So an RMS norm of one just means a typical entry is about size one, however wide the vector gets.
 
 15
-00:01:45,400 --> 00:01:55,966
-Check: a 64 by 256 matrix has spectral norm 1.49, so its RMS norm is twice that, 2.98.
+00:01:16,633 --> 00:01:18,646
+And that's what the plot showed.
 
 16
-00:01:55,966 --> 00:02:03,700
-Now put this norm into the optimizer recipe from episode one: steps of RMS to RMS size at most eta.
+00:01:18,646 --> 00:01:23,301
+With Xavier scaling, the RMS size going in equals the RMS size coming out.
 
 17
-00:02:03,700 --> 00:02:11,800
-The spectral size allowed is eta times root of d_out over d_in, so the best step is that factor times U V transpose.
+00:01:23,301 --> 00:01:31,400
+So can we turn that into a norm for matrices, one that measures how much a weight matrix grows RMS size?
 
 18
-00:02:11,800 --> 00:02:20,866
-Try eta equal to 0.1 on three shapes. Wide-to-narrow layers get a smaller spectral step, narrow-to-wide a larger one.
+00:01:31,400 --> 00:01:35,627
+There's a standard way to do that, and it's called the induced norm.
 
 19
-00:02:20,866 --> 00:02:29,400
-Yet each layer's output changes by exactly eta in RMS size. One number eta behaves like a layer-specific learning rate.
+00:01:35,627 --> 00:01:39,419
+Feed in every input of size one, and take the biggest output.
 
 20
-00:02:29,400 --> 00:02:38,600
-Fan-in and fan-out do the adjusting. Making this precise for growing width is the idea behind maximal update parametrization.
+00:01:39,419 --> 00:01:46,633
+If we measure both sides in RMS, it tells us how much the matrix can grow an input of RMS size one.
+
+21
+00:01:46,633 --> 00:01:53,980
+An input with RMS norm one has length root d_in, and an output's RMS norm is its length over root d_out.
+
+22
+00:01:53,980 --> 00:02:02,266
+Put those together, and the RMS to RMS norm is just the spectral norm, times the square root of d_in over d_out.
+
+23
+00:02:02,266 --> 00:02:06,997
+Let's check it on a random matrix that's sixty-four by two hundred fifty-six.
+
+24
+00:02:06,997 --> 00:02:13,817
+Its spectral norm is one point four nine, so its RMS to RMS norm should be twice that, or two point nine eight.
+
+25
+00:02:13,817 --> 00:02:20,900
+And sure enough, two thousand random inputs never grow by more than one point two nine.
+
+26
+00:02:20,900 --> 00:02:28,365
+Now drop this norm into our recipe from episode one, and allow steps whose RMS to RMS norm is at most eta.
+
+27
+00:02:28,365 --> 00:02:33,365
+In spectral terms, that's eta times the square root of d_out over d_in.
+
+28
+00:02:33,365 --> 00:02:37,400
+So the best step is that amount times U V transpose.
+
+29
+00:02:37,400 --> 00:02:40,605
+Try an eta of zero point one on three layer shapes.
+
+30
+00:02:40,605 --> 00:02:46,451
+A layer that narrows gets a smaller spectral step, and a layer that widens gets a bigger one.
+
+31
+00:02:46,451 --> 00:02:51,800
+But look at the last column, where every layer's output changes by exactly eta.
+
+32
+00:02:51,800 --> 00:02:57,331
+So one eta gives each layer its own right rate, and the fan-in and fan-out do the adjusting.
+
+33
+00:02:57,331 --> 00:03:04,800
+Push that idea to growing widths and you get maximal update parametrization, which is where this unit ends up.
 

@@ -1,96 +1,180 @@
 1
-00:00:06,200 --> 00:00:12,666
-The idea is old. In 1950, Turing describes learning as a path to machine intelligence.
+00:00:06,200 --> 00:00:08,707
+Is deep learning really as new as it feels?
 
 2
-00:00:12,666 --> 00:00:21,066
-In 1957 Rosenblatt proposes the perceptron. In the same years, L M S appears in adaptive signal processing.
+00:00:08,707 --> 00:00:14,481
+Back in nineteen fifty, Turing was already picturing machines that learn their way to intelligence.
 
 3
-00:00:21,066 --> 00:00:27,933
-In 1969, Minsky and Papert publish a book on the fundamental limitations of neural networks.
+00:00:14,481 --> 00:00:17,806
+In nineteen fifty-seven, Rosenblatt built the perceptron,
 
 4
-00:00:27,933 --> 00:00:35,966
-In 1986, backpropagation becomes a practical way to train deep networks, and in 1989 LeNet reads handwriting.
+00:00:17,806 --> 00:00:23,600
+and around the same time the least mean squares rule showed up in adaptive signal processing.
 
 5
-00:00:35,966 --> 00:00:42,600
-Then attention shifted to probabilistic methods and convex optimization, mostly on shallow models.
+00:00:23,600 --> 00:00:29,242
+Then in nineteen sixty-nine, Minsky and Papert wrote a whole book about what these networks can't do.
 
 6
-00:00:42,600 --> 00:00:50,900
-Around 2006 deep networks regain attention; in 2012 Krizhevsky's AlexNet beats all methods on ImageNet.
+00:00:29,242 --> 00:00:33,097
+In nineteen eighty-six, backpropagation made deep networks trainable,
 
 7
-00:00:50,900 --> 00:01:00,466
-From the perceptron to AlexNet is 55 years. The idea of a learned circuit is old; the breakthrough is recent.
+00:00:33,097 --> 00:00:37,666
+and by nineteen eighty-nine a network called LeNet was reading handwriting.
 
 8
-00:01:00,466 --> 00:01:08,966
-What limit was 1969 about? Take four points labeled exclusive or: plus one when exactly one input is on.
+00:00:37,666 --> 00:00:43,634
+After that the field drifted toward probabilistic and convex methods, with mostly shallow models.
 
 9
-00:01:08,966 --> 00:01:16,700
-One element draws one line. Try every line: some get three points right, none gets all four.
+00:00:43,634 --> 00:00:47,386
+Around two thousand six, deep networks started creeping back.
 
 10
-00:01:16,700 --> 00:01:24,366
-Stack two ramps on x1 plus x2, the second bending at 1, and read out first minus twice the second.
+00:00:47,386 --> 00:00:52,600
+And in twenty twelve, Krizhevsky's AlexNet beat every other method on ImageNet.
 
 11
-00:01:24,366 --> 00:01:33,833
-Compute the four rows: y comes out 0, 0, 1, 1. That is exclusive or, exactly, with no line in sight.
+00:00:52,600 --> 00:00:55,704
+From the perceptron to AlexNet is fifty-five years.
 
 12
-00:01:33,833 --> 00:01:42,200
-One element cannot, a stack can. Making stacks trainable is what backpropagation did in 1986.
+00:00:55,704 --> 00:01:02,833
+So learned circuits are an old idea, and what's new is that they finally work this well.
 
 13
-00:01:42,200 --> 00:01:49,200
-Is deep learning engineering, or alchemy? The lecture puts that question next to a famous xkcd comic.
+00:01:02,833 --> 00:01:06,053
+So what was the complaint back in nineteen sixty-nine?
 
 14
-00:01:49,200 --> 00:01:56,766
-The comic's machine learning system: pour the data into a big pile of linear algebra, collect the answers on the other side.
+00:01:06,053 --> 00:01:11,360
+Take four points labeled by exclusive or, which is plus one when exactly one input is on.
 
 15
-00:01:56,766 --> 00:02:04,766
-What if the answers are wrong? Just stir the pile until they start looking right. That is the alchemist's method.
+00:01:11,360 --> 00:01:13,447
+One element can only draw one line.
 
 16
-00:02:04,766 --> 00:02:10,566
-The learning rate decides whether training works. Try a bowl, starting from w equals 1.
+00:01:13,447 --> 00:01:20,066
+Try any line you like, and you can get three of the points right, but never all four.
 
 17
-00:02:10,566 --> 00:02:19,533
-Try four learning rates. 0.1 and 0.4 settle to zero, 0.5 bounces forever, and 0.6 blows up.
+00:01:20,066 --> 00:01:23,328
+But stack two elements and the problem goes away.
 
 18
-00:02:19,533 --> 00:02:30,666
-No magic: each step multiplies w by one minus four eta. It shrinks only while eta stays below two over four, which is 0.5.
+00:01:23,328 --> 00:01:30,119
+Put two ramps on the sum of the inputs, where the second one only switches on once the sum passes one.
 
 19
-00:02:30,666 --> 00:02:37,800
-That is engineering: a knob with a reason, which predicts where it works and where it fails.
+00:01:30,119 --> 00:01:33,315
+Then take the first ramp minus twice the second.
 
 20
-00:02:37,800 --> 00:02:42,200
-Three earlier courses feed this one, and they line up with the definition.
+00:01:33,315 --> 00:01:39,866
+Run the four rows through, and out comes zero, zero, one, one, which is exactly exclusive or.
 
 21
-00:02:42,200 --> 00:02:49,766
-Machine learning brings the patterns, optimization the circuits and knobs, probability the new data.
+00:01:39,866 --> 00:01:42,591
+So one element can't do it, but a stack can.
 
 22
-00:02:49,766 --> 00:02:57,300
-So the course is about designing, visualizing and understanding deep networks, and knowing why they work.
+00:01:42,591 --> 00:01:49,733
+And making stacks trainable is exactly what backpropagation did in nineteen eighty-six.
 
 23
-00:02:57,300 --> 00:03:02,300
-A companion reading: Terence Tao's essay, Mathematics in the Age of AI.
+00:01:49,733 --> 00:01:55,129
+Now for an awkward question, which is whether deep learning is engineering or alchemy.
 
 24
-00:03:02,300 --> 00:03:11,500
-It sets aside what AI tools can do and asks what the goals and values of a field are. We can ask the same of deep learning.
+00:01:55,129 --> 00:01:58,079
+There's a famous xkcd comic about exactly this.
+
+25
+00:01:58,079 --> 00:02:01,844
+Its machine learning system is a big pile of linear algebra,
+
+26
+00:02:01,844 --> 00:02:06,466
+where you pour data in on one side and collect answers on the other.
+
+27
+00:02:06,466 --> 00:02:10,995
+And if the answers come out wrong, you just stir the pile until they start looking right.
+
+28
+00:02:10,995 --> 00:02:15,100
+That's what alchemy looks like.
+
+29
+00:02:15,100 --> 00:02:18,325
+So what would engineering look like instead of stirring?
+
+30
+00:02:18,325 --> 00:02:24,966
+Take a single knob, the learning rate, and run gradient descent on a simple bowl, starting from w equals one.
+
+31
+00:02:24,966 --> 00:02:27,207
+Here are four settings of that knob.
+
+32
+00:02:27,207 --> 00:02:31,254
+At zero point one and at zero point four, w settles down to zero.
+
+33
+00:02:31,254 --> 00:02:37,200
+At zero point five it bounces back and forth forever, and at zero point six it blows up.
+
+34
+00:02:37,200 --> 00:02:41,274
+The reason is that each step multiplies w by one minus four eta,
+
+35
+00:02:41,274 --> 00:02:45,221
+and that factor only shrinks w while eta stays under one half.
+
+36
+00:02:45,221 --> 00:02:47,322
+That's engineering, not stirring.
+
+37
+00:02:47,322 --> 00:02:54,333
+It's a knob with a reason behind it, so you know where it works and where it breaks.
+
+38
+00:02:54,333 --> 00:03:00,176
+This course sits on top of three earlier ones, and they line up with the three parts of the definition.
+
+39
+00:03:00,176 --> 00:03:05,112
+Machine learning brings the patterns, optimization brings the circuits and their knobs,
+
+40
+00:03:05,112 --> 00:03:08,933
+and probability tells us about new data.
+
+41
+00:03:08,933 --> 00:03:10,804
+So that's the plan for the course.
+
+42
+00:03:10,804 --> 00:03:17,066
+We'll design deep networks, look inside them, and understand why they work.
+
+43
+00:03:17,066 --> 00:03:23,177
+There's one last thing to read alongside this, which is Terence Tao's essay, Mathematics in the Age of AI.
+
+44
+00:03:23,177 --> 00:03:27,500
+He sets aside what the tools can do, and asks what a field is actually for.
+
+45
+00:03:27,500 --> 00:03:32,300
+That's a question worth asking of deep learning too.
 

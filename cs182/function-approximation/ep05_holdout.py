@@ -60,6 +60,7 @@ def to_panel(p, cx, cy=0.15, s=0.7):
 
 class Ep05Holdout(NarratedScene):
     series = SERIES
+    SCENES = ["splits", "shortcut", "choose_unit", "formulation", "recap"]
 
     def construct(self):
         self.title_card()
@@ -70,9 +71,9 @@ class Ep05Holdout(NarratedScene):
         self.recap()
         self.end_card(
             ["Split at the unit that will be new in deployment",
-             "Random rows let a memorizer look like a learner",
-             "A hospital-only model can beat a real one on a new hospital",
-             "Ask first: does a pattern exist, matter, show up in data, and can it be extracted?"],
+             "Random row splits let a memorizer look like a genius",
+             "A model can ace the test by reading the hospital, not the disease",
+             "First ask: is there a pattern, does it matter, can we see it, can we learn it?"],
         )
 
     # ---------------------------------------------------------------- 1. splits
@@ -83,8 +84,6 @@ class Ep05Holdout(NarratedScene):
             cap = txt(tag, 28, WHITE).move_to([cx, 2.4, 0])
             frame = Rectangle(width=5.9, height=3.75, stroke_color=GREY_D, stroke_width=2).move_to([cx, 0.15, 0])
             panels.append((cx, cap, frame))
-        self.say("Forty patients, five scans each. Every scan is its patient's fingerprint plus noise; the labels are coin flips.",
-                 Write(head), *[FadeIn(g) for _, c, fr in panels for g in (c, fr)])
 
         def draw(cx, mask):
             return VGroup(*[Dot(to_panel(XS[i], cx), radius=0.055, color=C_TEST if mask[i] else C_TRAIN) for i in range(NP * NS)])
@@ -92,20 +91,28 @@ class Ep05Holdout(NarratedScene):
         dl, dr = draw(-3.6, ROW_TEST), draw(3.6, PAT_TEST)
         for g in (dl, dr):
             assert abs(g.get_center()[1] - 0.15) < 0.3 and g.get_bottom()[1] > -1.85 and g.get_top()[1] < 2.05
-        self.say("Left: shuffle rows, half become test. Right: shuffle patients, half of the patients become test.",
-                 FadeIn(dl), FadeIn(dr))
+        assert (NP, NS) == (40, 5)                            # spoken below
+        self.say("Can a model get top marks on labels that are pure noise? Watch this. We have forty patients with five scans "
+                 "each, and every patient's label comes from a coin flip. On the left we shuffle all the scans "
+                 "and hold out half of them, and on the right we hold out half of the patients instead.",
+                 Write(head), *[FadeIn(g) for _, c, fr in panels for g in (c, fr)])
+        self.cue("On the left we shuffle", FadeIn(dl))
+        self.cue("on the right we hold out", FadeIn(dr))
 
         def links(cx, te, nn):
             return VGroup(*[Line(to_panel(XS[t], cx), to_panel(XS[n], cx), color=YELLOW_D, stroke_width=3) for t, n in zip(te[:12], nn[:12])])
 
         ll, lr = links(-3.6, TE_ROW, NN_ROW), links(3.6, TE_PAT, NN_PAT)
-        self.say("A 1-nearest-neighbor model just memorizes. Each test scan copies the label of its closest training scan.",
-                 Create(ll), Create(lr))
         ra = txt(f"accuracy {ACC_ROW:.0%}", 32, C_TRAIN).move_to([-3.6, -2.2, 0])
         rb = txt(f"accuracy {ACC_PAT:.0%}", 32, C_LOSS).move_to([3.6, -2.2, 0])
-        self.say("With random rows the closest scan is the same patient: about 100 percent, on labels that are pure noise.",
-                 FadeIn(ra))
-        self.say("Split by patient and the trick collapses to chance. The honest number is the one on the right.", FadeIn(rb))
+        assert f"{ACC_ROW * 100:.0f}" == "100" and f"{ACC_PAT * 100:.0f}" == "58"      # spoken below
+        self.say("Now take the laziest model there is, where each test scan just copies the label of the closest "
+                 "training scan. On the left, the closest scan belongs to the same patient, so it scores one "
+                 "hundred percent on coin flips. Split by patient and the trick falls apart. We get fifty-eight "
+                 "percent, which is about chance, and that's the honest number.",
+                 Create(ll), Create(lr))
+        self.cue("On the left, the closest scan", FadeIn(ra))
+        self.cue("Split by patient", FadeIn(rb))
         self.hold(0.5)
         self.clear_stage()
 
@@ -123,13 +130,21 @@ class Ep05Holdout(NarratedScene):
             grids.append(g)
             labels.append(txt(f"{'AB'[h]}: {SICK[h]} of 100 sick", 26, WHITE).next_to(g, UP, buff=0.3))
         assert grids[1].get_right()[0] < 1.2 and grids[0].get_left()[0] > -6.6
-        self.say("Two hospitals, a hundred chest scans each. In one hospital 34 percent are sick, in the other 1 percent.",
-                 Write(head), *[FadeIn(g) for g in grids], *[FadeIn(t) for t in labels])
         box = VGroup(txt("model input: hospital ID", 26, GREY_B), txt("(the pixels are ignored)", 24, GREY_B),
                      txt(f"AUC = {AUC_TOY:.2f}", 44, C_LOSS)).arrange(DOWN, buff=0.25).move_to([4.6, 0.4, 0])
         assert box.get_right()[0] < 6.9
-        self.say(f"Predict from the hospital name alone and the AUC, the area under the ROC curve, is {AUC_TOY:.2f}.",
-                 FadeIn(box))
+        assert SICK == [34, 1] and f"{AUC_TOY:.2f}" == "0.79"      # spoken below
+        self.say("Here's a sneakier version of the same problem, with two hospitals and a hundred chest scans each. At the first "
+                 "one thirty-four patients are sick, and at the second only one is. Now ignore the pixels and "
+                 "guess from the hospital name alone. The area under the ROC curve, where one half is chance, "
+                 "comes out at zero point seven nine.",
+                 Write(head), *[FadeIn(g) for g in grids], *[FadeIn(t) for t in labels],
+                 speak="Here's a sneakier version of the same problem, with two hospitals and a hundred chest scans each. At the first "
+                       "one thirty-four patients are sick, and at the second only one is. Now ignore the pixels and "
+                       "guess from the hospital name alone. The area under the R O C curve, where one half is "
+                       "chance, comes out at zero point seven nine.")
+        self.cue("Now ignore the pixels", FadeIn(box[:2]))
+        self.cue("comes out at", FadeIn(box[2]))
         self.hold(0.5)
         self.clear_stage()
 
@@ -147,17 +162,23 @@ class Ep05Holdout(NarratedScene):
         axis = Line([-5.6, base_y, 0], [4.6, base_y, 0], color=GREY_B, stroke_width=2)
         chance = txt("0.5 = chance", 22, GREY_B).move_to([5.6, base_y, 0])
         assert bars.get_top()[1] < 2.3 and chance.get_right()[0] < 7.0
-        self.say("A published pneumonia CNN scored AUC 0.93 on test scans from the hospitals it trained on.",
+        assert (AUC_INTERNAL, AUC_EXTERNAL, AUC_HOSP_ONLY) == (0.93, 0.82, 0.86)      # spoken below
+        self.say("And this really happened, to a published pneumonia detector built on a convolutional network. "
+                 "It scored zero point nine three on scans from its own hospitals. At a new hospital it fell to "
+                 "zero point eight two. It was the same model and the same disease, just in a different "
+                 "building.",
                  Write(head), Create(axis), FadeIn(chance), GrowFromEdge(bars[0], DOWN), FadeIn(cap_txt[0]))
-        self.say("On scans from a new hospital it fell to 0.82. The same model, the same disease, a different building.",
-                 GrowFromEdge(bars[1], DOWN), FadeIn(cap_txt[1]))
+        self.cue("At a new hospital", GrowFromEdge(bars[1], DOWN), FadeIn(cap_txt[1]))
         note = txt("hospital identity was readable from the image with > 99.9% accuracy", 24, YELLOW_D).move_to([0, 2.65, 0])
         assert note.width < 13
-        self.say("Prevalence differed by site, so the hospital name alone scores 0.86 on the pooled test set.",
-                 GrowFromEdge(bars[2], DOWN), FadeIn(cap_txt[2]), FadeIn(note))
-        self.say("The CNN read scanner signatures, patient positioning and text overlays, without needing the lungs at all.",
-                 Indicate(note, color=YELLOW_D))
-        self.say("Random splits could never catch this: the shortcut lives on both sides. Hold out the hospital.", Indicate(bars[1], color=C_TEST))
+        self.say("And what about the hospital name alone? That scores zero point eight six on the pooled test "
+                 "set, because the sick rates differed from site to site. So the network was reading "
+                 "scanner quirks, patient positioning, and stamped text, instead of the lungs. A "
+                 "random split can't catch this, because the shortcut sits on both sides. You have to hold "
+                 "out the hospital.",
+                 GrowFromEdge(bars[2], DOWN), FadeIn(cap_txt[2]))
+        self.cue("So the network was reading", FadeIn(note))
+        self.cue("A random split", Indicate(bars[1], color=C_TEST))
         self.hold(0.5)
         self.clear_stage()
 
@@ -169,15 +190,19 @@ class Ep05Holdout(NarratedScene):
         rows = VGroup(*[VGroup(txt(u, 30, C_TEST), txt("→", 28, GREY_B), txt(d, 26, GREY_A)).arrange(RIGHT, buff=0.4) for u, d in units])
         rows.arrange(DOWN, aligned_edge=LEFT, buff=0.3).move_to([-2.9, 0.5, 0])
         assert rows.width < 7.6 and rows.get_left()[0] > -6.7 and rows.get_bottom()[1] > -2.2
-        self.say("Hold out whole units: a patient, a document, a time period, a molecule scaffold or a cluster of near-duplicates.",
-                 Write(head), LaggedStart(*[FadeIn(r, shift=RIGHT * 0.2) for r in rows], lag_ratio=0.3))
         rule = VGroup(txt("mimic deployment, no more:", 26, YELLOW_D),
                       txt("a much harder test set", 24, GREY_B),
                       txt("misleads just as much", 24, GREY_B)).arrange(DOWN, aligned_edge=LEFT, buff=0.2).move_to([4.3, 0.5, 0])
         assert rule.get_right()[0] < 6.6 and rule.get_left()[0] > rows.get_right()[0]
-        self.say("Mimic deployment and nothing more. A test set that differs in unrelated ways teaches you nothing either.", FadeIn(rule))
         credit = txt("Leakage surveys: Kapoor and Narayanan, 2023", 22, GREY_B).move_to([0, -2.2, 0])
-        self.say("Leakage is common: surveys across many fields keep finding the same mistake, and it inflates reported results.", FadeIn(credit))
+        self.say("So the rule is to hold out whatever will be new in deployment. That might be a patient, a "
+                 "document, a time period, or a molecule scaffold. But match deployment and no more, because "
+                 "a test set that differs in unrelated ways misleads you just as much.",
+                 Write(head), LaggedStart(*[FadeIn(r, shift=RIGHT * 0.2) for r in rows], lag_ratio=0.3))
+        self.cue("But match deployment", FadeIn(rule))
+        self.say("And none of this is rare, because surveys across many fields keep finding leakage like this, and it "
+                 "keeps inflating published results.",
+                 FadeIn(credit))
         self.hold(0.5)
         self.clear_stage()
 
@@ -190,11 +215,17 @@ class Ep05Holdout(NarratedScene):
         boxes = VGroup(*[box_label(n, c, w=2.95, h=0.9, font_size=22) for n, c in zip(names, cols)]).arrange(RIGHT, buff=0.35).move_to([0, 1.5, 0])
         assert boxes.width < 13.4
         qtx = VGroup(*[txt(q, 22, GREY_B, line_spacing=0.9).next_to(boxes[i], DOWN, buff=0.25) for i, q in enumerate(qs)])
-        self.say("Before any model, ask four questions. Does a pattern exist? Does it matter? Can we observe it? Can we extract it?",
-                 Write(head), LaggedStart(*[FadeIn(b, shift=UP * 0.2) for b in boxes], lag_ratio=0.3), FadeIn(qtx))
         fail = txt("the hospital shortcut passes the last three and fails the point of the task", 24, C_LOSS).move_to([0, -1.5, 0])
         assert fail.width < 13
-        self.say("A model can pass the last three and still miss the point, as the hospital shortcut did.", FadeIn(fail))
+        self.say("Before building any model, there are four things to check. A pattern has to exist, and it "
+                 "has to matter for some decision. It also has to show up in the features we record, and a "
+                 "model has to be able to pull it out. The hospital shortcut passed the last three checks "
+                 "and still missed the point, because it wasn't medicine.",
+                 Write(head), FadeIn(boxes[0], shift=UP * 0.2), FadeIn(qtx[0]))
+        self.cue("it has to matter", FadeIn(boxes[1], shift=UP * 0.2), FadeIn(qtx[1]))
+        self.cue("It also has to show up", FadeIn(boxes[2], shift=UP * 0.2), FadeIn(qtx[2]))
+        self.cue("a model has to be able", FadeIn(boxes[3], shift=UP * 0.2), FadeIn(qtx[3]))
+        self.cue("The hospital shortcut", FadeIn(fail))
         self.hold(0.4)
         self.clear_stage()
 
@@ -209,11 +240,13 @@ class Ep05Holdout(NarratedScene):
             ch = VGroup(*[txt(k, 22, WHITE) for k in kids]).arrange(DOWN, buff=0.3).next_to(top, DOWN, buff=0.5)
             assert ch.width < 4.2
             allg.add(VGroup(top, ch))
-        self.say("Function approximation covers a family: supervised learning with labels, such as regression and classification.",
+        self.say("Now let's zoom out for a moment and name the kinds of learning. Everything so far was supervised learning, where labels drive "
+                 "regression or classification. Take the labels away and you're finding structure instead, "
+                 "with embeddings or density estimation. And foundation models learn from broad data first "
+                 "and then get prompted or adapted, which is the same ideas at a bigger scale.",
                  Write(head), FadeIn(allg[0]))
-        self.say("Unsupervised learning finds structure without labels: embeddings like PCA, or density estimation, one route to generation.",
-                 FadeIn(allg[1]))
-        self.say("Foundation models pretrain on broad data first, then are prompted or adapted. Same ideas, bigger scale.", FadeIn(allg[2]))
+        self.cue("Take the labels away", FadeIn(allg[1]))
+        self.cue("And foundation models", FadeIn(allg[2]))
         self.hold(0.5)
         self.clear_stage()
 
@@ -225,8 +258,12 @@ class Ep05Holdout(NarratedScene):
                  ("5  hold-out", C_TEST, "split at the new unit")]
         cols = VGroup(*[VGroup(box_label(a, c, w=2.4, h=0.9, font_size=24), txt(b, 20, GREY_B)).arrange(DOWN, buff=0.25) for a, c, b in items]).arrange(RIGHT, buff=0.22).move_to([0, 0.6, 0])
         assert cols.width < 13.4
-        self.say("Samples do not determine a function. Ramps make a flexible basis, and layers stack them.",
-                 Write(head), LaggedStart(*[FadeIn(c, shift=UP * 0.2) for c in cols[:3]], lag_ratio=0.3))
-        self.say("The training surrogate is not the goal, and honest evaluation holds out exactly what will be new.",
-                 LaggedStart(*[FadeIn(c, shift=UP * 0.2) for c in cols[3:]], lag_ratio=0.3))
+        self.say("So here's the whole unit one more time, in five moves. Samples alone don't pin down a function. Ramps are "
+                 "flexible pieces, and a layer runs many of them at once. What we train on isn't what we "
+                 "actually want, and an honest test holds out exactly what will be new.",
+                 Write(head), FadeIn(cols[0], shift=UP * 0.2))
+        self.cue("Ramps are flexible pieces", FadeIn(cols[1], shift=UP * 0.2))
+        self.cue("a layer runs many", FadeIn(cols[2], shift=UP * 0.2))
+        self.cue("What we train on", FadeIn(cols[3], shift=UP * 0.2))
+        self.cue("an honest test", FadeIn(cols[4], shift=UP * 0.2))
         self.hold(0.5)

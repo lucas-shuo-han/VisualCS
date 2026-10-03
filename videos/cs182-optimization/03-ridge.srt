@@ -1,88 +1,168 @@
 1
-00:00:06,500 --> 00:00:13,033
-Ridge adds a penalty on the size of the weights, with strength lambda. Positive lambda makes it well posed.
+00:00:06,500 --> 00:00:09,367
+What if we simply charge a price for big weights?
 
 2
-00:00:13,033 --> 00:00:20,700
-Setting the gradient to zero gives a closed form. It inverts X transpose X plus lambda times the identity.
+00:00:09,367 --> 00:00:12,644
+That's ridge regression, and the price is called lambda.
 
 3
-00:00:20,700 --> 00:00:28,933
-A second form inverts an n by n matrix instead. Same estimator: use whichever matrix is smaller.
+00:00:12,644 --> 00:00:18,866
+With that penalty in place there's always exactly one answer, even when the data alone can't decide.
 
 4
-00:00:28,933 --> 00:00:35,700
-Take the SVD. Then ridge weights each direction by sigma over sigma squared plus lambda.
+00:00:18,866 --> 00:00:26,038
+Set the gradient to zero and a closed form pops out, which inverts X transpose X with lambda added on the diagonal.
 
 5
-00:00:35,700 --> 00:00:43,066
-The pseudoinverse uses one over sigma. Ridge keeps the fraction sigma squared over sigma squared plus lambda.
+00:00:26,038 --> 00:00:31,214
+There's also a second form, which inverts a matrix with one row per sample instead.
 
 6
-00:00:43,066 --> 00:00:49,333
-Plot it. Large singular values are nearly untouched; small ones are strongly attenuated.
+00:00:31,214 --> 00:00:36,833
+Both give the same answer, so we use whichever matrix is smaller.
 
 7
-00:00:49,333 --> 00:00:56,933
-At sigma equal to root lambda, exactly half is kept. A bigger lambda pushes that line right.
+00:00:36,833 --> 00:00:39,709
+So what does ridge actually do to the solution?
 
 8
-00:00:56,933 --> 00:01:03,500
-Now the actual multiplier. Without ridge it is one over sigma, which explodes for weak directions.
+00:00:39,709 --> 00:00:43,748
+Take the SVD, and each singular direction gets its own multiplier.
 
 9
-00:01:03,500 --> 00:01:11,300
-With ridge it rises, peaks at one over two root lambda where sigma is root lambda, then falls.
+00:00:43,748 --> 00:00:49,195
+The pseudoinverse would use one over sigma there, so ridge keeps only a fraction of that,
 
 10
-00:01:11,300 --> 00:01:18,900
-Adding lambda times the identity shifts every eigenvalue up by lambda. The smallest gain the most, relatively.
+00:00:49,195 --> 00:00:53,200
+and this fraction is the ridge filter.
 
 11
-00:01:18,900 --> 00:01:27,100
-The ravine from episode one has kappa 16. Ridge of 0.25 cuts it to 8.5, and ridge of 1 to 4.
+00:00:53,200 --> 00:00:58,162
+Let's plot that fraction against the singular value, for three values of lambda.
 
 12
-00:01:27,100 --> 00:01:34,366
-The price is a different problem and a different answer. Conditioning and overfitting improve together.
+00:00:58,162 --> 00:01:03,249
+Strong directions are left almost alone, while weak ones get squashed toward zero.
 
 13
-00:01:34,366 --> 00:01:42,000
-Data has strong energy along strong directions. Suppose the truth is small, and each direction carries noise.
+00:01:03,249 --> 00:01:09,018
+The cutoff sits where sigma equals the square root of lambda, and there exactly half is kept.
 
 14
-00:01:42,000 --> 00:01:49,466
-Without ridge we divide by sigma, so noise grows by one over sigma: thirty times more in the weakest direction.
+00:01:09,018 --> 00:01:13,600
+So a bigger lambda slides the cutoff to the right.
 
 15
-00:01:49,466 --> 00:01:57,366
-Ridge shrinks each direction by its own factor. Weak directions collapse toward zero; strong ones barely move.
+00:01:13,600 --> 00:01:15,720
+Now here's the multiplier itself.
 
 16
-00:01:57,366 --> 00:02:04,566
-Averaged over noise, the error drops about twelvefold: calibrated distrust of directions that are mostly noise.
+00:01:15,720 --> 00:01:20,798
+With no ridge it's one over sigma, which explodes as sigma shrinks toward zero.
 
 17
-00:02:04,566 --> 00:02:12,433
-Weak directions can hold signal, so suppressing them is a judgment. Overfitting trusts the data too much.
+00:01:20,798 --> 00:01:29,500
+Ridge tames that, so the curve rises, peaks where sigma equals the square root of lambda, and then falls again.
 
 18
-00:02:12,433 --> 00:02:19,166
-Gradient descent on the ridge objective shrinks the weights by a fixed factor, then takes the usual data step.
+00:01:29,500 --> 00:01:30,960
+There's a bonus as well.
 
 19
-00:02:19,166 --> 00:02:27,433
-That decay alone shrinks a weight by 0.9 each step. For plain gradient descent, ridge equals weight decay.
+00:01:30,960 --> 00:01:37,167
+Adding lambda lifts every eigenvalue by the same amount, so the tiny ones gain the most in proportion.
 
 20
-00:02:27,433 --> 00:02:33,466
-A Gaussian prior on the weights plus Gaussian noise makes the MAP estimate a ridge solution.
+00:01:37,167 --> 00:01:40,696
+Take the ravine from episode one, where kappa was sixteen.
 
 21
-00:02:33,466 --> 00:02:41,133
-One trap: minimizing the objective cannot pick lambda. It only grows with lambda, so lambda collapses to zero.
+00:01:40,696 --> 00:01:47,766
+A ridge lambda of one quarter cuts that to eight and a half, and a ridge lambda of one brings it down to four.
 
 22
-00:02:41,133 --> 00:02:49,100
-Lambda is a hyperparameter, chosen with held-out data. That is next, along with two other knobs.
+00:01:47,766 --> 00:01:50,443
+So the steps we need drop from thirty-seven to ten.
+
+23
+00:01:50,443 --> 00:01:58,000
+The catch is that we're now solving a different problem, and it has a different answer.
+
+24
+00:01:58,000 --> 00:02:00,906
+But why should we distrust weak directions at all?
+
+25
+00:02:00,906 --> 00:02:05,032
+Let's put a small true signal in each direction and add a little noise.
+
+26
+00:02:05,032 --> 00:02:10,147
+Without ridge we divide by sigma, so the weakest direction blows its noise up ten times,
+
+27
+00:02:10,147 --> 00:02:12,833
+and you can see those estimates scatter.
+
+28
+00:02:12,833 --> 00:02:13,977
+Now turn ridge on.
+
+29
+00:02:13,977 --> 00:02:18,810
+The weak directions collapse toward zero, while the strong ones barely move.
+
+30
+00:02:18,810 --> 00:02:22,942
+Averaged over the noise, the total error drops about twelve-fold.
+
+31
+00:02:22,942 --> 00:02:31,533
+So overfitting is really trusting noisy directions too much, and ridge is a judgment call to trust them less.
+
+32
+00:02:31,533 --> 00:02:34,880
+Inside gradient descent, ridge turns out to be simple.
+
+33
+00:02:34,880 --> 00:02:39,157
+We shrink the weights a little, and then we take the usual data step.
+
+34
+00:02:39,157 --> 00:02:43,310
+On its own, that shrink keeps ninety percent of a weight each step.
+
+35
+00:02:43,310 --> 00:02:47,633
+It's called weight decay, and here it's the same thing as ridge.
+
+36
+00:02:47,633 --> 00:02:49,878
+There's a Bayesian view of this too.
+
+37
+00:02:49,878 --> 00:02:56,799
+Assume Gaussian noise on the labels and a Gaussian prior on the weights, and the MAP estimate is exactly ridge.
+
+38
+00:02:56,799 --> 00:03:03,866
+The ridge lambda is then the noise variance divided by the prior variance.
+
+39
+00:03:03,866 --> 00:03:06,958
+So why not let the optimizer choose lambda as well?
+
+40
+00:03:06,958 --> 00:03:11,928
+Because the objective only grows with lambda, so it would just slide down to zero.
+
+41
+00:03:11,928 --> 00:03:17,020
+That makes lambda a hyperparameter, which we pick on held-out data, and that's next,
+
+42
+00:03:17,020 --> 00:03:20,966
+along with two more hyperparameters.
 

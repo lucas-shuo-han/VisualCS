@@ -1,84 +1,168 @@
 1
-00:00:06,200 --> 00:00:13,066
-Rotate gradient descent into the SVD basis, with the weights and the targets rotated the same way.
+00:00:06,200 --> 00:00:09,912
+What is gradient descent really doing if we stop it early?
 
 2
-00:00:13,066 --> 00:00:20,433
-Each singular direction obeys its own scalar recurrence, with factor one minus two eta sigma squared.
+00:00:09,912 --> 00:00:13,176
+To see it, we rotate everything into the SVD basis.
 
 3
-00:00:20,433 --> 00:00:29,866
-Start at zero and solve it. Direction i reaches the fraction q t of the converged answer, y tilde over sigma.
+00:00:13,176 --> 00:00:20,700
+Now each direction runs its own little recurrence on a single number, with the same shape we saw in episode one.
 
 4
-00:00:29,866 --> 00:00:37,466
-Plot q t against sigma. After a few steps only large singular values are fit; small ones have barely started.
+00:00:20,700 --> 00:00:23,223
+Start at zero and solve that recurrence.
 
 5
-00:00:37,466 --> 00:00:44,933
-Keep stepping and the curve rises from the right: large singular values converge first, small ones far later.
+00:00:23,223 --> 00:00:29,279
+After any number of steps, each direction has gone some fraction of the way to its final answer,
 
 6
-00:00:44,933 --> 00:00:51,533
-Compare with ridge. Both hold back weak directions, so stopping early regularizes without a penalty.
+00:00:29,279 --> 00:00:32,244
+and that fraction is the early-stopping filter.
 
 7
-00:00:51,533 --> 00:00:59,100
-The curves need not coincide. What they share is the ordering: weak singular directions enter last.
+00:00:32,244 --> 00:00:37,733
+Once the filter reaches one, the direction is fully converged.
 
 8
-00:00:59,100 --> 00:01:08,766
-This ordering is guaranteed only for eta up to one over two sigma max squared: here sigma is 1.5, eta 0.1.
+00:00:37,733 --> 00:00:40,640
+Let's plot that filter against the singular value.
 
 9
-00:01:08,766 --> 00:01:17,833
-Up to one over sigma max squared, the largest directions overshoot: q t goes above one, then settles.
+00:00:40,640 --> 00:00:45,988
+After a few steps only the strong directions are fit, and the weak ones have barely started.
 
 10
-00:01:17,833 --> 00:01:27,433
-Now watch four directions, with singular values 3, 1, 0.3 and 0.1, noisy data, and a fixed step size.
+00:00:45,988 --> 00:00:53,000
+Keep going and the curve climbs in from the right, so strong directions finish first while weak ones take ages.
 
 11
-00:01:27,433 --> 00:01:35,066
-Training loss only ever falls: given enough steps, gradient descent fits every direction, noise included.
+00:00:53,000 --> 00:00:56,086
+Now put the ridge filter next to one of these curves.
 
 12
-00:01:35,066 --> 00:01:42,066
-The distance falls, then climbs as noisy weak directions are fit. Best stopping is near 36 steps.
+00:00:56,086 --> 00:01:01,386
+Both hold back the weak directions, so stopping early regularizes without any penalty term.
 
 13
-00:01:42,066 --> 00:01:49,500
-Run to convergence and the error is many times larger. Stopping early trades a little bias for much less noise.
+00:01:01,386 --> 00:01:03,424
+They aren't the same curve, though.
 
 14
-00:01:49,500 --> 00:01:57,566
-In practice, save checkpoints and keep the one with the best validation score, not an arbitrary step count.
+00:01:03,424 --> 00:01:09,233
+What they share is the order, with weak directions always coming in last.
 
 15
-00:01:57,566 --> 00:02:04,333
-Regularization strength, learning rate and stopping time are hyperparameters spanning orders of magnitude.
+00:01:09,233 --> 00:01:10,866
+Is that order guaranteed?
 
 16
-00:02:04,333 --> 00:02:13,233
-So sweep on a log scale. Evenly spaced values bunch into one decade; one value per power of ten spans it all.
+00:01:10,866 --> 00:01:12,826
+Only when eta is small enough.
 
 17
-00:02:13,233 --> 00:02:19,766
-Each candidate is trained, then scored on validation data. The test set is kept for the final procedure.
+00:01:12,826 --> 00:01:17,790
+For a direction with sigma one point five, an eta of zero point one is safe,
 
 18
-00:02:19,766 --> 00:02:29,566
-A grid grows exponentially: five values per knob is 5, 25, 125 runs, and over fifteen thousand for six knobs.
+00:01:17,790 --> 00:01:20,664
+and the filter rises to one and stays there.
 
 19
-00:02:29,566 --> 00:02:36,500
-Random search tries new values of every knob on every run, usually a better use of the same budget.
+00:01:20,664 --> 00:01:29,766
+Push eta to zero point three and it's still stable, but now the filter overshoots past one before it settles back.
 
 20
-00:02:36,500 --> 00:02:43,700
-With no budget for broad search, borrow settings from a closely related paper: an engineering prior, not proof.
+00:01:29,766 --> 00:01:31,255
+So when should we stop?
 
 21
-00:02:43,700 --> 00:02:51,900
-Could another learner tune the knobs? Meta-learning can, but it is an outer loop with its own data and cost.
+00:01:31,255 --> 00:01:38,182
+Here are four directions, from a strong one with singular value three down to a weak one at zero point one,
+
+22
+00:01:38,182 --> 00:01:39,606
+and the data is noisy.
+
+23
+00:01:39,606 --> 00:01:46,500
+The training loss only ever goes down, and given enough steps it fits every direction, noise and all.
+
+24
+00:01:46,500 --> 00:01:53,068
+But the distance from the true weights falls and then climbs again, as the weak, noisy directions get fit.
+
+25
+00:01:53,068 --> 00:01:55,547
+The sweet spot is near thirty-six steps.
+
+26
+00:01:55,547 --> 00:02:00,319
+If we run all the way to convergence the error is about fourteen times worse,
+
+27
+00:02:00,319 --> 00:02:04,266
+so stopping early buys a little bias for a lot less noise.
+
+28
+00:02:04,266 --> 00:02:08,656
+In practice you can't see the true weights, so you save checkpoints as you train.
+
+29
+00:02:08,656 --> 00:02:13,900
+Then you keep whichever checkpoint scores best on validation data.
+
+30
+00:02:13,900 --> 00:02:20,955
+That leaves us three hyperparameters to choose, which are the ridge lambda, the learning rate and the stopping time.
+
+31
+00:02:20,955 --> 00:02:25,335
+Each one can range over many powers of ten, so we search on a log scale.
+
+32
+00:02:25,335 --> 00:02:33,700
+Evenly spaced values bunch up inside a single decade, while one value per power of ten covers the whole range.
+
+33
+00:02:33,700 --> 00:02:38,303
+Each candidate is trained on the training set and then scored on validation data.
+
+34
+00:02:38,303 --> 00:02:44,800
+The test set stays locked away until the very end, when the whole procedure is fixed.
+
+35
+00:02:44,800 --> 00:02:46,444
+A full grid blows up fast.
+
+36
+00:02:46,444 --> 00:02:53,337
+With five values for each hyperparameter, that's five runs, then twenty-five, then a hundred and twenty-five,
+
+37
+00:02:53,337 --> 00:02:56,372
+and with six of them it's over fifteen thousand.
+
+38
+00:02:56,372 --> 00:03:05,233
+Random search draws a fresh value of every hyperparameter each run, so the same budget usually covers more ground.
+
+39
+00:03:05,233 --> 00:03:10,523
+And if there's no budget to search at all, you can borrow settings from a closely related paper,
+
+40
+00:03:10,523 --> 00:03:12,728
+as a starting guess rather than a proof.
+
+41
+00:03:12,728 --> 00:03:15,042
+Could a learner tune these for us instead?
+
+42
+00:03:15,042 --> 00:03:22,166
+Meta-learning can, but that's an outer loop with a cost of its own.
 

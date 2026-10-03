@@ -78,6 +78,7 @@ assert abs(_q2 @ _q2 - (_q @ _q - 4 * ETA * (1 - ETA * (_x @ _x)) * (_x @ _q) **
 
 class Ep05Sgd(NarratedScene):
     series = SERIES
+    SCENES = ["minibatch", "landscape", "proof"]
 
     def construct(self):
         self.title_card()
@@ -85,10 +86,10 @@ class Ep05Sgd(NarratedScene):
         self.landscape()
         self.proof()
         self.end_card(
-            ["Averaged over a random mini-batch, the gradient is exactly the full gradient: an unbiased step",
-             "An unbiased step need not decrease the loss on every draw, and noise can help or hurt in a nonconvex landscape",
-             "If the model fits every example exactly, the noise vanishes at the solution and a constant step converges",
-             "The proof rests on interpolation, full row rank, uniform sampling, zero start and a step below one over rho squared"],
+            ["A random mini-batch gradient is right on average. Unbiased, but noisy",
+             "Unbiased doesn't mean every step goes downhill. Noise can help or hurt",
+             "If the model fits every example, the noise vanishes at the answer and a fixed step converges",
+             "The proof needs exact fit, full row rank, zero start and eta below one over rho squared"],
         )
 
     # ---------------------------------------------------------------- 1. mini-batches
@@ -97,10 +98,12 @@ class Ep05Sgd(NarratedScene):
         f = mts([r"f(\theta)=\frac1n\sum_{i=1}^n f_i(\theta)", r",\qquad ", r"\nabla f=\frac1n\sum_{i=1}^n\nabla f_i"], 0.8, {}).move_to([0, 2.3, 0])
         gb = mts([r"g_B(\theta)=\frac1b\sum_{i\in B}\nabla f_i(\theta)", r",\qquad ", r"\mathbb E_B[g_B]=\nabla f(\theta)"], 0.8, {2: C_NOISE}).move_to([0, 1.2, 0])
         assert_on_screen(f, gb)
-        self.say("A training loss averages over n examples, so its gradient is a sum of n terms. Costly for huge n.",
-                 Write(head), Write(f))
-        self.say("Instead draw a random batch of b examples and average those gradients. On average, this is the full gradient.",
-                 Write(gb))
+        self.say("What if we have a billion examples? The full gradient sums over every one of them, which is a lot "
+                 "of work for a single step. So instead we grab a random mini-batch and average its "
+                 "gradients, and on average we get the full gradient back.",
+                 Write(head), Write(f), run_time=1.2)
+        self.cue("So instead we grab", Write(gb))
+        self.hold(0.3)
         self.play(FadeOut(f), FadeOut(gb))
         # numbers
         ln = NumberLine(x_range=[-3, 5, 1], length=10.4, color=GREY_B, include_numbers=False, tick_size=0.1).move_to([0, 1.5, 0])
@@ -110,8 +113,6 @@ class Ep05Sgd(NarratedScene):
         full = VGroup(Line(ln.n2p(G_FULL) + UP * 0.5, ln.n2p(G_FULL) + DOWN * 0.3, color=C_LOSS, stroke_width=4),
                       txt(f"full gradient = {G_FULL:.2f}", 22, C_LOSS).next_to(ln.n2p(G_FULL) + UP * 0.5, UP, buff=0.1).shift(RIGHT * 2.0))
         assert_on_screen(VGroup(ln, lab), t1, full)
-        self.say("Six examples have these gradients at one point. Their average, the full gradient, is two thirds.",
-                 FadeIn(ln), FadeIn(lab), FadeIn(d1), FadeIn(t1), FadeIn(full))
         # batches on a second line
         ln2 = NumberLine(x_range=[-3, 5, 1], length=10.4, color=GREY_B, include_numbers=False, tick_size=0.1).move_to([0, -0.9, 0])
         lab2 = VGroup(*[txt(f"{v}", 20, GREY_B).next_to(ln2.n2p(v), DOWN, buff=0.15) for v in range(-3, 6)])
@@ -121,10 +122,16 @@ class Ep05Sgd(NarratedScene):
         t2 = txt("all 15 batches of size 2: their averages", 22, C_NOISE).next_to(ln2, UP, buff=0.5).align_to(ln2, LEFT)
         wr = txt(f"{N_WRONG} of 15 point the wrong way", 22, C_LOSS).next_to(ln2, DOWN, buff=0.6)
         assert_on_screen(VGroup(ln2, lab2), t2, wr, ymin=-2.6)
-        self.say("Now list every batch of two. Their averages scatter widely, from minus two to three and a quarter.",
-                 FadeIn(ln2), FadeIn(lab2), LaggedStart(*[FadeIn(d) for d in d2], lag_ratio=0.1, run_time=2), FadeIn(t2))
-        self.say("Their average over all 15 batches is exactly two thirds. Unbiased, yet five batches would step the wrong way.",
-                 Create(mean_mark), FadeIn(bad), FadeIn(wr))
+        self.say("Here are six per-example gradients at one point, and their average, the full gradient, is two "
+                 "thirds. Now try every possible batch of two. Those batch averages land all over the place, from "
+                 "minus two up to three and a quarter.",
+                 FadeIn(ln), FadeIn(lab), FadeIn(d1), FadeIn(t1))
+        self.cue("and their average", FadeIn(full))
+        self.cue("Now try every", FadeIn(ln2), FadeIn(lab2), LaggedStart(*[FadeIn(d) for d in d2], lag_ratio=0.1, run_time=2), FadeIn(t2))
+        self.say("Average all fifteen of them and you get exactly two thirds, which is what unbiased means. And "
+                 "yet five of the fifteen point the wrong way.",
+                 Create(mean_mark))
+        self.cue("yet five", FadeIn(bad), FadeIn(wr))
         self.hold(0.5)
         self.clear_stage()
 
@@ -142,12 +149,14 @@ class Ep05Sgd(NarratedScene):
         b2 = box_label("or send it somewhere worse", C_LOSS, w=5.3, h=0.9, font_size=19).move_to([4.2, 0.1, 0])
         b3 = box_label("early on, rough directions are enough", C_TRAIN, w=5.3, h=0.9, font_size=19).move_to([4.2, -1.3, 0])
         assert_on_screen(b1, b2, b3)
-        self.say("On a bumpy loss surface, the noise may shake the iterate out of a shallow valley.",
-                 Write(head), Create(ax), Create(curve), FadeIn(ball), FadeIn(sh), FadeIn(dp), Create(jump), FadeIn(b1))
-        self.say("That is a possibility, not a guarantee: the same noise can just as well push it toward a worse region.",
-                 FadeIn(b2))
-        self.say("Far from a solution, a rough direction already helps. Near it, the variance of the estimate is the limit.",
-                 FadeIn(b3))
+        self.say("So is the noise a bad thing? On a bumpy surface like this one, it might shake us out of a shallow "
+                 "valley. But the same noise can just as easily kick us somewhere worse, so it's a possibility "
+                 "and not a promise. Far from the answer a rough direction is plenty, but close to it the noise "
+                 "is what holds us back.",
+                 Write(head), Create(ax), Create(curve), FadeIn(ball), FadeIn(sh), FadeIn(dp), run_time=1.2)
+        self.cue("it might shake", Create(jump), FadeIn(b1))
+        self.cue("But the same noise", FadeIn(b2))
+        self.cue("Far from the answer", FadeIn(b3))
         self.hold(0.5)
         self.clear_stage()
 
@@ -159,12 +168,15 @@ class Ep05Sgd(NarratedScene):
         err = mts([r"q_t=w_t-w^*", r"\ \Rightarrow\ ", r"q_{t+1}=(I-2\eta\,x_{I_t}x_{I_t}^\top)\,q_t"], 0.8, {2: C_NOISE}).move_to([0, 0.1, 0])
         why = txt("the error obeys the same random update, because y = Xw* exactly", 24, GREY_B).move_to([0, -1.0, 0])
         assert_on_screen(setup, upd, err, why)
-        self.say("Take the overparameterized case again: more parameters than examples, and every example can be fit exactly.",
+        self.say("So when does SGD converge with a constant step? Let's take the case where every example can be "
+                 "fit exactly. We start from zero, and each step picks one random example and follows just that "
+                 "example's gradient.",
                  Write(head), Write(setup))
-        self.say("Use one random example per step, starting from zero. Its update is the gradient of that example's squared loss.",
-                 Write(upd))
-        self.say("Measure the distance to the minimum-norm solution. Since the fit is exact, the error updates alike.",
-                 Write(err), FadeIn(why))
+        self.cue("We start from zero", Write(upd))
+        self.say("Now track the error from the minimum-norm solution. Because the fit is exact, that "
+                 "error follows the very same random update.",
+                 Write(err))
+        self.cue("Because the fit", FadeIn(why))
         self.hold(0.3)
         self.clear_stage()
         # proof steps
@@ -176,14 +188,17 @@ class Ep05Sgd(NarratedScene):
         s5 = mts([r"\alpha=1-\frac{4\eta(1-\eta\rho^2)\,\sigma_{\min}^2}{n}", r",\quad 0<\eta<\frac1{\rho^2}"], 0.75, {0: C_LOSS}).move_to([0, -2.1, 0])
         assert_on_screen(s1, s2, s3, s4, ymin=-1.8)
         assert_on_screen(s5, ymin=-2.6)
-        self.say("Expand the squared norm of the next error. This identity is exact: a good step subtracts a positive amount.",
+        self.say("Zoom in on one step and expand the squared error. This first line is exact, and it says a good "
+                 "step subtracts something positive. Swap that factor for its worst case, and as long as eta is "
+                 "below one over rho squared we get an upper bound.",
                  Write(head), Write(s1))
-        self.say("Replace the per-example factor by its worst case, with a step below one over rho squared: an upper bound.",
-                 Write(s2))
-        self.say("Average over the random example: each has probability one over n, so the sum becomes the norm of X q.",
-                 Write(s3))
-        self.say("The error stays in the row space, where X q is at least sigma min times q: a contraction factor alpha below one.",
-                 Write(s4), Write(s5))
+        self.cue("Swap that factor", Write(s2))
+        self.say("Now average over which example we drew. Every example is equally likely, so the sum turns into "
+                 "the squared length of X times the error. The error lives in the row space, so that length "
+                 "can't be tiny. On average, then, each step keeps at most a fraction alpha of the squared error.",
+                 Write(s3), run_time=1.5)
+        self.cue("The error lives", Write(s4))
+        self.cue("On average, then", Write(s5))
         self.hold(0.3)
         self.clear_stage()
         # numeric demonstration
@@ -197,18 +212,21 @@ class Ep05Sgd(NarratedScene):
         xl = txt("steps t", 22, GREY_B).next_to(ax.c2p(20, -10), DOWN, buff=0.5)
         yl = txt("squared distance to w*", 22, GREY_B).next_to(ax, UP, buff=0.1).align_to(ax, LEFT)
         ts = np.arange(TMAX + 1)
-        curves = VGroup(*[polyline(ax, ts, np.log10(np.maximum(r, 1e-300)), C_NOISE, 2) for r in RUNS])
+        curves = VGroup(*[polyline(ax, ts, np.log10(np.maximum(r, 1e-10)), C_NOISE, 2) for r in RUNS])
         mean = polyline(ax, ts, np.log10(MEAN), C_TRAIN, 4)
         bnd = polyline(ax, ts, np.log10(BOUND), C_LOSS, 4)
         l1 = txt("three single SGD runs", 22, C_NOISE).move_to([4.2, 0.9, 0])
         l2 = txt("average of 20,000 runs", 22, C_TRAIN).move_to([4.2, 0.3, 0])
         l3 = txt("bound α^t ‖w*‖²", 22, C_LOSS).move_to([4.2, -0.3, 0])
         assert_on_screen(VGroup(setup, vals), VGroup(ax, xt, yt, xl, yl), l1, l2, l3)
-        self.say("Try two equations, three unknowns: rho squared is 1.25, sigma min squared is 0.75, so alpha is 0.7.",
+        self.say("Let's try it with two equations and three unknowns. With these numbers alpha comes out as "
+                 "zero point seven, so on average at most seventy percent of the squared error survives a step. "
+                 "Single runs jitter, but they all fall. Their average sits just under the bound, which is a "
+                 "straight line on this log scale.",
                  Write(head), Write(setup), Write(vals))
-        self.say("Single runs jitter but all fall. The average of many runs sits just under the bound: a line on a log scale.",
-                 Create(ax), FadeIn(xt), FadeIn(yt), FadeIn(xl), FadeIn(yl), FadeIn(l1),
-                 *[Create(c) for c in curves], Create(bnd), FadeIn(l3), Create(mean), FadeIn(l2))
+        self.cue("Single runs jitter", Create(ax), FadeIn(xt), FadeIn(yt), FadeIn(xl), FadeIn(yl), FadeIn(l1),
+                 *[Create(c) for c in curves])
+        self.cue("Their average", Create(bnd), FadeIn(l3), Create(mean), FadeIn(l2))
         self.hold(0.4)
         self.clear_stage()
         # aha and pitfalls
@@ -219,11 +237,17 @@ class Ep05Sgd(NarratedScene):
         p2 = txt("With noisy labels the gradients do not vanish, and a constant step leaves a neighborhood of error", 22, YELLOW_D)
         grp = VGroup(b1, b2, p1, p2).arrange(DOWN, buff=0.4).move_to([0, 0.3, 0])
         assert_on_screen(grp)
-        self.say("The reason: at the interpolating solution every example has zero gradient, so the noise vanishes there.",
-                 Write(head), FadeIn(b1, shift=UP * 0.2), FadeIn(b2, shift=UP * 0.2))
-        self.say("A special case: it needs exact fit, full row rank and a small step. With noisy labels a constant step stalls.",
-                 FadeIn(p1), FadeIn(p2))
-        self.say("Strict decrease alone is not enough: a decreasing sequence can stall above zero. The factor alpha does the work.",
+        self.say("Why does a fixed step work here? At the solution every example's gradient is zero, so the noise "
+                 "vanishes exactly where we want to stop. But this is a special case. It needs an exact fit, "
+                 "full row rank and a small enough step, and with noisy labels a constant step stalls some "
+                 "distance from the answer.",
+                 Write(head), FadeIn(b1, shift=UP * 0.2), run_time=1.2)
+        self.cue("so the noise", FadeIn(b2, shift=UP * 0.2))
+        self.cue("But this is a special", FadeIn(p1))
+        self.cue("and with noisy labels", FadeIn(p2))
+        self.say("There's one last subtlety in the proof. Shrinking at every step isn't enough on its own, because "
+                 "the error could still stall above zero. The fixed factor alpha, strictly below one, is what "
+                 "rules that out.",
                  Indicate(b2, color=YELLOW_D))
         self.hold(0.6)
         self.clear_stage()

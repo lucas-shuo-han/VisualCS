@@ -1,104 +1,168 @@
 1
-00:00:06,200 --> 00:00:14,066
-Until now we treated the parameters theta as one long vector. But network parameters live in matrices, one per layer.
+00:00:06,200 --> 00:00:09,112
+So far we've treated theta as one long vector.
 
 2
-00:00:14,066 --> 00:00:19,366
-Recall from Xavier initialization: scaling problems come from the weight matrices.
+00:00:09,112 --> 00:00:12,975
+But a network's weights come as matrices, one for each layer.
 
 3
-00:00:19,366 --> 00:00:23,866
-So let's measure the change ΔW in weight-matrix space instead.
+00:00:12,975 --> 00:00:18,673
+And every scaling problem we met in Xavier initialization came from those weight matrices.
 
 4
-00:00:23,866 --> 00:00:28,666
-The matching inner product multiplies entries in the same position and adds them up.
+00:00:18,673 --> 00:00:24,300
+So let's measure a step as what it really is, which is a matrix.
 
 5
-00:00:28,666 --> 00:00:36,233
-That number is the trace of G transpose times ΔW. Here both ways give five.
+00:00:24,300 --> 00:00:26,859
+First we need an inner product for matrices.
 
 6
-00:00:36,233 --> 00:00:42,366
-Here is a 2 by 2 matrix A. Feed it every input of length one, the unit circle.
+00:00:26,859 --> 00:00:31,745
+Multiply the entries in matching spots and add everything up, which here gives five.
 
 7
-00:00:42,366 --> 00:00:44,966
-It maps the circle to an ellipse.
+00:00:31,745 --> 00:00:37,833
+That's the same number you get from the trace of G transpose times the step.
 
 8
-00:00:44,966 --> 00:00:52,200
-The longest stretch is the largest singular value, 2.14. The shortest is 0.69.
+00:00:37,833 --> 00:00:39,124
+How big is a matrix?
 
 9
-00:00:52,200 --> 00:00:58,300
-The spectral norm of a matrix is exactly this: the largest amount it can stretch a unit vector.
+00:00:39,124 --> 00:00:45,517
+Take this two by two matrix, and feed it every input of length one, which is the whole unit circle.
 
 10
-00:00:58,300 --> 00:01:06,933
-So a spectral-norm ball of radius eta contains every matrix that stretches no input by more than eta.
+00:00:45,517 --> 00:00:48,733
+What comes out the other side is an ellipse.
 
 11
-00:01:06,933 --> 00:01:14,600
-Now the same question as before, for a matrix: the step of spectral size eta that lowers the linearized loss most.
+00:00:48,733 --> 00:00:53,689
+Its longest stretch is two point one four, and that's the largest singular value.
 
 12
-00:01:14,600 --> 00:01:22,366
-Write the gradient's singular value decomposition: left vectors U, singular values sigma, right vectors V.
+00:00:53,689 --> 00:00:55,891
+The shortest is zero point six nine.
 
 13
-00:01:22,366 --> 00:01:29,000
-Trace is linear, so the inner product becomes a sum: each singular value times one small scalar.
+00:00:55,891 --> 00:01:02,560
+The biggest stretch is what we call the spectral norm, so it's the most the matrix can stretch a unit vector.
 
 14
-00:01:29,000 --> 00:01:37,133
-Each scalar is at most one, because B cannot stretch anything past one. So the total is at most the sum of singular values.
+00:01:02,560 --> 00:01:10,300
+That makes the spectral ball of radius eta the set of steps that stretch no input by more than eta.
 
 15
-00:01:37,133 --> 00:01:45,800
-And B equals U V transpose reaches that bound. So the best step is minus eta times U V transpose.
+00:01:10,300 --> 00:01:12,549
+Now ask our question for a matrix.
 
 16
-00:01:45,800 --> 00:01:56,700
-Take a random 5 by 3 gradient. Its singular values are 3.54, 2.15, 0.77, which sum to 6.46.
+00:01:12,549 --> 00:01:17,049
+Which step of spectral size eta lowers the linearized loss the most?
 
 17
-00:01:56,700 --> 00:02:04,100
-Normalized G gains only 4.21. Twenty thousand random steps never beat 4.80.
+00:01:17,049 --> 00:01:21,748
+To answer it, break the gradient into its singular value decomposition.
 
 18
-00:02:04,100 --> 00:02:12,433
-Only U V transpose reaches the full sum. The larger ball of allowed steps buys a larger predicted decrease.
+00:01:21,748 --> 00:01:28,000
+That gives us output directions U, input directions V, and a stretch sigma for each pair.
 
 19
-00:02:12,433 --> 00:02:18,333
-Look at what this step does to the gradient. The gradient has three very different singular values.
+00:01:28,000 --> 00:01:35,010
+The trace is linear, so the inner product splits into a sum, with each singular value times one number.
 
 20
-00:02:18,333 --> 00:02:25,466
-U V transpose keeps the singular vectors, the directions, and replaces every singular value by one.
+00:01:35,010 --> 00:01:40,455
+Each of those numbers is at most one, because B can't stretch anything past one.
 
 21
-00:02:25,466 --> 00:02:32,400
-Such a matrix is semi-orthogonal. Its condition number is one, versus 4.6 for the gradient.
+00:01:40,455 --> 00:01:46,580
+So the sum of the sigmas is a ceiling, and choosing B to be U V transpose hits it exactly.
 
 22
-00:02:32,400 --> 00:02:39,466
-Uniform step in all directions, and no domination by the largest singular values.
+00:01:46,580 --> 00:01:51,900
+That makes the best step minus eta times U V transpose.
 
 23
-00:02:39,466 --> 00:02:46,400
-This is the Shampoo optimizer of Gupta and coauthors, 2017 and 2018.
+00:01:51,900 --> 00:01:53,767
+Let's check that with numbers.
 
 24
-00:02:46,400 --> 00:02:53,100
-Shampoo scales the gradient on both sides by inverse fourth roots. That also gives U V transpose.
+00:01:53,767 --> 00:01:56,069
+Take a random five by three gradient.
 
 25
-00:02:53,100 --> 00:03:01,500
-A variant of Shampoo, by Dahl and coauthors in 2023, won AlgoPerf, a competition for training algorithms.
+00:01:56,069 --> 00:02:01,857
+Its singular values are three point five four, two point one five and zero point seven seven.
 
 26
-00:03:01,500 --> 00:03:10,200
-Two questions remain: how to avoid computing the SVD every step, and how to set the step size for layers of different shapes.
+00:02:01,857 --> 00:02:04,900
+Together they add up to six point four six.
+
+27
+00:02:04,900 --> 00:02:08,014
+The gradient step collects only four point two one.
+
+28
+00:02:08,014 --> 00:02:11,984
+And twenty thousand random tries never get past four point eight.
+
+29
+00:02:11,984 --> 00:02:14,488
+Only U V transpose collects the full sum.
+
+30
+00:02:14,488 --> 00:02:20,100
+So a bigger ball of allowed steps buys us a bigger predicted drop.
+
+31
+00:02:20,100 --> 00:02:22,061
+Now look at what this step does.
+
+32
+00:02:22,061 --> 00:02:25,371
+The gradient has three very different singular values.
+
+33
+00:02:25,371 --> 00:02:32,233
+But U V transpose keeps the directions and throws the stretches away, so every singular value becomes one.
+
+34
+00:02:32,233 --> 00:02:34,817
+A matrix like that is called semi-orthogonal.
+
+35
+00:02:34,817 --> 00:02:38,893
+Its condition number drops from four point six all the way down to one.
+
+36
+00:02:38,893 --> 00:02:46,766
+That means every direction gets the same size of step, and the big singular values don't get to hog it.
+
+37
+00:02:46,766 --> 00:02:47,966
+And this isn't new.
+
+38
+00:02:47,966 --> 00:02:53,836
+It's the Shampoo optimizer, from Gupta and coauthors in twenty seventeen and twenty eighteen.
+
+39
+00:02:53,836 --> 00:03:00,966
+Shampoo squeezes the gradient from both sides with inverse fourth roots, and out comes U V transpose again.
+
+40
+00:03:00,966 --> 00:03:06,643
+A variant of it, from Dahl and coauthors, won the AlgoPerf contest in twenty twenty-three.
+
+41
+00:03:06,643 --> 00:03:08,536
+There are two catches, though.
+
+42
+00:03:08,536 --> 00:03:16,200
+An SVD at every step is expensive, and we still don't know what step size fits layers of different shapes.
 

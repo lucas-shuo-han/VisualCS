@@ -90,6 +90,7 @@ def mode_marker(r, w=4.6):
 
 class Ep01GdLeastSquares(NarratedScene):
     series = SERIES
+    SCENES = ["equations", "scalar_case", "two_directions", "condition_number"]
 
     def construct(self):
         self.title_card()
@@ -98,10 +99,10 @@ class Ep01GdLeastSquares(NarratedScene):
         self.two_directions()
         self.condition_number()
         self.end_card(
-            ["On a quadratic, gradient descent is a linear system: every error mode is multiplied by its own factor",
-             "That factor is one minus two eta lambda, so stability needs eta below one over lambda max",
-             "The steepest direction sets the speed limit; the flattest sets the pace",
-             "Condition number kappa is lambda max over lambda min: large kappa means slow, even at the best eta"],
+            ["On a quadratic, each error direction just gets multiplied by its own factor, every step",
+             "Keep that factor between minus one and one, or the run blows up",
+             "The steepest direction caps the learning rate; the flattest one sets the pace",
+             "Condition number: steepest over flattest. Big kappa means slow, however you tune eta"],
         )
 
     # ---------------------------------------------------------------- 1. equations
@@ -115,22 +116,26 @@ class Ep01GdLeastSquares(NarratedScene):
         dfn = mts([r"\vec\Delta_t=\vec w_t-\vec w_{\min}"], 0.7, {0: C_LOSS})
         loss.move_to([0, 2.2, 0]); grad.move_to([0, 1.2, 0]); step.move_to([0, 0.1, 0]); upd.move_to([0, 0.1, 0])
         assert_on_screen(loss, grad, step, upd)
-        self.say("Least squares is a lamppost: the geometry is explicit, so we can watch exactly what optimization does.",
+        self.say("How does gradient descent actually move? On most problems that's hard to say, but least squares "
+                 "is the one place where we can follow every step exactly. Here's the loss, and here's its "
+                 "gradient, which is two X transpose times the residual.",
                  Write(head), Write(loss))
-        self.say("The loss is the squared length of the residual, and its gradient is two X transpose times the residual.",
-                 Write(grad))
-        self.say("A gradient step with learning rate eta subtracts eta times that gradient.", Write(step))
-        self.say("Expand it and the step is a fixed linear map applied to the weights, plus a constant.",
-                 ReplacementTransform(step, upd))
+        self.cue("and here's its gradient", Write(grad))
+        self.say("Each step walks downhill, so we take the gradient, scale it by the learning rate eta, and "
+                 "subtract it. Now multiply that out, and something nice appears. Every step is just one fixed "
+                 "matrix times w, plus some constant.",
+                 Write(step))
+        self.cue("Now multiply that out", ReplacementTransform(step, upd))
         self.hold(0.3)
         self.play(FadeOut(loss), FadeOut(grad), upd.animate.move_to([0, 1.6, 0]))
         err.move_to([0, 0.2, 0])
         dfn.move_to([0, -0.9, 0])
         box = SurroundingRectangle(VGroup(err[1], err[2], err[3]), color=YELLOW_D, buff=0.1)
-        self.say("Subtract the minimizer and the constant vanishes: the error is multiplied by the same matrix at every step.",
+        self.say("If we measure from the answer instead, the constant disappears, and the error simply gets "
+                 "multiplied by that matrix again and again. It's the same matrix at every single step, so the "
+                 "whole story is hiding in its eigenvalues.",
                  Write(err), FadeIn(dfn))
-        self.say("Optimizing a quadratic is therefore a linear dynamical system, and its eigenvalues decide everything.",
-                 Create(box))
+        self.cue("It's the same matrix", Create(box))
         self.hold(0.4)
         self.clear_stage()
 
@@ -147,10 +152,11 @@ class Ep01GdLeastSquares(NarratedScene):
         rec = mts([r"w_{t+1}-w^*=", r"(1-2\eta\sigma^2)", r"\,(w_t-w^*)"], 0.72, {1: C_ITER})
         rec.next_to(prob, DOWN, buff=0.3)
         assert_on_screen(prob, rec)
-        self.say("In the eigenbasis of X transpose X, a problem splits into scalar ones. Start with one, sigma times w equals y.",
+        self.say("Each eigen-direction behaves on its own, so let's shrink the problem down to a single number. "
+                 "We want two times w to equal four, and we start from zero. Every step multiplies the error by "
+                 "one number, which we'll call r, so let's see what the learning rate does to it.",
                  Write(head), Create(ax), FadeIn(ticks), FadeIn(xl), FadeIn(yt), Create(star), FadeIn(sl), Write(prob))
-        self.say("Each gradient step multiplies the error by the same number, r equals one minus two eta sigma squared.",
-                 Write(rec))
+        self.cue("Every step multiplies", Write(rec))
 
         def panel(k):
             eta, r = ETAS[k], RS[k]
@@ -166,23 +172,23 @@ class Ep01GdLeastSquares(NarratedScene):
             return VGroup(clipped(ax, TS, WS[k], -2, 6, C_ITER, 4),
                           VGroup(*[Dot(ax.c2p(t, w), radius=0.07, color=C_ITER) for t, w in zip(TS, WS[k]) if -2 <= w <= 6]))
 
-        caps = [
-            "A small learning rate gives r between zero and one: the error shrinks smoothly, but slowly.",
-            "At eta equal to one over two sigma squared, r is zero, and a single step lands exactly on the answer.",
-            "Push eta higher and r turns negative: the iterate overshoots, bounces across the answer, and still settles.",
-            "Past eta equal to one over sigma squared, r falls below minus one, and every bounce is bigger than the last.",
-        ]
         pan = panel(0)
         cur = curve(0)
-        self.say(caps[0], FadeIn(pan), Create(cur[0], run_time=1.5), LaggedStart(*[FadeIn(d) for d in cur[1]], lag_ratio=0.1, run_time=1.5))
-        for k in range(1, 4):
-            new_pan, new_cur = panel(k), curve(k)
-            self.say(caps[k], Transform(pan, new_pan), Transform(cur, new_cur))
-            self.hold(0.3)
+        self.say("Start with a timid step. Then r is zero point eight four, so we creep toward the answer a little "
+                 "at a time. Raise eta to one eighth and r is exactly zero, so a single step lands on the answer.",
+                 FadeIn(pan), Create(cur[0], run_time=1.5), LaggedStart(*[FadeIn(d) for d in cur[1]], lag_ratio=0.1, run_time=1.5))
+        self.cue("Raise eta", Transform(pan, panel(1)), Transform(cur, curve(1)))
+        self.say("Go bigger and r turns negative. Now we overshoot and bounce back and forth, but each bounce is "
+                 "smaller, so we still settle down. Push a little further and r drops below minus one, and then "
+                 "every bounce is bigger than the last, and the run blows up.",
+                 Transform(pan, panel(2)), Transform(cur, curve(2)))
+        self.cue("Push a little further", Transform(pan, panel(3)), Transform(cur, curve(3)))
+        self.hold(0.3)
         cond = mts([r"|1-2\eta\sigma^2|<1\iff 0<\eta<\frac{1}{\sigma^2}"], 0.8, {})
         cond.move_to([4.0, 2.4, 0])
         assert_on_screen(cond)
-        self.say("So the scalar rule is simple: the iteration is stable exactly when the absolute value of r is below one.",
+        self.say("So the whole rule fits on one line. Keep r strictly between minus one and one, which means the "
+                 "learning rate has to stay below one over sigma squared.",
                  FadeOut(prob), FadeOut(rec), Write(cond))
         self.hold(0.5)
         self.clear_stage()
@@ -196,8 +202,10 @@ class Ep01GdLeastSquares(NarratedScene):
         xl = txt("shallow direction, σ = 0.5", 21, C_SOFT).next_to(ax, DOWN, buff=0.15).align_to(ax, LEFT).shift(RIGHT * 0.3)
         yl = txt("steep, σ = 2", 21, C_STIFF).next_to(ax.c2p(0, 1.5), RIGHT, buff=0.15).shift(DOWN * 0.15)
         assert_on_screen(VGroup(ax, cont, xl))
-        self.say("Now two directions: a ravine, steep where sigma is 2 and shallow where sigma is one half.",
-                 Write(head), Create(ax), LaggedStart(*[Create(c) for c in cont], lag_ratio=0.15), FadeIn(xl), FadeIn(yl))
+        self.say("Real problems have many directions at once, so here are two of them. One is a steep wall and "
+                 "the other is a shallow floor, and together they make a ravine.",
+                 Write(head), Create(ax), LaggedStart(*[Create(c) for c in cont], lag_ratio=0.15))
+        self.cue("One is a steep wall", FadeIn(yl), FadeIn(xl))
 
         def factors(f_steep, f_soft, eta):
             return VGroup(txt(f"η = {eta:.3g}", 30, C_ETA),
@@ -210,17 +218,22 @@ class Ep01GdLeastSquares(NarratedScene):
         start = Dot(ax.c2p(*START), radius=0.1, color=C_ITER)
         pa = path_pts(ax, P_A)
         da = path_dots(ax, P_A)
-        self.say("Take eta equal to 0.2. Each step multiplies the steep coordinate by minus 0.6 and the shallow one by 0.9.",
+        self.say("A single learning rate has to serve both directions. At zero point two, the steep error flips "
+                 "sign and keeps sixty percent of its size, while the shallow one keeps ninety percent. So we "
+                 "zigzag across the ravine while barely creeping along it, and the shallow direction is the one "
+                 "that makes us slow.",
                  FadeIn(start), FadeIn(pan))
-        self.say("The path bounces across the ravine while creeping along it: the shallow direction sets the pace.",
-                 Create(pa, run_time=3.5, rate_func=linear), LaggedStart(*[FadeIn(d) for d in da], lag_ratio=0.05, run_time=3.5))
+        self.cue("So we zigzag", Create(pa, run_time=3.5, rate_func=linear),
+                 LaggedStart(*[FadeIn(d) for d in da], lag_ratio=0.05, run_time=3.5))
         n_it = txt(f"{IT_A} steps for a 100× smaller error", 22, C_SOFT).next_to(pan, DOWN, buff=0.4).align_to(pan, LEFT)
         assert_on_screen(n_it)
-        self.say("The steepest direction forbids a bigger step: eta must stay below one over lambda max, not lambda min.",
+        self.say("That takes forty-four steps to make the error a hundred times smaller. So why not just take "
+                 "bigger steps? Because the steep wall won't let us. Once eta passes one quarter, that direction "
+                 "blows up.",
                  FadeIn(n_it))
         lim = mts([r"\eta<\frac{1}{\lambda_{\max}}", r"=\frac{1}{4}"], 0.75, {0: C_ETA}).next_to(n_it, DOWN, buff=0.35).align_to(pan, LEFT)
         assert_on_screen(lim)
-        self.play(Write(lim))
+        self.cue("Once eta passes", Write(lim))
         self.hold(0.3)
         # eta star
         pan2 = factors(1 - 2 * ETA_STAR * LAM_STEEP, 1 - 2 * ETA_STAR * LAM_SOFT, ETA_STAR)
@@ -230,11 +243,13 @@ class Ep01GdLeastSquares(NarratedScene):
         assert_on_screen(pan2, n_it2)
         best = mts([r"\eta^*=\frac{1}{\lambda_{\max}+\lambda_{\min}}=0.235"], 0.7, {0: C_ETA}).next_to(n_it2, DOWN, buff=0.35).align_to(pan2, LEFT)
         assert_on_screen(best)
-        self.say("The best constant rate balances the two extremes, equal and opposite. Now both modes shrink by 0.88 per step.",
+        self.say("The best we can do is choose eta so both directions shrink equally fast, and then each of them "
+                 "keeps eighty-eight percent per step. But look how little that buys us. It's thirty-seven steps "
+                 "instead of forty-four. So the learning rate isn't the real problem here, the ravine is.",
                  FadeOut(pa), FadeOut(da), Transform(pan, pan2), Transform(n_it, n_it2), FadeOut(lim))
-        self.play(Create(pb, run_time=3.5, rate_func=linear), LaggedStart(*[FadeIn(d) for d in db], lag_ratio=0.05, run_time=3.5), Write(best))
-        self.say("Even the best constant learning rate is still slow. The ravine itself is the problem.",
-                 Indicate(pb, color=YELLOW_D))
+        self.cue("and then each of them", Create(pb, run_time=3.5, rate_func=linear),
+                 LaggedStart(*[FadeIn(d) for d in db], lag_ratio=0.05, run_time=3.5), Write(best))
+        self.cue("So the learning rate", Indicate(pb, color=YELLOW_D))
         self.hold(0.5)
         self.clear_stage()
 
@@ -244,10 +259,11 @@ class Ep01GdLeastSquares(NarratedScene):
         kap = mts([r"\kappa=\frac{\lambda_{\max}}{\lambda_{\min}}", r"=\frac{4}{1/4}=16"], 0.85).move_to([-3.2, 1.6, 0])
         rho = mts([r"\rho(\eta^*)=\frac{\kappa-1}{\kappa+1}", r"=\frac{15}{17}\approx0.88"], 0.85).move_to([-3.2, 0.3, 0])
         assert_on_screen(kap, rho)
-        self.say("The ratio of the largest to the smallest eigenvalue is the condition number, kappa. Here it is 16.",
+        self.say("How stretched the ravine is has a name. It's called the condition number, kappa, and it's the "
+                 "steepest curvature divided by the flattest, which here is sixteen. Even at the best learning "
+                 "rate, kappa sets the speed. In our ravine each step keeps fifteen seventeenths of the error.",
                  Write(head), Write(kap))
-        self.say("At the best rate the error shrinks by kappa minus one over kappa plus one per step: 15 over 17 here.",
-                 Write(rho))
+        self.cue("Even at the best", Write(rho))
         # table
         colx = [1.6, 3.6, 5.6]
         hdr = VGroup(txt("κ", 26, GREY_B).move_to([colx[0], 2.3, 0]), txt("rate ρ", 26, GREY_B).move_to([colx[1], 2.3, 0]),
@@ -259,9 +275,10 @@ class Ep01GdLeastSquares(NarratedScene):
             rows.add(VGroup(txt(f"{k}", 28, col).move_to([colx[0], y, 0]), txt(f"{r:.3f}", 28, col).move_to([colx[1], y, 0]),
                             txt(f"{n}", 28, col).move_to([colx[2], y, 0])))
         assert_on_screen(hdr, rows)
-        self.say("Iterations grow with kappa: one for a round bowl, over two hundred at kappa 100, over two thousand at 1000.",
+        self.say("Here's what that costs. A perfectly round bowl takes one step, but at kappa one hundred we need "
+                 "over two hundred steps, and at kappa one thousand, over two thousand. Stretched bowls are slow "
+                 "however you tune eta, and fixing that is exactly what momentum and Adam are for.",
                  FadeIn(hdr), LaggedStart(*[FadeIn(r) for r in rows], lag_ratio=0.25))
-        self.say("Large condition number means slow convergence even when stable. Momentum and Adam will attack exactly this.",
-                 Indicate(rows[4], color=C_LOSS), Indicate(rows[5], color=C_LOSS))
+        self.cue("Stretched bowls", Indicate(rows[4], color=C_LOSS), Indicate(rows[5], color=C_LOSS))
         self.hold(0.6)
         self.clear_stage()

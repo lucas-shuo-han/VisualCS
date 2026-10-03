@@ -90,6 +90,7 @@ def poly_curve(ax, w, lo=-1.0, hi=4.0, color=C_MODEL):
 
 class Ep04Risk(NarratedScene):
     series = SERIES
+    SCENES = ["four_objects", "empirical_risk", "overfit", "ridge", "validation"]
 
     def construct(self):
         self.title_card()
@@ -99,10 +100,10 @@ class Ep04Risk(NarratedScene):
         self.ridge()
         self.validation()
         self.end_card(
-            ["Metric, surrogate and update estimator are different objects",
-             "Empirical risk is what we can optimize; population risk is what we want",
-             "More flexibility lowers training error, not necessarily test error",
-             "Regularization and validation keep the proxy honest"],
+            ["What we want, what we measure and what we train on are different things",
+             "We can only minimize training loss. We actually care about fresh data",
+             "More flexibility always helps training error, not test error",
+             "Pick knobs on validation data. Open the test set once, at the end"],
         )
 
     # ---------------------------------------------------------------- 1. four objects
@@ -117,10 +118,15 @@ class Ep04Risk(NarratedScene):
         arrows = VGroup(*[Arrow(boxes[i].get_right(), boxes[i + 1].get_left(), buff=0.03, color=GREY_B, stroke_width=3, max_tip_length_to_length_ratio=0.5) for i in range(3)])
         qtx = VGroup(*[txt(q, 21, GREY_B, line_spacing=0.9).next_to(boxes[i], DOWN, buff=0.2) for i, q in enumerate(qs)])
         etx = VGroup(*[txt(e, 26, cols[i]).next_to(qtx[i], DOWN, buff=0.3) for i, e in enumerate(ex)])
-        self.say("Keep four things apart: the outcome we want, the metric, the training surrogate, and the update estimator.",
+        self.say("We train a model to do well, but well at what? There are really four different things hiding "
+                 "in that one word. For a classifier, what we want is good decisions, and what we measure is "
+                 "accuracy. But what we train on is cross-entropy, and each update is estimated from one "
+                 "mini-batch.",
                  Write(head), LaggedStart(*[FadeIn(b, shift=UP * 0.2) for b in boxes], lag_ratio=0.25), Create(arrows), FadeIn(qtx))
-        self.say("For a classifier: good decisions, measured by accuracy, trained with cross-entropy and mini-batch gradients.",
-                 FadeIn(etx, lag_ratio=0.3))
+        self.cue("For a classifier", FadeIn(etx[0]))
+        self.cue("what we measure", FadeIn(etx[1]))
+        self.cue("But what we train on", FadeIn(etx[2]))
+        self.cue("each update is estimated", FadeIn(etx[3]))
         self.hold(0.4)
         self.clear_stage()
         # table: accuracy vs cross-entropy
@@ -137,13 +143,19 @@ class Ep04Risk(NarratedScene):
                        txt(f"{CE[i]:.3f}", 30, C_LOSS).move_to([colx[2], y, 0]))
             rows.append(r)
         head2 = self.heading("Metric vs surrogate")
-        self.say("The true class gets probability 0.45, 0.49, 0.51, then 0.90. Accuracy only sees which side of 0.5 we are on.",
+        assert (P[0], P[1], P[-1]) == (0.45, 0.49, 0.90)      # spoken below
+        self.say("You might ask why we don't just train on accuracy itself. Here are four predictions, where the probability given "
+                 "to the true class goes from zero point four five up to zero point nine. Accuracy only asks "
+                 "whether that number is past one half.",
                  Write(head2), FadeIn(cells), LaggedStart(*[FadeIn(r) for r in rows], lag_ratio=0.3))
         box = SurroundingRectangle(VGroup(rows[0], rows[1]), color=YELLOW_D, buff=0.12)
-        self.say(f"0.45 to 0.49: accuracy is stuck, but cross-entropy falls from {CE[0]:.2f} to {CE[1]:.2f}. That is a usable signal.",
+        assert f"{CE[0]:.2f}" == "0.80" and f"{CE[1]:.2f}" == "0.71"      # spoken below
+        self.say("From zero point four five to zero point four nine, accuracy doesn't move at all. Cross-entropy "
+                 "does, dropping from zero point eight to zero point seven one, and that gives training something "
+                 "to follow. That's the job of a training surrogate. It points where we care, gives a signal "
+                 "nearby, stays stable, and is cheap to compute.",
                  Create(box))
-        self.say("A useful surrogate expresses what we care about, gives local information, is stable, and is cheap to optimize.",
-                 FadeOut(box))
+        self.cue("That's the job", FadeOut(box))
         self.hold(0.5)
         self.clear_stage()
 
@@ -157,24 +169,32 @@ class Ep04Risk(NarratedScene):
         d = dots(ax, PX, PY, C_DATA)
         lineA = ax.plot(lambda x: LINE_A[0] * x + LINE_A[1], x_range=[0, 5], color=C_MODEL, stroke_width=4)
         segs = VGroup(*[Line(ax.c2p(x, y), ax.c2p(x, LINE_A[0] * x + LINE_A[1]), color=C_LOSS, stroke_width=4) for x, y in PTS])
-        self.say("With a loss chosen, training minimizes the empirical risk: the average loss over the training pairs.",
+        self.say("So we pick a loss, and training averages it over the training set and pushes that average "
+                 "down. That average is called the empirical risk. Let's take four points and squared error, "
+                 "and start with a line through the origin with slope one. It misses each point by one of "
+                 "these red gaps.",
                  Write(head), Write(eq), Create(ax), FadeIn(d))
-        self.say("Take squared error and four points. This line, y = x, misses them by these red gaps.",
-                 Create(lineA), LaggedStart(*[Create(s) for s in segs], lag_ratio=0.2))
+        self.cue("and start with a line", Create(lineA))
+        self.cue("It misses each point", LaggedStart(*[Create(s) for s in segs], lag_ratio=0.2))
         sq = " + ".join(f"{abs(r):.1f}²" for r in RES_A)
         calc = VGroup(txt("mean of squared gaps", 24, GREY_B),
                       txt(f"({sq}) / 4", 28, C_LOSS),
                       txt(f"= {RISK_A:.3f}", 32, C_LOSS)).arrange(DOWN, aligned_edge=LEFT, buff=0.22).move_to([3.4, -0.2, 0])
         assert calc.get_right()[0] < 7.0
-        self.say(f"Square each gap, average them, and this line scores an empirical risk of {RISK_A:.3f}.", FadeIn(calc))
         lineB = ax.plot(lambda x: LINE_B[0] * x + LINE_B[1], x_range=[0, 5], color=C_MODEL, stroke_width=4)
         segsB = VGroup(*[Line(ax.c2p(x, y), ax.c2p(x, LINE_B[0] * x + LINE_B[1]), color=C_LOSS, stroke_width=4) for x, y in PTS])
         sqB = " + ".join(f"{abs(r):.1f}²" for r in RES_B)
         calcB = VGroup(txt("mean of squared gaps", 24, GREY_B),
                        txt(f"({sqB}) / 4", 28, C_LOSS),
                        txt(f"= {RISK_B:.3f}", 32, C_LOSS)).arrange(DOWN, aligned_edge=LEFT, buff=0.22).move_to(calc)
-        self.say(f"Another line, y = 0.5x + 1, scores {RISK_B:.3f}. Empirical risk minimization prefers the first line.",
-                 Transform(lineA, lineB), Transform(segs, segsB), Transform(calc, calcB))
+        # spoken below
+        assert f"{RISK_A:.3f}" == "0.045" and f"{RISK_B:.3f}" == "0.270" and f"{RISK_B / RISK_A:.0f}" == "6"
+        assert LINE_B[0] < LINE_A[0]
+        self.say("Square the gaps and average them, and this line scores zero point zero four five. Now try a "
+                 "flatter line instead. That one scores zero point two seven, which is six times worse, so "
+                 "training picks the first line.",
+                 FadeIn(calc))
+        self.cue("Now try a flatter line", Transform(lineA, lineB), Transform(segs, segsB), Transform(calc, calcB))
         self.hold(0.5)
         self.clear_stage()
 
@@ -184,15 +204,19 @@ class Ep04Risk(NarratedScene):
         ax = make_axes([0, 6, 1], [-1, 4, 1], 7.6, 3.3).move_to([-2.0, -0.15, 0])
         tgt = DashedVMobject(plot(ax, f, C_TARGET, [0, 6], width=3), num_dashes=60)
         d = dots(ax, XT, YT, C_TRAIN)
-        self.say("The real target is population risk: expected loss on fresh data. Ten noisy samples; dashed is the unseen truth.",
-                 Write(head), Create(ax), Create(tgt), FadeIn(d))
         curve = poly_curve(ax, W0)
         info = VGroup(txt("degree 9, ten points", 24, C_TEXT),
                       txt(f"train RMSE {TR[-1]:.2f}", 26, C_TRAIN),
                       txt(f"test RMSE {TE[-1]:.1f}", 26, C_TEST)).arrange(DOWN, aligned_edge=LEFT, buff=0.22).move_to([4.6, 1.0, 0])
         assert info.get_right()[0] < 7.0
-        self.say(f"A degree-nine polynomial can hit all ten points: training error is essentially zero, but on fresh data it is {TE[-1]:.1f}.",
-                 Create(curve, run_time=2.0), FadeIn(info))
+        assert f"{TE[-1]:.1f}" == "3.2" and f"{TR[-1]:.2f}" == "0.00"      # spoken below
+        self.say("But what we really want is low loss on fresh data, and that's called the population risk. "
+                 "Here are ten samples, along with the hidden target function. A degree-nine polynomial "
+                 "threads through all ten of them, so its training error is zero. On fresh data, though, its "
+                 "error is three point two.",
+                 Write(head), Create(ax), Create(tgt), FadeIn(d))
+        self.cue("A degree-nine polynomial", Create(curve, run_time=2.0), FadeIn(info[:2]))
+        self.cue("On fresh data, though", FadeIn(info[2]))
         self.hold(0.4)
         self.clear_stage()
         # error vs degree
@@ -206,12 +230,14 @@ class Ep04Risk(NarratedScene):
         cte = polyline(ax, DEGS, np.minimum(TE, 3.5), C_TEST, 4)
         ltr = txt("training error", 24, C_TRAIN).move_to([4.4, 1.2, 0])
         lte = txt("error on new data", 24, C_TEST).move_to([4.4, 0.6, 0])
-        self.say("Training error only ever falls as models get more flexible: a richer family can always fit the samples at least as well.",
+        assert D_STAR == 3                                    # spoken: "degree three"
+        self.say("Make the model more flexible and the training error can only go down, because a bigger family "
+                 "always fits at least as well. But the error on fresh data bottoms out at degree three and "
+                 "then climbs, and that turnaround is overfitting. We can only optimize what we can see, which "
+                 "is the training set, so we're looking where the light is.",
                  Write(head), Create(ax), FadeIn(ticks), FadeIn(xl), Create(floor), FadeIn(fl), Create(ctr), FadeIn(ltr))
-        self.say(f"Error on new data bottoms out near degree {D_STAR}, then climbs. That turnaround is overfitting.",
-                 Create(cte), FadeIn(lte), Flash(ax.c2p(D_STAR, TE[D_STAR - 1]), color=YELLOW_D, flash_radius=0.35))
-        self.say("Empirical risk can be optimized; population performance cannot be seen. We are looking where the light is.",
-                 Indicate(ltr, color=C_TRAIN), Indicate(lte, color=C_TEST))
+        self.cue("But the error on fresh data", Create(cte), FadeIn(lte), Flash(ax.c2p(D_STAR, TE[D_STAR - 1]), color=YELLOW_D, flash_radius=0.35))
+        self.cue("We can only optimize", Indicate(ltr, color=C_TRAIN), Indicate(lte, color=C_TEST))
         self.hold(0.5)
         self.clear_stage()
 
@@ -235,17 +261,26 @@ class Ep04Risk(NarratedScene):
                           txt(f"‖w‖ = {np.linalg.norm(w):.1f}", 24, GREY_A)
                           ).arrange(DOWN, aligned_edge=LEFT, buff=0.2).move_to([4.6, -0.2, 0])
 
+        def stage(lam):
+            return Transform(cur, poly_curve(ax, W_S[lam])), Transform(pan, panel(lam))
+
         pan = panel(0.0)
-        self.say("One remedy is a second pressure: ridge regression balances fit against weight size, with strength lambda.",
+        assert STAGES == [0.0, 1e-3, LAM_STAR, 10.0]
+        self.say("To rein in a model that flexible, we add a second pressure, called regularization. Ridge regression charges a price for big "
+                 "weights, and lambda sets how high that price is. Even a tiny lambda calms down those wild "
+                 "swings between the points.",
                  Write(head), Write(eq), Create(ax), Create(tgt), FadeIn(d), Create(cur), FadeIn(pan))
-        caps = {1e-3: "A small lambda already tames the wild swings between the points.",
-                LAM_STAR: "At lambda = 0.1 the curve follows the trend, misses some points on purpose, and generalizes far better.",
-                10.0: "Too much lambda squeezes the weights until the model underfits. Regularization is a dial, not a cure."}
-        for lam in STAGES[1:]:
-            self.say(caps[lam], Transform(cur, poly_curve(ax, W_S[lam])), Transform(pan, panel(lam)))
-            self.hold(0.3)
-        self.say("So fit the data, but not too tightly. Even then, generalization is never guaranteed.",
-                 Indicate(eq[1], color=C_LAM))
+        self.cue("Even a tiny lambda", *stage(1e-3))
+        self.hold(0.3)
+        assert f"{LAM_STAR:g}" == "0.1" and f"{TEST_L[K_STAR]:.2f}" == "0.40"      # spoken below
+        self.say("At lambda equals zero point one, the curve follows the trend and misses some points on "
+                 "purpose, and the test error drops to zero point four. Turn it up too far, though, and the "
+                 "weights get squeezed flat, so now the model underfits. So regularization is a dial, not a "
+                 "cure. We fit the data, but not too tightly, and even then nothing guarantees it will "
+                 "generalize.",
+                 *stage(LAM_STAR))
+        self.cue("Turn it up too far", *stage(10.0))
+        self.cue("So regularization is a dial", Indicate(eq[1], color=C_LAM))
         self.hold(0.5)
         self.clear_stage()
 
@@ -259,20 +294,25 @@ class Ep04Risk(NarratedScene):
         vc = polyline(ax, [k + 7 for k in ks], np.minimum(VAL, 3.5), C_VAL, 4)
         vd = VGroup(*[Dot(ax.c2p(k + 7, min(v, 3.5)), radius=0.07, color=C_VAL) for k, v in zip(ks, VAL)])
         lv = txt("validation error", 24, C_VAL).move_to([5.0, 1.3, 0])
-        self.say("Training data sets the weights; validation data sets hyperparameters like lambda, learning rate, and hidden units.",
+        self.say("That leaves one question, which is who gets to pick lambda. The training set decides the parameters, meaning the weights and "
+                 "biases. A hyperparameter like lambda gets chosen on a separate validation set. So we sweep "
+                 "lambda over powers of ten, and each dot here is a whole training run, scored on the "
+                 "validation set.",
                  Write(head), Create(ax), FadeIn(ticks), FadeIn(xl))
-        self.say("Sweep the hyperparameter over orders of magnitude. Each point is a full training run scored on validation.",
-                 LaggedStart(*[GrowFromCenter(p) for p in vd], lag_ratio=0.15), Create(vc, run_time=2.0), FadeIn(lv))
+        self.cue("So we sweep lambda", LaggedStart(*[GrowFromCenter(p) for p in vd], lag_ratio=0.15), Create(vc, run_time=2.0), FadeIn(lv))
         best = Dot(ax.c2p(ks[K_STAR] + 7, VAL[K_STAR]), radius=0.13, color=YELLOW_D)
         pick = txt(f"best: λ = {LAM_STAR:g}", 24, YELLOW_D).next_to(best, UP, buff=0.9)
-        self.say(f"Validation picks lambda = {LAM_STAR:g}. Careful: every look at the validation set spends a little of its honesty.",
-                 FadeIn(best), FadeIn(pick))
         tst = VGroup(txt("test error, checked once", 24, C_TEST), txt(f"{TEST_L[K_STAR]:.2f}", 44, C_TEST),
                      txt(f"vs {TE[-1]:.1f} with no regularization", 24, GREY_A)).arrange(DOWN, buff=0.2).move_to([0.6, 1.8, 0])
         assert tst.get_right()[0] < 7.0
-        self.say("Only now do we open the test set, once, after every choice is made. It assumes test data resemble deployment.",
-                 FadeIn(tst))
-        self.say("A cats-and-dogs model shown dinosaurs: test scores mislead when deployment differs. Detecting shift is only partial.",
+        self.say("The lowest dot tells us to set lambda to zero point one. But be careful, because every peek "
+                 "at the validation set spends a little of its honesty. Only now, with every choice made, do "
+                 "we open the test set, and we do it exactly once.",
+                 FadeIn(best), FadeIn(pick))
+        self.cue("Only now", FadeIn(tst))
+        self.say("Even that number assumes the test set looks like the real world. Show a model trained on "
+                 "cats and dogs a dinosaur, and its test score tells you nothing. That's called distribution "
+                 "shift, and spotting it is hard.",
                  Indicate(tst[1], color=C_TEST))
         self.hold(0.6)
         self.clear_stage()

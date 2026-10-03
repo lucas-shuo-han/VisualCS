@@ -1,88 +1,160 @@
 1
-00:00:06,200 --> 00:00:13,966
-Forty patients, five scans each. Every scan is its patient's fingerprint plus noise; the labels are coin flips.
+00:00:06,200 --> 00:00:09,403
+Can a model get top marks on labels that are pure noise?
 
 2
-00:00:13,966 --> 00:00:21,033
-Left: shuffle rows, half become test. Right: shuffle patients, half of the patients become test.
+00:00:09,403 --> 00:00:10,033
+Watch this.
 
 3
-00:00:21,033 --> 00:00:28,033
-A 1-nearest-neighbor model just memorizes. Each test scan copies the label of its closest training scan.
+00:00:10,033 --> 00:00:15,411
+We have forty patients with five scans each, and every patient's label comes from a coin flip.
 
 4
-00:00:28,033 --> 00:00:35,200
-With random rows the closest scan is the same patient: about 100 percent, on labels that are pure noise.
+00:00:15,411 --> 00:00:19,015
+On the left we shuffle all the scans and hold out half of them,
 
 5
-00:00:35,200 --> 00:00:42,400
-Split by patient and the trick collapses to chance. The honest number is the one on the right.
+00:00:19,015 --> 00:00:24,100
+and on the right we hold out half of the patients instead.
 
 6
-00:00:42,400 --> 00:00:49,700
-Two hospitals, a hundred chest scans each. In one hospital 34 percent are sick, in the other 1 percent.
+00:00:24,100 --> 00:00:30,615
+Now take the laziest model there is, where each test scan just copies the label of the closest training scan.
 
 7
-00:00:49,700 --> 00:00:58,333
-Predict from the hospital name alone and the AUC, the area under the ROC curve, is 0.79.
+00:00:30,615 --> 00:00:36,951
+On the left, the closest scan belongs to the same patient, so it scores one hundred percent on coin flips.
 
 8
-00:00:58,333 --> 00:01:05,166
-A published pneumonia CNN scored AUC 0.93 on test scans from the hospitals it trained on.
+00:00:36,951 --> 00:00:39,521
+Split by patient and the trick falls apart.
 
 9
-00:01:05,166 --> 00:01:12,233
-On scans from a new hospital it fell to 0.82. The same model, the same disease, a different building.
+00:00:39,521 --> 00:00:45,966
+We get fifty-eight percent, which is about chance, and that's the honest number.
 
 10
-00:01:12,233 --> 00:01:18,933
-Prevalence differed by site, so the hospital name alone scores 0.86 on the pooled test set.
+00:00:45,966 --> 00:00:51,945
+Here's a sneakier version of the same problem, with two hospitals and a hundred chest scans each.
 
 11
-00:01:18,933 --> 00:01:25,766
-The CNN read scanner signatures, patient positioning and text overlays, without needing the lungs at all.
+00:00:51,945 --> 00:00:56,752
+At the first one thirty-four patients are sick, and at the second only one is.
 
 12
-00:01:25,766 --> 00:01:33,066
-Random splits could never catch this: the shortcut lives on both sides. Hold out the hospital.
+00:00:56,752 --> 00:01:00,512
+Now ignore the pixels and guess from the hospital name alone.
 
 13
-00:01:33,066 --> 00:01:41,233
-Hold out whole units: a patient, a document, a time period, a molecule scaffold or a cluster of near-duplicates.
+00:01:00,512 --> 00:01:07,800
+The area under the ROC curve, where one half is chance, comes out at zero point seven nine.
 
 14
-00:01:41,233 --> 00:01:47,633
-Mimic deployment and nothing more. A test set that differs in unrelated ways teaches you nothing either.
+00:01:07,800 --> 00:01:13,121
+And this really happened, to a published pneumonia detector built on a convolutional network.
 
 15
-00:01:47,633 --> 00:01:56,500
-Leakage is common: surveys across many fields keep finding the same mistake, and it inflates reported results.
+00:01:13,121 --> 00:01:16,783
+It scored zero point nine three on scans from its own hospitals.
 
 16
-00:01:56,500 --> 00:02:04,166
-Before any model, ask four questions. Does a pattern exist? Does it matter? Can we observe it? Can we extract it?
+00:01:16,783 --> 00:01:19,644
+At a new hospital it fell to zero point eight two.
 
 17
-00:02:04,166 --> 00:02:10,966
-A model can pass the last three and still miss the point, as the hospital shortcut did.
+00:01:19,644 --> 00:01:24,200
+It was the same model and the same disease, just in a different building.
 
 18
-00:02:10,966 --> 00:02:17,966
-Function approximation covers a family: supervised learning with labels, such as regression and classification.
+00:01:24,200 --> 00:01:26,439
+And what about the hospital name alone?
 
 19
-00:02:17,966 --> 00:02:26,533
-Unsupervised learning finds structure without labels: embeddings like PCA, or density estimation, one route to generation.
+00:01:26,439 --> 00:01:32,584
+That scores zero point eight six on the pooled test set, because the sick rates differed from site to site.
 
 20
-00:02:26,533 --> 00:02:35,100
-Foundation models pretrain on broad data first, then are prompted or adapted. Same ideas, bigger scale.
+00:01:32,584 --> 00:01:38,499
+So the network was reading scanner quirks, patient positioning, and stamped text, instead of the lungs.
 
 21
-00:02:35,100 --> 00:02:40,700
-Samples do not determine a function. Ramps make a flexible basis, and layers stack them.
+00:01:38,499 --> 00:01:42,691
+A random split can't catch this, because the shortcut sits on both sides.
 
 22
-00:02:40,700 --> 00:02:47,133
-The training surrogate is not the goal, and honest evaluation holds out exactly what will be new.
+00:01:42,691 --> 00:01:46,300
+You have to hold out the hospital.
+
+23
+00:01:46,300 --> 00:01:50,119
+So the rule is to hold out whatever will be new in deployment.
+
+24
+00:01:50,119 --> 00:01:54,739
+That might be a patient, a document, a time period, or a molecule scaffold.
+
+25
+00:01:54,739 --> 00:02:01,866
+But match deployment and no more, because a test set that differs in unrelated ways misleads you just as much.
+
+26
+00:02:01,866 --> 00:02:07,119
+And none of this is rare, because surveys across many fields keep finding leakage like this,
+
+27
+00:02:07,119 --> 00:02:11,133
+and it keeps inflating published results.
+
+28
+00:02:11,133 --> 00:02:14,416
+Before building any model, there are four things to check.
+
+29
+00:02:14,416 --> 00:02:17,982
+A pattern has to exist, and it has to matter for some decision.
+
+30
+00:02:17,982 --> 00:02:23,190
+It also has to show up in the features we record, and a model has to be able to pull it out.
+
+31
+00:02:23,190 --> 00:02:31,766
+The hospital shortcut passed the last three checks and still missed the point, because it wasn't medicine.
+
+32
+00:02:31,766 --> 00:02:35,546
+Now let's zoom out for a moment and name the kinds of learning.
+
+33
+00:02:35,546 --> 00:02:41,006
+Everything so far was supervised learning, where labels drive regression or classification.
+
+34
+00:02:41,006 --> 00:02:46,826
+Take the labels away and you're finding structure instead, with embeddings or density estimation.
+
+35
+00:02:46,826 --> 00:02:51,806
+And foundation models learn from broad data first and then get prompted or adapted,
+
+36
+00:02:51,806 --> 00:02:56,000
+which is the same ideas at a bigger scale.
+
+37
+00:02:56,000 --> 00:02:59,291
+So here's the whole unit one more time, in five moves.
+
+38
+00:02:59,291 --> 00:03:01,730
+Samples alone don't pin down a function.
+
+39
+00:03:01,730 --> 00:03:05,692
+Ramps are flexible pieces, and a layer runs many of them at once.
+
+40
+00:03:05,692 --> 00:03:13,233
+What we train on isn't what we actually want, and an honest test holds out exactly what will be new.
 

@@ -43,8 +43,10 @@ ang = np.linspace(0, 2 * np.pi, 40001)
 ci = np.stack([np.cos(ang), np.sin(ang)], 1)
 assert abs((sq @ G).min() + G1) < 1e-9 and abs((ci @ G).min() + G2) < 1e-6      # brute-force check of both solutions
 assert abs(G1 - 2.5) < 1e-12 and abs(G2 - np.sqrt(4.25)) < 1e-12
+assert f"{G2:.2f}" == "2.06"                                                    # spoken: "two point oh six"
 LEN_SIGN = float(np.linalg.norm(D_INF))
 assert abs(LEN_SIGN - np.sqrt(2)) < 1e-12
+assert f"{LEN_SIGN:.2f}" == "1.41"                                              # spoken: "one point four one"
 # lagrange view: minimize <g, d> + lam |d|^2  ->  d* = -g / (2 lam)
 LAM = 2.0
 D_LAM = -G / (2 * LAM)
@@ -63,6 +65,7 @@ def P(v):
 
 class Ep01Steepest(NarratedScene):
     series = SERIES
+    SCENES = ["why", "linearize", "ball", "recipe"]
 
     def construct(self):
         self.title_card()
@@ -71,10 +74,10 @@ class Ep01Steepest(NarratedScene):
         self.ball()
         self.recipe()
         self.end_card(
-            ["Near a point the loss is a line: L plus the gradient times the step",
-             "Steepest descent: minimize that line over all steps inside a ball",
-             "The infinity-norm ball gives sign SGD; the two-norm ball gives gradient descent",
-             "The recipe: choose a norm, choose a step size, get an optimizer"],
+            ["Up close, the loss is a line: L plus the gradient times the step",
+             "Steepest descent: the step inside a ball that pushes that line down the most",
+             "Square ball (infinity norm) gives sign SGD. Round ball (two norm) gives gradient descent",
+             "Pick a norm, pick a step size, and an optimizer falls out"],
         )
 
     # ---------------------------------------------------------------- 1. why
@@ -87,20 +90,22 @@ class Ep01Steepest(NarratedScene):
             box_label("Under Adam: lazy training", C_RAMP, w=8.6, h=0.75, font_size=28),
         ).arrange(DOWN, buff=0.3).move_to([0, 0.5, 0])
         assert cards.get_bottom()[1] > -2.5
-        self.say("Training a large model costs real money, so we want to train fast.",
-                 Write(head), FadeIn(cards[0], shift=UP * 0.2))
-        self.say("Today the default is AdamW with carefully tuned hyperparameters.", FadeIn(cards[1], shift=UP * 0.2))
-        self.say("A new optimizer needs its own hyperparameter search, and that search is difficult.",
-                 FadeIn(cards[2], shift=UP * 0.2))
+        self.say("Why should we care which optimizer we use? Because training a big model costs real money. "
+                 "And right now nearly everyone just reaches for AdamW, with hyperparameters tuned by hand. "
+                 "Try a new optimizer and you're back to square one, with a whole new, painful hyperparameter search.")
+        self.play(Write(head), FadeIn(cards[0], shift=UP * 0.2))
+        self.cue("right now nearly everyone", FadeIn(cards[1], shift=UP * 0.2))
+        self.cue("Try a new optimizer", FadeIn(cards[2], shift=UP * 0.2))
         # lazy training picture: parameters barely move
         far = Line(LEFT * 2.0, RIGHT * 2.0, color=GREY_B, stroke_width=3)
         far.move_to([0, -2.1, 0])
-        self.say("Worse, under Adam we often see lazy training: the model barely moves from its random initialization.",
-                 FadeIn(cards[3], shift=UP * 0.2))
-        self.hold(0.3)
+        self.say("Worse, Adam often gives us lazy training, where the weights barely move from where they started. "
+                 "We used to start every weight as a standard normal, until initialization got its rules. "
+                 "So the question for this unit is whether updates can get rules too.")
+        self.play(FadeIn(cards[3], shift=UP * 0.2))
+        self.cue("So the question", Indicate(cards[3], color=C_RAMP))
+        self.hold(0.5)
         self.clear_stage()
-        self.say("Initialization rules were a relief. Before them everything was standard normal. Can updates be as principled?")
-        self.hold(0.6)
 
     # ---------------------------------------------------------------- 2. linearize
     def linearize(self):
@@ -115,11 +120,13 @@ class Ep01Steepest(NarratedScene):
                   {4: C_GRAD})
         eq0.move_to([3.2, 1.9, 0])
         assert eq0.get_right()[0] < 7.0 and eq0.get_left()[0] > -0.6, eq0.get_center()
-        self.say("Write theta for all the parameters and L for the average loss over the data.",
-                 Write(head), Create(ax), Create(curve), FadeIn(lab), FadeIn(xl), FadeIn(dot0))
         tan = ax.plot(lambda t: lin(t - T0), x_range=[0.6, 2.5], color=C_STEP, stroke_width=4, use_smoothing=False)
-        self.say("Near the current point, the loss looks like a line: its value plus the gradient times the step.",
-                 Create(tan), Write(eq0))
+        self.say("Here's the loss, averaged over the data, with theta holding every parameter at once. "
+                 "Zoom in near where we stand, and the loss looks like a straight line. "
+                 "That line is the current loss, plus the gradient times the step.")
+        self.play(Write(head), Create(ax), Create(curve), FadeIn(lab), FadeIn(xl), FadeIn(dot0))
+        self.cue("Zoom in near", Create(tan))
+        self.cue("That line is", Write(eq0))
 
         def gap_group(step):
             x1 = T0 + step
@@ -133,15 +140,16 @@ class Ep01Steepest(NarratedScene):
                        txt(f"line says {lin(STEP_SMALL):.2f}", 24, C_STEP),
                        txt(f"loss is {L(T0 + STEP_SMALL):.2f}", 24, C_LOSS)
                        ).arrange(DOWN, aligned_edge=LEFT, buff=0.15).move_to([4.2, 0.0, 0])
-        self.say("For a small step, the line is accurate.", FadeIn(g1), FadeIn(info1))
         g2 = gap_group(STEP_BIG)
         info2 = VGroup(txt(f"step {STEP_BIG}", 26, C_STEP),
                        txt(f"line says {lin(STEP_BIG):.2f}", 24, C_STEP),
                        txt(f"loss is {L(T0 + STEP_BIG):.2f}", 24, C_LOSS)
                        ).arrange(DOWN, aligned_edge=LEFT, buff=0.15).move_to(info1)
-        self.say("For a big step, the line lies to us: it promises a much lower loss than we get.",
-                 Transform(g1, g2), Transform(info1, info2))
-        self.say("So a step must be small enough for the approximation to hold, yet large enough to converge fast.")
+        self.say("Take a small step, and the line is spot on. Take a big step, though, and the line lies, "
+                 "because it promises a much lower loss than we actually get. So that's the tension. "
+                 "The step has to be small enough to trust the line, but big enough to get somewhere.")
+        self.play(FadeIn(g1), FadeIn(info1))
+        self.cue("Take a big step", Transform(g1, g2), Transform(info1, info2))
         self.hold(0.4)
         self.clear_stage()
         # least squares SGD
@@ -151,17 +159,22 @@ class Ep01Steepest(NarratedScene):
         ls.move_to([0, 2.3, 0])
         upd = mts([r"\vec\theta_{t+1}=\vec\theta_t-", r"\eta", r"(\vec x^{\top}\vec\theta_t-y)\,\vec x"], 0.85, {1: C_LAM})
         upd.move_to([0, 1.2, 0])
-        self.say("For least squares on one sample, the gradient is the residual times the input.",
-                 Write(head), Write(ls))
-        self.say("SGD steps against it, scaled by the learning rate eta.", Write(upd))
+        self.say("Let's start with a step we already know. On a single least-squares sample, the gradient is the "
+                 "residual times the input. SGD just walks against it, scaled by the learning rate eta.")
+        self.play(Write(head), Write(ls))
+        self.cue("SGD just walks", Write(upd))
         num = VGroup(txt("x = (1, 2),  y = 3,  θ = (0, 0),  η = 0.1", 28, C_TEXT),
                      txt(f"residual = 0 − 3 = {RES:g}", 28, C_LOSS),
                      txt(f"θ becomes (0, 0) − 0.1 · ({RES:g}) · (1, 2) = ({TH1[0]:g}, {TH1[1]:g})", 28, C_STEP)
                      ).arrange(DOWN, aligned_edge=LEFT, buff=0.25).move_to([0, -0.7, 0])
         assert num.width < 13 and num.get_bottom()[1] > -2.5
-        self.say("With these numbers the residual is minus three, and one step moves theta to zero point three, zero point six.",
-                 LaggedStart(*[FadeIn(n, shift=UP * 0.15) for n in num], lag_ratio=0.4))
-        self.say("But why this direction and this length? Let's derive a step instead of guessing one.")
+        self.say("Plug in some numbers. The residual comes out as minus three, so one step moves theta from zero "
+                 "to zero point three and zero point six. But why this direction, and why this length? "
+                 "We'd like to derive the step instead of guessing it.")
+        self.play(FadeIn(num[0], shift=UP * 0.15))
+        self.cue("The residual comes out", FadeIn(num[1], shift=UP * 0.15))
+        self.cue("so one step moves", FadeIn(num[2], shift=UP * 0.15))
+        self.cue("But why this direction", Indicate(upd, color=C_LAM))
         self.hold(0.3)
         self.clear_stage()
 
@@ -173,10 +186,11 @@ class Ep01Steepest(NarratedScene):
         assert obj.get_right()[0] < 7.0
         obj2 = mts([r"=\ \arg\min_{\|\Delta\vec\theta\|\le\eta}", r"\big\langle\nabla_\theta\mathcal L,\Delta\vec\theta\big\rangle"], 0.7, {1: C_GRAD})
         obj2.next_to(obj, DOWN, buff=0.15).align_to(obj, LEFT)
-        self.say("Ask directly: among all steps of size at most eta, which lowers the linearized loss the most?",
-                 Write(head), Write(obj))
-        self.say("The loss value itself is a constant, so only the inner product with the gradient matters.",
-                 Write(obj2))
+        self.say("So let's ask the question directly. Of all the steps whose size is at most eta, which one lowers "
+                 "the linearized loss the most? The current loss doesn't care which step we take, so only the "
+                 "inner product with the gradient matters.")
+        self.play(Write(head), Write(obj))
+        self.cue("The current loss", Write(obj2))
         # plane
         axx = Line(P([-1.9, 0]), P([1.9, 0]), color=GREY_D, stroke_width=2)
         axy = Line(P([0, -1.7]), P([0, 1.9]), color=GREY_D, stroke_width=2)
@@ -185,8 +199,6 @@ class Ep01Steepest(NarratedScene):
         glab = txt("g", 28, C_GRAD).next_to(gvec.get_end(), DOWN, buff=0.08)
         square = Square(2 * SC, stroke_color=C_STEP, stroke_width=4, fill_color=C_STEP, fill_opacity=0.12).move_to(P([0, 0]))
         sqlab = txt("‖Δθ‖∞ ≤ η", 26, C_STEP).next_to(square, DOWN, buff=0.15)
-        self.say("Take two parameters, gradient g = (2, −0.5). Choice one: change each by at most eta: a square.",
-                 Create(axx), Create(axy), GrowArrow(gvec), FadeIn(glab), FadeIn(square), FadeIn(sqlab))
         # sweeping line of constant inner product
         gh = G / G2
         perp = np.array([-gh[1], gh[0]])
@@ -200,40 +212,48 @@ class Ep01Steepest(NarratedScene):
 
         sw = always_redraw(sweep_line)
         readout = always_redraw(lambda: txt(f"⟨g, Δ⟩ = {cval.get_value():+.2f} η", 30, WHITE).move_to([3.4, -1.4, 0]))
-        self.say("Slide a line of constant inner product against the gradient, and stop when it is about to leave the square.",
-                 FadeIn(sw), FadeIn(readout))
+        self.say("Take two parameters, where the gradient is two in the first coordinate and minus one half in the "
+                 "second. For our first ball, let each coordinate move by at most eta, which makes the ball a square. "
+                 "Now slide a line of equal inner product against the gradient, until it's about to leave the square.")
+        self.play(Create(axx), Create(axy), GrowArrow(gvec), FadeIn(glab))
+        self.cue("For our first ball", FadeIn(square), FadeIn(sqlab))
+        self.cue("Now slide a line", FadeIn(sw), FadeIn(readout))
         self.play(cval.animate.set_value(-G1), run_time=3.2, rate_func=smooth)
         corner = Dot(P(D_INF), color=C_STEP, radius=0.11)
         self.remove(glab)
-        self.say("It leaves through a corner: every coordinate moves by eta, against the sign of its gradient.",
-                 FadeIn(corner), Flash(P(D_INF), color=C_STEP, flash_radius=0.4))
         sign_eq = mts([r"\Delta\vec\theta^{*}=-\eta\,\mathrm{sgn}\big(\nabla_\theta\mathcal L\big)"], 0.8, )
         sign_eq.move_to([3.4, 1.0, 0])
         sgn = txt("sign SGD", 34, C_STEP).next_to(sign_eq, DOWN, buff=0.25)
         assert sign_eq.get_right()[0] < 7.0
-        self.say("That step is minus eta times the sign of the gradient. It is called sign SGD.", Write(sign_eq), FadeIn(sgn))
-        self.say(f"Predicted change: minus two plus minus a half, that is minus {G1:g} eta.",
-                 Indicate(readout, color=C_STEP))
+        self.say("It leaves through a corner, where every coordinate moves the full eta against the sign of its "
+                 "gradient. So the best step is minus eta times the sign of the gradient, and that's known as "
+                 "sign SGD. It buys us two from the first coordinate and a half from the second, which is a drop "
+                 "of two point five eta.")
+        self.play(FadeIn(corner), Flash(P(D_INF), color=C_STEP, flash_radius=0.4))
+        self.cue("So the best step", Write(sign_eq), FadeIn(sgn))
+        self.cue("It buys us", Indicate(readout, color=C_STEP))
         self.hold(0.3)
         # circle
         circle = Circle(radius=SC, stroke_color=C_STEP, stroke_width=4, fill_color=C_STEP, fill_opacity=0.12).move_to(P([0, 0]))
         circlab = txt("‖Δθ‖₂ ≤ η", 26, C_STEP).move_to(sqlab)
         sign_group = VGroup(sign_eq, sgn)
-        self.say("Choice two: bound the ordinary length instead. Now the allowed set is a circle.",
-                 Transform(square, circle), Transform(sqlab, circlab), FadeOut(corner), FadeOut(sign_group),
-                 cval.animate.set_value(3.0), run_time=1.0)
         tip = Dot(P(D_TWO), color=C_STEP, radius=0.11)
-        self.say("The line now last touches the circle where the step points straight against the gradient.",
-                 cval.animate.set_value(-G2))
+        self.say("For the second ball, we bound the ordinary length instead, so the allowed steps fill a circle. "
+                 "This time the line last touches the circle right where the step points straight against the gradient.")
+        self.play(Transform(square, circle), Transform(sqlab, circlab), FadeOut(corner), FadeOut(sign_group),
+                  cval.animate.set_value(3.0), run_time=1.0)
+        self.cue("This time the line", cval.animate.set_value(-G2), run_time=3.0)
         self.play(FadeIn(tip), Flash(P(D_TWO), color=C_STEP, flash_radius=0.4))
         cs = mts([r"\vec x^{\top}\vec y=\|\vec x\|_2\|\vec y\|_2\cos\phi"], 0.75).move_to([3.4, 0.95, 0])
         cs.set_x(min(cs.get_x(), 7.0 - cs.width / 2 - 0.1))
         d2 = mts([r"\Delta\vec\theta^{*}=-\eta\,\dfrac{\nabla_\theta\mathcal L}{\|\nabla_\theta\mathcal L\|_2}"], 0.8).move_to([3.4, -0.15, 0])
         assert d2.get_right()[0] < 7.0 and cs.get_right()[0] < 7.0
-        self.say("Cauchy-Schwarz: an inner product is largest in size when the vectors are aligned. So the step is minus eta times the unit-length gradient.",
-                 Write(cs), Write(d2))
-        self.say(f"That is gradient descent with a normalized step. Predicted change: minus {G2:.2f} eta, a bit less than the sign step.",
-                 FadeOut(cs))
+        self.say("That's the Cauchy-Schwarz inequality at work. An inner product is biggest when the two vectors "
+                 "line up, so we step against the unit gradient. This is normalized gradient descent. It drops "
+                 "the loss by about two point oh six eta, a bit less than the sign step.")
+        self.play(Write(cs))
+        self.cue("so we step against", Write(d2))
+        self.cue("This is normalized",FadeOut(cs), Indicate(readout, color=C_STEP))
         self.hold(0.3)
         self.clear_stage()
         # lagrange
@@ -241,17 +261,20 @@ class Ep01Steepest(NarratedScene):
         gd = mts([r"g(\Delta\vec\theta)=\big\langle\nabla_\theta\mathcal L,\Delta\vec\theta\big\rangle+", r"\lambda", r"\|\Delta\vec\theta\|_2^2"], 0.8, {1: C_LAM})
         gd.move_to([0, 2.1, 0])
         cvx = txt("convex, and unconstrained", 28, GREY_B).next_to(gd, DOWN, buff=0.3)
-        self.say("A cousin of this idea: instead of a hard bound, penalize the step with lambda times its squared length.",
-                 Write(head), Write(gd), FadeIn(cvx))
         st = mts([r"\nabla g=\nabla_\theta\mathcal L+2", r"\lambda", r"\Delta\vec\theta=0"], 0.8, {1: C_LAM})
         st.move_to([0, 0.6, 0])
         ans = mts([r"\Delta\vec\theta^{*}=-", r"\dfrac{1}{2\lambda}", r"\nabla_\theta\mathcal L"], 0.9, {1: C_LAM, 2: C_GRAD})
         ans.move_to([0, -0.7, 0])
-        self.say("Set its gradient to zero and solve.", Write(st))
-        self.say("The minimizer is minus one over two lambda times the gradient. That is plain gradient descent.",
-                 Write(ans))
+        self.say("Here's a cousin of that idea. Instead of a hard wall, we charge a penalty of lambda times the "
+                 "step's squared length. There's no constraint anymore, so we just set the gradient to zero and solve.")
+        self.play(Write(head), Write(gd), FadeIn(cvx))
+        self.cue("There's no constraint", Write(st))
         ex = txt(f"λ = {LAM:g}: step = −g / 4 = ({D_LAM[0]:g}, {D_LAM[1]:g})", 28, C_TEXT).move_to([0, -1.8, 0])
-        self.say("Its learning rate is one over two lambda, so sweeping lambda sweeps out the same solutions as eta.", FadeIn(ex))
+        self.say("Out pops minus one over two lambda, times the gradient, and that's plain gradient descent. "
+                 "So the learning rate is one over two lambda, which means turning the lambda knob does the same "
+                 "job as turning eta.")
+        self.play(Write(ans))
+        self.cue("So the learning rate", FadeIn(ex))
         self.hold(0.4)
         self.clear_stage()
         # aha: lengths
@@ -267,11 +290,12 @@ class Ep01Steepest(NarratedScene):
                       txt("gradient step: length η", 30, C_GRAD),
                       txt("in d dimensions: √d η", 30, GREY_A)).arrange(DOWN, aligned_edge=LEFT, buff=0.3).move_to([-3.6, 0.5, 0])
         assert txts.get_left()[0] > -6.8 and txts.get_right()[0] < org2[0] - 1.6, (txts.get_left(), txts.get_right())
-        self.say(f"Notice the sign step is longer: its corner sits at root two, about {LEN_SIGN:.2f}, times eta.",
-                 Write(head), Create(ax0), Create(ay0), FadeIn(circ), Create(sqr), GrowArrow(a_gd), GrowArrow(a_sign),
-                 FadeIn(txts[:2]))
-        self.say("With d parameters it is root d times eta. Same eta, different norm, different meaning of small.",
-                 FadeIn(txts[2]))
+        self.say("But look, the sign step is longer. Its corner sits at root two times eta, which is about one "
+                 "point four one eta. With d parameters, it's root d times eta. So it's the same eta under a "
+                 "different norm, and that means a different idea of what small is.")
+        self.play(Write(head), Create(ax0), Create(ay0), FadeIn(circ), Create(sqr), GrowArrow(a_gd), GrowArrow(a_sign),
+                  FadeIn(txts[:2]))
+        self.cue("With d parameters", FadeIn(txts[2]))
         self.hold(0.5)
         self.clear_stage()
 
@@ -285,8 +309,6 @@ class Ep01Steepest(NarratedScene):
         a1 = Arrow(b1.get_right(), b2.get_left(), buff=0.05, color=GREY_B, stroke_width=3, max_tip_length_to_length_ratio=0.3)
         a2 = Arrow(b2.get_right(), b3.get_left(), buff=0.05, color=GREY_B, stroke_width=3, max_tip_length_to_length_ratio=0.3)
         assert row.width < 13.2
-        self.say("This is the recipe of Bernstein and Newhouse, 2024: choose a norm, choose a step size, and an optimizer falls out.",
-                 Write(head), FadeIn(b1, shift=UP * 0.2), FadeIn(b2, shift=UP * 0.2), Create(a1), Create(a2), FadeIn(b3, shift=UP * 0.2))
         tab = VGroup(
             VGroup(txt("infinity norm", 28, C_STEP), txt("→", 28, GREY_B), txt("sign SGD", 28, WHITE)),
             VGroup(txt("two norm", 28, C_STEP), txt("→", 28, GREY_B), txt("gradient descent", 28, WHITE)),
@@ -296,8 +318,14 @@ class Ep01Steepest(NarratedScene):
             r.arrange(RIGHT, buff=0.35)
         tab.arrange(DOWN, aligned_edge=LEFT, buff=0.3).move_to([0, -0.4, 0])
         assert tab.get_bottom()[1] > -2.5
-        self.say("The infinity norm gives sign SGD, the two norm gives gradient descent, and the spectral norm is coming up.",
-                 LaggedStart(*[FadeIn(r, shift=RIGHT * 0.2) for r in tab], lag_ratio=0.5))
-        self.say("The right norm may depend on the geometry and architecture of the network. That is where we go next.",
-                 Indicate(b1, color=C_STEP))
+        self.say("That's the recipe of Bernstein and Newhouse, from twenty twenty-four. You pick a norm, you pick a "
+                 "step size, and out falls an optimizer. The infinity norm gave us sign SGD, the two norm gave us "
+                 "gradient descent, and the spectral norm is coming next.")
+        self.play(Write(head), FadeIn(b1, shift=UP * 0.2), FadeIn(b2, shift=UP * 0.2), Create(a1), Create(a2), FadeIn(b3, shift=UP * 0.2))
+        self.cue("The infinity norm", FadeIn(tab[0], shift=RIGHT * 0.2))
+        self.cue("the two norm gave", FadeIn(tab[1], shift=RIGHT * 0.2))
+        self.cue("and the spectral norm", FadeIn(tab[2], shift=RIGHT * 0.2))
+        self.say("So which norm is the right one? That depends on the shape of the network, and that's where "
+                 "we're headed.")
+        self.play(Indicate(b1, color=C_STEP))
         self.hold(0.5)

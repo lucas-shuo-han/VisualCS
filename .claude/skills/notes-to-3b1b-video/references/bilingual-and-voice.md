@@ -58,14 +58,14 @@ EN = {
 
 English runs ~1.3–2× wider than Chinese for the same content. In order of preference:
 a shorter translation; `scale_to_fit_width` on the one label; a small `if EN:` branch in
-the episode. Captions: CJK 30 pt at 30 units per line, Latin 28 pt at 35 units, up to
-three lines (the top of a 3-line caption reaches y ≈ −2.6, so keep content above −2.5).
+the episode. Subtitles: CJK 30 pt at 30 units per line, Latin 28 pt at 35 units, one sentence at a
+time and at most two lines (keep content above y ≈ −2.9).
 Always look at the contact sheets of *every* language: most translation bugs are layout.
 
 ## 4. Voice-over
 
-`tts.py` (copy next to the kit) synthesizes each caption with Microsoft's neural voices
-through the `edge-tts` package: good quality, many languages, no API key, but it needs
+`tts.py` (copy next to the kit) synthesizes each beat (one `say()`) as one clip, by default with Microsoft's
+neural voices through the `edge-tts` package: good quality, many languages, no API key, but it needs
 network access. Clips are cached (`KIT_TTS_CACHE`, render.py puts it in the media dir),
 trimmed of leading/trailing silence, and reused across renders, so only new or changed
 lines need the network.
@@ -76,8 +76,20 @@ lines need the network.
   (`--voice` / `--no-voice` override).
 - `title_card()` speaks "Episode n: title", `end_card()` speaks "To sum up", each bullet,
   and "Next time: ..." or the series-end line.
-- No network? Render without voice (`--no-voice`) and ship captions + .srt; the voice can
-  be added by re-rendering later since the clips are generated from the same captions.
+- Engines, in order of preference (`KIT_TTS_ENGINE`):
+  1. `edge` (default): the neural voices above. Needs `speech.platform.bing.com`.
+  2. `kokoro`: Kokoro-82M, a local neural model, close to edge quality and fully
+     offline. `pip install kokoro-onnx`, then put `kokoro-v1.0.onnx` and
+     `voices-v1.0.bin` from github.com/thewh1teagle/kokoro-onnx/releases in
+     `KIT_KOKORO_DIR` (default `~/.cache/kokoro`). Default voice `af_heart` (en);
+     override with `KIT_VOICE_EN=am_michael` etc. About 4x faster than real time on CPU.
+  3. `pico`: SVOX Pico (`apt install libttspico-utils`). Works anywhere but sounds
+     robotic; users notice. Use only when neither of the above is reachable, and say so.
+- Check which hosts are reachable before choosing (a proxy may block the edge host but
+  allow GitHub); try a sample line with `python tts.py --say "..." --synth`.
+- Behind a TLS-inspecting proxy, tts.py adds `SSL_CERT_FILE` to edge-tts's CA list.
+- No engine at all? Render without voice (`--no-voice`) and ship captions + .srt; the voice
+  can be added by re-rendering later since the clips are generated from the same captions.
 
 ## 5. Pronunciation
 
@@ -99,10 +111,57 @@ language, applied first: e.g. `8(sp)` → "S P plus 8"). Things learned the hard
   `speak` is translated through the table too.
 - Review spoken forms in bulk: `captions.py SRC N --spoken`, before rendering.
 
+### Math and technical terms: the "scalar a" problem
+
+A neural voice reads *words*. It has no way to know that a letter in a sentence is a
+variable. The CS61C run and later lessons turned up these failures:
+
+| Written | Heard | Fix |
+|---|---|---|
+| scalar a times vector v | "scalar uh times..." (the article) | `tts.math_letters` spells out `a` → "ay" in a math context |
+| 标量 a 乘以向量 v | 啊 (interjection) | math_letters uppercases lone letters in Chinese; better to write A in the caption |
+| xor, xori | "X or", "X or I" | `SAY_AS`: "ex-or", "ex-or immediate" |
+| andi, ori, addi | "and I", "or I" | `SAY_AS`: "and immediate", ... |
+| η∇L | skipped or read as a random character | `tts.GREEK`: "eta the gradient of L" |
+| I (identity matrix), e (Euler), O(n) | the pronoun "I", "eh", "oh of n" | `SAY_AS` / `REWRITES` per course, e.g. `(r"\bO\((\w+)\)", "big O of \\1")` |
+| CUDA, SIMD, GPU, SQL, RISC | read as a word when it should be spelled, or the reverse | `SAY_AS` or `SPELL`, decided per term by ear (GPU spelled, CUDA a word) |
+
+`math_letters` uses a heuristic. It spells out a lone letter when it follows a math noun
+(scalar, vector, matrix, variable, register...), sits next to an operator (`a · v`,
+`a = 3`, `v times a`), follows a digit (`2a`), or appears in a letter list (`a, b and c`).
+Ordinary words ("a dog") are left alone. For anything it misses, use `speak=` or a
+`REWRITES` rule. Add course nouns to `MATH_NOUNS` in the copied tts.py.
+
+**Workflow per course:**
+1. Run `python narration_lint.py <unit> --audition <scratch>/audition`. It lists every
+   risky term (spelled letters that fuse with a word, unknown ALL-CAPS, letter+digit
+   codes, leftover symbols, lone a/e/o in Chinese) and synthesizes each one in a carrier
+   sentence.
+2. Listen to the clips. Put what sounds wrong in `say_as.py`. Decide ALL-CAPS terms one
+   by one, the way the lecturer says them.
+3. Re-run until clean. Then listen to one full episode per language before the final
+   render: the linter finds candidates, but your ear decides.
+
+**Engines and control.** edge-tts is free and good, but Microsoft blocks custom SSML
+there, so `<phoneme>`, `<say-as>` and `<break>` are unavailable: text rewriting is the
+only lever. If a course needs exact phonemes, switch the backend in `tts.synth`:
+- **Azure Speech** (same voices, needs a key): full SSML, `<phoneme alphabet="ipa">`
+  and custom lexicons.
+- **Kokoro** (local, open weights): inline IPA with Markdown syntax,
+  `[Kokoro](/kˈOkəɹO/)`.
+- **ElevenLabs / OpenAI**: pronunciation dictionaries or aliases.
+
+Keep `spoken()` in front of any engine. Operators, hex and identifiers still need
+rewriting.
+
 ## 6. Timing
 
-With a voice, a caption stays up for max(reading time, audio + 0.35 s) plus `extra`, and
-the audio starts 0.15 s after the caption appears. Animations passed to `say()` play
-while it is spoken; `hold()` waits for the voice to finish. So a voiced episode runs
+With a voice, a beat lasts as long as its clip plus 0.35 s (plus `extra`), and the audio
+starts 0.15 s after the first subtitle appears. The subtitle switches sentence, and a
+`cue("phrase")` fires, at the moment given by the phrase's position in the text (by
+character count, weighted for CJK), which is within about half a second of the voice.
+Animations passed to `say()` play while it is spoken; `hold()` waits for the voice to
+finish. In a translation the same cue lands at the same fraction of the translated beat,
+so keep the order of ideas inside a beat the same in both languages. So a voiced episode runs
 longer than the silent one (roughly +10–25%), and the voice sets the pace: if the
 visuals need longer than the sentence, use `self.hold(extra)` rather than padding text.

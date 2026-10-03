@@ -77,9 +77,17 @@ assert PLAIN5 < 0.1 and q5(0.01) > 0.68
 # numbers read off the slides (NanoGPT speedrun, Jordan et al.), ms/step
 MS = [("Adam", 139), ("Shampoo (update every 32)", 154), ("Shampoo (every 10)", 179), ("SOAP", 301), ("Muon", 142)]
 
+# the numbers the narration says out loud
+assert [f"{v:.2f}" for v in ORB[:4]] == ["0.30", "0.44", "0.61", "0.80"]
+assert (OUT[0], f"{OUT[1]:.1f}", f"{OUT[2]:.0f}") == (2.5, "-4.1", "27")
+assert [f"{v:.2f}" for v in S0] == ["0.84", "0.51", "0.18"]
+assert f"{ITS[3].min():.2f}" == "0.56" and f"{ITS[6].min():.2f}" == "0.99"
+assert f"{Q1:.2f}" == "0.70" and (f"{Y5.min():.2f}", f"{Y5.max():.2f}") == ("0.68", "1.13") and f"{PLAIN5:.2f}" == "0.08"
+
 
 class Ep04Muon(NarratedScene):
     series = SERIES
+    SCENES = ["recap", "commute", "iterate", "demo", "tuned", "muon"]
 
     def construct(self):
         self.title_card()
@@ -90,10 +98,10 @@ class Ep04Muon(NarratedScene):
         self.tuned()
         self.muon()
         self.end_card(
-            ["Muon steps along U Vᵀ, scaled by root d_out over d_in",
-             "Odd matrix polynomials change singular values but keep the singular vectors",
-             "Iterating 1.5x minus 0.5x cubed pushes singular values in (0, 1] toward one",
-             "Newton-Schulz replaces the SVD, and a few tuned iterations are good enough"],
+            ["Muon steps along U V transpose, scaled by root d_out over d_in",
+             "Odd matrix polynomials reshape the singular values and leave the singular vectors alone",
+             "Iterate three halves x minus one half x cubed, and singular values between zero and one climb to one",
+             "Newton-Schulz stands in for the SVD, and a few tuned iterations are close enough"],
         )
 
     # ---------------------------------------------------------------- 1
@@ -101,23 +109,31 @@ class Ep04Muon(NarratedScene):
         head = self.heading("Recap: the RMS step")
         eq = mts([r"\Delta W^{*}=-\eta", r"\sqrt{\dfrac{d_{\rm out}}{d_{\rm in}}}", r"\,U_rV_r^{\top}"], 1.0, {1: C_WIDTH}).move_to([0, 1.8, 0])
         tag = txt("Muon, key idea 1", 30, C_LOSS).next_to(eq, DOWN, buff=0.3)
-        self.say("Last time the RMS ball gave the step minus eta, root d_out over d_in, times U V transpose. Muon's first key idea.",
-                 Write(head), Write(eq), FadeIn(tag))
         prob = txt("But computing U Vᵀ needs an SVD every step: expensive", 30, C_TEXT).move_to([0, -0.4, 0])
-        self.say("The catch: computing U V transpose needs an SVD of the gradient at every step, and that is expensive.", FadeIn(prob))
+        self.say("Last time we found the step we want. It's U V transpose, scaled by the square root of d_out over "
+                 "d_in, and that's the first key idea of Muon. The catch is that getting U V transpose means an SVD of "
+                 "the gradient at every step, and that's expensive.")
+        self.play(Write(head), Write(eq))
+        self.cue("and that's the first key idea", FadeIn(tag))
+        self.cue("The catch is", FadeIn(prob))
         obs = VGroup(txt("1.  a direction that is approximately right is good enough", 28, C_TEXT),
                      txt("2.  Newton-Schulz iterations  (Muon, key idea 2)", 28, C_LOSS)).arrange(DOWN, aligned_edge=LEFT, buff=0.3).move_to([0, -1.55, 0])
         assert obs.width < 12.5 and obs.get_bottom()[1] > -2.5
-        self.say("Two observations: an approximate direction is good enough, and Newton-Schulz can produce it cheaply.",
-                 FadeIn(obs[0]), FadeIn(obs[1]))
+        self.say("There are two ways out of this. First, we don't need the exact direction, because one that's "
+                 "approximately right is good enough. And second, a trick called the Newton-Schulz iteration gets us "
+                 "there cheaply, which is Muon's second key idea.")
+        self.cue("First, we don't need", FadeIn(obs[0]))
+        self.cue("And second", FadeIn(obs[1]))
         self.hold(0.4)
         self.clear_stage()
         head = self.heading("The goal")
         a = mts([r"A=U\Sigma V^{\top}", r"\ \longrightarrow\ ", r"UV^{\top}"], 1.1, {0: C_SV, 2: C_STEP}).move_to([0, 1.5, 0])
         b = txt("replace every singular value by 1", 30, GREY_A).move_to([0, 0.3, 0])
         c = mts([r"f(U\Sigma V^{\top})\approx UV^{\top}"], 1.0).move_to([0, -0.9, 0])
-        self.say("We want a cheap function f that turns U sigma V transpose into U V transpose: every singular value replaced by one.",
-                 Write(head), Write(a), FadeIn(b), Write(c))
+        self.say("So here's the goal. We want a cheap function that takes U sigma V transpose and hands back U V "
+                 "transpose. In other words, it should replace every singular value with one.")
+        self.play(Write(head), Write(a))
+        self.cue("In other words", FadeIn(b), Write(c))
         self.hold(0.4)
         self.clear_stage()
 
@@ -126,17 +142,26 @@ class Ep04Muon(NarratedScene):
         head = self.heading("Step 1: odd polynomials commute with the SVD")
         pdef = mts([r"p(X)=a_0X+a_1XX^{\top}X+a_2(XX^{\top})^2X+\cdots"], 0.85).move_to([0, 2.5, 0])
         ex = mts([r"\text{e.g. }p(X)=\tfrac32X-\tfrac12XX^{\top}X"], 0.85).move_to([0, 1.6, 0])
-        self.say("Take odd matrix polynomials: X, X X transpose X, and so on. Example: three halves X minus a half X X transpose X.",
-                 Write(head), Write(pdef), Write(ex))
+        self.say("Let's try odd polynomials of a matrix. They're built from X, then X times X transpose times X, and "
+                 "so on up. Here's one example, with three halves on the first term and minus one half on the second.")
+        self.play(Write(head), Write(pdef))
+        self.cue("Here's one example", Write(ex))
         d1 = mts([r"p(U\Sigma V^{\top})=\tfrac32U\Sigma V^{\top}-\tfrac12(U\Sigma V^{\top})(V\Sigma^{\top}U^{\top})U\Sigma V^{\top}"], 0.7).move_to([0, 0.6, 0])
         d2 = mts([r"=\tfrac32U\Sigma V^{\top}-\tfrac12U\Sigma\Sigma^{\top}\Sigma V^{\top}"], 0.7).move_to([0, -0.4, 0])
         d3 = mts([r"=U\Big[\tfrac32\Sigma-\tfrac12\Sigma\Sigma^{\top}\Sigma\Big]V^{\top}=U\,", r"p(\Sigma)", r"\,V^{\top}"], 0.7, {1: C_SV}).move_to([0, -1.4, 0])
         assert max(x.width for x in (d1, d2, d3)) < 13.4, [x.width for x in (d1, d2, d3)]
-        self.say("Plug in the SVD. The V transposes and U's in the middle cancel, because U and V have orthonormal columns.",
-                 Write(d1), Write(d2))
-        self.say("What is left is U times p applied to the singular values, times V transpose. The singular vectors are untouched.", Write(d3))
+        self.say("Now plug in the SVD. In the middle, V transpose meets V and then U transpose meets U. Both pairs "
+                 "cancel, because their columns are orthonormal. What's left is U, then p of the singular values, then "
+                 "V transpose.")
+        self.play(Write(d1))
+        self.cue("Both pairs cancel", Write(d2))
+        self.cue("What's left is", Write(d3))
         chk = txt(f"numerical check on a 5 × 3 matrix: difference {np.abs(PX - U @ np.diag(p(S0)) @ Vt).max():.0e}", 26, GREY_A).move_to([0, -2.25, 0])
-        self.say("So p can be applied to a whole matrix while changing only its singular values, with no SVD needed.", FadeIn(chk))
+        self.say("So here's the trick. The polynomial acts on the whole matrix, but it only touches the singular "
+                 "values. The singular vectors don't budge. That means we can reshape the singular values without ever "
+                 "computing an SVD.")
+        self.play(Indicate(d3[1], color=C_SV))
+        self.cue("That means we can", FadeIn(chk))
         self.hold(0.4)
         self.clear_stage()
 
@@ -148,8 +173,10 @@ class Ep04Muon(NarratedScene):
         curve = plot(ax, p, C_MODEL, [0, 1.5], width=5)
         diag = ax.plot(lambda x: x, x_range=[0, 1.2], color=GREY_B, stroke_width=3)
         tl = VGroup(*[txt(f"{v:g}", 20, GREY_B).next_to(ax.c2p(v, 0), DOWN, buff=0.12) for v in (0.5, 1.0, 1.5)])
-        self.say("Can we find p so that repeatedly applying it sends every positive singular value to one? Try this cubic.",
-                 Write(head), Write(peq), Create(ax), Create(curve), Create(diag), FadeIn(tl))
+        self.say("Now we need a polynomial that, applied over and over, drives every singular value to one. Let's try "
+                 "this cubic, which is three halves x minus one half x cubed.")
+        self.play(Write(head), Create(ax), FadeIn(tl))
+        self.cue("Let's try this cubic", Write(peq), Create(curve), Create(diag))
         pts = [ax.c2p(ORB[0], 0)]
         for a, b in zip(ORB[:-1], ORB[1:]):
             pts += [ax.c2p(a, b), ax.c2p(b, b)]
@@ -157,10 +184,13 @@ class Ep04Muon(NarratedScene):
         fx = Dot(ax.c2p(1, 1), color=C_STEP, radius=0.1)
         vals = VGroup(*[txt(f"{v:.3f}", 24, C_STEP) for v in ORB[:6]]).arrange(DOWN, aligned_edge=LEFT, buff=0.12).move_to([4.6, 0.3, 0])
         assert vals.get_bottom()[1] > -2.5
-        self.say(f"Start at 0.3 and bounce between the curve and the diagonal: {ORB[1]:.2f}, {ORB[2]:.2f}, {ORB[3]:.2f}, and on toward one.",
-                 Create(web, run_time=3.0), FadeIn(fx), LaggedStart(*[FadeIn(v) for v in vals], lag_ratio=0.4, run_time=3.0))
-        self.say("The point one is a fixed point that attracts everything nearby. Iterating p, singular values in the interval zero to one climb to one.",
-                 Flash(ax.c2p(1, 1), color=C_STEP, flash_radius=0.4))
+        self.say("Start at zero point three, and bounce between the curve and the diagonal. You get zero point four "
+                 "four, then zero point six one, then zero point eight, creeping up toward one. That's because one is "
+                 "a fixed point that pulls its neighbors in, so anything between zero and one climbs up to it.")
+        self.play(FadeIn(vals[0]))
+        self.cue("and bounce between", Create(web, run_time=6.0),
+                 LaggedStart(*[FadeIn(v) for v in vals[1:]], lag_ratio=0.5, run_time=6.0))
+        self.cue("That's because one", FadeIn(fx), Flash(ax.c2p(1, 1), color=C_STEP, flash_radius=0.4))
         self.hold(0.3)
         self.clear_stage()
         head = self.heading("But only inside a safe range")
@@ -172,11 +202,13 @@ class Ep04Muon(NarratedScene):
         txs = VGroup(txt(f"2.5  →  {OUT[1]:.1f}  →  {OUT[2]:.1f}  →  {OUT[3]:.0f}", 30, C_LOSS),
                      txt("diverges beyond √3 ≈ 1.73", 26, GREY_A)).arrange(DOWN, aligned_edge=LEFT, buff=0.25).move_to([3.9, 1.0, 0])
         assert txs.get_right()[0] < 7.0 and txs.get_left()[0] > 0.6, (txs.get_left(), txs.get_right())
-        self.say("Zoom out. Start at 2.5 and the iteration jumps to minus four, then twenty-seven, and diverges.",
-                 Write(head), Create(ax), Create(curve), Create(diag), Create(web), FadeIn(txs))
         fro = mts([r"X\leftarrow\dfrac{G}{\|G\|_F}"], 1.0).move_to([3.9, -0.8, 0])
-        self.say("So singular values must start inside zero to one. Dividing by the Frobenius norm guarantees it.",
-                 Write(fro))
+        self.say("But zoom out, and there's a danger. Start at two point five, and it jumps to minus four point one, "
+                 "then to about twenty-seven, and off it goes. So the singular values have to start between zero and "
+                 "one. Dividing by the Frobenius norm makes sure of that.")
+        self.play(Write(head), Create(ax), Create(curve), Create(diag))
+        self.cue("Start at two point five", Create(web), FadeIn(txs))
+        self.cue("So the singular values", Write(fro))
         self.hold(0.4)
         self.clear_stage()
 
@@ -203,22 +235,28 @@ class Ep04Muon(NarratedScene):
         cur = bars(ITS[0]); curl = labels(ITS[0])
         kt = txt("iteration 0", 30, C_TEXT).move_to([3.7, 1.9, 0])
         assert base_y + sc < 3.0
-        self.say(f"Take a random 5 by 3 gradient, normalized. Its singular values are {S0[0]:.2f}, {S0[1]:.2f} and {S0[2]:.2f}.",
-                 Write(head), Create(base), Create(one), FadeIn(onel), FadeIn(cur), FadeIn(curl), FadeIn(kt))
-        for k in range(1, 4):
-            nb, nl = bars(ITS[k]), labels(ITS[k])
-            self.say({1: "One iteration of p lifts the small ones the most.",
-                      2: "Another one, and the spread between them is shrinking.",
-                      3: "After three iterations, all three are within about one tenth of one."}[k],
-                     Transform(cur, nb), Transform(curl, nl), Transform(kt, txt(f"iteration {k}", 30, C_TEXT).move_to([3.7, 1.9, 0])))
-        nb, nl = bars(ITS[6]), labels(ITS[6])
-        self.say(f"By iteration six the smallest is {ITS[6].min():.3f}. Almost the same as replacing the singular values by exactly one.",
-                 Transform(cur, nb), Transform(curl, nl), Transform(kt, txt("iteration 6", 30, C_TEXT).move_to([3.7, 1.9, 0])))
+
+        def to_iter(k):
+            return [Transform(cur, bars(ITS[k])), Transform(curl, labels(ITS[k])),
+                    Transform(kt, txt(f"iteration {k}", 30, C_TEXT).move_to([3.7, 1.9, 0]))]
+
+        self.say("Let's run it on a real gradient, five by three and normalized. Its singular values start at zero "
+                 "point eight four, zero point five one and zero point one eight.")
+        self.play(Write(head), Create(base), Create(one), FadeIn(onel), FadeIn(cur), FadeIn(curl), FadeIn(kt))
+        self.say("After one iteration, the small values get the biggest boost in proportion. After another, the gap "
+                 "between them keeps shrinking. And after three, the top two are nearly one, while the smallest is "
+                 "still catching up at zero point five six.")
+        self.play(*to_iter(1))
+        self.cue("After another", *to_iter(2))
+        self.cue("And after three", *to_iter(3))
         small = VGroup(txt("the slow case: a tiny value", 26, GREY_A),
                        txt(f"from 0.01: {K_SMALL} iterations to 0.99", 26, C_LOSS)).arrange(DOWN, aligned_edge=LEFT, buff=0.2).move_to([3.4, 0.3, 0])
         assert small.get_right()[0] < 7.0 and small.get_left()[0] > 0.7, (small.get_left(), small.get_right())
-        self.say(f"A tiny singular value grows only about one and a half times per step, so from 0.01 it takes {K_SMALL} iterations.",
-                 FadeIn(small))
+        self.say("By iteration six, even the smallest has reached zero point nine nine, which is practically U V "
+                 "transpose. The slow case is a tiny value, since it only grows about one and a half times per "
+                 "iteration. Starting from zero point zero one, it takes fourteen iterations to get close.")
+        self.play(*to_iter(6))
+        self.cue("The slow case", FadeIn(small))
         self.hold(0.4)
         self.clear_stage()
 
@@ -226,12 +264,12 @@ class Ep04Muon(NarratedScene):
     def tuned(self):
         head = self.heading("Tune the coefficients")
         gen = mts([r"p(x)=a\,x+b\,x^3+c\,x^5+\cdots"], 0.9).move_to([-2.6, 2.6, 0])
-        self.say("We may choose the coefficients. Higher orders may converge faster, but each step costs more.",
-                 Write(head), Write(gen))
         nano = mts([r"f(x)=3.444\,x-4.7750\,x^3+2.0315\,x^5"], 0.85).move_to([-2.6, 1.7, 0])
         note = txt(f"NanoGPT speedrun  ·  f(1) = {Q1:.2f}, not 1", 26, C_LOSS).move_to([-2.6, 0.95, 0])
-        self.say(f"The NanoGPT speedrun uses these three coefficients. Notice f of one is {Q1:.2f}, not one. So it does not converge to one.",
-                 Write(nano), FadeIn(note))
+        self.say("But who says it has to be this cubic? Higher powers can converge faster, though each iteration costs "
+                 "more. The NanoGPT speedrun uses a fifth-degree polynomial with these tuned coefficients.")
+        self.play(Write(head), Write(gen))
+        self.cue("The NanoGPT speedrun", Write(nano))
         ax = make_axes([0, 1.2, 0.2], [0, 1.4, 0.5], 6.4, 2.6).move_to([-2.9, -0.95, 0])
         assert ax.get_bottom()[1] > -2.45, ax.get_bottom()
         band = Rectangle(width=ax.x_length, height=(1.2 - 0.7) / 1.4 * ax.y_length, stroke_width=0, fill_color=C_MUP, fill_opacity=0.18)
@@ -241,10 +279,17 @@ class Ep04Muon(NarratedScene):
         rng_t = txt(f"inputs 0.01 to 1  →  outputs {Y5.min():.2f} to {Y5.max():.2f}", 24, C_MUP).move_to([3.5, -1.1, 0])
         pl2 = txt(f"plain p, five iterations: 0.01 → {PLAIN5:.2f}", 24, C_LOSS).move_to([3.5, -1.8, 0])
         assert rng_t.get_right()[0] < 7.05 and pl2.get_right()[0] < 7.05, (rng_t.get_right(), pl2.get_right())
-        self.say(f"Five iterations send every input from 0.01 up to between {Y5.min():.2f} and {Y5.max():.2f}. Noisy, but far from tiny.",
-                 Create(ax), FadeIn(band), Create(c5), FadeIn(pl), FadeIn(rng_t))
-        self.say("Must it converge? No. Singular values roughly one are good enough, and much faster than the plain cubic.",
-                 FadeIn(pl2))
+        self.say("And look at what it does at one. It gives zero point seven, not one, so this iteration never settles "
+                 "down at one. Yet five rounds of it lift every input, even one as small as zero point zero one, into "
+                 "a band near one. It runs from zero point six eight to one point one three.")
+        self.play(FadeIn(note))
+        self.cue("Yet five rounds", Create(ax), FadeIn(band), Create(c5), FadeIn(pl))
+        self.cue("It runs from", FadeIn(rng_t))
+        self.say("So does it need to converge? Not really, because roughly one is good enough. And it gets there far "
+                 "faster than the cubic. After five iterations, the cubic has only brought zero point zero one up to "
+                 "zero point zero eight.")
+        self.play(Indicate(band, color=C_MUP, scale_factor=1.03))
+        self.cue("After five iterations", FadeIn(pl2))
         self.hold(0.4)
         self.clear_stage()
 
@@ -261,10 +306,13 @@ class Ep04Muon(NarratedScene):
             "W = W - eta * O           # step",
         ], lang="python", font_size=28, line_gap=0.6).move_to([0, 0.7, 0])
         assert code.width < 12.5, code.width
-        self.say("Put it together: Muon stands for momentum orthogonalized by Newton-Schulz.", Write(head), FadeIn(name))
-        self.say("Keep a momentum buffer, orthogonalize it with a few Newton-Schulz steps, and step the weights against it.",
-                 FadeIn(code, shift=UP * 0.2))
-        self.play(Create(code.line_box(1)))
+        self.say("Now let's put it all together. Muon stands for momentum, orthogonalized by Newton-Schulz, and that "
+                 "name is the whole algorithm. We keep a momentum buffer, orthogonalize it with a few Newton-Schulz "
+                 "iterations, then step the weights against it.")
+        self.play(Write(head))
+        self.cue("Muon stands for", FadeIn(name))
+        self.cue("We keep a momentum", FadeIn(code, shift=UP * 0.2))
+        self.cue("orthogonalize it with", Create(code.line_box(1)))
         self.hold(0.3)
         self.clear_stage()
         # impact
@@ -282,14 +330,15 @@ class Ep04Muon(NarratedScene):
             bars.add(VGroup(r, lab, val))
         assert bars.get_bottom()[1] > -2.5 and bars.get_top()[1] < 3.0 and bars.get_right()[0] < 7.0, bars.get_center()
         sub = txt("time per step, NanoGPT speedrun (read off the lecture slide)", 24, GREY_B).move_to([0, 2.65, 0])
-        self.say("On the NanoGPT speedrun, Muon costs about the same time per step as Adam, and far less than Shampoo or SOAP.",
-                 Write(head), FadeIn(sub), LaggedStart(*[FadeIn(b) for b in bars], lag_ratio=0.2))
-        self.say("Per step it also gets the validation loss down faster, so it reaches a given loss in less wall-clock time.",
-                 Indicate(bars[4][0], color=C_STEP))
+        self.say("So is it worth it? Per step, Muon costs about what Adam does, and far less than Shampoo or SOAP. And "
+                 "each step cuts the validation loss more, so it reaches a target loss in less wall-clock time.")
+        self.play(Write(head), FadeIn(sub), LaggedStart(*[FadeIn(b) for b in bars], lag_ratio=0.2))
+        self.cue("And each step", Indicate(bars[4][0], color=C_STEP))
         self.hold(0.3)
         self.clear_stage()
         head = self.heading("The speedrun record")
         pts = [("baseline", 45, C_STD), ("modernized + tuned LR", 31, C_MODEL), ("Muon introduced", 25, C_STEP), ("later record", 4, C_MUP)]
+        assert (pts[0][1], pts[3][1]) == (45, 4)
         rows = VGroup()
         for i, (nm, mnt, col) in enumerate(pts):
             r = Rectangle(width=max(mnt, 0.3) * 0.16, height=0.5, stroke_color=col, fill_color=col, fill_opacity=0.35, stroke_width=3)
@@ -298,9 +347,16 @@ class Ep04Muon(NarratedScene):
             v = txt(f"≈ {mnt} min", 26, col).next_to(lab, RIGHT, buff=0.3)
             rows.add(VGroup(r, lab, v))
         assert rows.get_bottom()[1] > -2.5 and rows.get_right()[0] < 7.0, rows.get_center()
-        self.say("The task took about 45 minutes at the May 2024 baseline. Muon was a big step down, and by December the record was a few minutes.",
-                 Write(head), LaggedStart(*[FadeIn(r) for r in rows], lag_ratio=0.6))
+        self.say("Here's the record on the NanoGPT speedrun. Back in May of twenty twenty-four, the record stood at "
+                 "about forty-five minutes. Muon helped bring that down, and by December it was about four minutes.")
+        self.play(Write(head))
+        self.cue("Back in May", FadeIn(rows[0]))
+        self.cue("Muon helped", LaggedStart(FadeIn(rows[1]), FadeIn(rows[2]), lag_ratio=0.5))
+        self.cue("and by December", FadeIn(rows[3]))
         kimi = txt("Feb 2025: “Muon is Scalable for LLM Training”", 26, C_TEXT).move_to([0, -1.9, 0])
         assert kimi.width < 13
-        self.say("In February 2025, Moonshot AI and UCLA showed that Muon scales to large language model training.", FadeIn(kimi))
+        self.say("Then in February of twenty twenty-five, Moonshot and UCLA showed that Muon holds up for large "
+                 "language models. So the recipe we started with, a linearized loss inside a norm ball, has turned "
+                 "into a real optimizer.")
+        self.play(FadeIn(kimi))
         self.hold(0.5)
