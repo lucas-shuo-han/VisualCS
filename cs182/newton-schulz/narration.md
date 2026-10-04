@@ -71,6 +71,91 @@
 > **6. 语音。** why_p 09–12 有 `speak:` 行，把系数读成 "ay" 和 "bee"。改这四拍的正文时要同步改 `speak:`。
 > 实际发音还没有听过。`.srt` 用的是正文（写 a、b），不是 `speak:`。
 
+> ---
+>
+> **修订记录（2026-10-04）：看完 35 分钟成片后的五条意见，原因和改法。**
+> 顺序：先文案（本文件），确认后再改代码。本轮文案已写入下面各场，标 **[10-04]** 的注释是对应的动画待办。
+>
+> **1. 字体不一致。** 画面上有三套字体：公式和 `\text{}` 是 LaTeX Computer Modern；`txt()` 是 Pango 无衬线（Windows 上是 Arial）；
+> 坐标轴刻度 `mono()` 是等宽字体。同一类标签有的在 `\text{}` 里、有的在 `txt()` 里；√3 有的是 `\sqrt3`、有的是 Unicode。
+> 改法：全片只用 LaTeX 一套（和 3b1b 一致），`txt()` / `mono()` 改成走 Tex，Unicode 符号改成 LaTeX 写法，字号收成三级（公式 40、标签 28、刻度 22）。
+>
+> **2. 关键处没有放大，取点不合适。** `NarratedScene` 继承 `Scene`，镜头不能动；所有"zoom in"都是清屏换一张图，看不出新图是原图的哪一块。
+> 改法：改为 `MovingCameraScene`，加 `zoom_to()` / `zoom_back()`。要放大的七处：
+> the_gap 04–05（2.2 和 2.23 在全图上只差 0.03 个单位，两条蛛网重叠：全图只跟 2.0 和 2.2，2.23 放大后再跟）；
+> first_boundary 05（先在原图上框出缺口，再推进）；basins 04–05（b₃ 和 √5 只差 0.002，推到 √5 附近）；
+> boundary_points 01（从上一张图连续推到角落）；how_big 05、08（曲线过 √3 的交点）；too_big 07–08（(√5, √5) 和方形轨道）；slopes 03（台词说了 zoom，核对画面）。
+>
+> **3. 节奏太快。** 语速本身偏快（含停顿约 168 词/分钟，3b1b 约 130–140），而且没有停顿：拍与拍之间只留 0.35 秒；
+> 长拍（why_p 09、11 各约 210 词）一口气念 80 秒；`cue()` 按文字位置估时间，拍越长越不准。
+> 改法：台词不删。长拍按本文件里的换行拆成多个 `say()`（每个不超过约 60 词）；拍间停顿 0.9 秒；每个新公式出现后静 1.2–1.5 秒；
+> TTS 语速 −15%（试听 −10% / −15% / −20% 后定）。目标含停顿 120–125 词/分钟。
+>
+> **3b. 分成三集。** 放慢后总长约 55 分钟，所以分集：
+>
+> | 集 | 场景 | 预计时长 | 结尾留下的问题 |
+> |---|---|---|---|
+> | 1 | 01 ellipse、02 why_orthogonal、03 why_p | 约 11 分钟 | 任意一个 σ 反复代入 p，会去哪？ |
+> | 2 | 04 try_numbers – 08 too_big | 约 20 分钟 | √3 和 √5 之间发生什么？ |
+> | 3 | 09 the_gap – 14 back_to_matrix | 约 25 分钟 | （收尾：回到矩阵） |
+>
+> 新增的台词：`ep1_closing`、`ep2_recap`、`ep2_closing`、`ep3_recap`（标题行的 hash 写的是 `#new`，代码里还没有对应的 say()，
+> `narration.py check` 会报 UNKNOWN，属于预期）。三张片头卡念的标题写在各段的注释里。
+> 代码待办：`series.py` 三项；`ep01` 拆成三个文件加一个共享模块；`preview.py` 能指定集数；第 2 集开头重新画出 p 的图，第 3 集开头重新给出 size factor 那一行。
+>
+> **4. 男声。** 现有成片用的是 Kokoro `af_heart`（女声）。先试听再定：edge 的 Andrew、Brian、Ryan（英音），Kokoro 的 am_michael、am_fenrir、bm_george。
+>
+> **5. 推导缺失（√3 到 √5）。** 09–12 场原来只用图像说法（折叠曲线、楼梯、没有空隙），屏幕上只有 |p(b₁)|=√3、|p(b₂)|=b₁ 两个式子。
+> 现在按手写稿的顺序把推导写进台词，图在左、式子在右，一句台词一行式子：
+>
+> | 步 | 屏幕上的式子 | 位置 |
+> |---|---|---|
+> | D1 | \|p(x)\| = \|x\| · \|x²−3\|/2（从此留在屏幕角上，直到 12 场结束） | too_big 05（已有） |
+> | D2 | √3 < x < √5 ⇒ 0 < (x²−3)/2 < 1 ⇒ \|p(x)\| < \|x\| | the_gap 01 |
+> | D3 | 进到 (−√3, √3) 之后：正 → +1，负 → −1 | the_gap 02 |
+> | D4 | 哪些起点一步就进去？\|p(x)\| < √3 | first_boundary 05 |
+> | D5 | \|p\| 在缺口里只升不降，从 0 到 √5 ⇒ 只过高度 √3 一次：p(b₁) = −√3 | first_boundary 05 |
+> | D6 | (√3, b₁) → (−√3, 0) → −1 | first_boundary 05 |
+> | D7 | p(b₂) = −b₁；(b₁, b₂) → (−b₁, −√3) | basins 02 |
+> | D8 | p(b₃) = −b₂；三个式子并排；数列 √3, b₁, b₂, b₃, … | basins 04 |
+> | D9 | 边界点会一直到 √5 吗？ | boundary_points 01 |
+> | D10 | 有界：b_n < √5 ⇒ b_{n+1} < √5 | boundary_points 02 |
+> | D11 | 递增：b_n = \|p(b_{n+1})\| < b_{n+1} | boundary_points 02 |
+> | D12 | 递增且有上界 ⇒ 收拢到某个 L（唯一不证明的事实） | boundary_points 02 |
+> | D13 | L · (L²−3)/2 = L ⇒ L² = 5 ⇒ L = √5 | boundary_points 02 |
+> | D14 | 缺口 = 所有条纹合起来 | boundary_points 02 |
+>
+> 和手写稿不同的四处（已确认方向，写台词时按右边的）：p(x) 第二项是 **−**(1/2)x³；"converge to √3 / bounded by √3" 是 **√5**；
+> "Uniform" 是单调，且是 b_m < b_{m+1}；最后一行是对 p(b_{n+1}) = −b_n 取极限得 √5，不是求 √3 的牛顿迭代。手写稿的 b* 就是片中的 b₁。
+> 先证有界、再证递增：b_{n+1} 存在的前提是 b_n < √5（曲线才够得到那个高度），所以顺序不能反。
+>
+> **实施记录（2026-10-04，同一天完成）。** 上面五条和分集都已经改进代码，`narration.py check` 报 0 个问题。
+> - **文件。** `ep01_inventing_p.py`（01–03）、`ep02_two_thresholds.py`（04–08）、`ep03_the_gap.py`（09–14），共用部分在 `ns_common.py`。
+>   原来的 `ep01_newton_schulz.py` 已删除。新增的四段台词在代码里是 `ep1_closing`、`ep2_recap`、`ep2_closing`、`ep3_recap` 四个方法。
+> - **设置都在 `series.py`。** `TTS`（edge 的 Andrew，语速 −10%，这是你试听后选的）、`PACE`（句间 0.75 秒、段间 1.6 秒、拍间 1.8 秒）、`TEXT_FONT = "latex"`。
+>   换音色前用 `python audition.py` 生成候选，在 `preview/voices/`。
+> - **节奏的做法和计划不同。** 没有把长拍拆成多个 say()，而是让 kit 逐句合成配音：每句之间停 `PACE["sentence"]`，
+>   本文件里一拍正文的每一行是一段，段间停 `PACE["paragraph"]`。`cue()` 现在按"那几个词在哪一句、那一句什么时候开始念"定时，不再按整拍估算。
+>   `.srt` 也是一句一条、按实际念的时间。超过 60 词的单行拍已经用 `narration.py paragraphs` 自动分了段，分得不合适的地方直接在这里改换行。
+> - **实测节奏**（480p 预览）：第 1 集 11.1 分钟、129 词/分钟；第 2 集 18.9 分钟、140 词/分钟；第 3 集 22.4 分钟、142 词/分钟。
+>   计划里写的目标是 120–125，现在是 130–140。还想慢就把 `PACE` 三个数调大，不用重新配音。
+> - **字号。** 文字 28，公式 36，大公式 44，刻度 22。why_p 里几条直接写 `MathTex(font_size=52/56)` 的主公式没有动。
+> - **放大。** 镜头推进：slopes 03、how_big 05 和 08、too_big 07、first_boundary 05（b₁ 交点）、basins 04（b₃）。
+>   框展开成新图：first_boundary 05（全图到缺口图）、boundary_points 01（缺口图到 √5 角落）。the_gap 05 用的是数轴放大镜（2.2、2.23、√5 三个点）。
+> - **改台词时的规矩。** 改正文不动标题行。`narration.py check` 会检查 `cue()` 等的那几个词还在不在（报 CUE）。
+>   代码里故意改了 say() 的文字之后运行 `narration.py rebind`。仍然不要运行 `narration.py sync`。
+> - **终审（同日，第二轮）。** 语速改为 −4%。五处补得更严格：slopes 05 把丢掉的 e²、e³ 项放回去，写出 p(1+e) = 1 − 1.5e² − 0.5e³
+>   （新误差带负号：不管从哪边来都落在 1 的下方）；how_big 11 补上"一直上升又过不了 1，所以会停在某处"；first_boundary 06 原来说
+>   "no tidy answer" 不对，b₁ 有闭式 ∛(√3+√2) + ∛(√3−√2)，现在如实说并显示；basins 08 的 6 倍不再只靠两个数估计，
+>   用 p(√5+e) ≈ −√5 − 6e 说明在 √5 处正好是 6；back_to_matrix 06 补上 σ = 0 的例外；总表里注明 b₀ = √3。
+> - **终审第三轮。** 补上了原来直接引用的三处：ellipse 07 说明非方阵时准确的说法是 orthonormal columns；
+>   boundary_points 02 取极限那一步说了 p 连续；back_to_matrix 03 说明了为什么元素平方和等于奇异值平方和
+>   （左乘旋转不改每一列的长度，右乘旋转不改每一行的长度，所以 ‖UΣVᵀ‖² = ‖Σ‖²）。
+>   现在唯一不证明的事实是：只升且有上界的数列会收拢到某个值。
+> - **最终成片（语速 −4%）。** 第 1 集 10:46、135 词/分钟；第 2 集 18:38、147 词/分钟；第 3 集 22:52、150 词/分钟。
+>   上面写的 Andrew −10% 和 129–142 词/分钟是第一轮的数字。
+> - **预览。** `python preview.py 9`、`python preview.py ep2`、`python preview.py ep3_recap ep1_closing`、`python preview.py all`。
+
 ## The story in one paragraph
 
 > A matrix W turns a circle into an ellipse; its singular values are the half-axes. Muon wants the
@@ -122,6 +207,8 @@
 > | 13 | summary | 现在有了完整的结局分布图（哪些 σ → +1、哪些 → −1、哪些会炸） | 用一句话收总：到底什么样的起点得到什么样的归宿？ | |
 > | 14 | back_to_matrix | 上面那张「起点归宿对照表」 | 换回我的矩阵：知道了这些，我到底该怎么缩放 W、再迭代，才能让它真正正交化？ | |
 
+## 第 1 集 · ep01_inventing_p.py（01–03）
+
 ## 01 · ellipse — Why would anyone iterate this? (motivation)
 
 > **Purpose.** Give a reason to care before any formula. Muon wants an orthogonal update; the picture of 'orthogonal' is a circle.
@@ -153,8 +240,8 @@ Finally, U rotates it into place. Since rotations never change lengths, all the 
 The two stretch factors, sigma one and sigma two, are the half-axes of the ellipse. They are called singular values.
 > screen: Indicate, Indicate
 
-### ellipse 07 <!-- #8559d4 -->
-If every singular value were exactly one, only the rotations would remain. Nothing gets stretched, and W would be orthogonal.
+### ellipse 07 <!-- #2492fc -->
+If every singular value were exactly one, only the rotations would remain. Nothing gets stretched, and W would be orthogonal. If W is not square, the exact name for this is orthonormal columns. The picture is the same, so we will keep saying orthogonal.
 > screen: FadeIn
 
 ## 02 · why_orthogonal — Why must every direction stay? (motivation)
@@ -285,9 +372,31 @@ So p of sigma is three halves sigma, minus one half sigma cubed. For the matrix,
 speak: Two wishes and two unknowns, which is exactly enough. The second wish says ay equals minus three bee. Put that into the first, and minus three bee plus bee equals one, so bee is minus one half. Then ay is three halves. So p of sigma is three halves sigma, minus one half sigma cubed. For the matrix, one step is three halves W, minus one half W times W transpose times W. That is the Newton Schulz step, and you could have invented it yourself.
 > screen: FadeOut, ReplacementTransform, Create
 
-### why_p 13 <!-- #0dc503 -->
-We built p from what happens close to one. But a real sigma can start anywhere. So take any positive sigma and apply p over and over. Where does it end up? That is the question in part (e) of the worksheet, and the rest of this video answers it.
+### why_p 13 <!-- #612838 -->
+We built p from what happens close to one. But a real sigma can start anywhere. So take any positive sigma and apply p over and over. Where does it end up? That is the question in part (e) of the worksheet.
 > screen: FadeIn
+> **[10-04]** 去掉了 "and the rest of this video answers it"：这一集到这里结束，问题留给下一集。
+
+## 第 1 集片尾 · ep1_closing
+
+> **[10-04] 新增。** 片头卡念："Newton–Schulz. You could have invented it."（不报集数，不列内容。）
+> 片尾不给答案，只留问题。画面：p 的式子和矩阵那一步留在屏幕上，下面出现 σ → p(σ) → p(p(σ)) → … → ?
+
+### ep1_closing 01 <!-- #010750 -->
+So this is where we stand. We wanted U times V transpose without computing an SVD. Matrix products alone gave us a polynomial, and two wishes fixed its two numbers.
+What we have not seen is the iteration itself. We only know what p does close to one. Where a sigma ends up when it starts far from one, we find out next time.
+
+## 第 2 集 · ep02_two_thresholds.py（04–08）
+
+## 第 2 集开头 · ep2_recap
+
+> **[10-04] 新增。** 片头卡念："Newton–Schulz. Where does a singular value go?"
+> 只说上一集得到的结论，三句以内，然后直接接 try_numbers 01。画面：矩阵那一步，然后变成 p(σ)，缩到右上角。
+
+### ep2_recap 01 <!-- #067c3f -->
+Last time we built one step out of nothing but matrix products. Three halves W, minus one half W, W transpose, W.
+On each singular value, that step is a polynomial. p of sigma is three halves sigma, minus one half sigma cubed. We chose it so that one stays at one, and a value close to one moves closer.
+But a real sigma can start anywhere.
 
 ## 04 · try_numbers — Just try numbers (easy cases first)
 
@@ -411,9 +520,11 @@ So here is the rule. Near a fixed point, each step multiplies the error by the s
 At zero the slope is one point five, and zero point zero five drifts to zero point zero seven five, then zero point one one, and on.
 > screen: Create, FadeIn
 
-### slopes 05 <!-- #640341 -->
+### slopes 05 <!-- #719603 -->
 At one, the multiplier is zero, so the slope is zero. The curve is flat at the top of its hump. That is our second wish, seen as a picture.
-But an error cannot vanish completely in one step. When we built p, we dropped the terms with e squared, because they were small. Now they are all that is left. Worked out, the new error is about one and a half times e squared.
+But an error cannot vanish completely in one step. When we built p, we dropped the terms with e squared and e cubed, because they were small. Now put them back.
+p of one plus e is three halves times one plus e, minus one half times the full cube, one plus three e plus three e squared plus e cubed. The ones add up to one. The terms with e cancel, as we arranged. What is left is minus one and a half e squared, minus one half e cubed.
+So the new error is about minus one and a half times e squared. The minus sign says that we land just below one, whichever side we started on.
 Start at one point two. The error goes from zero point two, to zero point zero six, to zero point zero zero six. Each step roughly squares it, which is far faster than shrinking by a fixed factor. The same calculation at minus one gives the same result.
 > screen: FadeOut, Create, FadeIn
 
@@ -472,8 +583,8 @@ One point five is below square root of three, and it was fine. One point eight i
 Then is every start below square root of three safe? Look at the curve between zero and square root of three. It stays above the axis, and its highest point, the top of the hump, is at height one. So wherever we start in this range, the first step lands somewhere between zero and one.
 > screen: FadeOut, Create, Indicate, FadeOut
 
-### how_big 11 <!-- #82fe74 -->
-And between zero and one, the curve sits above the diagonal. That means the output is bigger than the input, so every step climbs. It cannot climb past one, because the curve never goes higher than one. And the only place where it stops moving is a fixed point, so it ends at one.
+### how_big 11 <!-- #676fd2 -->
+And between zero and one, the curve sits above the diagonal. That means the output is bigger than the input, so every step climbs. It cannot climb past one, because the curve never goes higher than one. A value that keeps climbing and can never pass one has to settle somewhere. And the only place where it can settle is a fixed point, so it ends at one.
 > screen: FadeIn, self.draw
 
 ### how_big 12 <!-- #7d7317 -->
@@ -508,10 +619,12 @@ So somewhere between them, shrinking turns into growing. Narrow it down. Two poi
 But two point three goes to minus two point six three. Its size is bigger than where it started. So the turning point is somewhere between two point zero and two point three.
 
 ### too_big 05 <!-- #26b539 -->
-Where exactly is the turning point? Compare the size after a step with the size before. Use the factored form. p of x is x over two, times three minus x squared. So the size of p of x is the size of x, times the size of three minus x squared, over two. Past square root of three, that second part is x squared minus three, over two. Call it the size factor. Each step multiplies the size by this factor.
+Where exactly is the turning point? Compare the size after a step with the size before. Use the factored form. p of x is x over two, times three minus x squared.
+So the size of p of x is the size of x, times the size of three minus x squared, over two. Past square root of three, that second part is x squared minus three, over two. Call it the size factor. Each step multiplies the size by this factor.
 
 ### too_big 06 <!-- #82b56f -->
-Check it with the starts we tried. At two point zero, the factor is four minus three, over two, which is one half. And two did go to size one. At two point three, the factor is about one point one four, and two point three did come out bigger. So a factor below one means flip and shrink. A factor above one means flip and grow.
+Check it with the starts we tried. At two point zero, the factor is four minus three, over two, which is one half. And two did go to size one. At two point three, the factor is about one point one four, and two point three did come out bigger.
+So a factor below one means flip and shrink. A factor above one means flip and grow.
 
 ### too_big 07 <!-- #25d1c3 -->
 The turning point is where the factor is exactly one. That means x squared minus three equals two, so x squared equals five. The turning point is square root of five, about two point two four, and it does sit between two point zero and two point three. On the curve, between square root of three and square root of five a step shrinks the size, and beyond square root of five it grows.
@@ -525,6 +638,29 @@ So square root of five neither settles nor explodes. It jumps back and forth bet
 ### too_big 10 <!-- #d9c1b8 -->
 And past square root of five, every step flips and grows. Two point three goes to minus two point six three, then five point one eight, then minus sixty one point eight. Like three, it explodes.
 
+## 第 2 集片尾 · ep2_closing
+
+> **[10-04] 新增。** 画面：一条数轴，√3 以下涂 teal，√5 以上涂红，中间留灰，1.8 和 2.0 两个点标在灰色段里。
+> 1.8 和 2.0 都在缺口里（√3 ≈ 1.73），而且都到了 −1，所以这里的钩子是"是不是都这样"。
+
+### ep2_closing 01 <!-- #753a38 -->
+So now we have two thresholds. Below square root of three, every start ends at one. Beyond square root of five, every start explodes.
+Between them there is a gap, and we have only tried two starts in it, one point eight and two point zero. Both ended at minus one. Does every start in the gap do that? That is next time.
+
+## 第 3 集 · ep03_the_gap.py（09–14）
+
+## 第 3 集开头 · ep3_recap
+
+> **[10-04] 新增。** 片头卡念："Newton–Schulz. Between square root of three and square root of five."
+> 这一集要用到的东西全部来自上一集，开头各说一句，并且把式子重新放上屏幕：p(x)、镜像规则 p(−x) = −p(x)、
+> size factor 那一行 |p(x)| = |x| · |x²−3|/2（D1，留在角上）。画面同时把 p 的图和 √3、√5 两个刻度画出来。
+
+### ep3_recap 01 <!-- #ea4be3 -->
+We are following one number as we apply p again and again. p of x is three halves x, minus one half x cubed.
+Here is what we know so far. A negative value moves exactly like its positive twin, with the sign flipped. We called that the mirror rule.
+Past square root of three, p of x is negative, so a step flips the sign.
+And one step multiplies the size of the value by the size factor, x squared minus three, over two.
+
 ## 09 · the_gap — Follow three starts into the gap
 
 > **Purpose.** See, on the cobweb picture, that starts between √3 and √5 do not all end the same way, and why: the number of flips before the value gets inside √3.
@@ -534,17 +670,25 @@ And past square root of five, every step flips and grows. Two point three goes t
 > **Numbers used.** 2.0 → −1. 2.2 → −2.02 → +1.11 → … → +1. 2.23 → −2.20 → +2.02 → −1.10 → … → −1.
 > **Animation.** The p graph with the gap marked; the plan (inside √3: teal half, gold half); three cobwebs, each segment drawn when its number is said, with one row per start in the panel; the odd/even rule; then the colour strip and the zoom next to √5.
 
-### the_gap 01 <!-- #b6b760 -->
-So below square root of three, everything goes to one, and beyond square root of five, everything explodes. That leaves the gap between them. In the gap, every step flips the sign. And the size factor is below one, so every step also makes the size smaller.
+### the_gap 01 <!-- #1b30eb -->
+So below square root of three, everything goes to one, and beyond square root of five, everything explodes. That leaves the gap between them. In the gap, every step flips the sign.
+What about the size? One step multiplies it by the size factor, x squared minus three, over two. At the left end of the gap, x squared is three, so the factor is zero. At the right end, x squared is five, so the factor is one. In between, x squared is between three and five, so the factor is between zero and one.
+Multiplying by a number between zero and one makes a size smaller. So in the gap, the size of p of x is less than the size of x. Every step brings the value closer to zero.
+> **[10-04] D2.** 上屏三行，各挂在一句上：(x²−3)/2 在 x²=3 时 = 0、在 x²=5 时 = 1；0 < (x²−3)/2 < 1；|p(x)| < |x|。
+> 建议拆成三个 say()（按上面的三段）。
 
-### the_gap 02 <!-- #7b3eda -->
-That suggests a plan. If the size keeps getting smaller, then sooner or later it drops below square root of three. And inside square root of three we already know everything. A positive value goes to plus one. By the mirror rule, a negative value goes to minus one. So we only have to follow a start until it gets inside, and see on which side it arrives.
+### the_gap 02 <!-- #94820b -->
+That suggests a plan. Suppose the size shrinks far enough to drop below square root of three. Inside square root of three we already know everything. A positive value goes to plus one. By the mirror rule, a negative value goes to minus one.
+So we only have to follow a start until it gets inside, and see on which side it arrives.
+> **[10-04] D3.** 原来说 "sooner or later it drops below"，这一点要到 12 场才证出来，所以改成 "Suppose"。
+> 上屏：数轴上 (−√3, √3) 一段，右半 teal 标 +1，左半 gold 标 −1。
 
 ### the_gap 03 <!-- #cfa696 -->
 Try it on the cobweb picture. Start at two point zero. Go down to the curve, which gives minus one. Then across to the diagonal. Minus one is inside, on the negative side, and it is already a fixed point. So two point zero ends at minus one, after one flip.
 
 ### the_gap 04 <!-- #e5a13d -->
-Now two point two. Down to the curve, at minus two point zero two. That is smaller in size than two point two, but it is still outside. So go across to the diagonal and step again. This time the curve sends it up, to plus one point one one. Now it is inside, on the positive side, and from there it settles at plus one. Two flips, and a different ending.
+Now two point two. Down to the curve, at minus two point zero two. That is smaller in size than two point two, but it is still outside.
+So go across to the diagonal and step again. This time the curve sends it up, to plus one point one one. Now it is inside, on the positive side, and from there it settles at plus one. Two flips, and a different ending.
 
 ### the_gap 05 <!-- #1a1355 -->
 And two point two three, just a little further out. Minus two point two zero. Then plus two point zero two. Then minus one point one zero. It takes three flips to get inside, it arrives on the negative side, and it ends at minus one.
@@ -571,22 +715,33 @@ So each stripe is a flip count. One flip, two flips, three flips, and so on. Two
 > **Animation.** Mirror rule and the two bookkeeping lines; the part of the curve below the axis flips up; shrink/grow parts coloured, dot at √5; cobweb on the folded curve; then the stretched picture of the gap (x from 1.65 to 2.3) with the level line √3, the point b₁, the first stripe on the x-axis and where it lands on the y-axis; the equation and the two tries.
 
 ### first_boundary 01 <!-- #8c9a27 -->
-Following the sign and the size together on this picture gets messy. But the mirror rule lets us take them apart. A negative value moves exactly like its positive twin, with the sign flipped. So the size follows a rule of its own. The next size is the size of p of x. And the sign we can simply count. Every step that starts outside square root of three is one flip.
+Following the sign and the size together on this picture gets messy. But the mirror rule lets us take them apart. A negative value moves exactly like its positive twin, with the sign flipped.
+So the size follows a rule of its own. The next size is the size of p of x. And the sign we can simply count. Every step that starts outside square root of three is one flip.
 
 ### first_boundary 02 <!-- #81ad2b -->
 So fold the picture. We only need positive sizes, so look at the right half. Wherever the curve dips below the axis, flip that part up. This folded curve answers one question. If the size is x now, what is the size after one step?
 
 ### first_boundary 03 <!-- #0b2bd6 -->
-Now compare it with the diagonal, where the size would stay the same. Between square root of three and square root of five, the folded curve is below the diagonal. The size after the step is smaller than the size before. Beyond square root of five it is above the diagonal, and the size grows. They meet exactly at square root of five.
+Now compare it with the diagonal, where the size would stay the same. Between square root of three and square root of five, the folded curve is below the diagonal. The size after the step is smaller than the size before. Beyond square root of five it is above the diagonal, and the size grows.
+They meet exactly at square root of five.
 
 ### first_boundary 04 <!-- #5dfaf7 -->
-And the cobweb works on the folded picture too. Start at two point two. Up to the folded curve, at two point zero two. Across to the diagonal, and then to the curve again, at one point one one. Now we are inside, and the size climbs to one. Two of these steps started outside square root of three. So two flips, and the sign ends up positive.
+And the cobweb works on the folded picture too. Start at two point two. Up to the folded curve, at two point zero two. Across to the diagonal, and then to the curve again, at one point one one.
+Now we are inside, and the size climbs to one. Two of these steps started outside square root of three. So two flips, and the sign ends up positive.
 
-### first_boundary 05 <!-- #3c6e67 -->
-Now zoom in on the gap, and stretch it sideways so we can see. When does a start need exactly one flip? When its first step already lands inside, at a size below square root of three. So draw that level as a horizontal line. The folded curve climbs through it at one point. Call that start b one, b for boundary. A start to the left of b one lands below the line. One flip, and it is inside, on the negative side, so it ends at minus one. This is the first stripe.
+### first_boundary 05 <!-- #d8a8c8 -->
+Now zoom in on the gap, and stretch it sideways so we can see. Start with the simplest case. Which starts get inside in a single step? Those whose size after one step is below square root of three. So draw that level as a horizontal line.
+How often does the folded curve cross this line? Look at its formula, x times the size factor. As x moves to the right through the gap, x gets bigger, and the size factor gets bigger too. So their product only goes up. It starts at height zero, at square root of three, and it ends at height square root of five. Our line lies between those two heights. And a curve that only goes up passes each height once. So it crosses the line at exactly one point.
+Call that start b one, b for boundary. Its size after one step is exactly square root of three. And in the gap, p is negative. So p of b one is minus square root of three.
+Now take any start between square root of three and b one. It is to the left of the crossing, so its step lands below the line, on the negative side. That is somewhere between minus square root of three and zero. It is inside, and it is negative, so it ends at minus one. One flip. This is the first stripe.
+> **[10-04] D4–D6，手写稿标了 "explain closely" 的地方。** 拆成四个 say()（按上面的四段）。
+> 上屏：(1) 问题 |p(x)| < √3 ？和水平线；(2) x ↑、(x²−3)/2 ↑ ⇒ |p(x)| ↑，曲线两端标高度 0 和 √5，镜头推到交点；
+> (3) |p(b₁)| = √3，然后变成 p(b₁) = −√3；(4) (√3, b₁) → (−√3, 0) → −1，x 轴上的第一条条纹搬到纵轴上。
+> 新断言：|p| 在 [√3, √5] 上单调递增。
 
-### first_boundary 06 <!-- #cb1a5b -->
-Where is b one exactly? Its size after one step must be square root of three. With the size factor, that is b, times b squared minus three, over two, equals square root of three. Multiply by two, and we get b cubed, minus three b, equals two times square root of three, which is about three point four six. This has no tidy answer, so try values. Two point one gives two point nine six, which is too small. Two point two gives four point zero five, which is too big. Closing in between them gives about two point one four eight.
+### first_boundary 06 <!-- #f2aea1 -->
+Where is b one exactly? Its size after one step must be square root of three. With the size factor, that is b, times b squared minus three, over two, equals square root of three. Multiply by two, and we get b cubed, minus three b, equals two times square root of three, which is about three point four six.
+There is an exact formula for this b, built from cube roots, but it does not tell us much. So just try values. Two point one gives two point nine six, which is too small. Two point two gives four point zero five, which is too big. Closing in between them gives about two point one four eight.
 
 ### first_boundary 07 <!-- #6b9f0a -->
 That fits what we saw. One point eight and two point zero are both below b one, in the first stripe, and both ended at minus one. Two point two is above b one. Its first step did not get inside, and it needed a second flip.
@@ -603,14 +758,22 @@ That fits what we saw. One point eight and two point zero are both below b one, 
 ### basins 01 <!-- #9eed20 -->
 Now the starts above b one. Their first step does not get inside. But we do not have to follow them all the way. Suppose the first step lands, in size, somewhere in the first stripe. We already know the first stripe. From there it takes one more flip to get inside. So such a start flips exactly twice.
 
-### basins 02 <!-- #5fbd24 -->
-Which starts are those? Read it off the picture. On the vertical axis, the first stripe is the band of sizes from square root of three up to b one. The folded curve passes through that band. It enters at b one, and it leaves at a new point, where its height is exactly b one. Call that point b two. So every start between b one and b two lands in the first stripe. Two flips, an even number, so it ends at plus one. This is the second stripe.
+### basins 02 <!-- #c00dd2 -->
+Which starts are those? Read it off the picture. On the vertical axis, the first stripe is the band of sizes from square root of three up to b one. The folded curve only goes up, so it passes through that band once. It enters at b one, where its height is square root of three. And it leaves where its height is exactly b one. Call that point b two.
+So the size of p of b two is b one. The start is positive and the step flips it, so p of b two is minus b one.
+Now take any start between b one and b two. Its step lands between minus b one and minus square root of three. That is the first stripe, mirrored. From there it takes one more flip, so two flips in all, an even number. It ends at plus one. This is the second stripe.
+> **[10-04] D7.** 拆成三个 say()。上屏：|p(b₂)| = b₁ 变成 p(b₂) = −b₁；(b₁, b₂) → (−b₁, −√3)。
 
 ### basins 03 <!-- #d758fb -->
-Check it with two point two. It sits between b one and b two. Its first step has size two point zero two. And two point zero two lies between square root of three and b one, in the first stripe. So one more flip, and it is inside. That is the two flips we counted, and it ended at plus one.
+Check it with two point two. It sits between b one and b two. Its first step has size two point zero two. And two point zero two lies between square root of three and b one, in the first stripe.
+So one more flip, and it is inside. That is the two flips we counted, and it ended at plus one.
 
-### basins 04 <!-- #4bc08a -->
-And the same step works again. Starts that land in the second stripe need one flip more than the second stripe does, so three flips. The curve leaves that band where its height is b two. Call that point b three. The starts between b two and b three are the third stripe, and they end at minus one. Each new stripe is carried onto the stripe before it, so it needs exactly one more flip.
+### basins 04 <!-- #1866f8 -->
+And the same step works again. Starts that land in the second stripe need one flip more than the second stripe does, so three flips. The curve leaves that band where its height is b two. Call that point b three. So p of b three is minus b two. The starts between b two and b three are the third stripe, and they end at minus one.
+Put the three edges next to each other. p of b one is minus square root of three. p of b two is minus b one. p of b three is minus b two. One step sends each edge to the edge before it, with the sign flipped.
+And nothing stops us from going on. So we get a whole list of edges. Square root of three, then b one, b two, b three, and so on. Each new stripe is carried onto the stripe before it, so it needs exactly one more flip.
+> **[10-04] D8.** 拆成三个 say()。上屏：三个式子竖排 p(b₁) = −√3、p(b₂) = −b₁、p(b₃) = −b₂，然后收成一行 p(b_{n+1}) = −b_n；
+> 数列 √3, b₁, b₂, b₃, … 排成一排。讲 b₃ 时镜头推到 √5 附近（b₃ 和 √5 只差 0.002）。
 
 ### basins 05 <!-- #19bd55 -->
 Each edge is found like b one, by trying values. b one is about two point one four eight. b two is about two point two two one. b three is about two point two three four. They creep up toward square root of five, which is two point two three six.
@@ -621,8 +784,12 @@ So here are all the stripes on one line. Stripe number n flips n times. An odd n
 ### basins 07 <!-- #477d72 -->
 The stripes pile up against square root of five. Zoom in, and the same pattern shows up again and again.
 
-### basins 08 <!-- #95db52 -->
-Why do the stripes get thin so quickly? Near square root of five the folded curve is steep. From two point two to two point two three, the start moves by zero point zero three. But the size after the step moves from two point zero two to two point two zero, which is zero point one eight. That is six times as far. So one step stretches a stripe to six times its width. And the stretched stripe has to fit exactly onto the stripe before it. So each stripe is only about a sixth as wide as the one before.
+### basins 08 <!-- #30781b -->
+Why do the stripes get thin so quickly? Near square root of five the folded curve is steep. From two point two to two point two three, the start moves by zero point zero three.
+But the size after the step moves from two point zero two to two point two zero, which is zero point one eight. That is six times as far.
+So one step stretches a stripe to about six times its width.
+Where does the six come from? Do what we did at zero and at one. Put square root of five plus a small e into p, and drop the terms with e squared and e cubed. Out comes minus square root of five, minus six e. So next to square root of five, one step multiplies a small distance by six, exactly.
+And the stretched stripe has to fit onto the stripe before it. So each stripe is about a sixth as wide as the one before, and the closer to square root of five, the closer to exactly a sixth.
 
 ## 12 · boundary_points — Do the stripes fill the gap? And the edges
 
@@ -633,17 +800,32 @@ Why do the stripes get thin so quickly? Near square root of five the folded curv
 > **Numbers used.** b₁ → −√3 → 0. b₂ → −b₁ → √3 → 0. b₃ → −b₂ → b₁ → −√3 → 0.
 > **Animation.** The corner of the gap picture next to √5 (x from 2.05 to 2.26); the staircase drawn step by step; the dot at √5; then three number lines with the hopping edges and their chains; two nudged starts rolling to −1 and +1.
 
-### boundary_points 01 <!-- #b8d83c -->
-One question is still open. Do the stripes really fill the whole gap? Or is there a last piece, right next to square root of five, that no stripe ever reaches? Look at how we found the edges. Here is the corner of the picture next to square root of five. Start at the height square root of three, and go across to the folded curve. That is b one. Go up to the diagonal, and across to the curve again. That is b two. The edges are a staircase, squeezed between the curve and the diagonal.
+### boundary_points 01 <!-- #8ff930 -->
+One question is still open. Do the stripes really fill the whole gap? Or is there a last piece, right next to square root of five, that no stripe ever reaches?
+The stripes end at the edges. So this is a question about our list of edges, square root of three, b one, b two, and so on. Do the edges get all the way up to square root of five?
+Look at how we found them. Here is the corner of the picture next to square root of five. Start at the height square root of three, and go across to the folded curve. That is b one. Go up to the diagonal, and across to the curve again. That is b two. The edges are a staircase, squeezed between the curve and the diagonal.
+> **[10-04] D9.** 拆成三个 say()。第二段时把问题单独放在屏幕上：√3, b₁, b₂, … → √5 ？然后停 1.5 秒。
+> 角落图从上一张图连续推进过来，不清屏。
 
-### boundary_points 02 <!-- #f1c72f -->
-Every step of the staircase moves to the right, and it can never get past square root of five. So the edges close in on some point. At that point the staircase has no room left, which means the curve touches the diagonal there. And in the gap, the only place where the curve touches the diagonal is square root of five itself. So the edges come as close to square root of five as we like. Every start below square root of five is passed by some edge, so it lies in some stripe. The stripes fill the whole gap.
+### boundary_points 02 <!-- #fbb48b -->
+First, can an edge ever reach square root of five? The folded curve only goes up, and it gets to the height square root of five only at the very end of the gap. Each new edge is where the curve reaches the height of the edge before. If that height is below square root of five, the curve reaches it before the end of the gap. So the new edge is below square root of five as well. The list starts at square root of three, which is below. So every edge stays below square root of five.
+Next, does the list always go up? One step takes each edge to the size of the edge before it. Every edge is in the gap, and in the gap a step makes the size smaller. So the edge before is the smaller one. Each edge is bigger than the last.
+So the edges keep rising, and they can never pass square root of five. A list of numbers that only rises, under a ceiling it cannot pass, has to settle toward some value. Call that value L.
+Where is L? Far down the list, an edge and the one after it are both as close to L as we like. One step takes the later one to the size of the earlier one. Now p is a polynomial, so a tiny change in the input makes only a tiny change in the output. So one step from L itself lands as close as we like to a value of size L. And a fixed number that is as close as we like to L can only be L. So one step takes L to a value of the same size, L. That means the size factor at L is exactly one. We have met that before. L squared minus three, over two, equals one, so L squared is five. L is square root of five. On the picture, that is where the folded curve meets the diagonal.
+So the edges come as close to square root of five as we like. Every start below square root of five is passed by some edge, so it lies in some stripe. The stripes fill the whole gap. We now know where every start in the gap ends up.
+> **[10-04] D10–D14.** 拆成五个 say()（按上面的五段）。上屏，一段一行，写在楼梯图右边：
+> (1) b_n < √5 ⇒ b_{n+1} < √5；(2) b_n = |p(b_{n+1})| < b_{n+1}；(3) √3 < b₁ < b₂ < … < √5 ⇒ b_n → L；
+> (4) L · (L²−3)/2 = L ⇒ (L²−3)/2 = 1 ⇒ L² = 5 ⇒ L = √5，同时在图上点亮 (√5, √5)；(5) 所有条纹一起亮一次。
+> 顺序是先有界、后递增：b_{n+1} 存在要用到 b_n < √5。
+> **唯一不证明的事实**：只升且有上界的数列会收拢到某个值（第三段）。p 的连续性现在说了一句（多项式：输入变一点，输出只变一点）。
+> 新断言：b_n 递增、b_n < √5、(√5² − 3)/2 = 1。
 
 ### boundary_points 03 <!-- #62fe7d -->
 And what about the edges themselves? Take b one. Its first step lands exactly on minus square root of three. And we know what happens at square root of three. The next step gives exactly zero, and by the mirror rule the same holds for minus square root of three. So b one ends on zero, and stays there.
 
 ### boundary_points 04 <!-- #ba4456 -->
-b two lands on minus b one, and from there it follows the path of b one with the sign flipped. So it takes one step more. And b three takes one step more again. Every edge reaches plus or minus square root of three after a few steps, and then it sits on zero forever. An edge never reaches one or minus one.
+b two lands on minus b one, and from there it follows the path of b one with the sign flipped. So it takes one step more. And b three takes one step more again. Every edge reaches plus or minus square root of three after a few steps, and then it sits on zero forever.
+An edge never reaches one or minus one.
 
 ### boundary_points 05 <!-- #ea416e -->
 Should that worry us? Not much. Each edge is a single point, and zero is the top of the hill. Move the start by the tiniest amount, and it is inside a stripe on one side or the other, and it rolls down to plus one or minus one.
@@ -689,10 +871,11 @@ This one, at two point nine, would explode. And one that sits in a gold stripe w
 That is easy to do. Divide W by a number, and every singular value is divided by that number, while U and V transpose stay exactly the same. Our target, U times V transpose, does not change at all.
 > screen: Create, FadeIn
 
-### back_to_matrix 03 <!-- #22d274 -->
+### back_to_matrix 03 <!-- #dd42cc -->
 Which number? Dividing by the largest singular value would be ideal, because then everything is at one or below. But finding the largest singular value takes the very SVD we are trying to avoid.
 There is a cheap stand-in, called the Frobenius norm. Square every entry of W, add them all up, and take the square root. That only needs the entries, so it costs almost nothing.
-And it is big enough. The sum of the squared entries always equals the sum of the squared singular values. That sum already contains the largest one squared, plus more. So its square root, the Frobenius norm, is never smaller than the largest singular value.
+And it is big enough. Here is why. The sum of the squared entries of a matrix is the sum of the squared lengths of its columns. A rotation on the left turns every column without changing its length, so that sum stays the same. A rotation on the right does the same to the rows. So W, which is U, sigma, V transpose, has the same sum as sigma alone.
+And sigma holds only the singular values, so the sum of the squared entries equals the sum of the squared singular values. That sum already contains the largest one squared, plus more. So its square root, the Frobenius norm, is never smaller than the largest singular value.
 > screen: FadeOut, Write
 
 ### back_to_matrix 04 <!-- #39d19b -->
@@ -703,11 +886,23 @@ Here the Frobenius norm comes out to about three point four five, a bit more tha
 Two point nine becomes zero point eight four, and the others are smaller still. Now every singular value sits between zero and one, safely below square root of three.
 > screen: *[d.animate.move_to
 
-### back_to_matrix 06 <!-- #777d57 -->
+### back_to_matrix 06 <!-- #f6864f -->
 Now apply our matrix step, three halves W, minus one half W, W transpose, W, again and again. It needs nothing but matrix products. And each time, every singular value goes through p once.
-So each singular value climbs to plus one. The small ones start slowly, growing by about one and a half times per step as zero point one did, but they all arrive.
-And all along, U and V transpose never changed. So the middle is now all ones, and W has become U times V transpose.
+So each singular value climbs to plus one. The small ones start slowly, growing by about one and a half times per step as zero point one did, but they all arrive. The one exception is a singular value of exactly zero. Zero is a fixed point, so it stays at zero.
+And all along, U and V transpose never changed. So when no singular value is zero, the middle is now all ones, and W has become U times V transpose.
 > screen: FadeIn
 
 ### back_to_matrix 07 <!-- #40417c -->
 The ellipse has become a circle. All it took was matrix products, and a cubic built from two simple wishes.
+
+## closing — The method in two lines, and the answer to the title
+
+> **Purpose.** The closing card, right after the ellipse has become a circle. Not a recap list: scene 13 already gave the full table.
+> **Logic chain.** The circle stays on screen → the whole method is two lines (divide once, then repeat the step) → the title's question, answered in one sentence.
+> **Opening card.** The title card has no line here. The voice only says the title, "Newton–Schulz. Where does a singular value go?" (set in `opening()` in the code).
+
+### closing 01 <!-- #a711a6 -->
+So the whole method is two lines. Divide W by its Frobenius norm, once. Then apply the step, again and again.
+
+### closing 02 <!-- #bf713b -->
+And where does a singular value go? After that first division, every one of them goes to one.

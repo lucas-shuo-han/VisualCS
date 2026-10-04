@@ -54,7 +54,7 @@ The solution's line for (e), "for σ > √3, σ will either converge to −1 or 
 is too coarse: (b1, b2) ∋ 2.2 goes to +1 (§8).
 The Frobenius-norm scaling in §13 is standard practice, not stated in the solution.
 
-All numbers on screen are computed in `ep01_newton_schulz.py`; the b_n values, flip
+All numbers on screen are computed in `ns_common.py` and the three `epNN_*.py` files; the b_n values, flip
 counts, basin fates, the easy starts and the ratio 6 are asserted at import time.
 
 ## Editing the narration
