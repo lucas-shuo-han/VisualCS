@@ -112,3 +112,26 @@
   matches in "寄存器x5里". Use `flags=re.ASCII` for anything that runs on CJK text.
 - Shell heredocs mangle backslashes (`\b` became a backspace character): edit Python
   source with a file-editing tool, not `sed`/heredocs, when it contains regexes.
+
+## Second-round lessons (Newton–Schulz revision)
+- **LaTeX fails with "does not support converting .dvi files to SVG"** when the working
+  directory *or the media directory* is on another drive than the system one (MiKTeX's
+  dvisvgm, Windows). preview.py already works from the temp folder; for `render.py` set
+  `MANIM_CWD` and `--media` to a folder on the system drive and `KIT_TTS_CACHE` to the
+  project's cache so no clip is synthesized twice.
+- **The shell collapses `\\` to `\`** in heredocs and `sed` scripts: `"\\t"` in a patch
+  became a tab inside a Python string, and a line break appeared inside a literal. Write
+  patch scripts and anything with LaTeX or regexes with the file-writing tool.
+- **Do not start the final render before the voice and speed are chosen.** A change of
+  either invalidates every clip and every duration; two long renders were stopped and
+  thrown away for this.
+- **`speak=` must match the text sentence for sentence**, because each sentence is
+  synthesized alone. A mismatch is reported at render time and by `narration.py check`.
+- **Subtitle spans inside one sentence**: when a long sentence is cut at commas, give
+  each part its share of the sentence's whole span, computed once. Recomputing the span
+  from a moving start made each later part shorter than the one before.
+- **A preview of one scene can show things the full episode does not** (a corner formula
+  restored for a scene that never had it). Restore shared objects only for the scenes
+  that follow the one that creates them.
+- **A file-size limit of an upload tool is not something to work around** by cutting the
+  file into pieces. Ask the user to drag the files in, then fill in the form.

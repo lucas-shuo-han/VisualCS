@@ -11,6 +11,7 @@ video with the user over several rounds, read `derivation-episodes.md` as well.
 4. The review pass (writing + coverage + voice)
 5. Keeping the user in the loop
 6. Delivery checklist
+7. Publishing (YouTube and the like)
 
 ---
 
@@ -116,12 +117,48 @@ Run it per episode (or per pair) after the episode renders cleanly:
 - [ ] `i18n_check.py SRC` ok for every episode (bilingual).
 - [ ] Final render: `render.py SRC --out videos/<course>-<unit>` (voice on by default).
 - [ ] A 1080p contact sheet spot check of two or three episodes; play one start to end
-      with sound.
+      with sound. `pace.py` on the output folder; put the numbers in the report.
 - [ ] Narration scripts: `srt_to_script.py videos/<...>/<lang> <unit>/SCRIPT.<lang>.md`.
 - [ ] README: episode table (title + what it covers, per language), how to re-render,
       how to add a translation or change a pronunciation.
-- [ ] Remove superseded videos from git (old renders) rather than leaving two sets.
+- [ ] Superseded videos (old renders): ask before removing them. One user wanted the old
+      single episode kept beside the new three.
 - [ ] Commit code, tables, videos (~8–20 MB per episode at 1080p), subtitles, scripts.
 - [ ] Final message: where the videos are, the episode list, the coverage table or a
       pointer to it, notes errors found, limitations (e.g. which content came from your
       own knowledge, anything unverified).
+
+## 7. Publishing (YouTube and the like)
+
+Only when the user asks, and with their account open in their own browser. Never ask
+for a password.
+
+- **Private first.** Upload as Private (or Unlisted) and let the user decide about
+  Public after watching it on the site.
+- **The user puts the files in.** Browser automation cannot hand a 20 to 50 MB video to
+  an upload dialog, and it must not be cut into pieces to get it through. Open the
+  upload dialog, ask the user to drag the files in, then fill in every field for them.
+- **Title**: the episode title with a part number. No other creator's name or logo in
+  the title or thumbnail.
+- **Description**, the same block on every episode after a one-line summary:
+  - an unofficial, student-made study video; not affiliated with, endorsed by or
+    reviewed by the university, the course or its staff; not official course material
+    and not a solution key; mistakes are the author's;
+  - how it was made: script and animation code with an AI coding assistant (name it),
+    directed and reviewed by the author; the narration is a synthetic voice; animated
+    with Manim Community Edition; style inspired by 3Blue1Brown, with no affiliation;
+  - thanks: the course staff, the Manim developers, whoever else helped;
+  - not monetized, and an offer to change or remove on request;
+  - a link to the code if the repository is public (check; do not assume).
+- **Settings**: not made for kids; no paid promotion; leave monetization untouched.
+  Answer the platform's AI-use question as it is worded. YouTube's asks about realistic
+  altered or synthetic content (a real person, real footage, a realistic scene); an
+  abstract animation with a synthetic narrator is "No" there, and the description
+  carries the plain disclosure. Tell the user which answer you chose and why.
+- **Risks to raise before uploading**, so the user decides: whether the course allows
+  solutions or walkthroughs of its problems to be posted (and whether official solutions
+  are already out); the licence terms of the voice engine, which matter more once a
+  video earns money; any figure or text copied from the notes.
+- Keep the browser tab in the foreground while filling the form: a background tab stops
+  rendering and typed text is lost. Read each field back after filling it, and confirm
+  the saved visibility on the content list.

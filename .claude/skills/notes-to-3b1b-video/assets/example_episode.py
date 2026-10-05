@@ -60,7 +60,7 @@ class Ep01BinarySearch(NarratedScene):
     def idea(self):
         head = self.heading("The idea")
         row = self.cells()
-        # One beat = a few sentences spoken as one clip. say() starts it with the first
+        # One beat = a few sentences, spoken one after another with a pause after each. say() starts it with the first
         # animation; cue() plays each further step when the voice reaches those words.
         self.say("Here is a sorted list of ten numbers, and we want to know whether twenty-three "
                  "is in it. Checking them one by one could take ten comparisons. "

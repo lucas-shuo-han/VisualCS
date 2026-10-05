@@ -12,7 +12,10 @@ Body vs notes (what the renderer reads / ignores):
     "## " scene headings and the intro  -> NOTES
 
 Commands (run from the repo root with the venv python):
-    narration.py check          validate the file (lengths, stale lines, empties)
+    narration.py check          validate the file (lengths, stale lines, empties, cue() phrases)
+    narration.py rebind         after a deliberate change of a say() text in the code: keep the file's
+                                wording and point its heading at the code again
+    narration.py paragraphs     break long one-line beats into paragraphs (longer pauses of the voice)
     narration.py sync           rebuild/merge narration.md from the code + last dump
     KIT_NARRATION_DUMP=/tmp/d.jsonl  render ...   records the text each say() shows
 """
@@ -85,7 +88,12 @@ def sites(path) -> list[dict]:
                     continue
                 count[fn.name] = count.get(fn.name, 0) + 1
                 speak = next((_template(k.value) for k in n.keywords if k.arg == "speak"), None)
-                out.append(dict(
+                # the cue() phrases that belong to this say(): those before the next say() of the method
+                nxt = min((c.lineno for c in calls if c.lineno > n.lineno), default=10 ** 9)
+                cues = [c.args[0].value for c in ast.walk(fn)
+                        if isinstance(c, ast.Call) and isinstance(c.func, ast.Attribute) and c.func.attr == "cue"
+                        and c.args and isinstance(c.args[0], ast.Constant) and n.lineno < c.lineno < nxt]
+                out.append(dict(cues=cues,
                     method=fn.name, n=count[fn.name], start=n.lineno, end=n.end_lineno,
                     template=tpl, speak=speak, hash=hashlib.sha1(tpl.encode()).hexdigest()[:6],
                     screen=[ast.unparse(a) for a in n.args[1:]]))
@@ -161,7 +169,7 @@ def apply(frame, text, speak):
         print(f"[narration] {s['method']} {s['n']:02d}: code changed since the file was "
               f"synced; using the code's text (run narration.py sync)", file=sys.stderr)
         return text, speak
-    return " ".join(e["body"]), e["speak"]
+    return "\n".join(e["body"]), e["speak"]
 
 
 # ------------------------------------------------------------------ commands
@@ -227,8 +235,71 @@ def sync(dump_path=None, titles=None):
     print(f"wrote {MD} ({len(kept)} lines, {len(lost)} orphaned)")
 
 
+def all_sites() -> dict:
+    """Every say() of every episode file, by (method, n). Method names are unique across episodes."""
+    return {(s["method"], s["n"]): s for f in SCRIPTS for s in sites(f)}
+
+
+def rebind():
+    """After the code's say() text changed on purpose: point each heading in narration.md at
+    the code again (rewrite the #hash), keeping the wording that is in the file."""
+    st = all_sites()
+    out, n = [], 0
+    for raw in MD.read_text(encoding="utf-8").splitlines():
+        m = HEAD.match(raw)
+        if m and (m[1], int(m[2])) in st and st[(m[1], int(m[2]))]["hash"] != m[3]:
+            raw = f"### {m[1]} {int(m[2]):02d} <!-- #{st[(m[1], int(m[2]))]['hash']} -->"
+            n += 1
+        out.append(raw)
+    MD.write_text("\n".join(out) + "\n", encoding="utf-8")
+    print(f"rebound {n} heading(s)")
+
+
+def _sentences(text):
+    return [x for x in re.split(r"(?<=[.?!])\s+(?=[A-Z\"“(])", text.strip()) if x]
+
+
+_TURN = re.compile(r"(So|But|Now|Then|Next|What|Where|Why|Which|How|Check|Start|And yet|From there|This time|"
+                   r"On the graph|On the picture|In the gap|That is why|To find|For example)\b")
+
+
+def paragraphs(min_words=60):
+    """Break long one-line beats into paragraphs (a paragraph break is a longer pause of the
+    voice): at a sentence that starts a new thought once the paragraph has 28 words, and in
+    any case after 55. Beats that already have line breaks are left alone."""
+    out, n, lines = [], 0, MD.read_text(encoding="utf-8").splitlines()
+    in_entry, body_at = False, []
+    for i, raw in enumerate(lines):
+        if HEAD.match(raw):
+            in_entry, body_at = True, []
+        elif raw.startswith("## "):
+            in_entry = False
+        s = raw.strip()
+        plain = in_entry and s and not HEAD.match(raw) and not s.startswith((">", "//", "<!--")) \
+            and not s.lower().startswith("speak:")
+        if plain:
+            body_at.append(i)
+        out.append(raw)
+        last = i + 1 == len(lines) or HEAD.match(lines[i + 1]) or lines[i + 1].startswith("## ")
+        if in_entry and last and len(body_at) == 1 and len(lines[body_at[0]].split()) > min_words:
+            paras, cur = [], []
+            for sent in _sentences(lines[body_at[0]]):
+                words = sum(len(x.split()) for x in cur)
+                if cur and (words >= 55 or (words >= 28 and _TURN.match(sent))):
+                    paras.append(" ".join(cur))
+                    cur = []
+                cur.append(sent)
+            paras.append(" ".join(cur))
+            if len(paras) > 1:
+                k = len(out) - (i - body_at[0]) - 1
+                out[k:k + 1] = paras
+                n += 1
+    MD.write_text("\n".join(out) + "\n", encoding="utf-8")
+    print(f"split {n} long beat(s) into paragraphs")
+
+
 def check():
-    st = {(s["method"], s["n"]): s for s in sites(SCRIPTS[0])}
+    st = all_sites()
     _, ents = parse()
     bad = 0
     words = 0
@@ -249,6 +320,13 @@ def check():
         if len(text) > MAX_CAPTION and _burned():   # .srt-only subtitles are split per sentence
             print(f"LONG      {key[0]} {key[1]:02d}: {len(text)} chars (max {MAX_CAPTION}): {text[:50]}...")
             bad += 1
+        for phrase in s["cues"]:
+            if phrase not in text:
+                print(f"CUE       {key[0]} {key[1]:02d}: the animation waits for words that are gone: {phrase!r}")
+                bad += 1
+        if e["speak"] and len(_sentences(e["speak"])) != sum(len(_sentences(b)) for b in e["body"]):
+            print(f"SPEAK     {key[0]} {key[1]:02d}: speak: must have as many sentences as the text")
+            bad += 1
         if re.search(r"[{}]", text):
             print(f"BRACES    {key[0]} {key[1]:02d}: unresolved {{}} in text")
             bad += 1
@@ -265,5 +343,9 @@ if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "check"
     if cmd == "sync":
         sync(sys.argv[2] if len(sys.argv) > 2 else DUMP)
+    elif cmd == "rebind":
+        rebind()
+    elif cmd == "paragraphs":
+        paragraphs()
     else:
         sys.exit(1 if check() else 0)
