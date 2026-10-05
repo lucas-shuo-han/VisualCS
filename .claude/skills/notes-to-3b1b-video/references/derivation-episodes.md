@@ -4,7 +4,8 @@ Lessons from the Newton–Schulz episode (CS182): one 35-minute derivation in 14
 taken from a rough 14-minute "announce the result" video to a step-by-step lesson over
 several rounds of user review. Read this when an episode is one long argument (a proof,
 a design derivation, an analysis by cases) rather than a tour of facts, or when the user
-says an existing video is too rough, too fast, or "just states things".
+says an existing video is too rough, too fast, or "just states things". §8 is what a
+second review of the finished video found, and how those notes were handled.
 
 ## Contents
 1. The story: derive, never announce
@@ -14,6 +15,7 @@ says an existing video is too rough, too fast, or "just states things".
 5. Fast review loop
 6. Checks before you hand anything over
 7. What it costs
+8. Review notes on a finished video
 
 ## 1. The story: derive, never announce
 
@@ -63,8 +65,23 @@ the previous sentence just produced.**
   later step a picture.
 - **Arithmetic on screen, in steps.** 1.5 · 1.8 = 2.7, then 0.5 · 1.8³ = 2.92, then the
   difference. Three lines appearing one at a time, each when it is said.
-- **Zoom when the picture is cramped.** A second, closer set of axes for the part where
-  everything piles up (the staircase of edges near √5), instead of smaller labels.
+- **Zoom when the picture is cramped**, and make the zoom a movement. A cut to a
+  second, closer set of axes was read as a change of subject: the viewer could not tell
+  which part of the old picture the new one was. Either move the camera
+  (`zoom_to`), or frame the region with a box and let the box grow into the new axes
+  (`visual-patterns.md` §8).
+- **The step the user marks "explain closely" gets its own lines.** For p(b₁) = −√3 that
+  meant saying why the size is rising on the whole interval (both factors grow), why it
+  therefore crosses the level once, and why the sign is minus. Each is one line on
+  screen and one sentence.
+- **Write the argument down as it is spoken.** A proof told only through pictures
+  ("the staircase has no gap") left the user saying the derivation was missing. The
+  picture stays on the left; on the right the lines appear one by one: the claim, the
+  recurrence, increasing, bounded, so it converges, the limit equation, the limit.
+- **Name what is used without proof**, and keep that list as short as you can. After
+  three passes one fact was left (an increasing sequence with an upper bound
+  converges); continuity of the map, the norm identity and the non-square case each got
+  one sentence instead of silence.
 - All numbers computed and asserted in code, including the rounded forms the voice says.
 
 ## 3. Words first, then animation on the words
@@ -156,3 +173,69 @@ def construct(self):
   what to cut after watching, not before.
 - First voiced render of new text takes minutes per scene (synthesis); later renders
   about one to two minutes per scene without the animation cache.
+- A final 1080p render of 50 minutes in three parallel jobs took about 40 minutes.
+  Changing the voice or its speed afterwards costs all of it again.
+
+## 8. Review notes on a finished video
+
+The user watched the 35-minute episode and wrote five lines: the fonts differ, the
+animation does not zoom in at the key places or pick suitable points, why so fast, I
+want a pleasant male voice, a derivation is missing (with a photo of their own
+handwritten version). This is how such notes turn into work.
+
+**Write the revision plan before touching anything.** For each note: the cause in the
+code with file and line, the fix, the check. Terse notes hide concrete causes:
+
+| The note | What it turned out to be | The fix |
+|---|---|---|
+| "fonts are inconsistent" | Three typefaces on one frame: LaTeX in formulas, Pango sans in labels, monospace on axis ticks; √3 written two ways | `TEXT_FONT = "latex"`; labels through `txt()`, numbers through `num()`; font sizes cut to three tiers |
+| "no zoom at the key places, unsuitable points" | A scene class that cannot move its camera, so every "zoom" was a cut; example starts 2.2 and 2.23 drawn 0.03 apart | `zoom_to` at each crossing the argument rests on; box-grows-into-picture transitions; a magnified inset for the two close starts |
+| "why so fast" | 168 to 180 words per minute, 0.35 s between beats, 200-word beats spoken in one breath, cues timed by estimate | `PACE`, paragraphs, a slower rate, exact cue times (`narration-writing.md` §7) |
+| "a pleasant male voice" | The offline engine's default voice was female | `audition.py`, the user picks, `TTS` in series.py |
+| "derivation missing" | The argument was there, but only as pictures and two formulas | Fourteen lines on screen, each with its sentence (§2) |
+
+**Read a handwritten derivation critically.** The photo had a sign error in the first
+line, the wrong limit in two places, "uniform" for "monotone", and an inequality the
+wrong way round. List the corrections in the plan and ask the user to confirm them;
+keep their notation only where it does not clash with the video's (their b* was the
+video's b₁). Check every corrected claim numerically in the code with `assert`.
+
+**Order of work**, set by the user when they rejected the first plan: new content goes
+into the script first, code second.
+1. Commit the current state as a baseline. Put the plan at the top of `narration.md` as
+   a dated revision record.
+2. Script only: the new beats, the recaps and cards of new episodes, and under each
+   scene a note of what the picture must now show.
+3. Voice and speed by ear (`audition.py`), while the script is being read.
+4. Structure: split files, `series.py`, shared helpers in one module.
+5. Pace, typeface, then the new derivation scenes, then the camera. One scene at a
+   time with `preview.py`, frames inspected after each.
+6. One final render; `pace.py`; update videos, `.srt`, README.
+Work on the next step while the user is listening to the previous one. Ask before
+deleting the superseded video; here the answer was to keep it.
+
+**Splitting into episodes.** Once slower speech pushes a derivation past about 25
+minutes, split it where the viewer has a new question, not by length: you could have
+invented p (11 min) / where does one value go (19 min) / what happens in the gap
+(23 min). Each episode ends by asking the next one's question and gives no answer. Each
+later episode opens with a recap of two or three sentences that states only results,
+and redraws what it needs (the graph, the one formula), because nothing is left on the
+stage from before. Method names stay unique across the episode files so `narration.md`
+and `preview.py` can address a scene by name.
+
+**A last pass for rigour and clarity**, which the user asked for by name ("anything not
+mathy enough, or not told clearly"). What it found:
+- an approximation where the exact expression is just as short: p(1 + e) = 1 − 1.5e² − 0.5e³;
+- "there is no tidy answer" where a closed form exists (b₁ as a sum of two cube roots);
+- a number stated without its source (the factor 6 near √5 comes from p(√5 + e));
+- a general claim with an exception that was never mentioned (a singular value of 0);
+- a word used loosely (orthogonal, for a matrix that is not square);
+- a limit taken through a function without saying the function is continuous;
+- a "because" that was only an assertion ("so it has to settle somewhere").
+Report these to the user as a short list with a proposed sentence for each, and add
+them once approved.
+
+**Say plainly what was not done.** The plan aimed at 120 to 125 words per minute; the
+result was 135 to 150 after the user asked for a faster voice. The finished episodes
+were inspected frame by frame per changed scene but not watched end to end. Both went
+into the report.

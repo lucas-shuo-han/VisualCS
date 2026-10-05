@@ -48,7 +48,8 @@ Read this whole file before starting. Your task-specific instructions are in you
 
 ## Writing
 - Read `<skill>/references/narration-writing.md` first. The narration is written in **beats**:
-  one `say()` = two to four connected sentences about one picture, spoken as one clip; one
+  one `say()` = two to four connected sentences about one picture (a line break inside the
+  text is a paragraph: a longer pause); one
   `cue("phrase")` per thing the sentences mention, so the picture changes as it is named.
   Never one short sentence per `say()`, never a sentence split over two.
 - Sentences of 10–25 words (15–40 <CJK> characters), linked with "so / which means / now";

@@ -12,6 +12,7 @@ the LaTeX toolchain (`setup_env.sh --latex`); everything else only needs `Text`.
 5. Math: equations, plots, matrices (LaTeX)
 6. Deep learning: networks, gradients, attention
 7. Transitions and emphasis
+8. Camera moves and one typeface
 
 ---
 
@@ -64,7 +65,8 @@ Rules that prevented most layout bugs:
   keep labels short enough for both.
 
 Pacing: the voice sets it. `say()` first waits until the previous beat has been
-spoken (silent renders: its reading time, ~5 CJK chars/s or ~3.3 words/s), then
+spoken, plus the pause after a beat (silent renders estimate ~5 CJK chars/s or ~2.8
+words/s), then
 starts the new one; animations passed to `say()`, `cue()`s and plain `self.play()`
 calls after it run while it is spoken. `cue()` waits until the voice reaches its
 phrase. Use `self.hold()` when the viewer needs a moment to look at the result and
@@ -186,3 +188,38 @@ Ideas that work well for a deep-learning course:
 - `self.clear_stage(keep1, keep2)` between sections (keeps the caption).
 - `CurvedArrow(p, q, angle=±TAU/5)` for jumps/links; put it in a margin, not
   across text.
+
+## 8. Camera moves and one typeface
+
+`NarratedScene` is a `MovingCameraScene`. Use the camera where the argument rests on
+something small:
+
+```python
+self.say("The curve crosses the level root three exactly once.\nCall that point b one.", ...)
+self.cue("crosses the level", Flash(cross))
+self.zoom_to(cross, width=4.5)            # or zoom_to(group): frames it with a margin
+self.cue("Call that point", FadeIn(b1_label))
+self.hold(1.0)
+self.zoom_back()
+```
+
+- `self.pin(mob)` keeps a mobject where it is on the screen, at its size, while the
+  camera moves: the formula kept in a corner all episode, a side panel. The subtitle is
+  pinned for you.
+- Zooming makes strokes and text thicker. Up to about 3x this reads as emphasis. Past
+  that, draw a second set of axes for the region, and connect the two: a box around the
+  region on the old picture, then `ReplacementTransform(box, new_axes_frame)` while the
+  rest fades, so the viewer sees where the new picture came from. Never `clear_stage()`
+  and cut to the closer view.
+- Two values that differ by less than the width of a dot (2.2 and 2.23 on an axis from
+  −2.5 to 2.5) cannot both be followed on one picture. Follow one on the full picture
+  and the other in a magnified inset, or choose values the picture can tell apart.
+- Where a result is a crossing of two curves, go there and stop for a second before
+  moving on (`hold(1.0)`).
+
+One typeface: with `TEXT_FONT = "latex"` in series.py, `txt()` typesets prose with LaTeX
+(Unicode signs such as √3, −, σ, ≈ inside it become math) and `num()` typesets tick
+labels and values in math mode. Then a "2.2" on an axis, in a label and in a formula
+look the same. `mono()` stays monospace: use it for code only. Without the setting a
+frame can easily carry three typefaces (formula, label, tick), which the user saw at
+once. Keep font sizes to a few tiers as well (formula, label, tick), not a dozen.

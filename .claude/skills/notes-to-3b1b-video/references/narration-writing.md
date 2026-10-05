@@ -16,6 +16,7 @@ numerals left to the voice, and terms the voice may misread.
 4. Notation on screen, words aloud: `speak=`
 5. Before / after
 6. What other 3b1b / Manim skills do (and don't)
+7. Pace: speed and pauses
 
 ## 1. Beats: the unit of narration
 
@@ -33,8 +34,11 @@ self.cue("That is too small", Indicate(cells[4]), *[c.animate.set_opacity(0.2) f
 
 How to cut a scene into beats:
 - A new beat when the picture changes subject or the stage is cleared; not for every
-  sentence. One sentence per beat brings back the choppiness (each beat is a clip with
-  its own falling ending and a pause after it).
+  sentence. One sentence per beat brings back the choppiness (every beat ends with the
+  longest pause).
+- Inside a long beat, put a line break in the text where the thought turns. The voice
+  takes a longer pause there (`PACE["paragraph"]`), and the viewer gets time to look at
+  what just appeared. A beat of more than about 60 words needs at least one.
 - Everything a beat mentions should happen on screen while it is said: one `cue()` per
   thing. If a beat has more than about four cues, or runs past 25 seconds, cut it at a
   sentence boundary.
@@ -47,8 +51,8 @@ How to cut a scene into beats:
 
 ## 2. Why AI scripts sound choppy
 
-- **One clip per short line.** Each clip ends with falling intonation, then a gap. A
-  script of 5-word lines sounds like a list read aloud.
+- **One beat per short line.** Each beat ends with falling intonation, then the long
+  pause. A script of 5-word lines sounds like a list read aloud.
 - **Split sentences.** When "First the compiler turns C into assembly..." is followed by
   "...then the assembler...", each half is synthesized alone. The voice ends the first
   half as if it were a full sentence, and the second half starts cold. Inside one beat
@@ -106,8 +110,9 @@ self.say("x ← x − η∇L",
          speak="Each step moves x a little against the gradient, scaled by the learning rate eta.")
 ```
 
-Subtitle timing is then spread by the shown text, so keep the two about the same length
-and sentence count. If more than a third of an episode's beats need `speak=`, the text
+The voice is synthesized sentence by sentence, so `speak` must have exactly as many
+sentences as the text (the kit warns and speaks the text if not; `narration.py check`
+reports it as `SPEAK`). If more than a third of an episode's beats need `speak=`, the text
 is too symbolic. Rewrite it.
 
 ## 5. Before / after
@@ -160,3 +165,29 @@ pronunciation. Those came from this skill's production runs and are covered here
 idea, which is `cue()` here. `cue()` places the phrase by its position in the text, which
 is accurate to about half a second and needs no speech recognizer; that is enough for
 "highlight this when it is named".
+
+## 7. Pace: speed and pauses
+
+"Why is it so fast?" was said of a video whose voice ran at its normal speed. Two things
+were wrong, and the user named both: the speech itself was a little fast, and there
+were no pauses, so a formula appeared and the next sentence was already running.
+
+- **Measure.** `python <skill>/scripts/pace.py <videos folder>` gives words per minute
+  including pauses. The cut the user called too fast measured about 180. The accepted one
+  measured 135 to 150, which is also where 3Blue1Brown's own narration sits. A first
+  attempt at 120 was "a bit slow".
+- **Pauses do most of the work.** `PACE` in series.py, in seconds: after a sentence,
+  after a paragraph (a line break in the beat), after a beat. Defaults 0.4 / 1.0 / 0.8;
+  the derivation used 0.75 / 1.6 / 1.8. Then the speed: `TTS["rate"]`, where "-4%" was
+  the final choice after "-10%" was judged slow. Slowing the voice alone, without
+  pauses, makes it sound drugged.
+- **Long beats get paragraphs**, not more `say()` calls. `narration.py paragraphs`
+  breaks every one-line beat of more than 60 words at a sentence that starts a new
+  thought. Read the result; move a break when it lands inside one step of an argument.
+- **A new formula gets a second of quiet.** Put the cue for it at the start of the
+  sentence that reads it, and end the paragraph after that sentence.
+- **Length follows.** Slower speech and pauses added about half again to the running
+  time (35 minutes became 52). Tell the user before rendering, and offer to split the
+  video into episodes (`derivation-episodes.md` §8).
+- Do not cut words to make a video feel slower. The complaint is about breathing room,
+  not about content.

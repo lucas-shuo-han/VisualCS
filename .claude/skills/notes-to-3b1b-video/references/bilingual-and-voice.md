@@ -64,14 +64,25 @@ Always look at the contact sheets of *every* language: most translation bugs are
 
 ## 4. Voice-over
 
-`tts.py` (copy next to the kit) synthesizes each beat (one `say()`) as one clip, by default with Microsoft's
+`tts.py` (copy next to the kit) synthesizes each sentence of a beat as its own clip (the kit
+schedules them with the pauses of `PACE`, and knows when each one starts), by default with Microsoft's
 neural voices through the `edge-tts` package: good quality, many languages, no API key, but it needs
 network access. Clips are cached (`KIT_TTS_CACHE`, render.py puts it in the media dir),
 trimmed of leading/trailing silence, and reused across renders, so only new or changed
 lines need the network.
 
-- Defaults: en-US-AndrewNeural, zh-CN-YunxiNeural (others in `VOICES`); override with
-  `KIT_VOICE_EN=...`, speed with `KIT_TTS_RATE=+5%`.
+- Defaults: en-US-AndrewNeural, zh-CN-YunxiNeural (others in `VOICES`). The series'
+  choice lives in series.py and is read by tts.py:
+  `TTS = {"engine": "edge", "rate": "-4%", "voice": {"en": "en-US-AndrewNeural"},
+  "kokoro_voice": {"en": "am_michael"}}`. For one render the environment still wins:
+  `KIT_VOICE_EN=...`, `KIT_TTS_RATE=+5%`, `KIT_TTS_ENGINE=kokoro`.
+- **The voice is the user's taste; let them hear it.** `audition.py --unit <unit>`
+  speaks one beat in six voices at three speeds into `<unit>/preview/voices/`. Send the
+  folder, get one name back ("edge Andrew, minus ten"), write it into `TTS`. Do this
+  before the first full render: a new voice or speed re-synthesizes every sentence and
+  changes every duration, so a render started earlier is thrown away. A request for
+  "a pleasant male voice" got en-US-AndrewNeural (edge) over the Kokoro voices; Kokoro's
+  default `af_heart` is a female voice, which is how the complaint arose.
 - Enabled per render: `render.py` turns it on for full renders and off for previews
   (`--voice` / `--no-voice` override).
 - `title_card()` speaks "Episode n: title", `end_card()` speaks "To sum up", each bullet,
@@ -164,12 +175,14 @@ rewriting.
 
 ## 6. Timing
 
-With a voice, a beat lasts as long as its clip plus 0.35 s (plus `extra`), and the audio
-starts 0.15 s after the first subtitle appears. The subtitle switches sentence, and a
-`cue("phrase")` fires, at the moment given by the phrase's position in the text (by
-character count, weighted for CJK), which is within about half a second of the voice.
+With a voice, a beat lasts as long as its sentences and the pauses between them, plus
+`PACE["beat"]` (plus `extra`), and the audio starts 0.15 s after the first subtitle
+appears. The subtitle switches at the real start of each sentence, in the `.srt` and on
+the frame. A `cue("phrase")` fires at the start of the sentence that holds the phrase
+plus the phrase's share of that sentence, so it is right to a fraction of a second.
 Animations passed to `say()` play while it is spoken; `hold()` waits for the voice to
-finish. In a translation the same cue lands at the same fraction of the translated beat,
-so keep the order of ideas inside a beat the same in both languages. So a voiced episode runs
+finish. In a translation the cue is looked up in the source text and lands at the same
+place, proportionally, in the translated beat, so keep the order of ideas inside a beat
+the same in both languages. So a voiced episode runs
 longer than the silent one (roughly +10–25%), and the voice sets the pace: if the
 visuals need longer than the sentence, use `self.hold(extra)` rather than padding text.

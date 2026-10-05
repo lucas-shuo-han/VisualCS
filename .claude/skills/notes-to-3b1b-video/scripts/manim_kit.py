@@ -5,9 +5,10 @@ Copy this file next to your episode files and `from manim_kit import *`.
 Contents (search for the section banners):
   language & series ..... LANG, tr(), EN, series.py / i18n tables (see below)
   fonts & palette ....... SANS / MONO picked from installed fonts, BG, semantic colors
-  text helpers .......... txt(), mono(), box_label(), file_icon()
-  captions .............. wrap_caption(), reading_time()
+  text helpers .......... txt(), mono(), num(), tex_text(), box_label(), file_icon()
+  captions .............. wrap_caption(), reading_time(), sentences()
   NarratedScene ......... say() / cue() / hold() / clear_stage() / heading() / title_card() / end_card()
+                          zoom_to() / zoom_back() / pin()   (the camera can move)
                           fast_forward() / preview_only()
   code .................. CodeListing (asm / c / python highlighting), pc_arrow()
   bits .................. bit_row(), set_bit_row(), BitField, FormatScene helpers
@@ -16,9 +17,12 @@ Contents (search for the section banners):
 
 Every episode is one NarratedScene, narrated in beats:
 
-    self.say("Two or three connected sentences about one picture. They are spoken "
-             "as one clip. The subtitle shows one sentence at a time.", FadeIn(thing))
-    self.cue("They are spoken", Indicate(thing))   # when the voice reaches these words
+    self.say("Two or three connected sentences about one picture. The voice reads them "
+             "one at a time, with a pause after each. The subtitle shows one sentence at a time.",
+             FadeIn(thing))
+    self.cue("The voice reads them", Indicate(thing))   # when the voice reaches these words
+
+A line break inside the text of a beat starts a new paragraph: a longer pause.
 
 Subtitles are drawn on the frame and exported as an .srt next to the video, one
 sentence at a time with the same timing. With BURN_CAPTIONS = False in series.py
@@ -27,7 +31,9 @@ sentence at a time with the same timing. With BURN_CAPTIONS = False in series.py
 Optional files next to this one (see the skill's references/bilingual-and-voice.md):
   series.py ............. episode order, titles per language, SOURCE_LANG, LANGS.
                           title_card() / end_card() then need no arguments and
-                          "next episode" / "the end" are automatic.
+                          "next episode" / "the end" are automatic. Also the
+                          series-wide choices: BURN_CAPTIONS, TEXT_FONT, PACE
+                          (pauses of the voice) and TTS (engine, voice, rate).
   i18n/epNN.py .......... translation tables: a dict per target language
                           (EN = {...}, ZH = {...}) keyed by the source string.
   tts.py (+ say_as.py) .. voice-over (edge-tts) and course pronunciations.
@@ -37,8 +43,8 @@ Environment (render.py sets these):
                      episode's table. With a CJK source language a missing
                      entry is an error (nothing untranslated can slip through).
   KIT_I18N_LAX=1     warn instead of failing on a missing translation.
-  KIT_TTS=1          voice-over: each beat is spoken as one clip and lasts until
-                     its audio has finished.
+  KIT_TTS=1          voice-over: each beat is spoken sentence by sentence and
+                     lasts until its audio has finished, plus a pause.
   KIT_ONLY=a,b       render only these scene methods (preview.py; see preview_only).
   KIT_CAPTIONS=0|1   override series.py BURN_CAPTIONS (0: subtitles only in the .srt).
 """
@@ -75,6 +81,12 @@ I18N_LAX = os.environ.get("KIT_I18N_LAX") == "1"
 TTS = os.environ.get("KIT_TTS") == "1"
 BURN_CAPTIONS = (os.environ["KIT_CAPTIONS"] != "0" if os.environ.get("KIT_CAPTIONS")
                  else bool(_SERIES.get("BURN_CAPTIONS", True)))
+# "latex": txt() and num() are typeset by LaTeX, so prose, numbers and formulas share one
+# typeface (for a math-heavy series; needs LaTeX). "pango": the caption font.
+TEXT_FONT = _SERIES.get("TEXT_FONT", "pango")
+# pauses of the voice-over, in seconds: between sentences, between the paragraphs of one
+# beat, and after a beat. A derivation wants more (0.75 / 1.6 / 1.8), see narration-writing.md.
+PACE = {"sentence": 0.4, "paragraph": 1.0, "beat": 0.8, **_SERIES.get("PACE", {})}
 EPISODES = [dict(e, num=i + 1) for i, e in enumerate(_SERIES.get("EPISODES", []))]
 _BY_SCENE = {e["scene"]: e for e in EPISODES}
 EN = LANG == "en"   # handy for the rare `if EN:` layout branch in an episode
@@ -290,8 +302,46 @@ def mono(s, size=24, color=C_TEXT, **kw) -> Text:
     return crisp_text(s, MONO, size, color, disable_ligatures=True, **kw)
 
 
-def txt(s, size=30, color=C_TEXT, **kw) -> Text:
-    """Prose text in the caption font (handles Latin and CJK)."""
+_TEX_ESCAPE = {"\\": r"\textbackslash{}", "&": r"\&", "%": r"\%", "#": r"\#", "_": r"\_", "{": r"\{",
+               "}": r"\}", "~": r"\textasciitilde{}", "^": r"\textasciicircum{}"}
+_TEX_MATH = {"−": "-", "±": r"\pm ", "×": r"\times ", "·": r"\cdot ", "σ": r"\sigma ", "Σ": r"\Sigma ",
+             "⇔": r"\Leftrightarrow ", "≈": r"\approx ", "→": r"\to ", "ᵀ": r"^{\top}", "<": "<", ">": ">",
+             "|": "|", "≤": r"\le ", "≥": r"\ge ", "=": "="}
+TEX_LABEL = 28   # with TEXT_FONT = "latex", labels come in one size
+
+
+def tex_text(s, size=TEX_LABEL, color=C_TEXT, bold=False):
+    """Prose typeset by LaTeX, in the typeface of the formulas. Unicode math
+    signs inside it (√3, −1, σ, ×, ⇔ ...) become real math. Text with CJK
+    characters falls back to the caption font."""
+    s = tr(s)
+    if _CJK_RE.search(s):
+        return crisp_text(s, SANS, size, color, **({"weight": BOLD} if bold else {}))
+    s = "".join(_TEX_ESCAPE.get(c, c) for c in s)
+    s = re.sub(r"√(\d+)", lambda m: r"$\sqrt{" + m[1] + "}$", s)
+    s = re.sub("[" + re.escape("".join(_TEX_MATH)) + "]", lambda m: "$" + _TEX_MATH[m[0]] + "$", s)
+    s = s.replace("$$", "")            # neighbouring math runs join: ±√3 is one formula
+    s = s.replace("–", "--").replace("…", r"\dots{}")
+    s = re.sub(r"  +", lambda m: " " + r"\ " * (len(m[0]) - 1), s)
+    if bold:
+        s = r"\textbf{" + s + "}"
+    return Tex(s, font_size=size, color=color)
+
+
+def num(s, size=22, color=C_TEXT):
+    """A number on the picture (tick label, coordinate, value): LaTeX math with
+    TEXT_FONT = "latex", so 2.2 on an axis looks like 2.2 in a formula;
+    otherwise monospace."""
+    if TEXT_FONT == "latex":
+        return MathTex(str(s).replace("−", "-"), font_size=size, color=color)
+    return mono(str(s), size, color)
+
+
+def txt(s, size=30, color=C_TEXT, **kw):
+    """Prose text: the caption font (handles Latin and CJK), or LaTeX with
+    TEXT_FONT = "latex" in series.py (one typeface on the whole frame)."""
+    if TEXT_FONT == "latex":
+        return tex_text(s, TEX_LABEL if size <= 32 else size, color, bold=kw.get("weight") == BOLD)
     return crisp_text(s, SANS, size, color, **kw)
 
 
@@ -942,6 +992,12 @@ def reading_time(text: str, cps: float = 5.2) -> float:
     return max(1.8, 0.5 + cjk / cps + other * 0.28)
 
 
+def sentences(text: str) -> list[str]:
+    """The sentences of one paragraph of narration (Latin or CJK)."""
+    parts = re.split(r"(?<=[.?!])\s+(?=[A-Z\"“(]|[^\x00-\x7f])|(?<=[。？！])\s*", text.strip())
+    return [x for x in parts if x]
+
+
 def split_cue(text: str, max_units: float = 46) -> list[str]:
     """Cut one narration beat into subtitle-sized cues (two caption lines at
     most; widths in CJK-character units, a Latin letter is 0.55): whole
@@ -976,9 +1032,10 @@ def split_cue(text: str, max_units: float = 46) -> list[str]:
     return cues
 
 
-class NarratedScene(Scene):
+class NarratedScene(MovingCameraScene):
     """Scene with timed captions (burned in unless BURN_CAPTIONS is off, and
-    always exported as .srt), an optional voice-over, and title / end cards."""
+    always exported as .srt), an optional voice-over, title / end cards, and a
+    camera that can move onto the point being talked about."""
 
     caption_size = 30 if LANG in CJK_LANGS else 28
     caption_units = 30 if LANG in CJK_LANGS else 35   # line width in CJK-character units
@@ -992,6 +1049,9 @@ class NarratedScene(Scene):
         self._cap_t0 = 0.0
         self._cap_need = 0.0
         self._cap_span = 0.0
+        self._cap_src = None
+        self._sched = []
+        self._home = (self.camera.frame.get_center().copy(), self.camera.frame.width)
         name = type(self).__name__
         self.episode = _BY_SCENE.get(name)
         m = re.match(r"Ep(\d+)", name)
@@ -1075,16 +1135,25 @@ class NarratedScene(Scene):
         if remaining > 0.02:
             self.wait(remaining)
 
-    def _cue_times(self, text, span):
-        """Split a beat into subtitle cues and give each its start time: the
-        share of `span` (how long the beat is spoken, or read) before it."""
-        cues = split_cue(text, self.caption_units * 2 - 4)
-        total = sum(len(c) for c in cues)
-        starts, done = [], 0
-        for c in cues:
-            starts.append(self._cap_t0 + span * done / total)
-            done += len(c)
-        return cues, starts
+    def _cue_times(self):
+        """The subtitle cues of the current beat with the time each starts and
+        ends (scene time): one per sentence, at the moment the voice says it;
+        a sentence too long for two caption lines is cut at commas and shares
+        its time by length."""
+        cues, starts, ends = [], [], []
+        for k, (_, _, sent, t, d) in enumerate(self._sched):
+            end = self._sched[k + 1][3] if k + 1 < len(self._sched) else t + d + PACE["beat"]
+            end = min(end, t + d + 1.5)
+            parts = split_cue(sent, self.caption_units * 2 - 4)
+            total = sum(len(c) for c in parts)
+            whole = end - t
+            for c in parts:
+                span = whole * len(c) / total
+                cues.append(c)
+                starts.append(self._cap_t0 + t)
+                ends.append(self._cap_t0 + t + span)
+                t += span
+        return cues, starts, ends
 
     def _close_sub(self):
         if self._cap is not None:
@@ -1094,20 +1163,18 @@ class NarratedScene(Scene):
             self._cap_tick = None
         if self._cap_text is not None:
             now = self.time
-            if now > self._cap_t0:
-                # one .srt cue per sentence or so, timed like the burned caption
-                cues, starts = self._cue_times(self._cap_text, self._cap_span)
-                ends = starts[1:] + [now]
-                for c, a, b in zip(cues, starts, ends):
-                    if min(b, now) > a:
-                        self.add_subcaption(c, duration=min(b, now) - a, offset=a - now)
+            # one .srt cue per sentence, timed like the voice and the burned caption
+            for c, a, b in zip(*self._cue_times()):
+                if min(b, now) > a:
+                    self.add_subcaption(c, duration=min(b, now) - a, offset=a - now)
             self._cap_text = None
+            self._sched = []
 
-    def _caption_reel(self, text, span):
-        """The burned caption of a beat. A beat that fits two lines is one
-        static caption; a longer one shows one sentence at a time, switching
-        as the voice reaches each (same split and times as the .srt)."""
-        cues, starts = self._cue_times(text, span)
+    def _caption_reel(self):
+        """The burned caption of a beat: one sentence at a time, switching as
+        the voice reaches each (same split and times as the .srt). A beat of
+        one short sentence is one static caption."""
+        cues, starts, _ = self._cue_times()
         frames = [self._make_caption(c) for c in cues]
         if len(frames) == 1:
             return frames[0]
@@ -1143,9 +1210,9 @@ class NarratedScene(Scene):
         return holder
 
     def voice(self, text, speak=None, delay=0.15) -> float:
-        """Start speaking `text` now (no-op unless KIT_TTS=1) and return how
-        long the voice keeps talking. `speak` overrides the spoken wording; it
-        is translated like the caption, so give it a table entry too."""
+        """Start speaking `text` now as one clip (no-op unless KIT_TTS=1) and
+        return how long the voice keeps talking. For a line outside the beats;
+        say() schedules its own voice sentence by sentence."""
         if not TTS or not text:
             return 0.0
         import tts
@@ -1153,9 +1220,42 @@ class NarratedScene(Scene):
         self.add_sound(str(path), time_offset=delay)
         return delay + dur
 
+    def _speak(self, paras, speak):
+        """Schedule the voice-over of one beat sentence by sentence, with a
+        pause after each (longer at the end of a paragraph), and return
+        (schedule, seconds until the voice has finished). The schedule holds
+        (first char, last char, sentence, start, duration) with character
+        positions in the beat's text: cue() and the subtitles read it."""
+        text = " ".join(paras)
+        sents = [(x, k == len(ss) - 1) for ss in map(sentences, paras) for k, x in enumerate(ss)]
+        said = [x for sp in (tr(speak).split("\n") if speak else []) for x in sentences(sp)]
+        if len(said) != len(sents):
+            if said:
+                print(f"[narration] speak= has {len(said)} sentences, the text {len(sents)}: "
+                      f"speaking the text instead", file=sys.stderr)
+            said = [None] * len(sents)
+        sched, t, pos = [], 0.15, 0
+        for (x, last), sp in zip(sents, said):
+            if TTS:
+                import tts
+                path, dur = tts.synth(x, LANG, speak=sp)
+                self.add_sound(str(path), time_offset=t)
+            else:   # silent render: about the time the sentence takes to say
+                cjk = sum(1 for c in x if ord(c) > 0x2E7F)
+                dur = 0.3 + cjk / 5.2 + 0.36 * len(re.findall(r"[A-Za-z0-9_]+", x))
+            at = text.find(x, pos)
+            at = pos if at < 0 else at
+            sched.append((at, at + len(x), x, t, dur))
+            pos = at + len(x)
+            t += dur + PACE["paragraph" if last else "sentence"]
+        return sched, (sched[-1][3] + sched[-1][4] if sched else 0.0)
+
     def say(self, text, *anims, need=None, extra=0.0, run_time=None, speak=None):
-        """Show caption `text` (after the previous one has been readable, and
-        spoken, long enough) while playing `anims`."""
+        """Start the beat `text` (after the previous one has been spoken, plus a
+        pause) while playing `anims`. The voice reads it sentence by sentence
+        with a pause after each; a line break in the text is a paragraph and
+        gets a longer pause. `speak=` gives other words to voice (same number
+        of sentences as the text)."""
         if run_time is not None:
             for a in anims:
                 a.run_time = run_time
@@ -1164,7 +1264,9 @@ class NarratedScene(Scene):
             text, speak = narration.apply(sys._getframe(1), text, speak)
         except ImportError:
             pass
-        src, text = text, tr(text)
+        src = " ".join(x.strip() for x in text.split("\n") if x.strip())
+        paras = [x.strip() for x in tr(text).split("\n") if x.strip()]
+        text = " ".join(paras)
         self._flush()
         self._close_sub()
         old = self._cap
@@ -1172,11 +1274,13 @@ class NarratedScene(Scene):
         if self._ff:   # fast-forward: put the beat's end state on stage, silently, in no time
             self.play(*anims)
             return
-        talk = self.voice(text, speak)
-        need = reading_time(text) if need is None else need
-        self._cap_span = talk if talk else need
-        self._cap_need = max(need, talk + 0.35 if talk else 0.0) + extra
-        new = self._caption_reel(text, self._cap_span) if BURN_CAPTIONS else None
+        self._sched, talk = self._speak(paras, speak)
+        self._cap_span = talk
+        self._cap_need = max(need or 0.0, talk + PACE["beat"]) + extra
+        self._cap_text, self._cap_src = text, src
+        new = self._caption_reel() if BURN_CAPTIONS else None
+        if new is not None:
+            self._to_screen(new)
         # A sentence reel is added, not faded in: a FadeIn sharing a play() with longer
         # `anims` keeps restoring the first sentence after the reel has moved on (a ghost).
         reel = new is not None and not isinstance(new[0], BackgroundRectangle)
@@ -1185,31 +1289,83 @@ class NarratedScene(Scene):
         swap = [FadeIn(new, run_time=0.4)] if new is not None and not reel else []
         if old is not None:
             swap.append(FadeOut(old, run_time=0.3))
-        self._cap, self._cap_text, self._cap_src = new, text, src
+        self._cap = new
         if swap or anims:
             self.play(*swap, *anims)
 
     def cue(self, phrase, *anims, run_time=None, lead=0.3):
-        """Play `anims` when the narration of the current beat reaches `phrase`
-        (found in the beat's text; its position in the text gives the time).
-        For long beats: say() starts the line, cue() adds each step as it is said."""
+        """Play `anims` when the voice reaches `phrase` (words of the current
+        beat): the sentence that holds the phrase has a known start, and the
+        phrase's place inside that sentence gives the rest. For long beats:
+        say() starts the line, cue() adds each step as it is said."""
         if not self._ff:
-            # where the phrase sits in the beat, as a fraction of it; in a translated
-            # render the phrase is looked up in the source text (no table entry needed)
-            frac = None
-            for text in (self._cap_text or "", getattr(self, "_cap_src", None) or ""):
-                i = text.find(phrase)
-                if i >= 0:
-                    frac = i / len(text)
-                    break
-            if frac is None:
+            text, src = self._cap_text or "", self._cap_src or ""
+            i = text.find(phrase)
+            if i < 0 and src.find(phrase) >= 0:
+                # a translated render: the phrase is in the source text; use the same
+                # place, proportionally, in the translation (no table entry needed)
+                i = int(src.find(phrase) / len(src) * len(text))
+            if i < 0 or not self._sched:
                 print(f"[cue] phrase not in the current line: {phrase!r}", file=sys.stderr)
             else:
-                dt = self._cap_t0 + self._cap_span * frac - lead - self.time
+                c0, c1, _, t, d = next((x for x in self._sched if x[0] <= i < x[1]), self._sched[-1])
+                dt = self._cap_t0 + t + d * max(0, i - c0) / max(1, c1 - c0) - lead - self.time
                 if dt > 0.05:
                     self.wait(dt)
         if anims:
             self.play(*anims, **({} if run_time is None else {"run_time": run_time}))
+
+    # -- camera
+    def zoom_to(self, target, *anims, width=None, margin=1.6, run_time=2.0):
+        """Move the camera onto `target` (a mobject or a point), playing `anims`
+        with the move. `width` is the frame width to end with; by default what
+        the target needs, times `margin`. The subtitle stays where it is on the
+        screen; pin() anything else that should (a formula kept in a corner)."""
+        fr = self.camera.frame
+        if isinstance(target, Mobject):
+            c = target.get_center()
+            w = width or max(target.width * margin, target.height * margin * 16 / 9, 1.0)
+        else:
+            c, w = np.array(target, dtype=float), width or 4.0
+        if self._cap is not None and not hasattr(self._cap, "_pin"):
+            self.pin(self._cap)
+        self.play(fr.animate.set(width=w).move_to(c), *anims, run_time=run_time)
+
+    def zoom_back(self, *anims, run_time=1.6):
+        """Return the camera to the whole frame."""
+        c, w = self._home
+        if self._cap is not None and not hasattr(self._cap, "_pin"):
+            self.pin(self._cap)
+        self.play(self.camera.frame.animate.set(width=w).move_to(c), *anims, run_time=run_time)
+
+    def pin(self, mob):
+        """Keep `mob` where it is on the screen, at the size it has there,
+        while the camera moves."""
+        fr = self.camera.frame
+        mob._pin = [mob.get_center() - fr.get_center(), fr.width, 1.0]
+
+        def stay(m):
+            rel, w0, cur = m._pin
+            k = fr.width / w0
+            if abs(k - cur) > 1e-9:
+                m.scale(k / cur)
+                m._pin[2] = k
+            m.move_to(fr.get_center() + rel * k)
+
+        mob.add_updater(stay)
+        return mob
+
+    def _to_screen(self, mob):
+        """`mob` was laid out for the whole frame: put it at the same place on
+        the screen when the camera is somewhere else, and keep it there."""
+        fr = self.camera.frame
+        c, w = self._home
+        k = fr.width / w
+        if abs(k - 1) < 1e-6 and np.allclose(fr.get_center(), c):
+            return mob
+        rel = mob.get_center() - c
+        mob.scale(k).move_to(fr.get_center() + rel * k)
+        return self.pin(mob)
 
     def hold(self, extra=0.0):
         """Wait until the current caption has been read (and spoken), plus `extra`."""

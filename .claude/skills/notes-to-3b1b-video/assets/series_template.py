@@ -10,6 +10,13 @@ LANGS = ["zh", "en"]        # languages to render (translation tables: i18n/epNN
 
 SERIES_NAME = {"zh": "CS182 · 深度学习", "en": "CS182 · Deep Learning"}
 
+# Series-wide choices (all optional; the kit and tts.py read them):
+# BURN_CAPTIONS = False     # clean frame; subtitles only in the .srt beside the video
+# TEXT_FONT = "latex"       # labels and tick numbers in the typeface of the formulas (math-heavy series)
+# TTS = {"engine": "edge", "rate": "-4%",                     # chosen by ear: scripts/audition.py
+#        "voice": {"en": "en-US-AndrewNeural"}, "kokoro_voice": {"en": "am_michael"}}
+# PACE = {"sentence": 0.75, "paragraph": 1.6, "beat": 1.8}    # pauses in seconds; defaults 0.4 / 1.0 / 0.8
+
 EPISODES = [
     # file, scene class, then per language: title, subtitle, file-name slug
     {"file": "ep01_gradient_descent.py", "scene": "Ep01GradientDescent",
