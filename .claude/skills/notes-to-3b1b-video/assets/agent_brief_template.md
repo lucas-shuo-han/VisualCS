@@ -27,6 +27,9 @@ Read this whole file before starting. Your task-specific instructions are in you
    interruption (rate limits happen) without redoing work.
 
 ## Commands (<OS / shell>)
+- **The gate**: `<python> <skill>/scripts/check.py <unit> N [--scenes a b] [--lang <xx>] --media <scratch>/agents/<NN>/media`
+  runs the lint, a voiced 480p preview, the kit's `[layout]` / `[still]` / `[cue]` findings, audio against video,
+  pace and the contact sheets. Fix until `RESULT: PASS`. The single tools, when you need one alone:
 - Lint the script: `<python> <skill>/scripts/narration_lint.py <unit> N` (fix every split / choppy / long / colon).
 - Preview: `<python> <skill>/scripts/render.py <unit> N --preview --voice --lang <xx> --manim <manim> --media <scratch>/agents/<NN>/media`
   (add `--lax` while the table is incomplete). Log on failure: `<media>/<xx>/epNN.log`; `[cue]` lines in it are bugs.
@@ -63,10 +66,10 @@ Read this whole file before starting. Your task-specific instructions are in you
 - If the notes contain an error (it happens), do the right thing and report it.
 
 ## Done means
-1. `i18n_check.py <unit> N` says ok; `narration_lint.py <unit> N` reports nothing you have not settled.
-2. Previews render in every language without `--lax`.
-3. You looked at the end + mid contact sheets of the final voiced previews and fixed what they showed;
-   the render log has no `[cue]` warnings.
+1. `check.py <unit> N --lang <xx>` says `RESULT: PASS` in every language (paste the result tables).
+2. You opened the end + mid contact sheets of those previews and fixed what they showed
+   (text over shapes, leftovers, empty frames, wrong numbers: no script sees these).
+3. `i18n_check.py <unit> N` says ok; every `voice` term of the lint is settled in your report.
 4. Final message (concise): files, duration per language (last .srt timestamp), a coverage table
    (notes item → beat / omitted: why), notable wording decisions, notes errors found,
    anything unresolved, kit bugs.

@@ -77,6 +77,13 @@ class Unit:
         return bool(re.search(r"[A-Za-z]{2,}", s))
 
 
+def _is_getattr_call(n) -> bool:
+    """getattr(self, name)()"""
+    f = n.func
+    return (isinstance(f, ast.Call) and isinstance(f.func, ast.Name) and f.func.id == "getattr"
+            and bool(f.args) and isinstance(f.args[0], ast.Name) and f.args[0].id == "self")
+
+
 def narration(path: Path, scene: str | None = None):
     """(kind, text, speak) for each say()/end_card bullet, in the order the
     scene runs them: construct() is walked and self.<method>() calls are
@@ -88,6 +95,10 @@ def narration(path: Path, scene: str | None = None):
         c for c in classes
         if any(isinstance(f, ast.FunctionDef) and f.name == "construct" for f in c.body))
     methods = {f.name: f for f in cls.body if isinstance(f, ast.FunctionDef)}
+    # `for s in self.SCENES: getattr(self, s)()` calls the scene methods by name
+    scenes = next((ast.literal_eval(n.value) for n in cls.body if isinstance(n, ast.Assign)
+                   and any(isinstance(t, ast.Name) and t.id == "SCENES" for t in n.targets)
+                   and isinstance(n.value, (ast.List, ast.Tuple))), [])
     out, active = [], set()
 
     def lit(a):
@@ -98,12 +109,15 @@ def narration(path: Path, scene: str | None = None):
             return
         active.add(name)
         calls = sorted((n for n in ast.walk(methods[name]) if isinstance(n, ast.Call)
-                        and isinstance(n.func, ast.Attribute)),
+                        and (isinstance(n.func, ast.Attribute) or _is_getattr_call(n))),
                        key=lambda c: (c.lineno, c.col_offset))
         for c in calls:
-            attr = c.func.attr
+            attr = "__getattr_call__" if _is_getattr_call(c) else c.func.attr
             if attr in methods and isinstance(c.func.value, ast.Name) and c.func.value.id == "self":
                 visit(attr)
+            elif attr == "__getattr_call__":
+                for s in scenes:
+                    visit(s)
             elif attr == "say" and c.args:
                 speak = next((lit(k.value) for k in c.keywords if k.arg == "speak"), None)
                 out.append(("say", lit(c.args[0]), speak))
@@ -142,6 +156,15 @@ def literals(path: Path, needs_tr):
             seen.add(s)
             out.append((ln, s))
     return out, dynamic
+
+
+def latex_path() -> str | None:
+    """MiKTeX installs per user without touching PATH: its bin folder when `latex` is not found."""
+    import shutil
+    if shutil.which("latex"):
+        return None
+    cand = os.environ.get("KIT_LATEX_BIN") or Path.home() / "AppData/Local/Programs/MiKTeX/miktex/bin/x64"
+    return str(cand) if Path(cand).exists() else None
 
 
 def find_manim() -> str:

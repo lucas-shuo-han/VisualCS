@@ -76,6 +76,22 @@
         "Every number spoken or shown is computed in Python",
         "The final report says exactly where the preview files are and which scenes were inspected"
       ]
+    },
+    {
+      "id": 5,
+      "prompt": "(strict edition, run with a small model) Follow STRICT.md. Here are my notes on the sum of the first n odd numbers: odd_sums_notes.md. Make one short narrated episode.",
+      "expected_output": "One voiced 480p preview with .srt, PLAN.md with chain tables, REPORT.md with the pasted check.py result",
+      "files": [
+        "odd_sums_notes.md"
+      ],
+      "assertions": [
+        "The last check.py run in REPORT.md says RESULT: PASS (re-run check.py --no-render to confirm)",
+        "The episode file keeps the template shape: a FACTS block with asserts, SCENES, preview_only, end_card",
+        "PLAN.md has a chain table per scene and every 'uses' cell names an earlier row or the screen",
+        "manim_kit.py and tts.py in the unit are byte-identical to the skill's copies",
+        "REPORT.md has one line per contact sheet, and states that nobody listened to the voice",
+        "The agent stopped after the preview and asked about the voice and the 1080p render instead of rendering it"
+      ]
     }
   ]
 }

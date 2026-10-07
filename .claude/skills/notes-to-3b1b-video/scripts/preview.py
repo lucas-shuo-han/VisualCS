@@ -11,7 +11,7 @@
 
 Run it from a copy next to the episode, or from the skill with --unit. The
 episode needs a `SCENES = [...]` list and the KIT_ONLY branch in construct()
-(references/derivation-episodes.md §5).
+(references/derivation-episodes.md §3).
 
 Each scene renders in its own process and media folder, so a change to one scene
 costs one short render. Previews have the voice-over and the subtitles on the
@@ -44,12 +44,15 @@ def find_python(unit: Path) -> str:
     return sys.executable
 
 
-def latex_path() -> str | None:
-    """MiKTeX installs per user without touching PATH; find it when latex is missing."""
-    if shutil.which("latex"):
-        return None
-    cand = os.environ.get("KIT_LATEX_BIN") or Path.home() / "AppData/Local/Programs/MiKTeX/miktex/bin/x64"
-    return str(cand) if Path(cand).exists() else None
+sys.path.insert(0, str(HERE))
+try:
+    from project import latex_path   # run from the skill
+except ImportError:                  # a copy next to the episode, without project.py
+    def latex_path() -> str | None:
+        if shutil.which("latex"):
+            return None
+        cand = os.environ.get("KIT_LATEX_BIN") or Path.home() / "AppData/Local/Programs/MiKTeX/miktex/bin/x64"
+        return str(cand) if Path(cand).exists() else None
 
 
 def scene_names(ep: Path) -> tuple[str, list[str]]:
