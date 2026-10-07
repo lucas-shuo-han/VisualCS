@@ -1,0 +1,343 @@
+# Graphs, Visually
+
+Generated from the episode subtitles (.srt).
+
+
+## 01-konigsberg-preview-480p
+
+- `00:06` This is Königsberg, a city on the Pregel river, with four pieces of land and seven bridges.
+- `00:13` The people there liked to walk, and they wanted a route that crossed every bridge exactly once and came home again.
+- `00:21` Start on the left bank and cross to the island above, and from there go across to the right bank.
+- `00:28` Then walk down to the island below and back to the left bank, and two more bridges are behind us.
+- `00:34` Six of the seven bridges are behind us, and we are standing on the right bank with one bridge still waiting.
+- `00:42` Six bridges crossed and one still standing, so this route has failed, but maybe a cleverer route exists.
+- `00:49` In seventeen thirty six a mathematician named Leonhard Euler asked a sharper question about all routes at once.
+- `00:59` Now Euler threw away the river and the houses, and kept only what a walk can feel.
+- `01:04` Every piece of land becomes a single point, and every bridge becomes a line joining the two points that it touches.
+- `01:13` That leaves four points and seven lines, and the whole problem is now about these lines.
+- `01:19` Look at the island above and count the lines that touch it, and you will find five.
+- `01:25` The other three points each have three lines, so the four numbers are five, three, three and three.
+- `01:33` The number of lines at a point is called its degree, and a point with no lines at all is isolated.
+- `01:40` Here no point is isolated, and every one of the four degrees is odd, which is the difficulty.
+- `01:48` Euler turned the walk into a pen that traces every line once and comes back to where it started.
+- `01:55` The pen never lifts, and no line is traced twice.
+- `01:59` So think about one point of the picture and the visits the pen makes to it.
+- `02:05` Every visit to a point uses one line to arrive and another line to leave.
+- `02:10` That means the lines at the point can be paired up, one arrival with one departure,
+- `02:16` which forces their number to be even.
+- `02:18` Here the points have degrees three, five, three and three, and not one of those numbers is even.
+- `02:26` So at every point of Königsberg a walk would be left with one line that it cannot use, and the tour is impossible.
+- `02:34` In seventeen thirty six Euler proved it, and he also found exactly when a tour is possible.
+- `02:42` A walk that uses every line exactly once is called an Eulerian walk,
+- `02:46` and if it ends where it started we call it an Eulerian tour.
+- `02:50` Königsberg asked for such a tour, and now we want to know which graphs have one.
+- `02:57` Euler's theorem answers the question with two conditions that we can check by looking.
+- `03:02` A graph has an Eulerian tour exactly when every degree is even and the graph is connected.
+- `03:09` The only exception is a point with no lines at all, which a walk simply never visits.
+- `03:16` In this little graph every degree is even, and the whole graph is connected, so a tour must exist.
+- `03:24` The lonely point at the bottom left has no lines, so its degree is zero, and the walk ignores it.
+- `03:30` Here is one tour, and it walks around the left triangle, then the right one, and returns.
+- `03:38` So the same test decides both puzzles, the seven bridges and this little graph of two triangles.
+- `03:45` You count what touches each point, and you look at whether the picture holds together.
+
+## 01-seven-bridges
+
+- `00:06` This is Königsberg, a city on the Pregel river, with four pieces of land and seven bridges.
+- `00:13` The people there liked to walk,
+- `00:15` and they wanted a route that crossed every bridge exactly once and came home again.
+- `00:21` Start on the left bank and cross to the island above, and from there go across to the right bank.
+- `00:28` Then walk down to the island below and back to the left bank, and two more bridges are behind us.
+- `00:34` Six of the seven bridges are behind us, and we are standing on the right bank with one bridge still waiting.
+- `00:42` Six bridges crossed and one still standing, so this route has failed, but maybe a cleverer route exists.
+- `00:49` In seventeen thirty six a mathematician named Leonhard Euler asked a sharper question about all routes at
+- `00:57` once.
+- `00:58` Now Euler threw away the river and the houses, and kept only what a walk can feel.
+- `01:04` Every piece of land becomes a single point,
+- `01:08` and every bridge becomes a line joining the two points that it touches.
+- `01:13` That leaves four points and seven lines, and the whole problem is now about these lines.
+- `01:19` Look at the island above and count the lines that touch it, and you will find five.
+- `01:25` The other three points each have three lines, so the four numbers are five, three, three and three.
+- `01:33` The number of lines at a point is called its degree, and a point with no lines at all is isolated.
+- `01:40` Here no point is isolated, and every one of the four degrees is odd, which is the difficulty.
+- `01:48` Euler turned the walk into a pen that traces every line once and comes back to where it started.
+- `01:55` The pen never lifts, and no line is traced twice.
+- `01:59` So think about one point of the picture and the visits the pen makes to it.
+- `02:05` Every visit to a point uses one line to arrive and another line to leave.
+- `02:10` That means the lines at the point can be paired up, one arrival with one departure,
+- `02:15` which forces their number to be even.
+- `02:18` Here the points have degrees three, five, three and three, and not one of those numbers is even.
+- `02:26` So at every point of Königsberg a walk would be left with one line that it cannot use,
+- `02:32` and the tour is impossible.
+- `02:34` In seventeen thirty six Euler proved it, and he also found exactly when a tour is possible.
+- `02:42` A walk that uses every line exactly once is called an Eulerian walk,
+- `02:46` and if it ends where it started we call it an Eulerian tour.
+- `02:50` Königsberg asked for such a tour, and now we want to know which graphs have one.
+- `02:56` Euler's theorem answers the question with two conditions that we can check by looking.
+- `03:02` A graph has an Eulerian tour exactly when every degree is even and the graph is connected.
+- `03:09` The only exception is a point with no lines at all, which a walk simply never visits.
+- `03:16` In this little graph every degree is even, and the whole graph is connected, so a tour must exist.
+- `03:23` The lonely point at the bottom left has no lines, so its degree is zero, and the walk ignores it.
+- `03:30` Here is one tour, and it walks around the left triangle, then the right one, and returns.
+- `03:38` So the same test decides both puzzles, the seven bridges and this little graph of two triangles.
+- `03:45` You count what touches each point, and you look at whether the picture holds together.
+
+## 02-language-of-graphs
+
+- `00:06` Episode one ended with a picture of four lands joined by seven bridges,
+- `00:11` and now we give its parts their proper names.
+- `00:14` So the four lands are the vertices, and together they form one set, which we call V.
+- `00:20` And the seven bridges are the edges, and together they form a second set, which we call E.
+- `00:28` Look closely at E, because two of its pairs appear twice,
+- `00:32` since the city has two bridges between the same two lands.
+- `00:36` So E here is a multiset, which means a set in which an element may appear several times.
+- `00:44` In this course we usually forbid that, so from now on E is a plain set,
+- `00:49` and the second copy of each doubled pair disappears.
+- `00:53` Then between any two vertices there is either no edge or exactly one edge.
+- `01:01` So far every bridge could be crossed in both directions, but some relationships go only one way,
+- `01:08` like a one way street.
+- `01:10` So a directed graph models this with arrows, and its edges are ordered pairs.
+- `01:16` Here the vertex called one has an edge to two, to three and to four, so E holds exactly three ordered pairs.
+- `01:25` That makes E a subset of V times V, the set of all ordered pairs of vertices.
+- `01:33` Order matters in a directed graph, so the ordered pair one, two is an edge, while the ordered pair two,
+- `01:40` one is not.
+- `01:41` And you can follow the arrow from one to two, but nothing lets you come back along it.
+- `01:48` On the other hand, when every edge works in both directions, we call the graph undirected,
+- `01:54` like a network of two way streets.
+- `01:57` And then we drop the arrowheads and write each edge as a set with two members, instead of an ordered pair.
+- `02:05` In both cases a graph is a pair, G is the ordered pair V, E, where V is the vertex set and E is the edge set.
+- `02:15` So the undirected graph on the right has five vertices and five edges, and it is the one we use next.
+- `02:23` Take the undirected graph on the right and look at the vertex numbered three.
+- `02:29` So its three edges are incident on it, and the vertices at their other ends are its neighbours,
+- `02:35` which we also call adjacent.
+- `02:37` The degree of a vertex is the number of edges incident on it, so the vertex three has degree three.
+- `02:44` And counting the same way, the vertices one, two and four all have degree two,
+- `02:51` while the vertex five has degree one.
+- `02:54` Now add a lonely sixth vertex with no edges at all, and its degree is zero.
+- `03:00` Such a vertex is called isolated, because no edge connects it to the rest of the graph.
+- `03:06` And we agree that no edge may start and end at the same vertex, so our graphs have no self loops.
+- `03:15` A directed graph has two kinds of degree, because an arrow can come into a vertex or leave it.
+- `03:22` And the in-degree of a vertex counts the edges arriving at it,
+- `03:26` while the out-degree counts the edges leaving it.
+- `03:30` So in the graph on the left, vertex one has out-degree three and in-degree zero.
+- `03:36` And each of the other three vertices has in-degree one and out-degree zero,
+- `03:42` since every arrow ends at one of them.
+- `03:46` Let us explore a small neighbourhood, where each vertex is a house and each edge is a direct road.
+- `03:54` So the roads join houses one and two, one and three, one and four, two and three, and three and four.
+- `04:03` Suppose we want to drive from house two to house four, which is a job for a path.
+- `04:08` A path is a sequence of edges from the first house to the last, and here it never visits a house twice.
+- `04:16` So two, one, four is a shortest path, with two edges, because no single road joins houses two and four.
+- `04:25` And the longest path that repeats no house is two, three, one, four, which has three edges.
+- `04:34` A cycle is a path that returns to where it began, so we add one edge from the last house back to the first.
+- `04:41` For example, one, two, three and back to one is a cycle, and so is one, three, four and back to one.
+- `04:51` Now suppose we only want a leisurely stroll, going from two to one, back to two,
+- `04:58` then to three and on to four.
+- `05:00` That sequence of edges is a walk, and it may repeat houses and even edges, which a path never does.
+- `05:09` And a tour is a walk that ends where it started, so two, one, three, four, one, two is a tour.
+- `05:18` To keep the four words apart, remember that a path has no repeated vertices and a tour is closed.
+- `05:25` A cycle is both, apart from the start and end that coincide, and a walk has no rule at all.
+- `05:34` Now we can define connectivity,
+- `05:36` and a graph is connected if there is a path between any two distinct vertices.
+- `05:42` So our neighbourhood is connected,
+- `05:44` since from any house we can drive to any other house along some sequence of roads.
+- `05:51` Now look at a network of seven houses,
+- `05:53` where no road joins the left triangle to the lonely house or to the right triangle.
+- `05:59` So the network is not connected, and it falls apart into exactly three connected components.
+- `06:06` Those components are the sets V one, V two and V three, holding houses one, two, three, then four alone,
+- `06:16` then five, six, seven.
+- `06:19` With these words we can state Euler's theorem exactly,
+- `06:23` since an Eulerian walk is a walk that uses every edge once.
+- `06:27` And an Eulerian tour is one of these walks that ends where it started.
+- `06:32` The theorem says that an undirected graph has an Eulerian tour exactly when every degree is even and the
+- `06:40` graph is connected,
+- `06:41` ignoring isolated vertices.
+- `06:44` In this network every degree is even, and yet no Eulerian tour exists.
+- `06:50` So a tour that starts in the left triangle can never reach the right triangle, since no road joins them.
+- `06:56` That is why Euler's theorem needs both conditions, the even degrees and the connectedness.
+
+## 03-complete-graphs-and-trees
+
+- `00:06` Let us start with the graphs that have as many edges as they possibly can.
+- `00:11` In a complete graph every pair of distinct vertices is joined by an edge, so nothing can be added.
+- `00:18` So here are the complete graphs on two, three and four vertices.
+- `00:24` Counting the edges gives one, three and six, and the complete graph on five vertices has ten.
+- `00:31` It is the only complete graph on five vertices, so we call it K five.
+- `00:37` Each of its vertices touches the four others, so its degree is four.
+- `00:42` With n vertices that becomes n minus one.
+- `00:47` Adding up all the degrees gives n times n minus one,
+- `00:51` and this counts every edge twice because an edge has two ends.
+- `00:56` So the number of edges is n times n minus one over two.
+- `01:01` For K five that is five times four over two, which is ten.
+- `01:08` A tree is a connected graph that contains no cycles, and here is one with six vertices.
+- `01:14` Next to it stands a graph that is connected too, but four of its vertices form a cycle.
+- `01:20` So the first graph is a tree and the second one is not.
+- `01:25` Now count the tree.
+- `01:27` It has six vertices and five edges, always one edge fewer than vertices.
+- `01:33` So a tree is also a connected graph with n minus one edges, and that is the second way to say it.
+- `01:41` Now cut any single edge of the tree, and it falls into two separate pieces.
+- `01:47` So nothing can be removed without losing the connection.
+- `01:51` In the same way, adding one new edge between vertices four and five closes a triangle, which is a cycle.
+- `02:00` A complete graph is unique for each number of vertices, but trees are not.
+- `02:05` A formula counts them, and there are n to the power n minus two trees on n vertices.
+- `02:12` For six vertices that is six to the fourth power,
+- `02:16` which is one thousand two hundred ninety six different trees.
+- `02:22` A rooted tree has one special vertex called the root, which we draw at the top.
+- `02:28` Below it the tree spreads out, and the vertices at the very bottom are the leaves.
+- `02:33` The ones in between are the internal nodes.
+- `02:38` In a rooted tree the root is never a leaf, whereas in an unrooted tree a leaf is any vertex of degree one.
+- `02:46` The depth is the length of the longest path from the root to a leaf, which here is three edges.
+- `02:53` Level k holds the vertices that are exactly k edges from the root.
+- `02:59` The levels hold one, two, four and eight vertices, because every vertex has two below it.
+- `03:07` That is exactly how a bacterium divides into two new bacteria, layer after layer.
+- `03:13` Binary search trees use the same shape for fast searching,
+- `03:18` and hard problems like Maximum Cut become easy on trees.
+- `03:24` Now we can prove that the first two definitions of a tree really are equivalent,
+- `03:29` which is Theorem ten point two.
+- `03:31` It says that a graph is connected with no cycles exactly when it is connected with n minus one edges.
+- `03:39` So there are two directions to check, and we take the forward one first.
+- `03:44` For the forward direction we use strong induction on the number of vertices n.
+- `03:50` The base case is a single vertex, which has no edges at all, and zero is exactly one minus one.
+- `03:58` So the claim holds for n equal to one.
+- `04:02` For the inductive step, suppose the claim holds up to k vertices.
+- `04:07` Now take a connected graph G with no cycles on k plus one vertices, and remove one vertex v with its edges.
+- `04:16` Call what is left G prime, and notice that removing a vertex can never create a cycle.
+- `04:24` Assume that G prime is still connected, which is the case the notes treat,
+- `04:29` and the other case is left as an exercise.
+- `04:32` Then G prime is connected with no cycles on k vertices,
+- `04:37` so the induction hypothesis gives it k minus one edges.
+- `04:42` Now put v back.
+- `04:44` If v had two edges or more, then the connected graph G prime would give a cycle through v.
+- `04:51` But G has no cycles, so v has exactly one edge.
+- `04:55` That makes k minus one plus one, which is k edges, exactly as the claim needs.
+- `05:04` For the converse we argue by contradiction.
+- `05:07` Suppose a graph G is connected, has n minus one edges, and still contains a cycle.
+- `05:15` Then removing one edge of that cycle leaves G connected, with n minus two edges.
+- `05:22` But a connected graph needs at least n minus one edges, which is a fact the notes leave as an exercise.
+- `05:29` So n minus two edges are too few, we have a contradiction, and the converse is proved.
+
+## 04-planar-graphs
+
+- `00:06` Here is a graph with four vertices in which every vertex is joined to every other one, so it has six edges.
+- `00:14` Drawn as a square with both diagonals, two of its edges cross in the middle.
+- `00:19` Now we move one vertex into the middle, and the same six edges are drawn with no crossing at all.
+- `00:27` A graph is called planar when it can be drawn on the plane with no crossings.
+- `00:32` The first drawing had a crossing, but the second drawing has none, so this graph is planar.
+- `00:40` The edges cut the plane into regions that we call faces.
+- `00:44` Our drawing has three small triangles inside and one infinite face outside, so there are four faces in all.
+- `00:51` Counting vertices plus faces gives four plus four, which is eight, and edges plus two gives six plus two,
+- `00:59` which is eight as well.
+- `01:02` The cube drawn flat has eight vertices, twelve edges and six faces, and eight plus six is twelve plus two.
+- `01:10` The ancient Greeks knew the formula for polyhedra like this cube, but they could not prove it.
+- `01:16` Euler saw that planar graphs are the right setting for a proof, and that is the version we prove next.
+- `01:25` Theorem ten point three says that every connected planar graph satisfies vertices plus faces equals edges
+- `01:34` plus two.
+- `01:34` We prove it by induction on the number of edges, using our four vertex graph as the example.
+- `01:41` Right now it has six edges and four faces, and four plus four is six plus two.
+- `01:48` The smallest case has no edges at all, just one vertex and one face, and one plus one is zero plus two.
+- `01:56` So the formula holds for the base case, and every bigger graph will be reduced to a smaller one.
+- `02:03` Now take a graph with a cycle and delete one edge of it, so the two faces beside that edge merge into one.
+- `02:11` Edges and faces each drop by one, so four plus three equals five plus two for the smaller graph.
+- `02:18` By induction the smaller graph obeys the formula, and putting the edge back adds one to both sides.
+- `02:26` We keep deleting cycle edges until no cycle is left, and what remains is a tree.
+- `02:32` A tree does not cut the plane, so it has one face and one edge fewer than vertices.
+- `02:39` Four vertices, three edges and one face fit the formula, which completes the induction.
+- `02:48` Count the sides of every face, where a side is an edge on the boundary of that face.
+- `02:54` In our drawing each of the four faces has three sides, so together they have twelve.
+- `03:00` Every edge has a face on each of its two sides, so the total is twice the edges, and twice six is twelve.
+- `03:09` There are no parallel edges and at least three vertices, so every face has at least three sides.
+- `03:16` That makes three times the faces at most twice the edges.
+- `03:20` Euler's formula gives the faces as edges plus two minus vertices.
+- `03:26` Putting that in, the edges are at most three times the vertices minus six.
+- `03:32` So planar graphs are sparse, and our four vertex graph meets the bound exactly,
+- `03:38` since three times four minus six is six.
+- `03:41` A connected graph on a thousand vertices can have anywhere from nine hundred ninety nine edges up to nearly
+- `03:49` half a million.
+- `03:50` If it is planar, the bound allows at most two thousand nine hundred ninety four.
+- `03:58` Take the complete graph on five vertices, which is called K five.
+- `04:03` Each vertex joins the other four, so there are five times four divided by two, which is ten edges.
+- `04:10` The bound allows at most three times five minus six, which is nine edges,
+- `04:16` so ten is too many and K five is not planar.
+- `04:20` Next is the graph of three houses and three wells, where every house is joined to every well.
+- `04:27` That gives six vertices and nine edges, while the bound allows three times six minus six, which is twelve.
+- `04:35` So this graph passes the first test, and we have to think harder to show it is not planar.
+- `04:42` A triangle would need two houses or two wells to be joined, but houses only meet wells.
+- `04:49` So a flat drawing would have no triangles, and every face would have at least four sides.
+- `04:56` That gives four times the faces at most twice the edges,
+- `05:00` and then the edges are at most two times the vertices minus four.
+- `05:04` For six vertices that limit is eight, but we have nine edges, so K three three is not planar.
+- `05:14` So K five and K three three are both non-planar, and in some sense they are the only ones.
+- `05:21` This is made exact by Kuratowski, a Polish mathematician, and the K in K five stands for his name.
+- `05:29` Theorem ten point four says that a graph is non-planar exactly when it contains K five or K three three.
+- `05:38` Contains does not mean that a copy of K three three sits there unchanged.
+- `05:44` For each vertex of K three three we need one connected piece of the graph, and no two pieces share a vertex.
+- `05:51` Wherever K three three has an edge, some edge of the graph must join the two matching pieces.
+- `05:59` If we squeeze every piece into a single vertex, a copy of K three three appears.
+- `06:06` The notes use exactly this idea to show that the four-dimensional cube is not planar.
+- `06:12` One direction is obvious, since a graph that contains a non-planar graph is itself non-planar.
+- `06:19` The other direction is difficult, and the notes leave its proof out.
+
+## 05-hypercubes
+
+- `00:06` Here is a cube whose eight corners each carry a name made of three bits.
+- `00:11` So the corner at the front left is zero zero zero, and the corner above it is zero one zero.
+- `00:19` Now we join two corners by an edge exactly when their names differ in one single bit.
+- `00:25` So zero zero zero and zero zero one are neighbours, since only the last bit changes.
+- `00:32` In all, the cube has twelve such edges.
+- `00:37` But zero zero zero and zero one one differ in two bits, so no edge joins them.
+- `00:43` That means a corner has one neighbour for every bit that can be flipped,
+- `00:48` which is three neighbours for each corner here.
+- `00:51` With n bits the same rule gives two to the n corners, and each one has n neighbours.
+- `00:58` The Connection Machine of the nineteen eighties used twenty bits,
+- `01:01` so it joined about a million processors that each had only twenty neighbours.
+- `01:06` Wiring every pair directly would have needed about half a trillion wires.
+- `01:13` Now look at the same cube a second way.
+- `01:16` The four corners whose names start with zero form a square at the front, and we call it the zero subcube.
+- `01:24` The four corners whose names start with one form a second square at the back, which is the one subcube.
+- `01:31` Each square is a two dimensional hypercube, and the first bit is simply copied onto every name.
+- `01:38` The four edges left over join each corner of the front square to the corner behind it,
+- `01:44` which has the same last two bits.
+- `01:46` So zero one zero is joined to one one zero, and the first bit is the only one that changes.
+- `01:55` That is the second definition,
+- `01:57` which takes two copies of the smaller hypercube and joins every corner to its twin.
+- `02:03` So the cube has twelve edges, which is twice the four edges of a square plus four joining edges.
+- `02:11` Lemma ten point one counts the edges of the hypercube,
+- `02:16` and it says the answer is n times two to the n minus one.
+- `02:20` We will prove it twice, once from each definition, and the cube with its twelve edges is our test case.
+- `02:28` The first proof uses the direct definition, in which every corner has exactly n neighbours,
+- `02:35` one for each bit that can be flipped.
+- `02:37` So in our cube each of the eight corners has degree three.
+- `02:43` Adding up the degrees counts every edge twice, once from each of its two ends.
+- `02:49` So eight times three is twenty four ends, and half of that is twelve edges.
+- `02:54` In general that is n times two to the n, divided by two, which is n times two to the n minus one.
+- `03:04` The second proof uses the recursive definition instead.
+- `03:08` A hypercube is two smaller hypercubes plus the edges joining twins,
+- `03:14` so the edge count E of n equals twice E of n minus one, plus two to the n minus one.
+- `03:21` Start from one edge for the one dimensional cube, and the rule gives four for the square.
+- `03:27` Then it gives twelve for the cube, and one more step gives thirty two, which matches four times two cubed.
+- `03:35` To prove it for every n, assume the formula holds for one fewer bit,
+- `03:41` so doubling it gives n minus one times two to the n minus one.
+- `03:46` Then adding the joining edges, two to the n minus one more, makes it n times two to the n minus one.
+- `03:55` Now ask how hard it is to cut a group of corners away from the rest of the cube.
+- `04:00` Take just the corner zero zero zero, and the three edges leaving it must all be cut.
+- `04:07` Take instead all four corners of the front square, which is the zero subcube.
+- `04:13` Now exactly four edges leave it, and those are the four joining edges,
+- `04:18` so four edges are cut for four corners.
+- `04:22` Theorem ten point five says that this always happens.
+- `04:26` Whenever S holds at most half of all the corners, at least as many edges leave S as S has corners.
+- `04:35` We prove it by induction on the number of bits.
+- `04:39` With one bit there are two corners and one edge, so a set of one corner is cut off by exactly that one edge.
+- `04:47` For the step, split S into S zero in the front subcube and S one in the back one,
+- `04:53` where S zero is the larger part.
+- `04:56` Then either both parts are at most half of their subcube, or S zero is more than half.
+- `05:03` In the first case the hypothesis applies inside each subcube separately.
+- `05:09` So at least two edges leave S zero inside the front, and at least two leave S one inside the back,
+- `05:16` which gives at least four, as many as S has corners.
+- `05:20` In the second case S zero is more than half of the front subcube,
+- `05:25` so the hypothesis cannot be used on it directly.
+- `05:28` In our cube S zero has three corners and S one has one,
+- `05:33` which is small enough to give at least one edge in the back.
+- `05:38` The trick is to look at the front corners outside S zero, which here is the single corner zero one one.
+- `05:45` That set is small, so the hypothesis gives at least one edge between it and S zero.
+- `05:52` Finally every corner of S zero has a twin behind it, and at most one of those twins is in S one.
+- `05:59` So at least three minus one, which is two, joining edges cross, and one plus one plus two is four,
+- `06:07` the number of corners of S.
+- `06:09` In general the three parts add up to two to the k, and that is at least the size of S.

@@ -1,0 +1,228 @@
+1
+00:00:06,350 --> 00:00:11,266
+Let us start with the graphs that have as many edges as they possibly can.
+
+2
+00:00:11,266 --> 00:00:18,490
+In a complete graph every pair of distinct vertices is joined by an edge, so nothing can be added.
+
+3
+00:00:18,490 --> 00:00:23,986
+So here are the complete graphs on two, three and four vertices.
+
+4
+00:00:24,350 --> 00:00:31,762
+Counting the edges gives one, three and six, and the complete graph on five vertices has ten.
+
+5
+00:00:31,762 --> 00:00:37,098
+It is the only complete graph on five vertices, so we call it K five.
+
+6
+00:00:37,098 --> 00:00:42,432
+Each of its vertices touches the four others, so its degree is four.
+
+7
+00:00:42,432 --> 00:00:46,812
+With n vertices that becomes n minus one.
+
+8
+00:00:47,183 --> 00:00:51,222
+Adding up all the degrees gives n times n minus one,
+
+9
+00:00:51,222 --> 00:00:56,039
+and this counts every edge twice because an edge has two ends.
+
+10
+00:00:56,039 --> 00:01:01,081
+So the number of edges is n times n minus one over two.
+
+11
+00:01:01,081 --> 00:01:06,369
+For K five that is five times four over two, which is ten.
+
+12
+00:01:08,050 --> 00:01:14,608
+A tree is a connected graph that contains no cycles, and here is one with six vertices.
+
+13
+00:01:14,608 --> 00:01:20,936
+Next to it stands a graph that is connected too, but four of its vertices form a cycle.
+
+14
+00:01:20,936 --> 00:01:25,456
+So the first graph is a tree and the second one is not.
+
+15
+00:01:25,816 --> 00:01:27,708
+Now count the tree.
+
+16
+00:01:27,708 --> 00:01:33,948
+It has six vertices and five edges, always one edge fewer than vertices.
+
+17
+00:01:33,948 --> 00:01:41,352
+So a tree is also a connected graph with n minus one edges, and that is the second way to say it.
+
+18
+00:01:41,716 --> 00:01:47,414
+Now cut any single edge of the tree, and it falls into two separate pieces.
+
+19
+00:01:47,414 --> 00:01:51,322
+So nothing can be removed without losing the connection.
+
+20
+00:01:51,322 --> 00:01:59,776
+In the same way, adding one new edge between vertices four and five closes a triangle, which is a cycle.
+
+21
+00:02:00,150 --> 00:02:05,720
+A complete graph is unique for each number of vertices, but trees are not.
+
+22
+00:02:05,720 --> 00:02:12,628
+A formula counts them, and there are n to the power n minus two trees on n vertices.
+
+23
+00:02:12,628 --> 00:02:16,273
+For six vertices that is six to the fourth power,
+
+24
+00:02:16,273 --> 00:02:20,812
+which is one thousand two hundred ninety six different trees.
+
+25
+00:02:22,483 --> 00:02:28,197
+A rooted tree has one special vertex called the root, which we draw at the top.
+
+26
+00:02:28,197 --> 00:02:33,957
+Below it the tree spreads out, and the vertices at the very bottom are the leaves.
+
+27
+00:02:33,957 --> 00:02:38,065
+The ones in between are the internal nodes.
+
+28
+00:02:38,416 --> 00:02:46,854
+In a rooted tree the root is never a leaf, whereas in an unrooted tree a leaf is any vertex of degree one.
+
+29
+00:02:46,854 --> 00:02:53,550
+The depth is the length of the longest path from the root to a leaf, which here is three edges.
+
+30
+00:02:53,550 --> 00:02:59,286
+Level k holds the vertices that are exactly k edges from the root.
+
+31
+00:02:59,650 --> 00:03:07,282
+The levels hold one, two, four and eight vertices, because every vertex has two below it.
+
+32
+00:03:07,282 --> 00:03:13,570
+That is exactly how a bacterium divides into two new bacteria, layer after layer.
+
+33
+00:03:13,570 --> 00:03:18,124
+Binary search trees use the same shape for fast searching,
+
+34
+00:03:18,124 --> 00:03:22,522
+and hard problems like Maximum Cut become easy on trees.
+
+35
+00:03:24,183 --> 00:03:29,626
+Now we can prove that the first two definitions of a tree really are equivalent,
+
+36
+00:03:29,626 --> 00:03:31,735
+which is Theorem ten point two.
+
+37
+00:03:31,735 --> 00:03:39,017
+It says that a graph is connected with no cycles exactly when it is connected with n minus one edges.
+
+38
+00:03:39,017 --> 00:03:44,269
+So there are two directions to check, and we take the forward one first.
+
+39
+00:03:44,650 --> 00:03:50,194
+For the forward direction we use strong induction on the number of vertices n.
+
+40
+00:03:50,194 --> 00:03:58,292
+The base case is a single vertex, which has no edges at all, and zero is exactly one minus one.
+
+41
+00:03:58,292 --> 00:04:02,314
+So the claim holds for n equal to one.
+
+42
+00:04:02,683 --> 00:04:07,713
+For the inductive step, suppose the claim holds up to k vertices.
+
+43
+00:04:07,713 --> 00:04:16,675
+Now take a connected graph G with no cycles on k plus one vertices, and remove one vertex v with its edges.
+
+44
+00:04:16,675 --> 00:04:23,679
+Call what is left G prime, and notice that removing a vertex can never create a cycle.
+
+45
+00:04:24,050 --> 00:04:29,384
+Assume that G prime is still connected, which is the case the notes treat,
+
+46
+00:04:29,384 --> 00:04:32,412
+and the other case is left as an exercise.
+
+47
+00:04:32,412 --> 00:04:37,111
+Then G prime is connected with no cycles on k vertices,
+
+48
+00:04:37,111 --> 00:04:41,810
+so the induction hypothesis gives it k minus one edges.
+
+49
+00:04:42,183 --> 00:04:44,125
+Now put v back.
+
+50
+00:04:44,125 --> 00:04:51,001
+If v had two edges or more, then the connected graph G prime would give a cycle through v.
+
+51
+00:04:51,001 --> 00:04:55,667
+But G has no cycles, so v has exactly one edge.
+
+52
+00:04:55,667 --> 00:05:02,891
+That makes k minus one plus one, which is k edges, exactly as the claim needs.
+
+53
+00:05:04,550 --> 00:05:07,972
+For the converse we argue by contradiction.
+
+54
+00:05:07,972 --> 00:05:15,086
+Suppose a graph G is connected, has n minus one edges, and still contains a cycle.
+
+55
+00:05:15,086 --> 00:05:21,744
+Then removing one edge of that cycle leaves G connected, with n minus two edges.
+
+56
+00:05:22,116 --> 00:05:29,628
+But a connected graph needs at least n minus one edges, which is a fact the notes leave as an exercise.
+
+57
+00:05:29,628 --> 00:05:36,578
+So n minus two edges are too few, we have a contradiction, and the converse is proved.
+

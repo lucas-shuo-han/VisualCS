@@ -1,0 +1,280 @@
+1
+00:00:06,350 --> 00:00:11,306
+Episode one ended with a picture of four lands joined by seven bridges,
+
+2
+00:00:11,306 --> 00:00:14,448
+and now we give its parts their proper names.
+
+3
+00:00:14,448 --> 00:00:20,992
+So the four lands are the vertices, and together they form one set, which we call V.
+
+4
+00:00:20,992 --> 00:00:27,938
+And the seven bridges are the edges, and together they form a second set, which we call E.
+
+5
+00:00:28,316 --> 00:00:32,496
+Look closely at E, because two of its pairs appear twice,
+
+6
+00:00:32,496 --> 00:00:36,750
+since the city has two bridges between the same two lands.
+
+7
+00:00:36,750 --> 00:00:44,190
+So E here is a multiset, which means a set in which an element may appear several times.
+
+8
+00:00:44,550 --> 00:00:49,626
+In this course we usually forbid that, so from now on E is a plain set,
+
+9
+00:00:49,626 --> 00:00:53,344
+and the second copy of each doubled pair disappears.
+
+10
+00:00:53,344 --> 00:00:59,992
+Then between any two vertices there is either no edge or exactly one edge.
+
+11
+00:01:01,650 --> 00:01:08,648
+So far every bridge could be crossed in both directions, but some relationships go only one way,
+
+12
+00:01:08,648 --> 00:01:10,252
+like a one way street.
+
+13
+00:01:10,252 --> 00:01:16,718
+So a directed graph models this with arrows, and its edges are ordered pairs.
+
+14
+00:01:16,918 --> 00:01:25,352
+Here the vertex called one has an edge to two, to three and to four, so E holds exactly three ordered pairs.
+
+15
+00:01:25,352 --> 00:01:32,850
+That makes E a subset of V times V, the set of all ordered pairs of vertices.
+
+16
+00:01:33,216 --> 00:01:40,994
+Order matters in a directed graph, so the ordered pair one, two is an edge, while the ordered pair two,
+
+17
+00:01:40,994 --> 00:01:41,824
+one is not.
+
+18
+00:01:41,824 --> 00:01:47,830
+And you can follow the arrow from one to two, but nothing lets you come back along it.
+
+19
+00:01:48,183 --> 00:01:54,775
+On the other hand, when every edge works in both directions, we call the graph undirected,
+
+20
+00:01:54,775 --> 00:01:57,265
+like a network of two way streets.
+
+21
+00:01:57,265 --> 00:02:05,023
+And then we drop the arrowheads and write each edge as a set with two members, instead of an ordered pair.
+
+22
+00:02:05,383 --> 00:02:15,235
+In both cases a graph is a pair, G is the ordered pair V, E, where V is the vertex set and E is the edge set.
+
+23
+00:02:15,235 --> 00:02:22,835
+So the undirected graph on the right has five vertices and five edges, and it is the one we use next.
+
+24
+00:02:23,716 --> 00:02:29,036
+Take the undirected graph on the right and look at the vertex numbered three.
+
+25
+00:02:29,036 --> 00:02:35,539
+So its three edges are incident on it, and the vertices at their other ends are its neighbours,
+
+26
+00:02:35,539 --> 00:02:37,456
+which we also call adjacent.
+
+27
+00:02:37,816 --> 00:02:44,950
+The degree of a vertex is the number of edges incident on it, so the vertex three has degree three.
+
+28
+00:02:44,950 --> 00:02:51,322
+And counting the same way, the vertices one, two and four all have degree two,
+
+29
+00:02:51,322 --> 00:02:54,344
+while the vertex five has degree one.
+
+30
+00:02:54,716 --> 00:03:00,612
+Now add a lonely sixth vertex with no edges at all, and its degree is zero.
+
+31
+00:03:00,612 --> 00:03:06,838
+Such a vertex is called isolated, because no edge connects it to the rest of the graph.
+
+32
+00:03:06,838 --> 00:03:14,830
+And we agree that no edge may start and end at the same vertex, so our graphs have no self loops.
+
+33
+00:03:15,183 --> 00:03:22,073
+A directed graph has two kinds of degree, because an arrow can come into a vertex or leave it.
+
+34
+00:03:22,073 --> 00:03:26,559
+And the in-degree of a vertex counts the edges arriving at it,
+
+35
+00:03:26,559 --> 00:03:30,105
+while the out-degree counts the edges leaving it.
+
+36
+00:03:30,305 --> 00:03:36,647
+So in the graph on the left, vertex one has out-degree three and in-degree zero.
+
+37
+00:03:36,647 --> 00:03:42,308
+And each of the other three vertices has in-degree one and out-degree zero,
+
+38
+00:03:42,308 --> 00:03:45,177
+since every arrow ends at one of them.
+
+39
+00:03:46,850 --> 00:03:54,272
+Let us explore a small neighbourhood, where each vertex is a house and each edge is a direct road.
+
+40
+00:03:54,272 --> 00:04:02,946
+So the roads join houses one and two, one and three, one and four, two and three, and three and four.
+
+41
+00:04:03,316 --> 00:04:08,654
+Suppose we want to drive from house two to house four, which is a job for a path.
+
+42
+00:04:08,654 --> 00:04:16,656
+A path is a sequence of edges from the first house to the last, and here it never visits a house twice.
+
+43
+00:04:16,856 --> 00:04:25,444
+So two, one, four is a shortest path, with two edges, because no single road joins houses two and four.
+
+44
+00:04:25,444 --> 00:04:34,022
+And the longest path that repeats no house is two, three, one, four, which has three edges.
+
+45
+00:04:34,383 --> 00:04:41,777
+A cycle is a path that returns to where it began, so we add one edge from the last house back to the first.
+
+46
+00:04:41,777 --> 00:04:51,433
+For example, one, two, three and back to one is a cycle, and so is one, three, four and back to one.
+
+47
+00:04:51,783 --> 00:04:58,129
+Now suppose we only want a leisurely stroll, going from two to one, back to two,
+
+48
+00:04:58,129 --> 00:05:00,429
+then to three and on to four.
+
+49
+00:05:00,429 --> 00:05:08,887
+That sequence of edges is a walk, and it may repeat houses and even edges, which a path never does.
+
+50
+00:05:09,087 --> 00:05:17,963
+And a tour is a walk that ends where it started, so two, one, three, four, one, two is a tour.
+
+51
+00:05:18,316 --> 00:05:25,830
+To keep the four words apart, remember that a path has no repeated vertices and a tour is closed.
+
+52
+00:05:25,830 --> 00:05:33,526
+A cycle is both, apart from the start and end that coincide, and a walk has no rule at all.
+
+53
+00:05:34,383 --> 00:05:36,594
+Now we can define connectivity,
+
+54
+00:05:36,594 --> 00:05:42,159
+and a graph is connected if there is a path between any two distinct vertices.
+
+55
+00:05:42,159 --> 00:05:44,705
+So our neighbourhood is connected,
+
+56
+00:05:44,705 --> 00:05:50,847
+since from any house we can drive to any other house along some sequence of roads.
+
+57
+00:05:51,216 --> 00:05:53,850
+Now look at a network of seven houses,
+
+58
+00:05:53,850 --> 00:05:59,602
+where no road joins the left triangle to the lonely house or to the right triangle.
+
+59
+00:05:59,602 --> 00:06:06,380
+So the network is not connected, and it falls apart into exactly three connected components.
+
+60
+00:06:06,380 --> 00:06:16,825
+Those components are the sets V one, V two and V three, holding houses one, two, three, then four alone,
+
+61
+00:06:16,825 --> 00:06:19,034
+then five, six, seven.
+
+62
+00:06:19,416 --> 00:06:23,340
+With these words we can state Euler's theorem exactly,
+
+63
+00:06:23,340 --> 00:06:27,628
+since an Eulerian walk is a walk that uses every edge once.
+
+64
+00:06:27,628 --> 00:06:32,126
+And an Eulerian tour is one of these walks that ends where it started.
+
+65
+00:06:32,126 --> 00:06:40,266
+The theorem says that an undirected graph has an Eulerian tour exactly when every degree is even and the
+
+66
+00:06:40,266 --> 00:06:41,753
+graph is connected,
+
+67
+00:06:41,753 --> 00:06:43,866
+ignoring isolated vertices.
+
+68
+00:06:44,216 --> 00:06:50,196
+In this network every degree is even, and yet no Eulerian tour exists.
+
+69
+00:06:50,196 --> 00:06:56,796
+So a tour that starts in the left triangle can never reach the right triangle, since no road joins them.
+
+70
+00:06:56,796 --> 00:07:03,886
+That is why Euler's theorem needs both conditions, the even degrees and the connectedness.
+
