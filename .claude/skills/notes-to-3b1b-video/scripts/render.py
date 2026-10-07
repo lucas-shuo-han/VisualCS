@@ -29,7 +29,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from project import Unit, find_manim  # noqa: E402
+from project import Unit, find_manim, latex_path  # noqa: E402
 
 
 def render(unit, ep, lang, a, voice):
@@ -43,6 +43,8 @@ def render(unit, ep, lang, a, voice):
            "KIT_TTS_CACHE": os.environ.get("KIT_TTS_CACHE", str(media_root / "tts"))}
     if a.lax:
         env["KIT_I18N_LAX"] = "1"
+    if latex_path():
+        env["PATH"] = f"{latex_path()}{os.pathsep}{env['PATH']}"
     log = media_root / lang / f"ep{n:02d}.log"
     with open(log, "w", encoding="utf-8") as fh:
         # no animation cache: on a cache hit Manim's clock does not advance and the voice-over drifts

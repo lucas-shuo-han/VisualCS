@@ -1,0 +1,256 @@
+1
+00:00:06,350 --> 00:00:11,610
+Here is a cube whose eight corners each carry a name made of three bits.
+
+2
+00:00:11,610 --> 00:00:18,970
+So the corner at the front left is zero zero zero, and the corner above it is zero one zero.
+
+3
+00:00:19,350 --> 00:00:25,740
+Now we join two corners by an edge exactly when their names differ in one single bit.
+
+4
+00:00:25,740 --> 00:00:32,662
+So zero zero zero and zero zero one are neighbours, since only the last bit changes.
+
+5
+00:00:32,662 --> 00:00:36,680
+In all, the cube has twelve such edges.
+
+6
+00:00:37,050 --> 00:00:43,876
+But zero zero zero and zero one one differ in two bits, so no edge joins them.
+
+7
+00:00:43,876 --> 00:00:48,537
+That means a corner has one neighbour for every bit that can be flipped,
+
+8
+00:00:48,537 --> 00:00:51,580
+which is three neighbours for each corner here.
+
+9
+00:00:51,950 --> 00:00:58,066
+With n bits the same rule gives two to the n corners, and each one has n neighbours.
+
+10
+00:00:58,066 --> 00:01:01,976
+The Connection Machine of the nineteen eighties used twenty bits,
+
+11
+00:01:01,976 --> 00:01:06,610
+so it joined about a million processors that each had only twenty neighbours.
+
+12
+00:01:06,610 --> 00:01:12,630
+Wiring every pair directly would have needed about half a trillion wires.
+
+13
+00:01:13,483 --> 00:01:16,385
+Now look at the same cube a second way.
+
+14
+00:01:16,385 --> 00:01:23,851
+The four corners whose names start with zero form a square at the front, and we call it the zero subcube.
+
+15
+00:01:24,216 --> 00:01:31,040
+The four corners whose names start with one form a second square at the back, which is the one subcube.
+
+16
+00:01:31,040 --> 00:01:38,402
+Each square is a two dimensional hypercube, and the first bit is simply copied onto every name.
+
+17
+00:01:38,783 --> 00:01:44,596
+The four edges left over join each corner of the front square to the corner behind it,
+
+18
+00:01:44,596 --> 00:01:46,827
+which has the same last two bits.
+
+19
+00:01:46,827 --> 00:01:55,093
+So zero one zero is joined to one one zero, and the first bit is the only one that changes.
+
+20
+00:01:55,450 --> 00:01:57,612
+That is the second definition,
+
+21
+00:01:57,612 --> 00:02:03,596
+which takes two copies of the smaller hypercube and joins every corner to its twin.
+
+22
+00:02:03,596 --> 00:02:11,036
+So the cube has twelve edges, which is twice the four edges of a square plus four joining edges.
+
+23
+00:02:11,916 --> 00:02:16,021
+Lemma ten point one counts the edges of the hypercube,
+
+24
+00:02:16,021 --> 00:02:20,354
+and it says the answer is n times two to the n minus one.
+
+25
+00:02:20,354 --> 00:02:28,216
+We will prove it twice, once from each definition, and the cube with its twelve edges is our test case.
+
+26
+00:02:28,583 --> 00:02:35,165
+The first proof uses the direct definition, in which every corner has exactly n neighbours,
+
+27
+00:02:35,165 --> 00:02:37,841
+one for each bit that can be flipped.
+
+28
+00:02:37,841 --> 00:02:42,661
+So in our cube each of the eight corners has degree three.
+
+29
+00:02:43,016 --> 00:02:49,112
+Adding up the degrees counts every edge twice, once from each of its two ends.
+
+30
+00:02:49,112 --> 00:02:54,748
+So eight times three is twenty four ends, and half of that is twelve edges.
+
+31
+00:02:54,748 --> 00:03:03,720
+In general that is n times two to the n, divided by two, which is n times two to the n minus one.
+
+32
+00:03:04,083 --> 00:03:08,399
+The second proof uses the recursive definition instead.
+
+33
+00:03:08,399 --> 00:03:14,175
+A hypercube is two smaller hypercubes plus the edges joining twins,
+
+34
+00:03:14,175 --> 00:03:21,417
+so the edge count E of n equals twice E of n minus one, plus two to the n minus one.
+
+35
+00:03:21,783 --> 00:03:27,663
+Start from one edge for the one dimensional cube, and the rule gives four for the square.
+
+36
+00:03:27,663 --> 00:03:35,391
+Then it gives twelve for the cube, and one more step gives thirty two, which matches four times two cubed.
+
+37
+00:03:35,750 --> 00:03:41,140
+To prove it for every n, assume the formula holds for one fewer bit,
+
+38
+00:03:41,140 --> 00:03:46,056
+so doubling it gives n minus one times two to the n minus one.
+
+39
+00:03:46,056 --> 00:03:54,802
+Then adding the joining edges, two to the n minus one more, makes it n times two to the n minus one.
+
+40
+00:03:55,683 --> 00:04:00,709
+Now ask how hard it is to cut a group of corners away from the rest of the cube.
+
+41
+00:04:00,709 --> 00:04:07,367
+Take just the corner zero zero zero, and the three edges leaving it must all be cut.
+
+42
+00:04:07,750 --> 00:04:13,626
+Take instead all four corners of the front square, which is the zero subcube.
+
+43
+00:04:13,626 --> 00:04:18,958
+Now exactly four edges leave it, and those are the four joining edges,
+
+44
+00:04:18,958 --> 00:04:21,930
+so four edges are cut for four corners.
+
+45
+00:04:22,283 --> 00:04:26,601
+Theorem ten point five says that this always happens.
+
+46
+00:04:26,601 --> 00:04:34,761
+Whenever S holds at most half of all the corners, at least as many edges leave S as S has corners.
+
+47
+00:04:35,616 --> 00:04:39,158
+We prove it by induction on the number of bits.
+
+48
+00:04:39,158 --> 00:04:47,256
+With one bit there are two corners and one edge, so a set of one corner is cut off by exactly that one edge.
+
+49
+00:04:47,616 --> 00:04:53,994
+For the step, split S into S zero in the front subcube and S one in the back one,
+
+50
+00:04:53,994 --> 00:04:56,514
+where S zero is the larger part.
+
+51
+00:04:56,514 --> 00:05:03,378
+Then either both parts are at most half of their subcube, or S zero is more than half.
+
+52
+00:05:03,750 --> 00:05:09,104
+In the first case the hypothesis applies inside each subcube separately.
+
+53
+00:05:09,104 --> 00:05:16,423
+So at least two edges leave S zero inside the front, and at least two leave S one inside the back,
+
+54
+00:05:16,423 --> 00:05:20,308
+which gives at least four, as many as S has corners.
+
+55
+00:05:20,683 --> 00:05:25,408
+In the second case S zero is more than half of the front subcube,
+
+56
+00:05:25,408 --> 00:05:28,897
+so the hypothesis cannot be used on it directly.
+
+57
+00:05:28,897 --> 00:05:33,150
+In our cube S zero has three corners and S one has one,
+
+58
+00:05:33,150 --> 00:05:37,791
+which is small enough to give at least one edge in the back.
+
+59
+00:05:38,150 --> 00:05:45,230
+The trick is to look at the front corners outside S zero, which here is the single corner zero one one.
+
+60
+00:05:45,230 --> 00:05:52,350
+That set is small, so the hypothesis gives at least one edge between it and S zero.
+
+61
+00:05:52,716 --> 00:05:59,816
+Finally every corner of S zero has a twin behind it, and at most one of those twins is in S one.
+
+62
+00:05:59,816 --> 00:06:07,655
+So at least three minus one, which is two, joining edges cross, and one plus one plus two is four,
+
+63
+00:06:07,655 --> 00:06:09,814
+the number of corners of S.
+
+64
+00:06:09,814 --> 00:06:16,816
+In general the three parts add up to two to the k, and that is at least the size of S.
+

@@ -1,0 +1,152 @@
+1
+00:00:06,350 --> 00:00:13,406
+This is Königsberg, a city on the Pregel river, with four pieces of land and seven bridges.
+
+2
+00:00:13,406 --> 00:00:15,593
+The people there liked to walk,
+
+3
+00:00:15,593 --> 00:00:21,450
+and they wanted a route that crossed every bridge exactly once and came home again.
+
+4
+00:00:21,816 --> 00:00:28,224
+Start on the left bank and cross to the island above, and from there go across to the right bank.
+
+5
+00:00:28,224 --> 00:00:34,704
+Then walk down to the island below and back to the left bank, and two more bridges are behind us.
+
+6
+00:00:34,704 --> 00:00:41,950
+Six of the seven bridges are behind us, and we are standing on the right bank with one bridge still waiting.
+
+7
+00:00:42,316 --> 00:00:49,904
+Six bridges crossed and one still standing, so this route has failed, but maybe a cleverer route exists.
+
+8
+00:00:49,904 --> 00:00:57,670
+In seventeen thirty six a mathematician named Leonhard Euler asked a sharper question about all routes at
+
+9
+00:00:57,670 --> 00:00:58,040
+once.
+
+10
+00:00:58,916 --> 00:01:04,888
+Now Euler threw away the river and the houses, and kept only what a walk can feel.
+
+11
+00:01:04,888 --> 00:01:08,073
+Every piece of land becomes a single point,
+
+12
+00:01:08,073 --> 00:01:13,332
+and every bridge becomes a line joining the two points that it touches.
+
+13
+00:01:13,683 --> 00:01:19,749
+That leaves four points and seven lines, and the whole problem is now about these lines.
+
+14
+00:01:19,749 --> 00:01:25,163
+Look at the island above and count the lines that touch it, and you will find five.
+
+15
+00:01:25,163 --> 00:01:33,071
+The other three points each have three lines, so the four numbers are five, three, three and three.
+
+16
+00:01:33,450 --> 00:01:40,238
+The number of lines at a point is called its degree, and a point with no lines at all is isolated.
+
+17
+00:01:40,238 --> 00:01:47,386
+Here no point is isolated, and every one of the four degrees is odd, which is the difficulty.
+
+18
+00:01:48,250 --> 00:01:55,048
+Euler turned the walk into a pen that traces every line once and comes back to where it started.
+
+19
+00:01:55,048 --> 00:01:59,368
+The pen never lifts, and no line is traced twice.
+
+20
+00:01:59,368 --> 00:02:04,828
+So think about one point of the picture and the visits the pen makes to it.
+
+21
+00:02:05,183 --> 00:02:10,623
+Every visit to a point uses one line to arrive and another line to leave.
+
+22
+00:02:10,623 --> 00:02:15,859
+That means the lines at the point can be paired up, one arrival with one departure,
+
+23
+00:02:15,859 --> 00:02:18,193
+which forces their number to be even.
+
+24
+00:02:18,193 --> 00:02:26,089
+Here the points have degrees three, five, three and three, and not one of those numbers is even.
+
+25
+00:02:26,450 --> 00:02:32,364
+So at every point of Königsberg a walk would be left with one line that it cannot use,
+
+26
+00:02:32,364 --> 00:02:34,222
+and the tour is impossible.
+
+27
+00:02:34,222 --> 00:02:41,222
+In seventeen thirty six Euler proved it, and he also found exactly when a tour is possible.
+
+28
+00:02:42,083 --> 00:02:46,627
+A walk that uses every line exactly once is called an Eulerian walk,
+
+29
+00:02:46,627 --> 00:02:50,637
+and if it ends where it started we call it an Eulerian tour.
+
+30
+00:02:50,637 --> 00:02:56,373
+Königsberg asked for such a tour, and now we want to know which graphs have one.
+
+31
+00:02:56,750 --> 00:03:02,252
+Euler's theorem answers the question with two conditions that we can check by looking.
+
+32
+00:03:02,252 --> 00:03:09,064
+A graph has an Eulerian tour exactly when every degree is even and the graph is connected.
+
+33
+00:03:09,064 --> 00:03:15,808
+The only exception is a point with no lines at all, which a walk simply never visits.
+
+34
+00:03:16,183 --> 00:03:23,841
+In this little graph every degree is even, and the whole graph is connected, so a tour must exist.
+
+35
+00:03:23,841 --> 00:03:30,669
+The lonely point at the bottom left has no lines, so its degree is zero, and the walk ignores it.
+
+36
+00:03:30,669 --> 00:03:37,737
+Here is one tour, and it walks around the left triangle, then the right one, and returns.
+
+37
+00:03:38,516 --> 00:03:45,630
+So the same test decides both puzzles, the seven bridges and this little graph of two triangles.
+
+38
+00:03:45,630 --> 00:03:51,458
+You count what touches each point, and you look at whether the picture holds together.
+

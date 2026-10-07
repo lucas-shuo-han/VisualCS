@@ -1,0 +1,232 @@
+1
+00:00:06,350 --> 00:00:14,288
+Here is a graph with four vertices in which every vertex is joined to every other one, so it has six edges.
+
+2
+00:00:14,288 --> 00:00:19,924
+Drawn as a square with both diagonals, two of its edges cross in the middle.
+
+3
+00:00:19,924 --> 00:00:27,158
+Now we move one vertex into the middle, and the same six edges are drawn with no crossing at all.
+
+4
+00:00:27,516 --> 00:00:32,748
+A graph is called planar when it can be drawn on the plane with no crossings.
+
+5
+00:00:32,748 --> 00:00:39,684
+The first drawing had a crossing, but the second drawing has none, so this graph is planar.
+
+6
+00:00:40,050 --> 00:00:44,192
+The edges cut the plane into regions that we call faces.
+
+7
+00:00:44,192 --> 00:00:51,686
+Our drawing has three small triangles inside and one infinite face outside, so there are four faces in all.
+
+8
+00:00:51,686 --> 00:00:59,948
+Counting vertices plus faces gives four plus four, which is eight, and edges plus two gives six plus two,
+
+9
+00:00:59,948 --> 00:01:01,758
+which is eight as well.
+
+10
+00:01:02,116 --> 00:01:10,512
+The cube drawn flat has eight vertices, twelve edges and six faces, and eight plus six is twelve plus two.
+
+11
+00:01:10,512 --> 00:01:16,692
+The ancient Greeks knew the formula for polyhedra like this cube, but they could not prove it.
+
+12
+00:01:16,692 --> 00:01:24,076
+Euler saw that planar graphs are the right setting for a proof, and that is the version we prove next.
+
+13
+00:01:25,750 --> 00:01:34,251
+Theorem ten point three says that every connected planar graph satisfies vertices plus faces equals edges
+
+14
+00:01:34,251 --> 00:01:34,980
+plus two.
+
+15
+00:01:34,980 --> 00:01:41,700
+We prove it by induction on the number of edges, using our four vertex graph as the example.
+
+16
+00:01:41,700 --> 00:01:48,230
+Right now it has six edges and four faces, and four plus four is six plus two.
+
+17
+00:01:48,583 --> 00:01:56,571
+The smallest case has no edges at all, just one vertex and one face, and one plus one is zero plus two.
+
+18
+00:01:56,571 --> 00:02:03,469
+So the formula holds for the base case, and every bigger graph will be reduced to a smaller one.
+
+19
+00:02:03,850 --> 00:02:11,160
+Now take a graph with a cycle and delete one edge of it, so the two faces beside that edge merge into one.
+
+20
+00:02:11,160 --> 00:02:18,712
+Edges and faces each drop by one, so four plus three equals five plus two for the smaller graph.
+
+21
+00:02:18,712 --> 00:02:26,340
+By induction the smaller graph obeys the formula, and putting the edge back adds one to both sides.
+
+22
+00:02:26,716 --> 00:02:32,736
+We keep deleting cycle edges until no cycle is left, and what remains is a tree.
+
+23
+00:02:32,736 --> 00:02:39,134
+A tree does not cut the plane, so it has one face and one edge fewer than vertices.
+
+24
+00:02:39,134 --> 00:02:46,398
+Four vertices, three edges and one face fit the formula, which completes the induction.
+
+25
+00:02:48,050 --> 00:02:54,300
+Count the sides of every face, where a side is an edge on the boundary of that face.
+
+26
+00:02:54,300 --> 00:03:00,306
+In our drawing each of the four faces has three sides, so together they have twelve.
+
+27
+00:03:00,306 --> 00:03:08,770
+Every edge has a face on each of its two sides, so the total is twice the edges, and twice six is twelve.
+
+28
+00:03:09,150 --> 00:03:16,158
+There are no parallel edges and at least three vertices, so every face has at least three sides.
+
+29
+00:03:16,158 --> 00:03:20,474
+That makes three times the faces at most twice the edges.
+
+30
+00:03:20,474 --> 00:03:26,076
+Euler's formula gives the faces as edges plus two minus vertices.
+
+31
+00:03:26,076 --> 00:03:32,272
+Putting that in, the edges are at most three times the vertices minus six.
+
+32
+00:03:32,650 --> 00:03:38,822
+So planar graphs are sparse, and our four vertex graph meets the bound exactly,
+
+33
+00:03:38,822 --> 00:03:41,948
+since three times four minus six is six.
+
+34
+00:03:41,948 --> 00:03:49,231
+A connected graph on a thousand vertices can have anywhere from nine hundred ninety nine edges up to nearly
+
+35
+00:03:49,231 --> 00:03:50,252
+half a million.
+
+36
+00:03:50,252 --> 00:03:56,550
+If it is planar, the bound allows at most two thousand nine hundred ninety four.
+
+37
+00:03:58,216 --> 00:04:03,240
+Take the complete graph on five vertices, which is called K five.
+
+38
+00:04:03,240 --> 00:04:10,350
+Each vertex joins the other four, so there are five times four divided by two, which is ten edges.
+
+39
+00:04:10,350 --> 00:04:16,349
+The bound allows at most three times five minus six, which is nine edges,
+
+40
+00:04:16,349 --> 00:04:19,964
+so ten is too many and K five is not planar.
+
+41
+00:04:20,316 --> 00:04:27,632
+Next is the graph of three houses and three wells, where every house is joined to every well.
+
+42
+00:04:27,632 --> 00:04:35,400
+That gives six vertices and nine edges, while the bound allows three times six minus six, which is twelve.
+
+43
+00:04:35,400 --> 00:04:42,044
+So this graph passes the first test, and we have to think harder to show it is not planar.
+
+44
+00:04:42,416 --> 00:04:49,108
+A triangle would need two houses or two wells to be joined, but houses only meet wells.
+
+45
+00:04:49,108 --> 00:04:56,174
+So a flat drawing would have no triangles, and every face would have at least four sides.
+
+46
+00:04:56,550 --> 00:05:00,382
+That gives four times the faces at most twice the edges,
+
+47
+00:05:00,382 --> 00:05:04,830
+and then the edges are at most two times the vertices minus four.
+
+48
+00:05:04,830 --> 00:05:12,962
+For six vertices that limit is eight, but we have nine edges, so K three three is not planar.
+
+49
+00:05:14,616 --> 00:05:21,542
+So K five and K three three are both non-planar, and in some sense they are the only ones.
+
+50
+00:05:21,542 --> 00:05:29,106
+This is made exact by Kuratowski, a Polish mathematician, and the K in K five stands for his name.
+
+51
+00:05:29,106 --> 00:05:37,990
+Theorem ten point four says that a graph is non-planar exactly when it contains K five or K three three.
+
+52
+00:05:38,350 --> 00:05:44,074
+Contains does not mean that a copy of K three three sits there unchanged.
+
+53
+00:05:44,074 --> 00:05:51,848
+For each vertex of K three three we need one connected piece of the graph, and no two pieces share a vertex.
+
+54
+00:05:51,848 --> 00:05:59,456
+Wherever K three three has an edge, some edge of the graph must join the two matching pieces.
+
+55
+00:05:59,816 --> 00:06:06,752
+If we squeeze every piece into a single vertex, a copy of K three three appears.
+
+56
+00:06:06,752 --> 00:06:12,676
+The notes use exactly this idea to show that the four-dimensional cube is not planar.
+
+57
+00:06:12,676 --> 00:06:19,434
+One direction is obvious, since a graph that contains a non-planar graph is itself non-planar.
+
+58
+00:06:19,434 --> 00:06:24,546
+The other direction is difficult, and the notes leave its proof out.
+

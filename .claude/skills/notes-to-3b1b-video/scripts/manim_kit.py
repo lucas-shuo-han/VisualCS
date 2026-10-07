@@ -47,6 +47,19 @@ Environment (render.py sets these):
                      lasts until its audio has finished, plus a pause.
   KIT_ONLY=a,b       render only these scene methods (preview.py; see preview_only).
   KIT_CAPTIONS=0|1   override series.py BURN_CAPTIONS (0: subtitles only in the .srt).
+  KIT_CHECKS=0       switch off the checks below.
+
+Checks while rendering (lines on stderr, so in the render log; check.py collects them):
+  [layout]  two texts on top of each other, a text outside the frame, a text in the
+            subtitle band (below y = -2.9), a line or curve running through a text, two
+            shapes drawn exactly on top of each other (seven edges that look like five).
+            Looked at whenever the picture has settled: after a cue(), at hold(), before
+            clear_stage(), at the end of a beat.
+  [empty]   nothing was on the stage during a beat.     [textonly] only words were on
+            the stage during a beat (a slide, not a picture). Warnings outside --strict.
+  [still]   a beat of more than 14 s of narration with a single animation step (26 s:
+            two): the picture stands still while the voice talks. Add cue()s.
+  [cue]     a cue() phrase that is not in its beat.   [narration] a speak= mismatch.
 """
 
 from __future__ import annotations
@@ -79,6 +92,7 @@ LANG = (os.environ.get("KIT_LANG") or SOURCE_LANG).lower()
 TRANSLATING = LANG != SOURCE_LANG
 I18N_LAX = os.environ.get("KIT_I18N_LAX") == "1"
 TTS = os.environ.get("KIT_TTS") == "1"
+CHECKS = os.environ.get("KIT_CHECKS", "1") != "0"
 BURN_CAPTIONS = (os.environ["KIT_CAPTIONS"] != "0" if os.environ.get("KIT_CAPTIONS")
                  else bool(_SERIES.get("BURN_CAPTIONS", True)))
 # "latex": txt() and num() are typeset by LaTeX, so prose, numbers and formulas share one
@@ -937,7 +951,7 @@ def wrap_caption(text: str, max_units: float = 30) -> str:
     if total <= max_units:
         return text
     # arrows count as word characters so routes like "S→B→A" never break mid-route
-    toks = re.findall(r"[A-Za-z0-9_\-\.\[\]\(\)\{\}:+*/<>=#&|~^%',$→←]+|\s+|.", text)
+    toks = re.findall(r"[A-Za-zÀ-ɏ0-9_\-\.\[\]\(\)\{\}:+*/<>=#&|~^%',$→←]+|\s+|.", text)
     T = len(toks)
     INF = float("inf")
 
@@ -1051,6 +1065,7 @@ class NarratedScene(MovingCameraScene):
         self._cap_span = 0.0
         self._cap_src = None
         self._sched = []
+        self._noted = set()
         self._home = (self.camera.frame.get_center().copy(), self.camera.frame.width)
         name = type(self).__name__
         self.episode = _BY_SCENE.get(name)
@@ -1095,6 +1110,7 @@ class NarratedScene(MovingCameraScene):
 
     def play(self, *args, **kwargs):
         if not self._ff:
+            self._beat_plays += 1
             return super().play(*args, **kwargs)
         from manim.animation.animation import prepare_animation
         anims = [prepare_animation(a) for a in args]
@@ -1110,15 +1126,142 @@ class NarratedScene(MovingCameraScene):
         if not self._ff:
             return super().wait(*args, **kwargs)
 
+    # -- checks (see the module docstring): findings go to stderr, the render goes on
+    _beat_no = 0
+    _beat_plays = 0
+    _beat_had = set()
+    _TEXT_TYPES = (Text, MarkupText, SingleStringMathTex)   # MathTex and Tex are the last
+
+    def _note(self, tag, msg):
+        key = (tag, msg) if tag == "layout" else (tag, self._beat_no, msg)   # a lasting flaw is said once
+        if key not in self._noted:
+            self._noted.add(key)
+            head = (self._cap_src or "")[:44]
+            print(f"[{tag}] beat {self._beat_no} \"{head}\": {msg}", file=sys.stderr, flush=True)
+
+    @staticmethod
+    def _ink_box(mob):
+        """(x0, y0, x1, y1) of what `mob` actually draws, or None if nothing shows."""
+        pts = [f.points for f in mob.family_members_with_points()
+               if f.get_fill_opacity() > 0.05 or (f.get_stroke_opacity() > 0.05 and f.get_stroke_width() > 0)]
+        if not pts:
+            return None
+        pts = np.vstack(pts)
+        return pts[:, 0].min(), pts[:, 1].min(), pts[:, 0].max(), pts[:, 1].max()
+
+    def _stage(self):
+        """(texts, shapes) on stage now: texts as (name, ink box, is it code), shapes as
+        the visible non-text mobjects with points. The caption and headings are left out."""
+        texts, shapes = [], []
+
+        def walk(m):
+            if m is self._cap or getattr(m, "_kit_ui", False):
+                return
+            if isinstance(m, self._TEXT_TYPES):
+                box = self._ink_box(m)
+                if box is not None:
+                    name = (getattr(m, "original_text", None) or getattr(m, "text", None)
+                            or getattr(m, "tex_string", "") or "?")
+                    texts.append((" ".join(str(name).split())[:28], box, isinstance(m, MarkupText)))
+                return
+            if isinstance(m, VMobject) and len(m.points) and (
+                    m.get_fill_opacity() > 0.05 or (m.get_stroke_opacity() > 0.05 and m.get_stroke_width() > 0)):
+                shapes.append(m)
+            for sub in m.submobjects:
+                walk(sub)
+
+        for m in self.mobjects:
+            walk(m)
+        return texts, shapes
+
+    def _layout_check(self):
+        if not CHECKS or self._ff:
+            return
+        try:
+            texts, shapes = self._stage()
+            # what the beat has shown so far (a stage cleared for the next beat is not "empty")
+            self._beat_had |= {"shape"} if shapes else set()
+            self._beat_had |= {"code" if code else "text" for _, _, code in texts}
+            texts = [(n, b) for n, b, _ in texts]
+            seen = set()
+            for s in shapes:   # the same geometry twice: parallel edges, a copy left behind
+                if not (s.get_stroke_opacity() > 0.05 and s.get_stroke_width() > 0):
+                    continue
+                key = (type(s).__name__, np.round(s.points, 2).tobytes())
+                if key in seen:
+                    x, y = s.get_center()[:2]
+                    self._note("layout", f"two {type(s).__name__} shapes exactly on top of each other near "
+                                         f"({x:.1f}, {y:.1f}): only one is visible")
+                seen.add(key)
+                if not texts:
+                    continue
+                p = s.points   # a stroke through a text
+                if len(p) <= 8:
+                    p = np.linspace(p[0], p[-1], 40)
+                for name, (x0, y0, x1, y1) in texts:
+                    inside = ((p[:, 0] > x0 + 0.03) & (p[:, 0] < x1 - 0.03)
+                              & (p[:, 1] > y0 + 0.03) & (p[:, 1] < y1 - 0.03)).sum()
+                    if inside >= 2:
+                        self._note("layout", f"a {type(s).__name__} runs through the text '{name}'")
+            fr = self.camera.frame
+            c, w = self._home
+            if abs(fr.width - w) < 1e-6 and np.allclose(fr.get_center(), c):   # not while zoomed in
+                hw, hh = w / 2, w * 9 / 32
+                for name, (x0, y0, x1, y1) in texts:
+                    if x0 < c[0] - hw - 0.02 or x1 > c[0] + hw + 0.02 or y1 > c[1] + hh + 0.02:
+                        self._note("layout", f"off the frame: '{name}'")
+                    elif y0 < c[1] - 3.0:
+                        self._note("layout", f"in the subtitle band (below y = -2.9): '{name}'")
+            pad = 0.04   # touching is fine; text has to share real area
+            for i, (a, (ax0, ay0, ax1, ay1)) in enumerate(texts):
+                for b, (bx0, by0, bx1, by1) in texts[i + 1:]:
+                    iw = min(ax1, bx1) - max(ax0, bx0) - 2 * pad
+                    ih = min(ay1, by1) - max(ay0, by0) - 2 * pad
+                    if iw <= 0 or ih <= 0:
+                        continue
+                    small = min((ax1 - ax0) * (ay1 - ay0), (bx1 - bx0) * (by1 - by0))
+                    if small > 0 and iw * ih > 0.15 * small:
+                        self._note("layout", f"overlapping text: '{a}' and '{b}'")
+        except Exception as e:   # a check must never break a render
+            self._note("layout", f"check skipped ({type(e).__name__}: {e})")
+
+    def _beat_report(self):
+        """The beat on stage has been spoken: look at its picture and at how much moved."""
+        if not CHECKS or self._ff or self._cap_text is None:
+            return
+        self._layout_check()
+        if not self._beat_had:
+            self._note("empty", "nothing was on the stage during this beat")
+        elif self._beat_had == {"text"}:
+            self._note("textonly", "only words were on the stage during this beat: build the thing "
+                                   "the words describe (boxes, arrows, a graph) and change it")
+        talk, n = self._cap_span, self._beat_plays
+        if n < (3 if talk > 26 else 2 if talk > 14 else 0):
+            self._note("still", f"{talk:.0f} s of narration with {n} animation step(s): add cue()s "
+                                f"so the picture changes as things are named")
+
     # -- captions
+    _cap_units_cache = {}
+
+    def _cap_units(self):
+        """caption_units, lowered when the font that is really in use (a fallback, say)
+        is wider than the estimate, so the wrap and the cue split agree on two lines."""
+        key = (SANS, self.caption_size, LANG)
+        if key not in self._cap_units_cache:
+            sample = ("这是一行用来测量字幕宽度的示例文字" if LANG in CJK_LANGS
+                      else "The quick brown fox jumps over the lazy dog, then walks home.")
+            per_unit = Text(sample, font=SANS, font_size=self.caption_size).width / text_units(sample)
+            self._cap_units_cache[key] = min(self.caption_units, int(10.2 / per_unit))
+        return self._cap_units_cache[key]
+
     def _make_caption(self, text):
         # Pango wraps an oversampled line wider than ~10.6 units by itself and draws its
         # last word over the next line: narrow the wrap until every line is inside.
-        units = self.caption_units
+        units = self._cap_units()
         while True:
             wrapped = wrap_caption(text, units)
             widest = max(Text(ln, font=SANS, font_size=self.caption_size).width for ln in wrapped.split("\n"))
-            if widest <= 10.4 or units <= self.caption_units - 8:
+            if widest <= 10.4 or units <= 12:
                 break
             units -= 2
         t = crisp_text(wrapped, SANS, self.caption_size, C_TEXT, line_spacing=0.9)
@@ -1144,7 +1287,7 @@ class NarratedScene(MovingCameraScene):
         for k, (_, _, sent, t, d) in enumerate(self._sched):
             end = self._sched[k + 1][3] if k + 1 < len(self._sched) else t + d + PACE["beat"]
             end = min(end, t + d + 1.5)
-            parts = split_cue(sent, self.caption_units * 2 - 4)
+            parts = split_cue(sent, self._cap_units() * 2 - 4)
             total = sum(len(c) for c in parts)
             whole = end - t
             for c in parts:
@@ -1268,6 +1411,7 @@ class NarratedScene(MovingCameraScene):
         paras = [x.strip() for x in tr(text).split("\n") if x.strip()]
         text = " ".join(paras)
         self._flush()
+        self._beat_report()
         self._close_sub()
         old = self._cap
         self._cap_t0 = self.time
@@ -1292,6 +1436,10 @@ class NarratedScene(MovingCameraScene):
         self._cap = new
         if swap or anims:
             self.play(*swap, *anims)
+        self._beat_no += 1
+        self._beat_plays = 1 if anims else 0
+        self._beat_had = set()
+        self._layout_check()
 
     def cue(self, phrase, *anims, run_time=None, lead=0.3):
         """Play `anims` when the voice reaches `phrase` (words of the current
@@ -1314,6 +1462,7 @@ class NarratedScene(MovingCameraScene):
                     self.wait(dt)
         if anims:
             self.play(*anims, **({} if run_time is None else {"run_time": run_time}))
+            self._layout_check()
 
     # -- camera
     def zoom_to(self, target, *anims, width=None, margin=1.6, run_time=2.0):
@@ -1370,11 +1519,13 @@ class NarratedScene(MovingCameraScene):
     def hold(self, extra=0.0):
         """Wait until the current caption has been read (and spoken), plus `extra`."""
         self._flush()
+        self._layout_check()
         if extra > 0:
             self.wait(extra)
 
     def uncaption(self):
         self._flush()
+        self._beat_report()
         self._close_sub()
         if self._cap is not None:
             self.play(FadeOut(self._cap, run_time=0.3))
@@ -1382,6 +1533,7 @@ class NarratedScene(MovingCameraScene):
 
     def clear_stage(self, *keep, run_time=0.8):
         """Fade out everything except the caption and `keep`."""
+        self._layout_check()
         keep_ids = {id(m) for k in keep for m in k.get_family()}
         mobs = [m for m in self.mobjects
                 if m is not self._cap and id(m) not in keep_ids]
@@ -1394,7 +1546,9 @@ class NarratedScene(MovingCameraScene):
         t.to_corner(UL, buff=0.45)
         line = Line(t.get_left(), t.get_right(), stroke_color=color, stroke_width=2)
         line.next_to(t, DOWN, buff=0.1)
-        return VGroup(t, line)
+        head = VGroup(t, line)
+        head._kit_ui = True      # not part of the picture (see the checks)
+        return head
 
     def title_card(self, ep=None, title=None, subtitle=None):
         """Series tag + "Episode n" + title (+ subtitle), spoken with a

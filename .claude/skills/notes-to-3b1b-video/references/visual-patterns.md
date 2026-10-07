@@ -1,198 +1,95 @@
 # Visual patterns
 
-Tested snippets for turning common course concepts into motion. Everything here
-runs against `manim_kit` (Manim Community 0.21). Snippets marked **LaTeX** need
-the LaTeX toolchain (`setup_env.sh --latex`); everything else only needs `Text`.
+Layout budget and snippets for `manim_kit` (Manim Community 0.21). Snippets marked
+**LaTeX** need the toolchain; the rest only need `Text`. General Manim practice is not
+repeated here.
 
-## Contents
-1. Design principles (what makes it read as 3b1b)
-2. Layout budget and pacing
-3. Code and step-through execution
-4. Bits, words and memory
-5. Math: equations, plots, matrices (LaTeX)
-6. Deep learning: networks, gradients, attention
-7. Transitions and emphasis
-8. Camera moves and one typeface
+## Principles
 
----
+- One picture per beat, one step per thing said. A sentence the picture does not act
+  out is a frozen frame.
+- Build the object (array, register, network) and change it while the narration says
+  why. Text on screen labels things; it does not narrate.
+- A worked example with real numbers before the rule, so the rule summarises what was
+  just watched. One "wait, why?" per episode, then the picture that resolves it.
+- Colour is meaning: one colour per concept across the series, said once.
+- Transform the old picture into the new one (`ReplacementTransform`,
+  `TransformFromCopy`, `.animate`) instead of fading everything and starting over.
 
-## 1. Design principles
+## Layout budget
 
-- **One picture per beat, one step per thing said.** A beat is a few sentences of
-  narration (`say`) about one picture; every thing those sentences mention happens on
-  screen as it is said (`cue`). A sentence the picture does not act out is a frozen frame.
-- **Show the mechanism, not a slide.** Don't put a bullet list on screen and
-  read it. Build the object (array, register, network) and change it while the
-  narration explains why. Text on screen should label things, not narrate.
-- **Concrete first, then general.** Walk one example with real numbers (compute
-  them in Python, see §3) before stating the rule. The rule lands because the
-  viewer just watched it happen.
-- **Color is meaning.** Pick a color per concept and keep it across the whole
-  series (e.g. every "gradient" is BLUE_B, every "learning rate" YELLOW_D, every
-  "loss" RED_C). Say so once, then rely on it.
-- **Continuity over cuts.** Transform the old picture into the new one
-  (`ReplacementTransform`, `TransformFromCopy`, `.animate`) instead of fading
-  everything out and drawing from scratch — the viewer's eye keeps its place.
-- **Teaching order.** Intuition before formalism, why before what, the question
-  before its answer. Name a thing after the viewer has seen it.
-- **Reveal a surprise, then resolve it.** The best moments in the RISC-V series
-  were "wait, why is this immediate split in two?" → aligned-fields picture.
-  Plan one such beat per episode.
-- **Dark background, few colors, generous space.** `BG` + the Manim palette
-  (BLUE_*, TEAL_*, GREEN_*, YELLOW_D, GOLD_*, RED_*, GREY_*). Leave margins.
+The frame is 14.2 × 8 units: x ∈ [−7.1, 7.1], y ∈ [−4, 4].
 
-## 2. Layout budget and pacing
-
-Frame is 14.2 × 8 units, x ∈ [−7.1, 7.1], y ∈ [−4, 4].
-
-| Zone | y range | Use |
+| Zone | y | Use |
 |---|---|---|
-| heading | ≈ 3.5 | `self.heading("...")` top-left |
-| content | −2.9 … 3.3 | everything else |
-| subtitle | −3.9 … −2.9 | reserved: one sentence at a time, at most two lines |
+| heading | ≈ 3.5 | `self.heading("...")`, top left |
+| content | −2.9 to 3.3 | everything else, x within ±6.8 |
+| subtitle | −3.9 to −2.9 | reserved: one sentence, two lines at most |
 
-Rules that prevented most layout bugs:
-- Place big objects with `to_edge` / `to_corner` / `set_x` / `set_y`, and
-  position labels with `next_to` relative to the object they label.
-- A left block + right block side by side: give each ≤ 6.3 units of width.
-  Monospace code at font 26 is ≈ 0.19 units per character, so a 40-char line
-  is ≈ 7.6 units — shorten comments or drop the font size before it collides.
-- After `scale()`-ing a group, rebuild labels relative to the new size (or
-  scale them with it); never mix pre- and post-scale coordinates.
-- Keep content above y ≈ −2.9 so the subtitle band never covers it. A sentence too
-  long for two lines is shown in parts, so the band never grows.
-- Bilingual: the translation is usually wider. Design for the wider language, or
-  keep labels short enough for both.
+- Place big objects with `to_edge` / `to_corner` / `set_x` / `set_y`; place every label
+  with `next_to` its object, after the object has its final position.
+- Two blocks side by side: 6.3 units each at most. Monospace at font 26 is about 0.19
+  units per character, so a 40-character line is 7.6 units.
+- After `scale()`, rebuild labels or scale them too.
+- A panel beside a graph: lines from one anchor going down; check the frame where it is
+  fullest against whatever stays all episode (a corner formula).
+- A label at the start of a path hides the axis label there: use a dot, put the number
+  in the side panel, and a level line's label at its far end.
+- Two languages: design for the wider one (English runs 1.3 to 2 times wider than Chinese).
 
-Pacing: the voice sets it. `say()` first waits until the previous beat has been
-spoken, plus the pause after a beat (silent renders estimate ~5 CJK chars/s or ~2.8
-words/s), then
-starts the new one; animations passed to `say()`, `cue()`s and plain `self.play()`
-calls after it run while it is spoken. `cue()` waits until the voice reaches its
-phrase. Use `self.hold()` when the viewer needs a moment to look at the result and
-`extra=` on `say()` for a longer pause. Add up the `run_time` of what follows a
-`say()`: if it is longer than the beat, the next beat starts late (shorten the
-animations); if much shorter, the picture stands still (add cues).
+The kit reports text over text, off the frame and in the subtitle band as `[layout]`.
+Text over a shape or a curve, and anything mid-animation, only the sheets show.
 
-## 3. Code and step-through execution
+## Timing
 
-```python
-code = CodeListing([
-    "while lo <= hi:",
-    "    mid = (lo + hi) // 2",
-], lang="python", font_size=26, line_gap=0.46)      # lang: "asm", "c", "python"
-code.to_edge(LEFT, buff=0.6)
-box = code.line_box(0)                                # highlight bar for line 0
-self.play(FadeIn(box))
-self.play(box.animate.become(code.line_box(1)))       # move the highlight
-self.play(Circumscribe(code.glyphs(1, "mid"), color=RED_B))   # a token inside line 1
-arrow = pc_arrow().move_to(code.left_of(1, 0.5))      # program-counter style pointer
-```
+`say()` waits for the previous beat and its pause, then starts; its animations, `cue()`s
+and plain `self.play()` calls run while it is spoken. Add up the `run_time` after a
+`say()`: longer than the beat and the next beat starts late; much shorter and the
+picture stands still. `hold(extra)` gives the viewer a moment; `extra=` on `say()` a
+longer pause.
 
-Drive every value you show from real computation, not hand-typed numbers:
+## Kit snippets
 
 ```python
-def trace(arr, target):          # compute the steps once, animate them after
-    ...
-for lo, hi, mid in trace(ARR, TARGET):
-    self.say(f"The middle of {lo}..{hi} is {mid}", regs[2].set(mid), ...)
-```
+code = CodeListing(["while lo <= hi:", "    mid = (lo + hi) // 2"],
+                   lang="python", font_size=26, line_gap=0.46).to_edge(LEFT, buff=0.6)   # "asm" | "c" | "python"
+box = code.line_box(0); self.play(FadeIn(box))
+self.play(box.animate.become(code.line_box(1)))                 # move the highlight
+self.play(Circumscribe(code.glyphs(1, "mid"), color=RED_B))     # a token in line 1
+arrow = pc_arrow().move_to(code.left_of(1, 0.5))
 
-Registers / named variables: `reg_column([("lo", 0), ("hi", 9)], color=TEAL_C)`
-then `regs[0].set(new_value)` (in-place transform + a small flash).
+regs = reg_column([("lo", 0), ("hi", 9)], color=TEAL_C); self.play(regs[0].set(5))
 
-For encodings, add `assert` lines at the top of the episode that check every
-worked example (see the RISC-V `assert bits_to_hex(ADD) == "0x00A98933"`). A
-wrong number in an explainer video is worse than no video.
-
-## 4. Bits, words and memory
-
-```python
-row = bit_row("10110110", BLUE_B)                  # squares with digits
-self.play(set_bit_row(row, "00001111"))            # change digits in place
+row = bit_row("10110110", BLUE_B); self.play(set_bit_row(row, "00001111"))
 bf = BitField([("sign", 1, RED_C), ("exponent", 8, GREEN_C), ("fraction", 23, BLUE_C)])
-self.play(bf.fill_field(1, "10000001"))            # fields fill with a lagged reveal
-mem = MemoryView(0x100, rows=6, cols=4)            # byte-addressed, little-endian helpers
-self.play(mem.set_word(0x104, 42))
-stack = WordColumn(0x1000, 5)                      # high addresses on top
+self.play(bf.fill_field(1, "10000001"))
+mem = MemoryView(0x100, rows=6, cols=4); self.play(mem.set_word(0x104, 42))
+stack = WordColumn(0x1000, 5)                                   # high addresses on top
+# FormatScene adds encode(), hex_of(), fly_bits() for packing a number into fields
+
+g, layers, edges = nn_diagram((3, 4, 2)); self.play(Create(g))
+self.play(ShowPassingFlash(edges.copy().set_color(YELLOW_D).set_stroke(width=3), time_width=0.5))
+hm = heatmap([[0.9, .05, .05], [.2, .7, .1], [.1, .3, .6]])     # values in [0, 1]
 ```
 
-`FormatScene` adds `encode()`, `hex_of()` and `fly_bits()` for "watch the
-number get packed into fields" moments.
+Compute the steps once and animate them after, so the picture cannot disagree with the
+algorithm (`for lo, hi, mid in trace(ARR, TARGET): ...`), and `assert` every worked
+example at the top of the file.
 
-## 5. Math (LaTeX)
+**LaTeX**: split a formula into parts to colour or transform them
+(`MathTex(r"w", r"\leftarrow", r"w", r"-", r"\eta", r"\nabla_w L(w)")`,
+`TransformMatchingTex`). Plots: `Axes` + `ValueTracker` + `always_redraw`. Without
+LaTeX there is no `Tex`, `MathTex`, `Matrix`, `DecimalNumber` or `Integer`.
+`Polyline` does not exist in every version: `VMobject().set_points_as_corners([...])`.
 
-**LaTeX.** Split a formula into parts so each part can be colored or
-transformed on its own:
+Deep-learning pictures that worked: backprop as a flash running right to left with the
+local gradient appearing at each node; a loss curve with a tracker dot, contour rings
+for 2-D; bars morphing from logits to probabilities, then the heatmap; a kernel grid
+sliding over an input, writing each output cell.
 
-```python
-eq = MathTex(r"w", r"\leftarrow", r"w", r"-", r"\eta", r"\nabla_w L(w)")
-eq[4].set_color(YELLOW_D); eq[5].set_color(BLUE_B)
-self.say("Step against the gradient, scaled by the learning rate.", Write(eq))
-```
+## Camera
 
-Transform one equation into the next with
-`TransformMatchingTex(eq1, eq2)` when they share parts.
-
-Plots driven by a `ValueTracker` (the dot follows the tracker every frame):
-
-```python
-axes = Axes(x_range=[-3, 3, 1], y_range=[0, 9, 3], x_length=6, y_length=3.4,
-            axis_config={"color": GREY_B, "include_tip": False})
-f = lambda x: x ** 2
-curve = axes.plot(f, color=BLUE_C)
-x = ValueTracker(-2.6)
-dot = always_redraw(lambda: Dot(axes.c2p(x.get_value(), f(x.get_value())), color=YELLOW_D))
-for _ in range(4):                                  # gradient descent, lr = 0.3
-    self.play(x.animate.set_value(x.get_value() - 0.3 * 2 * x.get_value()), run_time=0.6)
-```
-
-Matrices (**LaTeX**):
-
-```python
-W = Matrix([[1, 2], [3, 4]]).scale(0.7)
-v = Matrix([[5], [6]]).scale(0.7)
-prod = VGroup(W, v, MathTex("="), Matrix([[17], [39]]).scale(0.7)).arrange(RIGHT, buff=0.2)
-self.play(Indicate(W.get_rows()[0]), Indicate(prod[3].get_entries()[0]))
-```
-
-## 6. Deep learning
-
-```python
-g, layers, edges = nn_diagram((3, 4, 2))           # fully connected net
-self.play(Create(g))
-self.play(LaggedStart(*[Indicate(n, color=YELLOW_D) for L in layers for n in L], lag_ratio=0.05))
-self.play(ShowPassingFlash(edges.copy().set_color(YELLOW_D).set_stroke(width=3), time_width=0.5))  # forward pass
-
-hm = heatmap([[0.9, .05, .05], [.2, .7, .1], [.1, .3, .6]])   # values in [0, 1]; cell=0.8 leaves room for labels
-labels = VGroup(*[txt(t, 22, GREY_A).next_to(hm[j], UP, buff=0.12) for j, t in enumerate(["the", "cat", "sat"])])
-```
-
-Ideas that work well for a deep-learning course:
-- **Backprop**: run `ShowPassingFlash` right-to-left over `edges` in a different
-  color, and put the local gradient next to each node as it arrives.
-- **Loss landscapes**: 1-D curve + tracker dot (above); for 2-D, draw contour
-  rings with `axes.plot_implicit_curve` at several levels and move a dot.
-- **Softmax / attention**: bars (`Rectangle`s whose heights come from the
-  numbers) morphing from logits to probabilities; then the heatmap.
-- **Convolution**: a small kernel `Square` grid sliding over an input grid with
-  `.animate.shift`, writing each output cell as it goes.
-- **Training dynamics**: a `ValueTracker` for "step", with `always_redraw`
-  plots of loss that grow as it advances.
-
-## 7. Transitions and emphasis
-
-- `Indicate`, `Circumscribe`, `Flash`, `Wiggle` for "look here".
-- `LaggedStart(*anims, lag_ratio=0.1)` for building rows/grids.
-- `TransformFromCopy(a, b)` for "this value came from there".
-- `self.clear_stage(keep1, keep2)` between sections (keeps the caption).
-- `CurvedArrow(p, q, angle=±TAU/5)` for jumps/links; put it in a margin, not
-  across text.
-
-## 8. Camera moves and one typeface
-
-`NarratedScene` is a `MovingCameraScene`. Use the camera where the argument rests on
-something small:
+`NarratedScene` is a `MovingCameraScene`.
 
 ```python
 self.say("The curve crosses the level root three exactly once.\nCall that point b one.", ...)
@@ -203,23 +100,19 @@ self.hold(1.0)
 self.zoom_back()
 ```
 
-- `self.pin(mob)` keeps a mobject where it is on the screen, at its size, while the
-  camera moves: the formula kept in a corner all episode, a side panel. The subtitle is
-  pinned for you.
-- Zooming makes strokes and text thicker. Up to about 3x this reads as emphasis. Past
-  that, draw a second set of axes for the region, and connect the two: a box around the
-  region on the old picture, then `ReplacementTransform(box, new_axes_frame)` while the
-  rest fades, so the viewer sees where the new picture came from. Never `clear_stage()`
-  and cut to the closer view.
-- Two values that differ by less than the width of a dot (2.2 and 2.23 on an axis from
-  −2.5 to 2.5) cannot both be followed on one picture. Follow one on the full picture
-  and the other in a magnified inset, or choose values the picture can tell apart.
-- Where a result is a crossing of two curves, go there and stop for a second before
-  moving on (`hold(1.0)`).
+- `pin(mob)` keeps a mobject at its place and size on the screen while the camera
+  moves (a corner formula, a side panel). The subtitle is pinned for you.
+- Up to about 3x a zoom reads as emphasis. Past that, draw second axes for the region
+  and connect them: a box on the old picture, `ReplacementTransform(box, new_frame)`
+  while the rest fades. Never `clear_stage()` and cut to the closer view.
+- Two values closer than a dot's width (2.2 and 2.23 on an axis from −2.5 to 2.5)
+  cannot both be followed on one picture: an inset for one, or other values.
+- At a crossing of two curves, go there and stop for a second before moving on.
 
-One typeface: with `TEXT_FONT = "latex"` in series.py, `txt()` typesets prose with LaTeX
-(Unicode signs such as √3, −, σ, ≈ inside it become math) and `num()` typesets tick
-labels and values in math mode. Then a "2.2" on an axis, in a label and in a formula
-look the same. `mono()` stays monospace: use it for code only. Without the setting a
-frame can easily carry three typefaces (formula, label, tick), which the user saw at
-once. Keep font sizes to a few tiers as well (formula, label, tick), not a dozen.
+## One typeface
+
+With `TEXT_FONT = "latex"` in series.py, `txt()` typesets prose with LaTeX (Unicode
+signs such as √3, −, σ, ≈ become math) and `num()` typesets ticks and values in math
+mode, so "2.2" looks the same on an axis, in a label and in a formula. `mono()` stays
+monospace, for code only. Without it a frame easily carries three typefaces, which the
+user saw at once. Three font sizes (formula, label, tick), not a dozen.

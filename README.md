@@ -76,7 +76,7 @@ cs61c/riscv/say_as.py      本课程的读法：寄存器、指令名、十六�
 tools/beats_apply.py       把逐句的 say() 合并成旁白段（beat），并把后面几句的动画改成 cue()
 tools/cue_tables.py        把 L("中文短语", "English phrase") 形式的 cue 短语写进英文对照表
 tools/en_set.py            只改对照表里的英文值（片尾小结要写成能念出来的句子）
-.claude/skills/notes-to-3b1b-video/scripts/   渲染、i18n 检查、旁白检查（narration_lint.py）、逐帧联系表、台词导出
+.claude/skills/notes-to-3b1b-video/scripts/   一键门禁（check.py）、渲染、i18n 检查、旁白检查（narration_lint.py）、逐帧联系表、台词导出
 ```
 
 ## 自己渲染
@@ -111,7 +111,7 @@ python tools/beats_apply.py 5 --list                               # 列出可�
 
 ## 用 skill 做新课程
 
-`.claude/skills/notes-to-3b1b-video/` 是从这个系列提炼出来的 Claude skill：通用组件库 `manim_kit.py`（字幕、配音、双语翻译表、标题/小结卡）、`tts.py` 配音、渲染 / 逐帧检查 / 台词导出 / 翻译检查脚本（Linux、macOS、Windows 都能用），以及可视化模式、制作流程（笔记覆盖清单、并行 agent、审稿）、双语与配音、踩坑清单等参考文档。在这个仓库里开 Claude Code 会话会自动加载；打包好的 `dist/notes-to-3b1b-video.skill` 可以装到任何地方。下一门课（CS182）的起始提示词在 [`prompts/cs182-kickoff.md`](prompts/cs182-kickoff.md)。
+`.claude/skills/notes-to-3b1b-video/` 是从这个系列提炼出来的 Claude skill：通用组件库 `manim_kit.py`（字幕、配音、双语翻译表、标题/小结卡）、`tts.py` 配音、渲染 / 逐帧检查 / 台词导出 / 翻译检查脚本（Linux、macOS、Windows 都能用），以及可视化模式、制作流程（笔记覆盖清单、并行 agent、审稿）、双语与配音、踩坑清单等参考文档。在这个仓库里开 Claude Code 会话会自动加载；打包好的 `dist/notes-to-3b1b-video.skill` 可以装到任何地方。skill 有两个版本，共用同一套组件和脚本：`SKILL.md` 是给能力强的模型的精简版（需求与经验）；`STRICT.md` 是给便宜小模型的严格版（逐步手册，每步一个门禁，可用 `/notes-to-3b1b-video-strict` 直接调用）。大批量制作时按 `PIPELINE.md` 分工以省钱：强模型（Opus）只写每集的分镜稿 `BOARD-epNN.md`（逐字旁白 + 每个 beat 的画面与变化 + 事实表），可选由另一个模型独立核对数学，便宜模型（DeepSeek / Haiku）照分镜稿写代码并跑渲染—检查循环（旁白不许改，`check.py` 逐字校验），中档模型（Sonnet）最后对着联系表看片出修改清单；各角色的提示词在 `assets/roles/`，`scripts/run_with_model.sh` 用 Claude Code 自身的 harness（无头模式、换接口地址）驱动 DeepSeek 等 Anthropic 兼容接口的模型当 builder。两版都以 `scripts/check.py <单元> <集号>` 为验收：旁白 lint、带配音的 480p 预览、kit 在渲染时自动报告的文字重叠 / 出框 / 压字幕带 / 定格画面、音画时长、语速、联系表。下一门课（CS182）的起始提示词在 [`prompts/cs182-kickoff.md`](prompts/cs182-kickoff.md)。
 
 ## 说明
 
