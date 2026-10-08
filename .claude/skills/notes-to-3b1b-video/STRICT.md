@@ -44,8 +44,8 @@ If your brief names a `U/BOARD-epNN.md`, an author has already made the decision
 (`PIPELINE.md` describes the whole arrangement; you do not need to read it):
 
 - Step 0: do it only if `U/manim_kit.py` is missing. `U/series.py` exists; leave it.
-- Step 1: the numbers are the BOARD's "Facts" table (and `U/FACTS-epNN.py` when it
-  exists): assert each one in your FACTS block.
+- Step 1: the numbers are the BOARD's "Facts" table: assert each one that
+  its "Computed how" cell gives a formula for in your FACTS block.
 - Step 2: skip it. The BOARD is the plan.
 - Step 3: each `### id` beat is one `say()`. Copy its `> ` lines into the `say()` as
   one text, unchanged: `check.py` FAILs on a different word. "with the first word" is
@@ -140,6 +140,11 @@ to four rows. Rules, all of them checked later:
   `ArcBetweenPoints(p, q, angle=0.5)` and `ArcBetweenPoints(p, q, angle=-0.5)`.
 - A line to a labelled circle stops at the circle's edge, not at its centre:
   `Line(a.get_center(), b.get_center(), buff=radius)`. No line may cross a text.
+- End every scene method with `self.hold()`: it waits until the voice has finished the
+  last beat. Without it the next scene removes the picture while it is still being
+  talked about.
+- A word inside a box is at most the box's width minus 0.2: scale it down if it is wider.
+  Nothing but the heading above y = 2.7; the heading's underline is near y = 3.0.
 - If the voice counts things ("seven edges"), exactly that many are separately visible.
 - Keep everything between y = −2.9 and y = 3.3 and x = ±6.8. Below −2.9 is the subtitle.
 - Place a label with `.next_to(its_object, ...)`, after the object is in its final
