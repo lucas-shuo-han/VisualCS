@@ -1,0 +1,172 @@
+1
+00:00:06,350 --> 00:00:13,814
+Propose and reject gives every job its optimal candidate, the best partner it has in any stable matching.
+
+2
+00:00:13,814 --> 00:00:20,362
+In our example that is the green matching, and the purple one is the only other stable matching.
+
+3
+00:00:20,516 --> 00:00:23,216
+Now look at the columns of the candidates.
+
+4
+00:00:23,216 --> 00:00:27,886
+For Cleo and for Dora the green job sits below the purple one.
+
+5
+00:00:27,886 --> 00:00:34,844
+So the matching that is best for every job gives these two the lowest job they have in any stable matching,
+
+6
+00:00:34,844 --> 00:00:36,470
+which we called pessimal.
+
+7
+00:00:36,650 --> 00:00:42,624
+Ada and Bea have the same job in both, so for them best and worst are one and the same.
+
+8
+00:00:42,624 --> 00:00:46,094
+Is this an accident of the example, or a law?
+
+9
+00:00:46,094 --> 00:00:50,912
+Let us test it on Cleo, whose green job is job three.
+
+10
+00:00:52,083 --> 00:00:58,139
+Suppose there were some other stable matching in which Cleo has a job she likes less than job three.
+
+11
+00:00:58,139 --> 00:01:02,859
+On her list that could only be job one or job four.
+
+12
+00:01:03,016 --> 00:01:07,912
+In that matching job three is not with Cleo, so it has some other candidate.
+
+13
+00:01:07,912 --> 00:01:10,498
+Could she be above Cleo on its list?
+
+14
+00:01:10,498 --> 00:01:14,576
+No, because Cleo is the optimal candidate of job three,
+
+15
+00:01:14,576 --> 00:01:19,692
+the best it gets in any stable matching, and this matching is stable.
+
+16
+00:01:19,850 --> 00:01:25,220
+So that other candidate is below Cleo, and job three would rather have Cleo.
+
+17
+00:01:25,220 --> 00:01:30,312
+And Cleo would rather have job three than her job there, because that is what we supposed.
+
+18
+00:01:30,312 --> 00:01:35,354
+They are a rogue couple, so that matching is not stable after all.
+
+19
+00:01:35,516 --> 00:01:39,302
+So no stable matching gives Cleo less than job three.
+
+20
+00:01:39,302 --> 00:01:47,058
+Job three is the worst she can get, her pessimal job, and the job optimal matching hands her exactly that.
+
+21
+00:01:47,216 --> 00:01:50,176
+The argument never used the name of Cleo.
+
+22
+00:01:50,176 --> 00:01:55,792
+Take any candidate, and call the job she gets in the job optimal matching her green job.
+
+23
+00:01:55,792 --> 00:01:59,878
+Suppose some stable matching gave her a job she likes less.
+
+24
+00:01:59,878 --> 00:02:06,880
+Then her green job has another partner there, and it likes her more, because she is its optimal candidate.
+
+25
+00:02:07,050 --> 00:02:12,678
+So she and her green job would both rather have each other, and that matching has a rogue couple.
+
+26
+00:02:12,678 --> 00:02:16,874
+So it does not exist, and her green job is her pessimal job.
+
+27
+00:02:16,874 --> 00:02:21,614
+A job optimal matching is always candidate pessimal.
+
+28
+00:02:22,783 --> 00:02:28,619
+So the side that proposes gets its best stable outcome, and the side that answers gets its worst.
+
+29
+00:02:28,619 --> 00:02:32,735
+Then the remedy for the candidates is to let them do the proposing.
+
+30
+00:02:32,735 --> 00:02:36,358
+None of our proofs cared which side was called jobs,
+
+31
+00:02:36,358 --> 00:02:40,609
+so with candidates proposing the result is candidate optimal.
+
+32
+00:02:40,783 --> 00:02:42,565
+Try it on our lists.
+
+33
+00:02:42,565 --> 00:02:49,529
+Ada asks job one, Bea asks job four, Cleo asks job two, and Dora asks job three.
+
+34
+00:02:49,529 --> 00:02:57,123
+Every job has exactly one offer, so it stops on the first day, and the result is the purple matching.
+
+35
+00:02:57,283 --> 00:03:01,115
+This choice was made for real in the residency match.
+
+36
+00:03:01,115 --> 00:03:06,181
+At first the hospitals did the proposing, so the result was hospital optimal.
+
+37
+00:03:06,181 --> 00:03:11,179
+In the nineteen nineties the roles were reversed, so that the students do the proposing.
+
+38
+00:03:11,179 --> 00:03:17,915
+Later changes also let married couples ask for positions at the same or nearby hospitals.
+
+39
+00:03:18,083 --> 00:03:23,584
+The algorithm was in use for ten years before Gale and Shapley analysed it properly,
+
+40
+00:03:23,584 --> 00:03:25,877
+in a paper from nineteen sixty-two.
+
+41
+00:03:25,877 --> 00:03:29,451
+It always stops, it always ends in a stable matching,
+
+42
+00:03:29,451 --> 00:03:33,295
+and it gives the best stable outcome to whoever proposes.
+
+43
+00:03:33,295 --> 00:03:38,591
+So the question to ask of any matching system is who makes the offers.
+

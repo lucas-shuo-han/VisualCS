@@ -1,0 +1,168 @@
+1
+00:00:06,350 --> 00:00:13,164
+In episode three one set of lists had two stable matchings, so stable alone does not pick a winner.
+
+2
+00:00:13,164 --> 00:00:17,214
+To see what separates them, here is a slightly bigger example.
+
+3
+00:00:17,214 --> 00:00:24,968
+There are four jobs, numbered one to four, and four candidates, Ada, Bea, Cleo and Dora.
+
+4
+00:00:25,150 --> 00:00:29,208
+Each column shows a list, most wanted first as always.
+
+5
+00:00:29,208 --> 00:00:35,670
+Notice that every job puts Ada at the top, and that the favourite of Ada is job one.
+
+6
+00:00:35,850 --> 00:00:42,514
+Let us hunt for the stable matchings, starting with job one and Ada, who are first on each other's lists.
+
+7
+00:00:42,514 --> 00:00:48,388
+If they were not together, each would prefer the other to its partner, and they would be a rogue couple.
+
+8
+00:00:48,388 --> 00:00:52,614
+So every stable matching pairs job one with Ada.
+
+9
+00:00:52,783 --> 00:00:55,801
+That already tells us something about job two.
+
+10
+00:00:55,801 --> 00:01:02,365
+Its first choice is Ada as well, but in a stable matching Ada is always taken by job one.
+
+11
+00:01:02,365 --> 00:01:06,755
+So the top of a list is not always a realistic hope.
+
+12
+00:01:06,916 --> 00:01:09,880
+With Ada out of reach, look at job four.
+
+13
+00:01:09,880 --> 00:01:14,428
+Its next name is Bea, and the favourite of Bea is job four.
+
+14
+00:01:14,428 --> 00:01:20,274
+Apart, job four would have someone below Bea, and Bea would have a job below her favourite.
+
+15
+00:01:20,274 --> 00:01:25,800
+So job four and Bea are together in every stable matching as well.
+
+16
+00:01:25,983 --> 00:01:32,191
+That leaves jobs two and three with Cleo and Dora, and they can be paired in only two ways.
+
+17
+00:01:32,191 --> 00:01:38,725
+Either job two takes Dora and job three takes Cleo, or the other way round.
+
+18
+00:01:38,883 --> 00:01:40,875
+Is the first way stable?
+
+19
+00:01:40,875 --> 00:01:47,229
+Jobs two, three and four each have the second name on their lists, and the only name above it is Ada.
+
+20
+00:01:47,229 --> 00:01:52,737
+Ada has her favourite and will not move, so there is no rogue couple.
+
+21
+00:01:52,916 --> 00:01:58,166
+Now the other way round, where job two has Cleo and job three has Dora.
+
+22
+00:01:58,166 --> 00:02:03,560
+Job two would rather have Dora, and job three would rather have Cleo or Bea.
+
+23
+00:02:03,560 --> 00:02:09,030
+But Dora, Cleo and Bea each have their favourite job here, so none of them would move.
+
+24
+00:02:09,030 --> 00:02:13,432
+Both matchings are stable, and they are the only ones.
+
+25
+00:02:14,583 --> 00:02:17,913
+Now compare the two through the eyes of job two.
+
+26
+00:02:17,913 --> 00:02:21,993
+In the first matching it has Dora, the second name on its list,
+
+27
+00:02:21,993 --> 00:02:25,231
+and in the second matching it has Cleo, the third.
+
+28
+00:02:25,231 --> 00:02:32,453
+Dora is the best partner job two has in any stable matching, and we call her its optimal candidate.
+
+29
+00:02:32,616 --> 00:02:34,908
+Do the same for the other jobs.
+
+30
+00:02:34,908 --> 00:02:41,944
+Job one has Ada and job four has Bea in both, and job three is better off with Cleo than with Dora.
+
+31
+00:02:41,944 --> 00:02:46,844
+So the first matching gives every job its optimal candidate at once,
+
+32
+00:02:46,844 --> 00:02:49,870
+and such a matching is called job optimal.
+
+33
+00:02:50,050 --> 00:02:52,630
+Now take the side of the candidates.
+
+34
+00:02:52,630 --> 00:02:59,460
+Cleo has job three in the first matching and job two in the second, and job two is higher on her list.
+
+35
+00:02:59,460 --> 00:03:06,402
+Dora has job two in the first and job three in the second, and job three is higher on hers.
+
+36
+00:03:06,583 --> 00:03:13,075
+So the second matching gives every candidate her best stable job, and it is called candidate optimal.
+
+37
+00:03:13,075 --> 00:03:18,803
+And the first matching gives Cleo and Dora the lowest job they have in any stable matching.
+
+38
+00:03:18,803 --> 00:03:21,585
+The word for that is pessimal.
+
+39
+00:03:21,750 --> 00:03:26,648
+So here the matching that is optimal for the jobs is pessimal for the candidates.
+
+40
+00:03:26,648 --> 00:03:30,046
+Is that an accident of these lists, or a law?
+
+41
+00:03:30,046 --> 00:03:34,094
+Can every job always get its optimal candidate at once?
+
+42
+00:03:34,094 --> 00:03:38,420
+And which of the two does propose and reject produce?
+

@@ -1,0 +1,502 @@
+# Stable Matching, Step by Step
+
+Generated from the episode subtitles (.srt).
+
+
+## 01-propose-and-reject
+
+- `00:07` Three companies each have one job to fill, and we will call the jobs Approximation, Basis and Control.
+- `00:14` Three candidates, Anita, Bridget and Christine, are each looking for exactly one job.
+- `00:21` Every job has ranked the candidates from the one it wants most to the one it wants least.
+- `00:26` Approximation would hire Anita first, then Bridget, and Christine comes last on its list.
+- `00:33` Basis sees it differently, because it puts Bridget first, then Anita, then Christine.
+- `00:39` Control has the same list as Approximation, so Anita is at the top for two of the three jobs.
+- `00:46` The candidates have opinions too, and each of them has ranked the three jobs in the same way.
+- `00:52` Anita likes Basis best, then Approximation, then Control,
+- `00:57` while Bridget and Christine both put Approximation first, then Basis, then Control.
+- `01:04` Our task is a matching, which means every job gets one candidate and nobody is used twice.
+- `01:11` Here is one, where Approximation takes Bridget, Basis takes Christine, and Control takes Anita.
+- `01:19` But look at Approximation, which got Bridget although Anita is higher on its list.
+- `01:24` And Anita got Control, the last job on her list, although she ranks Approximation higher.
+- `01:30` So these two would both rather have each other, and a matching like that will not hold.
+- `01:38` So let us try the obvious thing and let every job ask for the candidate at the top of its list.
+- `01:43` Approximation asks Anita, Basis asks Bridget, and Control asks Anita as well.
+- `01:50` Now Anita holds two offers and Christine holds none, so the obvious thing has failed.
+- `01:56` Anita can only take one job, so let her choose, and her own list puts Approximation above Control.
+- `02:03` So Anita keeps the offer from Approximation and says no to Control.
+- `02:08` Bridget has a single offer, from Basis, so she simply keeps that one.
+- `02:14` Notice that Anita has not said yes.
+- `02:17` Basis is at the top of her list and might still ask her on a later day, so her answer is only a maybe.
+- `02:23` We say that she has the offer from Approximation in hand.
+- `02:28` Control has been refused, so there is no point in asking Anita again.
+- `02:32` It crosses her off its list, and the best candidate it has left is Bridget.
+- `02:38` What we just watched was one full day, so let us give its parts their names.
+- `02:43` In the morning every job made an offer to the best candidate still on its list.
+- `02:49` In the afternoon every candidate kept her best offer in hand and refused the rest.
+- `02:54` In the evening every refused job crossed off the candidate who said no.
+- `03:00` On the second morning the rule is the same, so every job asks the best candidate who has not refused it.
+- `03:07` Approximation and Basis were never refused, so they simply repeat their offers to Anita and Bridget.
+- `03:14` Control asks Bridget for the first time.
+- `03:17` So this afternoon it is Bridget who holds two offers, one from Basis and one from Control.
+- `03:24` Her list puts Basis above Control, so she keeps Basis in hand and refuses Control.
+- `03:31` In the evening Control crosses Bridget off as well.
+- `03:34` Only one name is left on its list now, and that name is Christine.
+- `03:40` On the third morning Approximation asks Anita again, Basis asks Bridget again, and Control asks Christine.
+- `03:47` In the afternoon every candidate holds exactly one offer, so for the first time nobody is refused.
+- `03:55` Think about what a fourth day would look like.
+- `03:57` Nobody was refused, so no list changed in the evening, and every job would ask the same candidate again.
+- `04:04` Each candidate would get the same single offer, so nothing could ever change.
+- `04:09` This is where we stop, and each candidate accepts the offer she has in hand.
+- `04:16` So the result is that Approximation hires Anita, Basis hires Bridget, and Control hires Christine.
+- `04:23` The pair that spoiled our first matching, Approximation and Anita, has ended up together.
+- `04:29` This procedure is called the propose and reject algorithm,
+- `04:33` and it is also known as the Gale Shapley algorithm.
+- `04:37` Look at Control and Christine, who each ended up with the last name on their own list.
+- `04:42` And we watched only one example, which happened to stop after three days.
+- `04:47` Does this procedure always stop,
+- `04:49` and is its result always free of pairs who would both rather have each other?
+- `04:53` Those are the questions for the next episodes.
+
+## 02-the-residency-match
+
+- `00:07` Every year, medical students who finish school need a place at a teaching hospital,
+- `00:12` which is called a residency.
+- `00:13` So on one side there are residency slots, and on the other side there are graduates.
+- `00:19` This is the matching problem of the last episode,
+- `00:23` with hospitals in the place of jobs and graduates in the place of candidates.
+- `00:27` Today a computer takes ranked lists from both sides and runs propose and reject on them.
+- `00:33` But the road there was long, and each failed attempt shows why the algorithm is built as it is.
+- `00:42` Residencies began about a century ago, and hospitals liked them, because an intern is cheap labour.
+- `00:49` Soon there were more slots than graduates to fill them.
+- `00:53` Now think like one of these hospitals, which does not want to be left with an empty slot.
+- `00:58` If it waits, the graduates it wants may already have said yes to another hospital.
+- `01:03` So the safe move is to make its offer a little earlier than everybody else.
+- `01:09` But every hospital thinks the same way, so the offers crept earlier year after year.
+- `01:14` By the middle of the nineteen forties they arrived at the beginning of the junior year,
+- `01:19` two years before graduation.
+- `01:20` Some hospitals were even thinking about asking sophomores.
+- `01:25` An offer that early is a bet on a student the hospital hardly knows yet.
+- `01:30` So the American Medical Association stepped in,
+- `01:33` and told the schools to keep transcripts and reference letters locked up until the senior year.
+- `01:38` Without those papers an early offer had nothing to stand on, and the race to be first was over.
+- `01:47` But now every hospital was making its offers in the same short season.
+- `01:51` A hospital whose offer sat unanswered could lose its second and
+- `01:55` third choices to other hospitals in the meantime.
+- `01:58` So hospitals attached a deadline to every offer,
+- `02:02` and in the end a student had only a few hours to say yes or no.
+- `02:06` Now look at it from the side of the graduate.
+- `02:09` She has an offer in front of her, and a hospital she likes more has not answered yet.
+- `02:14` With a few hours on the clock she must take it or risk ending up with nothing.
+- `02:20` Compare that with the candidates in the last episode,
+- `02:23` who could answer maybe and keep an offer in hand while better ones arrived.
+- `02:27` The short deadline took exactly that answer away.
+- `02:30` So the missing piece was a way to hold an offer without closing the door.
+- `02:37` In the early nineteen fifties this led to one central system, called the National Residency Matching Program.
+- `02:44` Every hospital handed in a ranked list of graduates, and every graduate handed in a ranked list of hospitals.
+- `02:53` The program then paired everyone up from those lists.
+- `02:57` But at first its pairing could contain a hospital and a graduate who would both rather have each other.
+- `03:03` That is exactly the trouble we met in the last episode,
+- `03:07` and such a pair has every reason to make a private deal again.
+- `03:11` In nineteen fifty-two the program switched to propose and reject.
+- `03:16` A matching with no such pair is called stable,
+- `03:18` and that is what the algorithm produced, so nobody had a reason to deal privately.
+- `03:23` The offers and the answers of maybe all happen inside the computer, and people only see the final result.
+- `03:31` Sixty years later, in twenty twelve,
+- `03:33` Lloyd Shapley and Alvin Roth received the Nobel Prize in economics for work that extends this algorithm.
+- `03:40` So the word that carried the whole story is stable.
+- `03:44` What exactly it demands of a matching is the question of the next episode.
+
+## 03-rogue-couples
+
+- `00:07` Here are the three jobs and the three candidates from the first episode,
+- `00:11` each with the same ranked list as before.
+- `00:14` The first name under a header is the favourite, and the last name is the least wanted.
+- `00:20` What should a good matching do for them?
+- `00:22` We could give as many of them as possible their first choice, or as few as possible their last choice.
+- `00:28` Or we could add up how far down its list everybody lands, and make that total small.
+- `00:35` But all of these are scores handed down from above, and jobs and candidates are free to act on their own.
+- `00:41` So let us look at one matching through their eyes.
+- `00:46` Take this matching, where Approximation has Christine, Basis has Bridget, and Control has Anita.
+- `00:53` Start with Approximation, which sits at the bottom of its own list with Christine,
+- `00:58` so it would rather have Bridget.
+- `01:00` But wanting is not enough, because Bridget has to want it too.
+- `01:04` Bridget has Basis, the second name on her list, and the first name on her list is Approximation.
+- `01:11` So Approximation and Bridget would both rather have each other,
+- `01:15` and they can simply walk away from this matching together.
+- `01:19` And look what that does to the others.
+- `01:21` Approximation drops Christine, who is suddenly without a job,
+- `01:25` and Bridget leaves Basis, which suddenly has an empty position.
+- `01:29` A pair like this is called a rogue couple, and a matching that contains one is called unstable.
+- `01:36` Is that the only rogue couple here?
+- `01:39` Approximation also ranks Anita above Christine, and Anita,
+- `01:43` who has Control at the bottom of her list, ranks Approximation above it.
+- `01:48` So Approximation and Anita are a second rogue couple, and one is already enough to make a matching unstable.
+- `01:58` Now try a different matching, where Approximation has Bridget, Basis has Anita, and Control has Christine.
+- `02:05` To hunt for a rogue couple we can go through the jobs one at a time.
+- `02:09` A job only prefers the names above its partner, so those are the only candidates we need to ask.
+- `02:16` Approximation has Bridget and would rather have Anita.
+- `02:20` But Anita has Basis, the very first name on her list, so she will not move.
+- `02:25` That is why Approximation and Anita are no rogue couple here.
+- `02:30` Basis has Anita and would rather have Bridget, but Bridget has Approximation,
+- `02:36` which is first on her list, so she stays too.
+- `02:39` Control would rather have Anita or Bridget, and we have just seen that each of them holds her first choice.
+- `02:46` So every job has been checked and no rogue couple turned up,
+- `02:49` and a matching with no rogue couple is called stable.
+- `02:53` Notice that Control and Christine are both stuck with the last name on their lists.
+- `02:58` So stable does not mean everyone is happy, only that nobody can find a partner who wants to leave with them.
+- `03:05` This is not the matching that propose and reject gave us in the first episode.
+- `03:10` That one paired Approximation with Anita, Basis with Bridget, and Control with Christine.
+- `03:16` There, only Control has names above its partner,
+- `03:20` and Anita and Bridget each rank Control last, so it is stable as well.
+- `03:25` So one set of lists can have more than one stable matching.
+- `03:29` But we found both of them by luck and by checking.
+- `03:32` Does every set of lists have a stable matching at all?
+
+## 04-the-roommates-problem
+
+- `00:07` Last time we asked whether every set of lists has a stable matching.
+- `00:11` Before we answer that, look at a close cousin of the problem.
+- `00:15` Four students, Amy, Ben, Cora and Dan, have to pair up as roommates.
+- `00:21` This time there are no two sides, so anybody can end up with anybody.
+- `00:26` Each of them ranks the other three.
+- `00:29` Amy would like Ben best and then Cora, Ben would like Cora best and then Amy,
+- `00:34` and Cora would like Amy best and then Ben.
+- `00:37` All three put Dan last, and we leave the list of Dan open for now.
+- `00:44` Let us start with any matching, say Amy with Ben and Cora with Dan.
+- `00:49` Ben has Amy, but his first choice is Cora,
+- `00:51` and Cora is stuck with her last choice, so she would gladly take Ben.
+- `00:56` So Ben and Cora are a rogue couple, and this matching is unstable.
+- `01:02` The obvious repair is to give the rogue couple what they want.
+- `01:06` So Ben moves in with Cora, and the two who are left behind, Amy and Dan, share the other room.
+- `01:13` Each repair gets rid of one rogue couple, so surely we run out of them in the end.
+- `01:19` Ben is content now, but look at Cora, who has Ben and still ranks Amy above him.
+- `01:24` And Amy has been pushed down to her last choice, so she would gladly take Cora.
+- `01:29` The repair removed one rogue couple and created a new one, Amy and Cora.
+- `01:35` So we repair again, which puts Amy with Cora and leaves Ben with Dan.
+- `01:41` Now it is Ben who sits on his last choice, and Amy still ranks Ben above Cora.
+- `01:46` That makes Amy and Ben the next rogue couple.
+- `01:50` Repair once more, and Amy is with Ben and Cora is with Dan.
+- `01:55` But that is exactly the matching we started from.
+- `01:58` The repairs run in a circle and never finish, so this recipe does not always lead to a stable matching.
+- `02:08` Maybe the recipe was just unlucky and a stable matching hides somewhere else.
+- `02:13` Let us count the possibilities.
+- `02:15` Amy shares with Ben, with Cora, or with Dan, and each choice leaves the other two no option but each other.
+- `02:23` So there are only three matchings, and we have just seen a rogue couple in every one of them.
+- `02:29` There is a pattern behind this.
+- `02:31` Whoever shares with Dan has landed on their last choice and would rather be with anyone else.
+- `02:37` Now look at the first choices, where Amy wants Ben, Ben wants Cora, and Cora wants Amy.
+- `02:43` So whoever is with Dan is always somebody's first choice.
+- `02:48` That somebody cannot be with their first choice, because Dan has taken it.
+- `02:53` So the two of them would both rather have each other,
+- `02:56` and they form a rogue couple whatever the list of Dan says.
+- `03:02` So for roommates a stable matching does not have to exist.
+- `03:06` Now remember the repair recipe, which never asked who was a job and who was a candidate.
+- `03:11` If it proved that jobs and candidates always have a stable matching,
+- `03:16` the same words would prove it for roommates, and that is false.
+- `03:20` So any proof for jobs and candidates has to use the two sides somewhere.
+- `03:25` Propose and reject does exactly that, because only jobs make offers and only candidates answer.
+- `03:32` Whether it always ends in a stable matching is what the next episodes work out.
+
+## 05-offers-only-get-better
+
+- `00:07` In the first episode, propose and reject stopped after three days, but that was one example.
+- `00:13` The stopping rule waits for a day on which nobody is refused,
+- `00:17` so could there be lists for which such a day never comes?
+- `00:20` Look at what a day with a refusal does.
+- `00:23` In the evening the refused job crosses a name off its list, and a name that is crossed off never comes back.
+- `00:30` On day one Control crossed off Anita, and on day two it crossed off Bridget.
+- `00:36` So every day that does not stop the algorithm uses up at least one name.
+- `00:41` And the supply is limited, since three jobs with three names each make nine names in all.
+- `00:47` That means at most nine days can have a refusal, and after that a day with no refusal has to come.
+- `00:54` Nothing in this count was special about three.
+- `00:57` With any number of jobs, and as many candidates, the number of names is that number times itself.
+- `01:04` So only that many days can have a refusal, and propose and reject always halts, whatever the lists are.
+- `01:14` Halting is half of what we want, and the other half is that the result is stable.
+- `01:19` For that we need to know what a candidate holds from day to day, so let us replay the three days of Anita.
+- `01:26` On day one Approximation and Control both made her an offer, and she kept Approximation in hand.
+- `01:33` On days two and three Approximation simply asked again, and she kept it again.
+- `01:39` Now pick any job that ever made Anita an offer, for example Control on day one.
+- `01:44` From that day on, what Anita holds is never below Control on her own list.
+- `01:49` The same is true for Approximation, where what she holds is exactly as good,
+- `01:55` because it is Approximation itself.
+- `01:58` Here is the claim in general.
+- `02:00` Suppose a job makes an offer to a candidate on some day.
+- `02:04` Then at the end of that day, and of every later day, she holds an offer she likes at least as much.
+- `02:10` This is called the improvement lemma, and one example is not a proof of it.
+- `02:17` Take a candidate and a job that makes her an offer, and look at the afternoon of that same day.
+- `02:23` She has at least this one offer to choose from, and the rule says she keeps the best of what she has.
+- `02:29` So at the end of that day she holds this job or one she likes more.
+- `02:34` Now suppose that at the end of some day she holds a job that is at least this good.
+- `02:39` The question is whether that job will ask her again tomorrow.
+- `02:43` She did not refuse it, and a job makes only one offer a day,
+- `02:47` so in the evening it crossed nothing off its list.
+- `02:51` So the next morning her name is still the first one on its list that is not crossed off,
+- `02:56` exactly as it was this morning.
+- `02:58` The morning rule then makes that job ask her again.
+- `03:01` That is the step the whole proof turns on,
+- `03:04` because an offer that was not refused always comes back the next day.
+- `03:09` So tomorrow afternoon she again has that job among her offers, and again she keeps the best of what she has.
+- `03:16` What she holds tomorrow is that job or one she likes more.
+- `03:20` And since that job was at least as good as the original one, what she holds tomorrow is at least as good too.
+- `03:27` So the claim is true on the day of the offer, and whenever it is true on one day it is true on the next.
+- `03:34` That carries it from day to day forever, which is a proof by induction on the days.
+- `03:39` The hand of a candidate can only climb her list.
+- `03:43` A job, meanwhile, starts at the top of its list and can only move down,
+- `03:48` because names are crossed off and never come back.
+- `03:52` So candidates climb while jobs sink, and somewhere the two have to meet.
+- `03:56` Whether the place where they meet is always stable is the question we are heading for.
+
+## 06-the-first-counterexample
+
+- `00:07` Last time we proved the improvement lemma by walking forward from day to day.
+- `00:12` Once a job has made a candidate an offer, she holds that job or a better one.
+- `00:17` That is true at the end of that day and of every later day.
+- `00:22` Here is a different way to prove the same thing.
+- `00:24` On the day of the offer itself the claim is true,
+- `00:28` because she keeps the best of her offers and this job is among them.
+- `00:32` So let us paint that day green.
+- `00:35` Now suppose the lemma were false.
+- `00:37` Then on some later days the claim fails, so let us paint those days red, wherever they may be.
+- `00:44` Among the red days, look at the first one.
+- `00:47` The first red day is not the day of the offer, because that day is green.
+- `00:52` So there is a day just before it, and that day is not red, because then ours would not be the first.
+- `00:59` The claim is true on the day before.
+- `01:02` So on the day before, she holds a job at least as good as the original one.
+- `01:07` She did not refuse that job, so by the step from last time it asks her again on the red day.
+- `01:13` Then she keeps it or something better, which makes the claim true on the red day.
+- `01:19` But a day cannot be red and green at once, so the first red day does not exist.
+- `01:24` And if there is no first red day, there are no red days at all.
+- `01:29` So the lemma holds, and we have proved it a second time.
+- `01:35` Is this a new kind of proof?
+- `01:37` Both proofs begin by checking the day of the offer.
+- `01:40` And both do the same work in the middle, which is to show that a green day is never followed by a red one.
+- `01:48` Induction tells it forwards, where green today forces green tomorrow, so the green runs on forever.
+- `01:55` The second proof tells it backwards, where a first red day would need a green day right before it.
+- `02:01` It is one argument told in two directions.
+- `02:07` But the backward telling leaned on something we never proved.
+- `02:11` We said, look at the first red day.
+- `02:14` Why should a set of days have a first one at all?
+- `02:17` Days are counted with natural numbers, so let us try it with numbers.
+- `02:22` Take the set five, two, eleven, seven and eight.
+- `02:26` Its smallest element is two, and in a finite set we can always find it by comparing.
+- `02:32` Infinite sets work just as well.
+- `02:35` The odd numbers never end, but they start at one.
+- `02:38` The primes never end, but they start at two.
+- `02:43` Here is why it cannot fail.
+- `02:45` Pick any element of the set, say eleven, and only finitely many natural numbers lie below it.
+- `02:52` So we can check them one by one, and the lowest one that belongs to the set is the smallest.
+- `02:58` This fact is called the well ordering principle.
+- `03:02` Every set of natural numbers that is not empty has a smallest element.
+- `03:06` Our red days were such a set, not empty because we supposed the lemma false,
+- `03:12` and so a first red day had to exist.
+- `03:17` Other number systems are not so kind.
+- `03:19` Take the integers, which include the negative numbers, and look at the set of all negative ones.
+- `03:25` Below minus one comes minus two, then minus three, and it never ends, so this set has no smallest element.
+- `03:34` The real numbers contain that same set, so they fail too.
+- `03:38` What if we only allow zero and everything above it?
+- `03:42` Then look at the set of all positive numbers.
+- `03:45` Whatever positive number you call the smallest, half of it is smaller and still positive.
+- `03:51` Zero would be below them all, but zero is not positive, so it is not in the set.
+- `03:56` So first counterexamples belong to the natural numbers, and to things counted by them, like our days.
+- `04:03` Next we use the improvement lemma to show that the result of propose and reject is stable.
+
+## 07-always-a-stable-matching
+
+- `00:07` We know that propose and reject always stops.
+- `00:10` But stopping is not the same as succeeding.
+- `00:13` When it stops, is every job really paired with a candidate, and every candidate with a job?
+- `00:20` Here is what could go wrong.
+- `00:22` In the first episode Control was refused by Anita and then by Bridget,
+- `00:27` and it ended with the last name on its list, Christine.
+- `00:30` What if Christine had refused it too?
+- `00:34` Then Control would have no name left, and it could never make an offer again.
+- `00:38` So let us suppose that this happens to some job on some day, and look closely at the end of that day.
+- `00:46` Each candidate who refused Control did so because she kept an offer she liked more.
+- `00:52` And by the improvement lemma she still holds Control or something better at the end of every later day.
+- `00:58` It cannot be Control itself, which she has refused, so she holds another job.
+- `01:04` So at the end of that day all three candidates hold an offer, and none of the three offers is from Control.
+- `01:10` A job makes only one offer each morning, so three hands need three different jobs.
+- `01:17` But without Control only two jobs are left, Approximation and Basis.
+- `01:22` Two jobs cannot fill three hands.
+- `01:25` So the day we supposed can never come, and Control cannot be refused by everyone.
+- `01:31` The same count works for any number of jobs.
+- `01:35` A job refused by everyone would leave one job fewer than there are candidates,
+- `01:40` while every candidate holds an offer of her own.
+- `01:43` So no job ever runs out of names.
+- `01:46` So every morning every job has someone to ask.
+- `01:50` On the last day nobody is refused, so every job's offer is in the hand of some candidate.
+- `01:56` No candidate holds two offers, and there are as many candidates as jobs, so everyone is paired.
+- `02:03` Propose and reject always ends with a matching.
+- `02:09` Now the main question, whether that matching is stable.
+- `02:12` Here is the result of the first episode, with the two names that Control crossed off shown faded.
+- `02:18` Approximation and Basis have their first choices,
+- `02:22` so the only job that would rather have someone else is Control.
+- `02:26` Control would rather have Anita, who is above its partner Christine.
+- `02:30` Now, why is Anita above Christine and yet not its partner?
+- `02:35` A job works down its list, and it only moves past a name when that name has refused it.
+- `02:41` So Control asked Anita on an earlier day, and she said no.
+- `02:45` Now the improvement lemma speaks.
+- `02:48` From the day Control asked her, Anita holds Control or something better at the end of every day,
+- `02:54` and that includes the last day.
+- `02:57` And on the last day she does not hold Control, because Control's last offer went to Christine.
+- `03:02` So what Anita holds at the end is a job she likes more than Control, and she has no wish to leave it.
+- `03:09` Control and Anita are not a rogue couple.
+- `03:13` Bridget is the other name above Christine, and the same steps apply to her.
+- `03:18` Control asked her on day two and she refused, so she ends with Control or better.
+- `03:23` It is not Control, so it is Basis, which is higher on her list.
+- `03:31` Nothing in those steps used the names.
+- `03:33` Take any job with its final partner, and any candidate the job would rather have.
+- `03:39` She stands above the partner on its list, so the job asked her on an earlier day and she refused.
+- `03:46` By the improvement lemma she ends with that job or a better one.
+- `03:50` It is not that job, because its last offer went to its partner.
+- `03:54` So she ends with a job she likes more, and she will not leave it.
+- `03:59` A rogue couple needs a job and a candidate who both want to switch, and here the candidate never does.
+- `04:05` So the result of propose and reject has no rogue couple, which means it is always stable.
+- `04:12` And so a stable matching always exists, which the roommates could not promise.
+- `04:18` But in episode three one set of lists had two stable matchings.
+- `04:22` So which one does propose and reject choose, and who is it good for?
+- `04:27` That is where we go next.
+
+## 08-the-best-partner-you-can-keep
+
+- `00:06` In episode three one set of lists had two stable matchings, so stable alone does not pick a winner.
+- `00:13` To see what separates them, here is a slightly bigger example.
+- `00:17` There are four jobs, numbered one to four, and four candidates, Ada, Bea, Cleo and Dora.
+- `00:25` Each column shows a list, most wanted first as always.
+- `00:29` Notice that every job puts Ada at the top, and that the favourite of Ada is job one.
+- `00:35` Let us hunt for the stable matchings, starting with job one and Ada, who are first on each other's lists.
+- `00:42` If they were not together, each would prefer the other to its partner, and they would be a rogue couple.
+- `00:48` So every stable matching pairs job one with Ada.
+- `00:52` That already tells us something about job two.
+- `00:55` Its first choice is Ada as well, but in a stable matching Ada is always taken by job one.
+- `01:02` So the top of a list is not always a realistic hope.
+- `01:06` With Ada out of reach, look at job four.
+- `01:09` Its next name is Bea, and the favourite of Bea is job four.
+- `01:14` Apart, job four would have someone below Bea, and Bea would have a job below her favourite.
+- `01:20` So job four and Bea are together in every stable matching as well.
+- `01:25` That leaves jobs two and three with Cleo and Dora, and they can be paired in only two ways.
+- `01:32` Either job two takes Dora and job three takes Cleo, or the other way round.
+- `01:38` Is the first way stable?
+- `01:40` Jobs two, three and four each have the second name on their lists, and the only name above it is Ada.
+- `01:47` Ada has her favourite and will not move, so there is no rogue couple.
+- `01:52` Now the other way round, where job two has Cleo and job three has Dora.
+- `01:58` Job two would rather have Dora, and job three would rather have Cleo or Bea.
+- `02:03` But Dora, Cleo and Bea each have their favourite job here, so none of them would move.
+- `02:09` Both matchings are stable, and they are the only ones.
+- `02:14` Now compare the two through the eyes of job two.
+- `02:17` In the first matching it has Dora, the second name on its list,
+- `02:21` and in the second matching it has Cleo, the third.
+- `02:25` Dora is the best partner job two has in any stable matching, and we call her its optimal candidate.
+- `02:32` Do the same for the other jobs.
+- `02:34` Job one has Ada and job four has Bea in both, and job three is better off with Cleo than with Dora.
+- `02:41` So the first matching gives every job its optimal candidate at once,
+- `02:46` and such a matching is called job optimal.
+- `02:50` Now take the side of the candidates.
+- `02:52` Cleo has job three in the first matching and job two in the second, and job two is higher on her list.
+- `02:59` Dora has job two in the first and job three in the second, and job three is higher on hers.
+- `03:06` So the second matching gives every candidate her best stable job, and it is called candidate optimal.
+- `03:13` And the first matching gives Cleo and Dora the lowest job they have in any stable matching.
+- `03:18` The word for that is pessimal.
+- `03:21` So here the matching that is optimal for the jobs is pessimal for the candidates.
+- `03:26` Is that an accident of these lists, or a law?
+- `03:30` Can every job always get its optimal candidate at once?
+- `03:34` And which of the two does propose and reject produce?
+
+## 09-the-proposers-win
+
+- `00:06` Last time four jobs and four candidates had exactly two stable matchings,
+- `00:11` one optimal for the jobs and one optimal for the candidates.
+- `00:15` So let us run propose and reject on these lists and see which one comes out.
+- `00:21` On the first morning all four jobs ask Ada, because she is at the top of every list.
+- `00:26` Ada keeps job one, her favourite, and refuses the other three, and each of them crosses her off.
+- `00:34` On the second morning job one asks Ada again, job two asks Dora, job three asks Cleo, and job four asks Bea.
+- `00:42` Every candidate has exactly one offer, so nobody is refused and the algorithm stops.
+- `00:50` This is the first of our two matchings, the one in which every job has its optimal candidate.
+- `00:56` And look who did the refusing along the way.
+- `00:58` Jobs two, three and four were refused only by Ada, and Ada is not the optimal candidate of any of them.
+- `01:07` So here is a bold guess for all lists.
+- `01:09` In propose and reject no job is ever refused by its optimal candidate.
+- `01:15` If that is true, every job ends with its optimal candidate, and the result is job optimal.
+- `01:22` Why would that be enough?
+- `01:24` A job only moves past a name that has refused it, so it never ends below its optimal candidate.
+- `01:30` And it cannot end above her, because the result is stable,
+- `01:34` and she is the best partner in any stable matching.
+- `01:40` Suppose the guess is wrong for some lists.
+- `01:43` Then there are days on which some job is refused by its optimal candidate, so mark those days red.
+- `01:49` By the well ordering principle there is a first red day, and we look at that day.
+- `01:55` On that day some job is refused by its optimal candidate.
+- `01:59` She refuses it because she keeps an offer she likes more, from another job, which we will call the rival.
+- `02:06` So she ranks the rival above the job she refused.
+- `02:10` Now remember what optimal means.
+- `02:13` She is the best partner the refused job has in any stable matching,
+- `02:17` so there is a stable matching in which these two are together.
+- `02:21` In that matching the rival has some partner too.
+- `02:27` We will show that in this stable matching the candidate and the rival would both rather have each other.
+- `02:33` Her side of this is quick.
+- `02:35` There she is with the refused job, and we just saw that she ranks the rival above it.
+- `02:41` Now the side of the rival.
+- `02:43` On the first red day the rival is asking her, and a job asks the first name it has not crossed off.
+- `02:49` So every name above her on its list has already refused it, on an earlier day.
+- `02:55` But before the first red day no job was refused by its optimal candidate.
+- `03:00` So the optimal candidate of the rival is not among the names above her.
+- `03:04` That puts her level with the rival's optimal candidate or higher.
+- `03:09` Now look at the partner the rival has in the stable matching.
+- `03:13` That partner cannot be above its optimal candidate,
+- `03:16` because optimal means the best partner in any stable matching.
+- `03:20` So our candidate is level with that partner or higher.
+- `03:25` And she is not that partner, because in this matching she is with the refused job.
+- `03:30` So the rival ranks her strictly above its partner, and wants to switch.
+- `03:35` So she prefers the rival and the rival prefers her,
+- `03:38` and they are a rogue couple inside a matching we called stable.
+- `03:42` That is a plain contradiction.
+- `03:44` So there is no first red day, no red day at all, and no job is ever refused by its optimal candidate.
+- `03:53` So every job ends with its optimal candidate,
+- `03:56` and propose and reject always produces the job optimal matching.
+- `04:00` The proof took the first red day and showed it cannot happen, which is induction in its well ordering form.
+- `04:07` And if the jobs get their best, what is left for the candidates?
+
+## 10-and-the-candidates-lose
+
+- `00:06` Propose and reject gives every job its optimal candidate, the best partner it has in any stable matching.
+- `00:13` In our example that is the green matching, and the purple one is the only other stable matching.
+- `00:20` Now look at the columns of the candidates.
+- `00:23` For Cleo and for Dora the green job sits below the purple one.
+- `00:27` So the matching that is best for every job gives these two the lowest job they have in any stable matching,
+- `00:34` which we called pessimal.
+- `00:36` Ada and Bea have the same job in both, so for them best and worst are one and the same.
+- `00:42` Is this an accident of the example, or a law?
+- `00:46` Let us test it on Cleo, whose green job is job three.
+- `00:52` Suppose there were some other stable matching in which Cleo has a job she likes less than job three.
+- `00:58` On her list that could only be job one or job four.
+- `01:03` In that matching job three is not with Cleo, so it has some other candidate.
+- `01:07` Could she be above Cleo on its list?
+- `01:10` No, because Cleo is the optimal candidate of job three,
+- `01:14` the best it gets in any stable matching, and this matching is stable.
+- `01:19` So that other candidate is below Cleo, and job three would rather have Cleo.
+- `01:25` And Cleo would rather have job three than her job there, because that is what we supposed.
+- `01:30` They are a rogue couple, so that matching is not stable after all.
+- `01:35` So no stable matching gives Cleo less than job three.
+- `01:39` Job three is the worst she can get, her pessimal job, and the job optimal matching hands her exactly that.
+- `01:47` The argument never used the name of Cleo.
+- `01:50` Take any candidate, and call the job she gets in the job optimal matching her green job.
+- `01:55` Suppose some stable matching gave her a job she likes less.
+- `01:59` Then her green job has another partner there, and it likes her more, because she is its optimal candidate.
+- `02:07` So she and her green job would both rather have each other, and that matching has a rogue couple.
+- `02:12` So it does not exist, and her green job is her pessimal job.
+- `02:16` A job optimal matching is always candidate pessimal.
+- `02:22` So the side that proposes gets its best stable outcome, and the side that answers gets its worst.
+- `02:28` Then the remedy for the candidates is to let them do the proposing.
+- `02:32` None of our proofs cared which side was called jobs,
+- `02:36` so with candidates proposing the result is candidate optimal.
+- `02:40` Try it on our lists.
+- `02:42` Ada asks job one, Bea asks job four, Cleo asks job two, and Dora asks job three.
+- `02:49` Every job has exactly one offer, so it stops on the first day, and the result is the purple matching.
+- `02:57` This choice was made for real in the residency match.
+- `03:01` At first the hospitals did the proposing, so the result was hospital optimal.
+- `03:06` In the nineteen nineties the roles were reversed, so that the students do the proposing.
+- `03:11` Later changes also let married couples ask for positions at the same or nearby hospitals.
+- `03:18` The algorithm was in use for ten years before Gale and Shapley analysed it properly,
+- `03:23` in a paper from nineteen sixty-two.
+- `03:25` It always stops, it always ends in a stable matching,
+- `03:29` and it gives the best stable outcome to whoever proposes.
+- `03:33` So the question to ask of any matching system is who makes the offers.

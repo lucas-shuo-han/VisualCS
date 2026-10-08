@@ -1,0 +1,184 @@
+1
+00:00:07,350 --> 00:00:13,348
+In the first episode, propose and reject stopped after three days, but that was one example.
+
+2
+00:00:13,348 --> 00:00:17,159
+The stopping rule waits for a day on which nobody is refused,
+
+3
+00:00:17,159 --> 00:00:20,722
+so could there be lists for which such a day never comes?
+
+4
+00:00:20,883 --> 00:00:23,617
+Look at what a day with a refusal does.
+
+5
+00:00:23,617 --> 00:00:30,515
+In the evening the refused job crosses a name off its list, and a name that is crossed off never comes back.
+
+6
+00:00:30,515 --> 00:00:36,375
+On day one Control crossed off Anita, and on day two it crossed off Bridget.
+
+7
+00:00:36,550 --> 00:00:41,346
+So every day that does not stop the algorithm uses up at least one name.
+
+8
+00:00:41,346 --> 00:00:47,248
+And the supply is limited, since three jobs with three names each make nine names in all.
+
+9
+00:00:47,248 --> 00:00:54,304
+That means at most nine days can have a refusal, and after that a day with no refusal has to come.
+
+10
+00:00:54,483 --> 00:00:57,501
+Nothing in this count was special about three.
+
+11
+00:00:57,501 --> 00:01:04,117
+With any number of jobs, and as many candidates, the number of names is that number times itself.
+
+12
+00:01:04,117 --> 00:01:12,259
+So only that many days can have a refusal, and propose and reject always halts, whatever the lists are.
+
+13
+00:01:14,216 --> 00:01:19,618
+Halting is half of what we want, and the other half is that the result is stable.
+
+14
+00:01:19,618 --> 00:01:26,484
+For that we need to know what a candidate holds from day to day, so let us replay the three days of Anita.
+
+15
+00:01:26,650 --> 00:01:33,300
+On day one Approximation and Control both made her an offer, and she kept Approximation in hand.
+
+16
+00:01:33,300 --> 00:01:39,566
+On days two and three Approximation simply asked again, and she kept it again.
+
+17
+00:01:39,716 --> 00:01:44,974
+Now pick any job that ever made Anita an offer, for example Control on day one.
+
+18
+00:01:44,974 --> 00:01:49,968
+From that day on, what Anita holds is never below Control on her own list.
+
+19
+00:01:49,968 --> 00:01:55,576
+The same is true for Approximation, where what she holds is exactly as good,
+
+20
+00:01:55,576 --> 00:01:58,158
+because it is Approximation itself.
+
+21
+00:01:58,316 --> 00:02:00,338
+Here is the claim in general.
+
+22
+00:02:00,338 --> 00:02:04,282
+Suppose a job makes an offer to a candidate on some day.
+
+23
+00:02:04,282 --> 00:02:10,424
+Then at the end of that day, and of every later day, she holds an offer she likes at least as much.
+
+24
+00:02:10,424 --> 00:02:15,614
+This is called the improvement lemma, and one example is not a proof of it.
+
+25
+00:02:17,583 --> 00:02:23,385
+Take a candidate and a job that makes her an offer, and look at the afternoon of that same day.
+
+26
+00:02:23,385 --> 00:02:29,531
+She has at least this one offer to choose from, and the rule says she keeps the best of what she has.
+
+27
+00:02:29,531 --> 00:02:34,525
+So at the end of that day she holds this job or one she likes more.
+
+28
+00:02:34,683 --> 00:02:39,577
+Now suppose that at the end of some day she holds a job that is at least this good.
+
+29
+00:02:39,577 --> 00:02:43,247
+The question is whether that job will ask her again tomorrow.
+
+30
+00:02:43,247 --> 00:02:47,438
+She did not refuse it, and a job makes only one offer a day,
+
+31
+00:02:47,438 --> 00:02:50,931
+so in the evening it crossed nothing off its list.
+
+32
+00:02:51,083 --> 00:02:56,549
+So the next morning her name is still the first one on its list that is not crossed off,
+
+33
+00:02:56,549 --> 00:02:58,475
+exactly as it was this morning.
+
+34
+00:02:58,475 --> 00:03:01,707
+The morning rule then makes that job ask her again.
+
+35
+00:03:01,707 --> 00:03:04,594
+That is the step the whole proof turns on,
+
+36
+00:03:04,594 --> 00:03:09,337
+because an offer that was not refused always comes back the next day.
+
+37
+00:03:09,516 --> 00:03:16,362
+So tomorrow afternoon she again has that job among her offers, and again she keeps the best of what she has.
+
+38
+00:03:16,362 --> 00:03:20,180
+What she holds tomorrow is that job or one she likes more.
+
+39
+00:03:20,180 --> 00:03:27,450
+And since that job was at least as good as the original one, what she holds tomorrow is at least as good too.
+
+40
+00:03:27,616 --> 00:03:34,066
+So the claim is true on the day of the offer, and whenever it is true on one day it is true on the next.
+
+41
+00:03:34,066 --> 00:03:39,622
+That carries it from day to day forever, which is a proof by induction on the days.
+
+42
+00:03:39,622 --> 00:03:43,600
+The hand of a candidate can only climb her list.
+
+43
+00:03:43,783 --> 00:03:48,727
+A job, meanwhile, starts at the top of its list and can only move down,
+
+44
+00:03:48,727 --> 00:03:52,209
+because names are crossed off and never come back.
+
+45
+00:03:52,209 --> 00:03:56,929
+So candidates climb while jobs sink, and somewhere the two have to meet.
+
+46
+00:03:56,929 --> 00:04:02,777
+Whether the place where they meet is always stable is the question we are heading for.
+

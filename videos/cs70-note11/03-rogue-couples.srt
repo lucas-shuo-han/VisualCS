@@ -1,0 +1,172 @@
+1
+00:00:07,350 --> 00:00:11,798
+Here are the three jobs and the three candidates from the first episode,
+
+2
+00:00:11,798 --> 00:00:14,332
+each with the same ranked list as before.
+
+3
+00:00:14,332 --> 00:00:20,006
+The first name under a header is the favourite, and the last name is the least wanted.
+
+4
+00:00:20,183 --> 00:00:22,595
+What should a good matching do for them?
+
+5
+00:00:22,595 --> 00:00:28,813
+We could give as many of them as possible their first choice, or as few as possible their last choice.
+
+6
+00:00:28,813 --> 00:00:35,017
+Or we could add up how far down its list everybody lands, and make that total small.
+
+7
+00:00:35,183 --> 00:00:41,405
+But all of these are scores handed down from above, and jobs and candidates are free to act on their own.
+
+8
+00:00:41,405 --> 00:00:45,015
+So let us look at one matching through their eyes.
+
+9
+00:00:46,183 --> 00:00:53,089
+Take this matching, where Approximation has Christine, Basis has Bridget, and Control has Anita.
+
+10
+00:00:53,089 --> 00:00:58,387
+Start with Approximation, which sits at the bottom of its own list with Christine,
+
+11
+00:00:58,387 --> 00:01:00,455
+so it would rather have Bridget.
+
+12
+00:01:00,616 --> 00:01:04,756
+But wanting is not enough, because Bridget has to want it too.
+
+13
+00:01:04,756 --> 00:01:11,054
+Bridget has Basis, the second name on her list, and the first name on her list is Approximation.
+
+14
+00:01:11,054 --> 00:01:15,181
+So Approximation and Bridget would both rather have each other,
+
+15
+00:01:15,181 --> 00:01:18,980
+and they can simply walk away from this matching together.
+
+16
+00:01:19,150 --> 00:01:21,610
+And look what that does to the others.
+
+17
+00:01:21,610 --> 00:01:25,731
+Approximation drops Christine, who is suddenly without a job,
+
+18
+00:01:25,731 --> 00:01:29,988
+and Bridget leaves Basis, which suddenly has an empty position.
+
+19
+00:01:29,988 --> 00:01:36,758
+A pair like this is called a rogue couple, and a matching that contains one is called unstable.
+
+20
+00:01:36,916 --> 00:01:39,280
+Is that the only rogue couple here?
+
+21
+00:01:39,280 --> 00:01:43,308
+Approximation also ranks Anita above Christine, and Anita,
+
+22
+00:01:43,308 --> 00:01:48,308
+who has Control at the bottom of her list, ranks Approximation above it.
+
+23
+00:01:48,308 --> 00:01:56,336
+So Approximation and Anita are a second rogue couple, and one is already enough to make a matching unstable.
+
+24
+00:01:58,516 --> 00:02:05,684
+Now try a different matching, where Approximation has Bridget, Basis has Anita, and Control has Christine.
+
+25
+00:02:05,684 --> 00:02:09,718
+To hunt for a rogue couple we can go through the jobs one at a time.
+
+26
+00:02:09,718 --> 00:02:16,610
+A job only prefers the names above its partner, so those are the only candidates we need to ask.
+
+27
+00:02:16,783 --> 00:02:20,531
+Approximation has Bridget and would rather have Anita.
+
+28
+00:02:20,531 --> 00:02:25,761
+But Anita has Basis, the very first name on her list, so she will not move.
+
+29
+00:02:25,761 --> 00:02:30,813
+That is why Approximation and Anita are no rogue couple here.
+
+30
+00:02:30,983 --> 00:02:36,093
+Basis has Anita and would rather have Bridget, but Bridget has Approximation,
+
+31
+00:02:36,093 --> 00:02:39,079
+which is first on her list, so she stays too.
+
+32
+00:02:39,079 --> 00:02:46,107
+Control would rather have Anita or Bridget, and we have just seen that each of them holds her first choice.
+
+33
+00:02:46,283 --> 00:02:49,957
+So every job has been checked and no rogue couple turned up,
+
+34
+00:02:49,957 --> 00:02:53,203
+and a matching with no rogue couple is called stable.
+
+35
+00:02:53,203 --> 00:02:58,125
+Notice that Control and Christine are both stuck with the last name on their lists.
+
+36
+00:02:58,125 --> 00:03:05,529
+So stable does not mean everyone is happy, only that nobody can find a partner who wants to leave with them.
+
+37
+00:03:05,683 --> 00:03:10,691
+This is not the matching that propose and reject gave us in the first episode.
+
+38
+00:03:10,691 --> 00:03:16,655
+That one paired Approximation with Anita, Basis with Bridget, and Control with Christine.
+
+39
+00:03:16,655 --> 00:03:20,186
+There, only Control has names above its partner,
+
+40
+00:03:20,186 --> 00:03:25,335
+and Anita and Bridget each rank Control last, so it is stable as well.
+
+41
+00:03:25,516 --> 00:03:29,338
+So one set of lists can have more than one stable matching.
+
+42
+00:03:29,338 --> 00:03:32,642
+But we found both of them by luck and by checking.
+
+43
+00:03:32,642 --> 00:03:36,642
+Does every set of lists have a stable matching at all?
+
