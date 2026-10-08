@@ -45,9 +45,13 @@ report as a question, and the coordinator takes it back to the author.
 
 1. **Author**, once per unit: the episode split and `series.py`, then one BOARD per
    episode. The narration lint needs code, so at this point the author holds the BOARD
-   against `narration-writing.md` itself (the builder's lint will repeat it). Stop and show
-   the user the first BOARD before writing the rest; a change of voice or depth is
-   cheap now and expensive after the builders ran.
+   against `narration-writing.md` itself (the builder's lint will repeat it).
+   **Pilot before the batch.** The author writes two boards first: the easiest episode
+   and the hardest one (a proof or a long derivation). Both are built and reviewed,
+   the user listens to one preview (voice and pace forced the rewrites of every
+   earlier series), and what the review finds goes into the briefs as rules. Only
+   then does the author write the remaining boards. Writing all the boards after one
+   build repeats the first build's faults in every episode and buys a fix round each.
 2. **Builder**, one per episode. At most two at once on one machine: renders that
    compete take three times as long, and a full drive corrupts the caches.
 3. **Reviewer**, per episode, on the builder's last sheets. Rows it marks "author" go
@@ -61,6 +65,37 @@ report as a question, and the coordinator takes it back to the author.
 5. **Coordinator**: for each episode, `check.py U N --strict --no-render` says PASS and
    `REVIEW-epNN.md` has no open item; then the 1080p render, after the user has heard
    a preview.
+
+## Keeping the coordinator cheap
+
+The coordinator is usually the strongest model, and every report, review and
+notification of every worker lands in its context. That cost is easy to miss, because
+only the workers' tokens are printed. Three habits keep it down:
+
+- Queue with a shell loop, not by hand: one background command runs the builders of
+  a lane one after another and prints only each one's result table, so the
+  coordinator is woken once per lane instead of once per step.
+- Read summaries, not transcripts: the last check table and the "questions for the
+  author" of a builder, the table of a reviewer. Open a contact sheet yourself only
+  for a row someone marked NOT FIXED or to spot-check a verifier.
+- Hand triage down: dropping review rows the sheets cannot support and writing the
+  `REVIEW-epNN.md` file is work for the reviewer's own model; the author's model is
+  needed only for rows that change a board.
+
+Report the coordinator's own usage with the workers' when you report the cost of a unit.
+
+## Before you start: is the pipeline the right tool
+
+- Grain. Ten episodes came out of a nine-page note under "four to six minutes, skip
+  no step". Ask the user how many minutes the unit deserves before the author splits
+  it; an episode count is a decision, not a consequence.
+- Reach. The one full run was one language, a fixed camera, tables and arrows, no
+  LaTeX, the default voice. Two languages, zooms, formula-heavy derivations and an
+  auditioned voice are untested in this arrangement: for those, pilot first or use
+  `SKILL.md` with one strong model.
+- Shortcuts leave a mark. When the coordinator decides an author's row itself or
+  edits an episode's code directly to save a round, it says so in the review file
+  and in the final message; otherwise the next reader takes the board for the truth.
 
 ## Running a builder on another provider
 
@@ -111,5 +146,12 @@ change before the last sentence had ended. The builder's questions to the author
 worth reading (a picture contradicting its caption, a count on screen that did not
 prove what the voice claimed). The verifier's verdicts matched the coordinator's own
 look on the frames checked; it cannot judge sizes, so write review rows in terms of
-what is visible ("larger than the cell names"), not in points. Nobody listened to the
-voice in that run.
+what is visible ("larger than the cell names"), not in points.
+
+What that run does not show. Nobody listened to the voice, and the 1080p files were
+not inspected, so it has not met the test that reshaped every earlier series: the
+user watching and listening. Fix rounds took about 40% of the builder's tokens, most
+of them avoidable with the pilot above. The coordinator's own tokens were not
+measured, and they were what ran into the usage limit. The first builds needed no
+narration rewrite, which no earlier series managed; whether the narration is good is
+still the user's call.

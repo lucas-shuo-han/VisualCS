@@ -10,14 +10,18 @@ Read `K/SKILL.md` (the sections "Done means" and "What the users asked for"),
 `K/references/visual-patterns.md`. Skim the header of `K/scripts/manim_kit.py` so the
 pictures you ask for are ones its helpers can draw.
 
+Before you split the unit, the coordinator tells you how many minutes of video it
+should become; if it did not, ask. Do not let "four to six minutes each" and "skip no
+step" decide the number of episodes by themselves.
+
 Deliver, in `<unit folder>`:
 
 1. `series.py` from `K/assets/strict_series.py`: series name, the episode rows (file,
    class, title, slug), language.
-2. `BOARD-ep01.md` from `K/assets/board_template.md`. Then stop and show it to the
-   user: the depth, the voice of the narration and the amount of picture per sentence
-   are theirs to correct before the other episodes are written the same way.
-3. After the go, `BOARD-epNN.md` for every other episode.
+2. Two pilot boards from `K/assets/board_template.md`: the easiest episode and the
+   hardest (a proof or a long derivation). Then stop. They are built and reviewed and
+   the user hears one, and you get back the rules that came out of it.
+3. After the go, `BOARD-epNN.md` for every other episode, written to those rules.
 
 What a builder cannot repair later, so get it right here:
 
