@@ -9,7 +9,8 @@ description: Turn course notes, lecture slides, textbook chapters, a derivation 
 plans and judges well on its own. A small or cheap model, or anyone told to work in
 strict mode, follows `STRICT.md` instead and reads nothing else here. For a large unit
 on a budget, `PIPELINE.md` splits the work: a strong model writes a storyboard per
-episode, cheap models build from it, a mid model reviews the frames.
+episode, cheap models build from it, a mid model reviews the frames. Pilot two
+episodes before the batch, and have the user listen before anything is scaled up.
 
 You write the narration, write one Manim scene class per episode on the bundled kit,
 render, look at the frames and listen, fix, and ship MP4 + SRT + scripts. Everything

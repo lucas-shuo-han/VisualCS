@@ -1,0 +1,184 @@
+1
+00:00:07,350 --> 00:00:12,229
+Every year, medical students who finish school need a place at a teaching hospital,
+
+2
+00:00:12,229 --> 00:00:13,876
+which is called a residency.
+
+3
+00:00:13,876 --> 00:00:19,810
+So on one side there are residency slots, and on the other side there are graduates.
+
+4
+00:00:19,983 --> 00:00:23,054
+This is the matching problem of the last episode,
+
+5
+00:00:23,054 --> 00:00:27,881
+with hospitals in the place of jobs and graduates in the place of candidates.
+
+6
+00:00:27,881 --> 00:00:33,737
+Today a computer takes ranked lists from both sides and runs propose and reject on them.
+
+7
+00:00:33,737 --> 00:00:40,319
+But the road there was long, and each failed attempt shows why the algorithm is built as it is.
+
+8
+00:00:42,483 --> 00:00:49,095
+Residencies began about a century ago, and hospitals liked them, because an intern is cheap labour.
+
+9
+00:00:49,095 --> 00:00:53,259
+Soon there were more slots than graduates to fill them.
+
+10
+00:00:53,416 --> 00:00:58,504
+Now think like one of these hospitals, which does not want to be left with an empty slot.
+
+11
+00:00:58,504 --> 00:01:03,556
+If it waits, the graduates it wants may already have said yes to another hospital.
+
+12
+00:01:03,556 --> 00:01:08,914
+So the safe move is to make its offer a little earlier than everybody else.
+
+13
+00:01:09,083 --> 00:01:14,591
+But every hospital thinks the same way, so the offers crept earlier year after year.
+
+14
+00:01:14,591 --> 00:01:19,419
+By the middle of the nineteen forties they arrived at the beginning of the junior year,
+
+15
+00:01:19,419 --> 00:01:20,973
+two years before graduation.
+
+16
+00:01:20,973 --> 00:01:25,635
+Some hospitals were even thinking about asking sophomores.
+
+17
+00:01:25,816 --> 00:01:30,400
+An offer that early is a bet on a student the hospital hardly knows yet.
+
+18
+00:01:30,400 --> 00:01:33,110
+So the American Medical Association stepped in,
+
+19
+00:01:33,110 --> 00:01:38,586
+and told the schools to keep transcripts and reference letters locked up until the senior year.
+
+20
+00:01:38,586 --> 00:01:45,350
+Without those papers an early offer had nothing to stand on, and the race to be first was over.
+
+21
+00:01:47,516 --> 00:01:51,776
+But now every hospital was making its offers in the same short season.
+
+22
+00:01:51,776 --> 00:01:55,623
+A hospital whose offer sat unanswered could lose its second and
+
+23
+00:01:55,623 --> 00:01:58,614
+third choices to other hospitals in the meantime.
+
+24
+00:01:58,614 --> 00:02:02,167
+So hospitals attached a deadline to every offer,
+
+25
+00:02:02,167 --> 00:02:06,830
+and in the end a student had only a few hours to say yes or no.
+
+26
+00:02:06,983 --> 00:02:09,637
+Now look at it from the side of the graduate.
+
+27
+00:02:09,637 --> 00:02:14,917
+She has an offer in front of her, and a hospital she likes more has not answered yet.
+
+28
+00:02:14,917 --> 00:02:20,129
+With a few hours on the clock she must take it or risk ending up with nothing.
+
+29
+00:02:20,283 --> 00:02:23,343
+Compare that with the candidates in the last episode,
+
+30
+00:02:23,343 --> 00:02:27,673
+who could answer maybe and keep an offer in hand while better ones arrived.
+
+31
+00:02:27,673 --> 00:02:30,979
+The short deadline took exactly that answer away.
+
+32
+00:02:30,979 --> 00:02:35,997
+So the missing piece was a way to hold an offer without closing the door.
+
+33
+00:02:37,950 --> 00:02:44,874
+In the early nineteen fifties this led to one central system, called the National Residency Matching Program.
+
+34
+00:02:44,874 --> 00:02:53,016
+Every hospital handed in a ranked list of graduates, and every graduate handed in a ranked list of hospitals.
+
+35
+00:02:53,750 --> 00:02:57,476
+The program then paired everyone up from those lists.
+
+36
+00:02:57,476 --> 00:03:03,430
+But at first its pairing could contain a hospital and a graduate who would both rather have each other.
+
+37
+00:03:03,430 --> 00:03:07,122
+That is exactly the trouble we met in the last episode,
+
+38
+00:03:07,122 --> 00:03:11,284
+and such a pair has every reason to make a private deal again.
+
+39
+00:03:11,450 --> 00:03:16,084
+In nineteen fifty-two the program switched to propose and reject.
+
+40
+00:03:16,084 --> 00:03:18,833
+A matching with no such pair is called stable,
+
+41
+00:03:18,833 --> 00:03:23,734
+and that is what the algorithm produced, so nobody had a reason to deal privately.
+
+42
+00:03:23,734 --> 00:03:31,460
+The offers and the answers of maybe all happen inside the computer, and people only see the final result.
+
+43
+00:03:31,616 --> 00:03:33,984
+Sixty years later, in twenty twelve,
+
+44
+00:03:33,984 --> 00:03:40,824
+Lloyd Shapley and Alvin Roth received the Nobel Prize in economics for work that extends this algorithm.
+
+45
+00:03:40,824 --> 00:03:44,172
+So the word that carried the whole story is stable.
+
+46
+00:03:44,172 --> 00:03:49,848
+What exactly it demands of a matching is the question of the next episode.
+

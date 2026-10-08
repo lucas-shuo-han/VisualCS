@@ -6,7 +6,6 @@ Python is `<PY>`. On Windows set `PYTHONIOENCODING=utf-8` first.
 Read `K/STRICT.md` and follow it, with the section "With a storyboard" in force:
 `U/BOARD-ep<NN>.md` is your plan. Its `> ` lines are the narration, to be copied
 unchanged; its stage and change lines are the picture, to be built as written.
-`U/FACTS-ep<NN>.py`, when it exists, is your FACTS block: paste it in.
 
 You may write only inside `U`, and only `ep<NN>_*.py`, `REPORT-ep<NN>.md` and
 `TRIAL_LOG-ep<NN>.md`. Do not edit the BOARD, `series.py`, `manim_kit.py`, `tts.py`.

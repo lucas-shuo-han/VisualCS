@@ -24,5 +24,11 @@ Mark each row `builder` (the code departs from the board, or a layout fix) or `a
 (the board itself asks for something that does not work on screen). End with one line:
 `ready` or `not ready`. If your tools refuse to create the file, return its full text.
 
+What the sheets cannot show, so do not report it: a change that seems one subtitle
+early or late inside one sentence (a sentence cut into several subtitles shares its
+time by length, while the picture follows the spoken word), and a flash, which lasts
+under a second. A change that is a whole sentence early, or a scene that changes
+before its last sentence has ended, is a finding.
+
 Do not list what is fine. Do not ask for changes of taste the board did not ask for.
 You cannot hear the voice; say so.

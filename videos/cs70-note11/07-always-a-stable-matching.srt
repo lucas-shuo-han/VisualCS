@@ -1,0 +1,216 @@
+1
+00:00:07,350 --> 00:00:10,914
+We know that propose and reject always stops.
+
+2
+00:00:10,914 --> 00:00:13,900
+But stopping is not the same as succeeding.
+
+3
+00:00:13,900 --> 00:00:20,620
+When it stops, is every job really paired with a candidate, and every candidate with a job?
+
+4
+00:00:20,783 --> 00:00:22,645
+Here is what could go wrong.
+
+5
+00:00:22,645 --> 00:00:27,170
+In the first episode Control was refused by Anita and then by Bridget,
+
+6
+00:00:27,170 --> 00:00:30,725
+and it ended with the last name on its list, Christine.
+
+7
+00:00:30,725 --> 00:00:34,121
+What if Christine had refused it too?
+
+8
+00:00:34,283 --> 00:00:38,883
+Then Control would have no name left, and it could never make an offer again.
+
+9
+00:00:38,883 --> 00:00:45,625
+So let us suppose that this happens to some job on some day, and look closely at the end of that day.
+
+10
+00:00:46,783 --> 00:00:52,113
+Each candidate who refused Control did so because she kept an offer she liked more.
+
+11
+00:00:52,113 --> 00:00:58,213
+And by the improvement lemma she still holds Control or something better at the end of every later day.
+
+12
+00:00:58,213 --> 00:01:04,127
+It cannot be Control itself, which she has refused, so she holds another job.
+
+13
+00:01:04,283 --> 00:01:10,655
+So at the end of that day all three candidates hold an offer, and none of the three offers is from Control.
+
+14
+00:01:10,655 --> 00:01:17,113
+A job makes only one offer each morning, so three hands need three different jobs.
+
+15
+00:01:17,283 --> 00:01:22,651
+But without Control only two jobs are left, Approximation and Basis.
+
+16
+00:01:22,651 --> 00:01:25,495
+Two jobs cannot fill three hands.
+
+17
+00:01:25,495 --> 00:01:31,731
+So the day we supposed can never come, and Control cannot be refused by everyone.
+
+18
+00:01:31,883 --> 00:01:35,105
+The same count works for any number of jobs.
+
+19
+00:01:35,105 --> 00:01:40,081
+A job refused by everyone would leave one job fewer than there are candidates,
+
+20
+00:01:40,081 --> 00:01:43,143
+while every candidate holds an offer of her own.
+
+21
+00:01:43,143 --> 00:01:46,811
+So no job ever runs out of names.
+
+22
+00:01:46,983 --> 00:01:50,631
+So every morning every job has someone to ask.
+
+23
+00:01:50,631 --> 00:01:56,491
+On the last day nobody is refused, so every job's offer is in the hand of some candidate.
+
+24
+00:01:56,491 --> 00:02:03,031
+No candidate holds two offers, and there are as many candidates as jobs, so everyone is paired.
+
+25
+00:02:03,031 --> 00:02:07,189
+Propose and reject always ends with a matching.
+
+26
+00:02:09,150 --> 00:02:12,820
+Now the main question, whether that matching is stable.
+
+27
+00:02:12,820 --> 00:02:18,826
+Here is the result of the first episode, with the two names that Control crossed off shown faded.
+
+28
+00:02:18,826 --> 00:02:22,107
+Approximation and Basis have their first choices,
+
+29
+00:02:22,107 --> 00:02:26,326
+so the only job that would rather have someone else is Control.
+
+30
+00:02:26,483 --> 00:02:30,857
+Control would rather have Anita, who is above its partner Christine.
+
+31
+00:02:30,857 --> 00:02:35,151
+Now, why is Anita above Christine and yet not its partner?
+
+32
+00:02:35,151 --> 00:02:41,031
+A job works down its list, and it only moves past a name when that name has refused it.
+
+33
+00:02:41,031 --> 00:02:45,757
+So Control asked Anita on an earlier day, and she said no.
+
+34
+00:02:45,916 --> 00:02:48,410
+Now the improvement lemma speaks.
+
+35
+00:02:48,410 --> 00:02:54,798
+From the day Control asked her, Anita holds Control or something better at the end of every day,
+
+36
+00:02:54,798 --> 00:02:56,860
+and that includes the last day.
+
+37
+00:02:57,016 --> 00:03:02,980
+And on the last day she does not hold Control, because Control's last offer went to Christine.
+
+38
+00:03:02,980 --> 00:03:09,234
+So what Anita holds at the end is a job she likes more than Control, and she has no wish to leave it.
+
+39
+00:03:09,234 --> 00:03:13,066
+Control and Anita are not a rogue couple.
+
+40
+00:03:13,250 --> 00:03:18,172
+Bridget is the other name above Christine, and the same steps apply to her.
+
+41
+00:03:18,172 --> 00:03:23,834
+Control asked her on day two and she refused, so she ends with Control or better.
+
+42
+00:03:23,834 --> 00:03:29,118
+It is not Control, so it is Basis, which is higher on her list.
+
+43
+00:03:31,083 --> 00:03:33,787
+Nothing in those steps used the names.
+
+44
+00:03:33,787 --> 00:03:39,225
+Take any job with its final partner, and any candidate the job would rather have.
+
+45
+00:03:39,225 --> 00:03:46,107
+She stands above the partner on its list, so the job asked her on an earlier day and she refused.
+
+46
+00:03:46,283 --> 00:03:50,585
+By the improvement lemma she ends with that job or a better one.
+
+47
+00:03:50,585 --> 00:03:54,763
+It is not that job, because its last offer went to its partner.
+
+48
+00:03:54,763 --> 00:03:59,461
+So she ends with a job she likes more, and she will not leave it.
+
+49
+00:03:59,616 --> 00:04:05,998
+A rogue couple needs a job and a candidate who both want to switch, and here the candidate never does.
+
+50
+00:04:05,998 --> 00:04:12,020
+So the result of propose and reject has no rogue couple, which means it is always stable.
+
+51
+00:04:12,020 --> 00:04:18,074
+And so a stable matching always exists, which the roommates could not promise.
+
+52
+00:04:18,250 --> 00:04:22,754
+But in episode three one set of lists had two stable matchings.
+
+53
+00:04:22,754 --> 00:04:27,470
+So which one does propose and reject choose, and who is it good for?
+
+54
+00:04:27,470 --> 00:04:30,084
+That is where we go next.
+

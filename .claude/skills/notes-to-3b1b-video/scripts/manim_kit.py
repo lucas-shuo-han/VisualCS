@@ -1021,13 +1021,21 @@ def split_cue(text: str, max_units: float = 46) -> list[str]:
         cjk_edge = ord(a[-1]) > 0x2E7F or ord(b[0]) > 0x2E7F
         return a + ("" if cjk_edge else " ") + b
 
-    def pack(parts):
+    def pack(parts, limit=None):
+        limit = limit or max_units
         out = []
         for part in parts:
-            if out and text_units(join(out[-1], part)) <= max_units:
+            if out and text_units(join(out[-1], part)) <= limit:
                 out[-1] = join(out[-1], part)
             else:
                 out.append(part)
+        # a last cue of a word or two reads as a glitch: pack again to even lengths
+        if limit == max_units and len(out) > 1 and text_units(out[-1]) < 0.4 * max_units:
+            even = sum(text_units(p) for p in out) / len(out)
+            for slack in (1.15, 1.3, 1.5):
+                again = pack(parts, min(max_units, even * slack))
+                if len(again) == len(out):
+                    return again
         return out
 
     def words(clause):   # Latin words, or CJK characters when there are no spaces
@@ -1545,7 +1553,7 @@ class NarratedScene(MovingCameraScene):
         t = txt(text, 34, color)
         t.to_corner(UL, buff=0.45)
         line = Line(t.get_left(), t.get_right(), stroke_color=color, stroke_width=2)
-        line.next_to(t, DOWN, buff=0.1)
+        line.next_to(t, DOWN, buff=0.17)   # clear of the descenders of g, p, y
         head = VGroup(t, line)
         head._kit_ui = True      # not part of the picture (see the checks)
         return head

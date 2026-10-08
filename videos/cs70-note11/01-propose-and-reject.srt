@@ -1,0 +1,204 @@
+1
+00:00:07,350 --> 00:00:14,416
+Three companies each have one job to fill, and we will call the jobs Approximation, Basis and Control.
+
+2
+00:00:14,416 --> 00:00:21,192
+Three candidates, Anita, Bridget and Christine, are each looking for exactly one job.
+
+3
+00:00:21,350 --> 00:00:26,726
+Every job has ranked the candidates from the one it wants most to the one it wants least.
+
+4
+00:00:26,726 --> 00:00:33,656
+Approximation would hire Anita first, then Bridget, and Christine comes last on its list.
+
+5
+00:00:33,816 --> 00:00:39,890
+Basis sees it differently, because it puts Bridget first, then Anita, then Christine.
+
+6
+00:00:39,890 --> 00:00:46,808
+Control has the same list as Approximation, so Anita is at the top for two of the three jobs.
+
+7
+00:00:46,983 --> 00:00:52,775
+The candidates have opinions too, and each of them has ranked the three jobs in the same way.
+
+8
+00:00:52,775 --> 00:00:57,382
+Anita likes Basis best, then Approximation, then Control,
+
+9
+00:00:57,382 --> 00:01:04,091
+while Bridget and Christine both put Approximation first, then Basis, then Control.
+
+10
+00:01:04,250 --> 00:01:11,048
+Our task is a matching, which means every job gets one candidate and nobody is used twice.
+
+11
+00:01:11,048 --> 00:01:18,854
+Here is one, where Approximation takes Bridget, Basis takes Christine, and Control takes Anita.
+
+12
+00:01:19,016 --> 00:01:24,228
+But look at Approximation, which got Bridget although Anita is higher on its list.
+
+13
+00:01:24,228 --> 00:01:30,326
+And Anita got Control, the last job on her list, although she ranks Approximation higher.
+
+14
+00:01:30,326 --> 00:01:35,900
+So these two would both rather have each other, and a matching like that will not hold.
+
+15
+00:01:38,083 --> 00:01:43,871
+So let us try the obvious thing and let every job ask for the candidate at the top of its list.
+
+16
+00:01:43,871 --> 00:01:50,597
+Approximation asks Anita, Basis asks Bridget, and Control asks Anita as well.
+
+17
+00:01:50,750 --> 00:01:56,322
+Now Anita holds two offers and Christine holds none, so the obvious thing has failed.
+
+18
+00:01:56,322 --> 00:02:03,716
+Anita can only take one job, so let her choose, and her own list puts Approximation above Control.
+
+19
+00:02:03,883 --> 00:02:08,749
+So Anita keeps the offer from Approximation and says no to Control.
+
+20
+00:02:08,749 --> 00:02:14,371
+Bridget has a single offer, from Basis, so she simply keeps that one.
+
+21
+00:02:14,550 --> 00:02:17,202
+Notice that Anita has not said yes.
+
+22
+00:02:17,202 --> 00:02:23,584
+Basis is at the top of her list and might still ask her on a later day, so her answer is only a maybe.
+
+23
+00:02:23,584 --> 00:02:28,040
+We say that she has the offer from Approximation in hand.
+
+24
+00:02:28,216 --> 00:02:32,836
+Control has been refused, so there is no point in asking Anita again.
+
+25
+00:02:32,836 --> 00:02:38,468
+It crosses her off its list, and the best candidate it has left is Bridget.
+
+26
+00:02:38,650 --> 00:02:43,816
+What we just watched was one full day, so let us give its parts their names.
+
+27
+00:02:43,816 --> 00:02:49,072
+In the morning every job made an offer to the best candidate still on its list.
+
+28
+00:02:49,072 --> 00:02:54,740
+In the afternoon every candidate kept her best offer in hand and refused the rest.
+
+29
+00:02:54,740 --> 00:03:00,474
+In the evening every refused job crossed off the candidate who said no.
+
+30
+00:03:00,650 --> 00:03:07,480
+On the second morning the rule is the same, so every job asks the best candidate who has not refused it.
+
+31
+00:03:07,480 --> 00:03:14,348
+Approximation and Basis were never refused, so they simply repeat their offers to Anita and Bridget.
+
+32
+00:03:14,348 --> 00:03:17,810
+Control asks Bridget for the first time.
+
+33
+00:03:17,983 --> 00:03:24,197
+So this afternoon it is Bridget who holds two offers, one from Basis and one from Control.
+
+34
+00:03:24,197 --> 00:03:31,235
+Her list puts Basis above Control, so she keeps Basis in hand and refuses Control.
+
+35
+00:03:31,416 --> 00:03:34,980
+In the evening Control crosses Bridget off as well.
+
+36
+00:03:34,980 --> 00:03:40,166
+Only one name is left on its list now, and that name is Christine.
+
+37
+00:03:40,350 --> 00:03:47,604
+On the third morning Approximation asks Anita again, Basis asks Bridget again, and Control asks Christine.
+
+38
+00:03:47,604 --> 00:03:55,210
+In the afternoon every candidate holds exactly one offer, so for the first time nobody is refused.
+
+39
+00:03:55,383 --> 00:03:57,981
+Think about what a fourth day would look like.
+
+40
+00:03:57,981 --> 00:04:04,861
+Nobody was refused, so no list changed in the evening, and every job would ask the same candidate again.
+
+41
+00:04:04,861 --> 00:04:09,741
+Each candidate would get the same single offer, so nothing could ever change.
+
+42
+00:04:09,741 --> 00:04:15,439
+This is where we stop, and each candidate accepts the offer she has in hand.
+
+43
+00:04:16,616 --> 00:04:23,538
+So the result is that Approximation hires Anita, Basis hires Bridget, and Control hires Christine.
+
+44
+00:04:23,538 --> 00:04:29,516
+The pair that spoiled our first matching, Approximation and Anita, has ended up together.
+
+45
+00:04:29,516 --> 00:04:33,522
+This procedure is called the propose and reject algorithm,
+
+46
+00:04:33,522 --> 00:04:37,044
+and it is also known as the Gale Shapley algorithm.
+
+47
+00:04:37,216 --> 00:04:42,606
+Look at Control and Christine, who each ended up with the last name on their own list.
+
+48
+00:04:42,606 --> 00:04:47,298
+And we watched only one example, which happened to stop after three days.
+
+49
+00:04:47,298 --> 00:04:49,260
+Does this procedure always stop,
+
+50
+00:04:49,260 --> 00:04:53,982
+and is its result always free of pairs who would both rather have each other?
+
+51
+00:04:53,982 --> 00:04:57,516
+Those are the questions for the next episodes.
+

@@ -1,0 +1,168 @@
+1
+00:00:07,350 --> 00:00:11,714
+Last time we asked whether every set of lists has a stable matching.
+
+2
+00:00:11,714 --> 00:00:15,576
+Before we answer that, look at a close cousin of the problem.
+
+3
+00:00:15,576 --> 00:00:21,380
+Four students, Amy, Ben, Cora and Dan, have to pair up as roommates.
+
+4
+00:00:21,380 --> 00:00:26,508
+This time there are no two sides, so anybody can end up with anybody.
+
+5
+00:00:26,950 --> 00:00:29,392
+Each of them ranks the other three.
+
+6
+00:00:29,392 --> 00:00:34,889
+Amy would like Ben best and then Cora, Ben would like Cora best and then Amy,
+
+7
+00:00:34,889 --> 00:00:37,888
+and Cora would like Amy best and then Ben.
+
+8
+00:00:37,888 --> 00:00:43,190
+All three put Dan last, and we leave the list of Dan open for now.
+
+9
+00:00:44,350 --> 00:00:49,186
+Let us start with any matching, say Amy with Ben and Cora with Dan.
+
+10
+00:00:49,186 --> 00:00:51,934
+Ben has Amy, but his first choice is Cora,
+
+11
+00:00:51,934 --> 00:00:56,450
+and Cora is stuck with her last choice, so she would gladly take Ben.
+
+12
+00:00:56,450 --> 00:01:02,490
+So Ben and Cora are a rogue couple, and this matching is unstable.
+
+13
+00:01:02,650 --> 00:01:06,448
+The obvious repair is to give the rogue couple what they want.
+
+14
+00:01:06,448 --> 00:01:13,026
+So Ben moves in with Cora, and the two who are left behind, Amy and Dan, share the other room.
+
+15
+00:01:13,026 --> 00:01:18,902
+Each repair gets rid of one rogue couple, so surely we run out of them in the end.
+
+16
+00:01:19,083 --> 00:01:24,725
+Ben is content now, but look at Cora, who has Ben and still ranks Amy above him.
+
+17
+00:01:24,725 --> 00:01:29,687
+And Amy has been pushed down to her last choice, so she would gladly take Cora.
+
+18
+00:01:29,687 --> 00:01:35,791
+The repair removed one rogue couple and created a new one, Amy and Cora.
+
+19
+00:01:35,950 --> 00:01:41,022
+So we repair again, which puts Amy with Cora and leaves Ben with Dan.
+
+20
+00:01:41,022 --> 00:01:46,488
+Now it is Ben who sits on his last choice, and Amy still ranks Ben above Cora.
+
+21
+00:01:46,488 --> 00:01:50,426
+That makes Amy and Ben the next rogue couple.
+
+22
+00:01:50,583 --> 00:01:55,323
+Repair once more, and Amy is with Ben and Cora is with Dan.
+
+23
+00:01:55,323 --> 00:01:58,373
+But that is exactly the matching we started from.
+
+24
+00:01:58,373 --> 00:02:06,093
+The repairs run in a circle and never finish, so this recipe does not always lead to a stable matching.
+
+25
+00:02:08,250 --> 00:02:13,426
+Maybe the recipe was just unlucky and a stable matching hides somewhere else.
+
+26
+00:02:13,426 --> 00:02:15,770
+Let us count the possibilities.
+
+27
+00:02:15,770 --> 00:02:23,270
+Amy shares with Ben, with Cora, or with Dan, and each choice leaves the other two no option but each other.
+
+28
+00:02:23,270 --> 00:02:29,300
+So there are only three matchings, and we have just seen a rogue couple in every one of them.
+
+29
+00:02:29,483 --> 00:02:31,745
+There is a pattern behind this.
+
+30
+00:02:31,745 --> 00:02:37,511
+Whoever shares with Dan has landed on their last choice and would rather be with anyone else.
+
+31
+00:02:37,511 --> 00:02:43,571
+Now look at the first choices, where Amy wants Ben, Ben wants Cora, and Cora wants Amy.
+
+32
+00:02:43,571 --> 00:02:48,439
+So whoever is with Dan is always somebody's first choice.
+
+33
+00:02:48,616 --> 00:02:53,122
+That somebody cannot be with their first choice, because Dan has taken it.
+
+34
+00:02:53,122 --> 00:02:56,487
+So the two of them would both rather have each other,
+
+35
+00:02:56,487 --> 00:03:00,232
+and they form a rogue couple whatever the list of Dan says.
+
+36
+00:03:02,383 --> 00:03:06,275
+So for roommates a stable matching does not have to exist.
+
+37
+00:03:06,275 --> 00:03:11,689
+Now remember the repair recipe, which never asked who was a job and who was a candidate.
+
+38
+00:03:11,689 --> 00:03:16,197
+If it proved that jobs and candidates always have a stable matching,
+
+39
+00:03:16,197 --> 00:03:20,373
+the same words would prove it for roommates, and that is false.
+
+40
+00:03:20,550 --> 00:03:25,424
+So any proof for jobs and candidates has to use the two sides somewhere.
+
+41
+00:03:25,424 --> 00:03:32,396
+Propose and reject does exactly that, because only jobs make offers and only candidates answer.
+
+42
+00:03:32,396 --> 00:03:37,862
+Whether it always ends in a stable matching is what the next episodes work out.
+

@@ -1,0 +1,204 @@
+1
+00:00:07,350 --> 00:00:12,308
+Last time we proved the improvement lemma by walking forward from day to day.
+
+2
+00:00:12,308 --> 00:00:17,432
+Once a job has made a candidate an offer, she holds that job or a better one.
+
+3
+00:00:17,432 --> 00:00:22,048
+That is true at the end of that day and of every later day.
+
+4
+00:00:22,216 --> 00:00:24,990
+Here is a different way to prove the same thing.
+
+5
+00:00:24,990 --> 00:00:28,063
+On the day of the offer itself the claim is true,
+
+6
+00:00:28,063 --> 00:00:32,326
+because she keeps the best of her offers and this job is among them.
+
+7
+00:00:32,326 --> 00:00:35,198
+So let us paint that day green.
+
+8
+00:00:35,350 --> 00:00:37,920
+Now suppose the lemma were false.
+
+9
+00:00:37,920 --> 00:00:44,158
+Then on some later days the claim fails, so let us paint those days red, wherever they may be.
+
+10
+00:00:44,158 --> 00:00:47,784
+Among the red days, look at the first one.
+
+11
+00:00:47,950 --> 00:00:52,670
+The first red day is not the day of the offer, because that day is green.
+
+12
+00:00:52,670 --> 00:00:59,096
+So there is a day just before it, and that day is not red, because then ours would not be the first.
+
+13
+00:00:59,096 --> 00:01:02,606
+The claim is true on the day before.
+
+14
+00:01:02,783 --> 00:01:07,901
+So on the day before, she holds a job at least as good as the original one.
+
+15
+00:01:07,901 --> 00:01:13,679
+She did not refuse that job, so by the step from last time it asks her again on the red day.
+
+16
+00:01:13,679 --> 00:01:19,437
+Then she keeps it or something better, which makes the claim true on the red day.
+
+17
+00:01:19,616 --> 00:01:24,986
+But a day cannot be red and green at once, so the first red day does not exist.
+
+18
+00:01:24,986 --> 00:01:29,160
+And if there is no first red day, there are no red days at all.
+
+19
+00:01:29,160 --> 00:01:33,452
+So the lemma holds, and we have proved it a second time.
+
+20
+00:01:35,416 --> 00:01:37,538
+Is this a new kind of proof?
+
+21
+00:01:37,538 --> 00:01:40,924
+Both proofs begin by checking the day of the offer.
+
+22
+00:01:40,924 --> 00:01:48,158
+And both do the same work in the middle, which is to show that a green day is never followed by a red one.
+
+23
+00:01:48,316 --> 00:01:55,668
+Induction tells it forwards, where green today forces green tomorrow, so the green runs on forever.
+
+24
+00:01:55,668 --> 00:02:01,960
+The second proof tells it backwards, where a first red day would need a green day right before it.
+
+25
+00:02:01,960 --> 00:02:05,768
+It is one argument told in two directions.
+
+26
+00:02:07,750 --> 00:02:11,366
+But the backward telling leaned on something we never proved.
+
+27
+00:02:11,366 --> 00:02:14,130
+We said, look at the first red day.
+
+28
+00:02:14,130 --> 00:02:17,698
+Why should a set of days have a first one at all?
+
+29
+00:02:17,850 --> 00:02:22,018
+Days are counted with natural numbers, so let us try it with numbers.
+
+30
+00:02:22,018 --> 00:02:26,272
+Take the set five, two, eleven, seven and eight.
+
+31
+00:02:26,272 --> 00:02:32,728
+Its smallest element is two, and in a finite set we can always find it by comparing.
+
+32
+00:02:32,883 --> 00:02:35,401
+Infinite sets work just as well.
+
+33
+00:02:35,401 --> 00:02:38,989
+The odd numbers never end, but they start at one.
+
+34
+00:02:38,989 --> 00:02:43,047
+The primes never end, but they start at two.
+
+35
+00:02:43,216 --> 00:02:45,358
+Here is why it cannot fail.
+
+36
+00:02:45,358 --> 00:02:52,196
+Pick any element of the set, say eleven, and only finitely many natural numbers lie below it.
+
+37
+00:02:52,196 --> 00:02:58,506
+So we can check them one by one, and the lowest one that belongs to the set is the smallest.
+
+38
+00:02:58,683 --> 00:03:02,065
+This fact is called the well ordering principle.
+
+39
+00:03:02,065 --> 00:03:06,859
+Every set of natural numbers that is not empty has a smallest element.
+
+40
+00:03:06,859 --> 00:03:12,496
+Our red days were such a set, not empty because we supposed the lemma false,
+
+41
+00:03:12,496 --> 00:03:15,167
+and so a first red day had to exist.
+
+42
+00:03:17,150 --> 00:03:19,836
+Other number systems are not so kind.
+
+43
+00:03:19,836 --> 00:03:25,712
+Take the integers, which include the negative numbers, and look at the set of all negative ones.
+
+44
+00:03:25,712 --> 00:03:34,128
+Below minus one comes minus two, then minus three, and it never ends, so this set has no smallest element.
+
+45
+00:03:34,283 --> 00:03:38,443
+The real numbers contain that same set, so they fail too.
+
+46
+00:03:38,443 --> 00:03:42,021
+What if we only allow zero and everything above it?
+
+47
+00:03:42,021 --> 00:03:45,037
+Then look at the set of all positive numbers.
+
+48
+00:03:45,037 --> 00:03:51,165
+Whatever positive number you call the smallest, half of it is smaller and still positive.
+
+49
+00:03:51,316 --> 00:03:56,912
+Zero would be below them all, but zero is not positive, so it is not in the set.
+
+50
+00:03:56,912 --> 00:04:03,480
+So first counterexamples belong to the natural numbers, and to things counted by them, like our days.
+
+51
+00:04:03,480 --> 00:04:10,058
+Next we use the improvement lemma to show that the result of propose and reject is stable.
+
