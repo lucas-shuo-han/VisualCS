@@ -1,0 +1,414 @@
+# CS61C · State and Timing (L18)
+
+Generated from the episode subtitles (.srt).
+
+
+## 01-the-sum-that-ran-away
+
+- `00:06` Here is an adder.
+- `00:07` Put two numbers on its inputs, and their sum comes out on the other side.
+- `00:13` It has no memory at all, so its output depends only on what the inputs are right now.
+- `00:20` Let's give it a job that sounds easy.
+- `00:22` A list of numbers arrives one at a time, three, then one, then four, then two, and we want their total.
+- `00:32` The total is ten, but the adder only ever sees two numbers at once.
+- `00:38` So one input has to be the next number from the list, and the other has to be the total so far.
+- `00:45` And the total so far is exactly what the adder produces.
+- `00:49` The natural thing to do is to run a wire from the output straight back to the second input.
+- `00:56` On paper this looks finished.
+- `00:59` To find out whether it works, we have to watch what the wires do over time,
+- `01:04` and for that we need a way to draw time.
+- `01:07` Take a single wire and touch a probe to it.
+- `01:11` All the probe can measure is a voltage, so we plot that voltage against time.
+- `01:17` A picture like this is called a waveform.
+- `01:21` Most of the time the voltage sits at one of two levels.
+- `01:24` By convention the low level means a zero and the high level means a one.
+- `01:30` So this wire said zero, then one, then zero again.
+- `01:36` Look closely and the levels are not perfect.
+- `01:39` A high is sometimes a little short of the top, and a low floats a little above the bottom.
+- `01:45` That is fine,
+- `01:46` because every gate reads anything near the top as a one and
+- `01:50` then drives its own output all the way to the top.
+- `01:53` The small errors are wiped out at each gate instead of piling up,
+- `01:58` and that is what makes a circuit digital.
+- `02:02` A number needs several wires, one for each bit.
+- `02:05` Here are four of them carrying the number three, and then the number six.
+- `02:11` Drawing every wire gets crowded, so we draw the whole group,
+- `02:15` called a bus, as one band with its value written inside.
+- `02:19` Where the band pinches, the value is changing.
+- `02:25` Now watch the adder in this picture.
+- `02:27` Both inputs are zero, so the output is zero.
+- `02:32` Change the top input to three.
+- `02:35` The output does become three, but not at the same moment.
+- `02:40` The change has to work its way through the transistors inside.
+- `02:44` The time from an input changing to the output settling is called the propagation delay.
+- `02:50` Let's say that for this adder it is two nanoseconds.
+- `02:58` With that we can test our circuit.
+- `03:00` The total starts at zero, and at time zero the first number, three, arrives.
+- `03:07` The numbers come one every eight nanoseconds, so the three stays on the input until then.
+- `03:14` Two nanoseconds later the adder has worked out zero plus three, and the output says three.
+- `03:20` That is the correct total so far.
+- `03:24` But the output is wired back to the input, so now the adder sees three plus three,
+- `03:30` and two nanoseconds later it says six.
+- `03:33` Then six plus three makes nine, and nine plus three makes twelve.
+- `03:40` Only now, at eight nanoseconds, does the second number show up.
+- `03:44` The total should still be three, ready to become four.
+- `03:49` Instead the wire says twelve, and it carries on to thirteen, fourteen, fifteen.
+- `03:56` Nothing is broken here, because the adder did exactly what an adder does.
+- `04:02` The trouble is that each new sum went back into the input the moment it was ready,
+- `04:07` and nothing in the circuit ever said wait.
+- `04:11` So let's say what we need.
+- `04:13` Somewhere on that feedback wire there should be a box that holds on
+- `04:17` to the old total and keeps showing it to the adder.
+- `04:21` The new sum can wait at the door, but it does not get in until we say so.
+- `04:27` Give the box one extra input for that, and call it load.
+- `04:31` When load gives the signal, the box takes in whatever is at its input,
+- `04:36` and from then on shows that at its output.
+- `04:39` At all other times its input can do anything, and its output stays put.
+- `04:45` A circuit like this, one that remembers, is called a register.
+- `04:49` Its input is labelled D and its output Q.
+- `04:54` Who gives the load signal, and when?
+- `04:57` We want exactly one load for each number, so it should come at the same rhythm as the numbers themselves.
+- `05:04` In our example that is once every eight nanoseconds.
+- `05:10` A computer has a signal with precisely that job.
+- `05:13` It is called the clock, and it does nothing but go high and low, high and low, at a steady rate.
+- `05:20` It is made on the motherboard and wired to every part of the chip.
+- `05:26` The moment it goes from low to high is called a rising edge,
+- `05:30` and the moment it comes back down is a falling edge.
+- `05:34` The time from one rising edge to the next is one clock period.
+- `05:38` Ours is eight nanoseconds.
+- `05:41` In a real processor it is closer to one nanosecond, which is a billion ticks every second.
+- `05:48` Now connect the clock to the load input.
+- `05:51` This register takes in a new value at every rising edge, and only then.
+- `05:59` Let's run the list again.
+- `06:01` First the register has to start at zero, and registers have an input for that, called reset.
+- `06:08` If reset is one at a rising edge, the register clears to zero, whatever is waiting at D.
+- `06:16` The register shows zero and the first number is three, so the adder settles on three.
+- `06:22` And this time the three just waits at the register's input, because no edge has come yet.
+- `06:29` Here is the edge.
+- `06:31` The register takes the three, the list moves on to one, and the adder settles on four.
+- `06:38` At the next edge the register takes the four, the list gives four, and the adder says eight.
+- `06:44` One more edge, and eight plus two is ten.
+- `06:49` At the following edge the ten is stored.
+- `06:52` Four numbers, four ticks, and the total is ten.
+- `06:56` The circuit now takes one step per clock period,
+- `07:00` and the register is what holds each step back until the next tick.
+- `07:06` So a circuit that feeds its own output back needs something that holds a value still,
+- `07:11` and something that says when to let go.
+- `07:13` Those are the register and the clock.
+- `07:17` A circuit built this way, where every change follows a clock edge,
+- `07:22` is called a synchronous digital system.
+- `07:25` We were generous to the register, though.
+- `07:28` In our picture it took its new value in no time at all, exactly at the edge.
+- `07:34` But a register is made of transistors, just like the adder.
+- `07:38` So what is inside it, and what does at the edge really mean?
+
+## 02-inside-the-register
+
+- `00:06` Last time a register saved our running sum.
+- `00:09` It took in a new value at each rising edge of the clock and held it still for the rest of the period.
+- `00:16` Today we open the box.
+- `00:20` Our register stored a whole number, so it has several wires going in and several coming out.
+- `00:27` Inside there is no clever machinery.
+- `00:30` There is one small circuit for each bit, side by side, and all of them listen to the same clock.
+- `00:38` Each of these small circuits is a register for a single bit.
+- `00:41` It is called a flip-flop, because all it ever does is flip to one or flop back to zero,
+- `00:48` and it takes about ten transistors to build.
+- `00:51` By convention the input of a register is capital D and its output is capital Q.
+- `00:56` For a single flip-flop we use the small letters.
+- `01:01` So to understand a register of any width, we only have to understand one flip-flop.
+- `01:07` Let's put a probe on its three wires and watch.
+- `01:12` Here is the clock, and here is an input that changes whenever it likes.
+- `01:17` Before the output appears, try to predict it.
+- `01:21` All you need to know is that the flip-flop only looks at its input at each rising edge.
+- `01:29` At the first edge the input is high, so the output goes high.
+- `01:33` During this period the input drops and comes back up, and the output takes no notice at all.
+- `01:40` At the second edge the input is low, so the output goes low.
+- `01:46` At the third edge the input is low again.
+- `01:49` The flip-flop does take that value in,
+- `01:52` but it is the value the output already has, so nothing visible happens.
+- `01:57` At the fourth the input is high, and the output goes high again.
+- `02:03` So the rule is short.
+- `02:05` At every rising edge q becomes whatever d is at that moment, and between edges q does not move.
+- `02:13` This kind is called a positive edge triggered D flip-flop.
+- `02:17` There is also a kind that acts on the falling edge, but we will only use this one.
+- `02:24` That rule has a soft spot, and it is the phrase at that moment.
+- `02:28` Let's zoom in on one rising edge, far enough to see that the clock itself takes a little while to rise.
+- `02:36` Suppose the input changes right here, in the middle of the rise.
+- `02:41` Is the value at the edge a zero or a one?
+- `02:45` The transistors inside are partway through taking the old value in,
+- `02:49` and now they are handed a different one.
+- `02:52` What the output ends up as is anyone's guess.
+- `02:56` So the flip-flop comes with a condition.
+- `02:59` Its input has to be steady already a short time before the edge, so that the value has time to get in.
+- `03:06` That time is called the setup time.
+- `03:10` And the input has to stay steady for a short time after the edge,
+- `03:14` until the flip-flop has safely let go of it.
+- `03:17` That time is called the hold time.
+- `03:20` Together they make a window around every rising edge.
+- `03:24` Inside the window the input must not change.
+- `03:28` Outside it, the input can do whatever it wants.
+- `03:32` There is one more delay, on the output side.
+- `03:36` Even when the input behaves, the new value does not show up at the output on the edge itself.
+- `03:43` It appears a little later, and that delay is called the clock to q delay.
+- `03:49` Three numbers, then, describe a flip-flop.
+- `03:52` Setup and hold are demands it makes on its input, and clock to q is how long it makes its output wait.
+- `04:01` Let's put numbers on them.
+- `04:03` Take a flip-flop with a setup time of two and a half picoseconds,
+- `04:08` a hold time of one and a half, and a clock to q delay of one and a half.
+- `04:13` The clock period is thirteen picoseconds.
+- `04:18` Draw the window at each edge.
+- `04:20` It opens two and a half picoseconds before and closes one and a half after.
+- `04:27` This input changes many times, but every change falls outside a window,
+- `04:32` so each edge samples a clean value.
+- `04:36` Now the output.
+- `04:37` Before the first edge we have no idea what the flip-flop holds, so we shade it as unknown.
+- `04:44` One and a half picoseconds after that edge, the output shows the value the input had, which was a one.
+- `04:51` After the next edge it shows a zero.
+- `04:55` Here the hold time and the clock to q delay happen to be equal.
+- `04:59` Nothing forces that, because one describes the input and the other describes the output.
+- `05:06` In practice, though, flip-flops are built so that the hold time is the smaller of the two,
+- `05:13` or at most equal.
+- `05:15` Here are two statements to test yourself on.
+- `05:18` The first says that the clock to q delay is the time from the rising edge to the hold time.
+- `05:25` That is false.
+- `05:27` Clock to q runs from the rising edge to the moment the output shows the new value,
+- `05:33` and the hold time is about the input.
+- `05:36` The second says that a flip-flop only updates its output at a rising edge,
+- `05:41` even if its input changes in between.
+- `05:44` That one is true, and it is the whole point of the device.
+- `05:50` So a register is a row of flip-flops.
+- `05:54` Each one samples its input in a small window around the rising edge and answers a moment later.
+- `06:01` Now put it back in our circuit, where the adder's result has to arrive before that window opens.
+- `06:07` How short can we make the clock period before the sum stops being right?
+
+## 03-how-fast-can-the-clock-tick
+
+- `00:06` We have an adder with a register on its feedback wire,
+- `00:10` and we know that a register needs its input steady in a window around each rising edge.
+- `00:16` Today we put the two together and ask how fast this circuit can be clocked.
+- `00:23` Give everything a number.
+- `00:25` The register has a clock to q delay of one nanosecond and a setup time of one nanosecond.
+- `00:32` The adder takes five nanoseconds, and the clock period is ten.
+- `00:38` Follow one period, starting at a rising edge.
+- `00:42` One nanosecond later the register's output shows the stored total.
+- `00:47` Suppose the next number from the list shows up at that moment too.
+- `00:51` The adder now has both inputs, and five nanoseconds later, at six, the new sum is ready.
+- `00:59` The next edge comes at ten, and the register needs its input steady one nanosecond before that,
+- `01:06` so from nine on.
+- `01:07` The sum has been waiting since six, which leaves three nanoseconds to spare.
+- `01:13` In a real machine the two inputs rarely arrive together.
+- `01:17` Say the stored total shows up at one nanosecond as before,
+- `01:22` but the next number from the list only at three.
+- `01:26` For those two nanoseconds the adder sees the new total next to the old number.
+- `01:31` Right after the first number was stored,
+- `01:34` that means it starts adding three plus three, which nobody asked for.
+- `01:39` That wrong sum does travel through the adder, so for a while the output is garbage.
+- `01:45` Then at three the right number arrives, and five nanoseconds later,
+- `01:50` at eight, the output settles on the right sum.
+- `01:54` Eight is still before nine.
+- `01:56` The register only looks during its small window around the edge, so it never sees the garbage.
+- `02:03` This happens in every circuit.
+- `02:06` Signals wobble in the middle of a period,
+- `02:09` and all that matters is that they are quiet when the edge comes.
+- `02:14` So how short can the period be?
+- `02:16` Go back to both inputs arriving at one nanosecond, with the sum ready at six.
+- `02:23` Try a period of eight.
+- `02:25` The window now opens at seven, and the sum is there in time.
+- `02:30` Try seven.
+- `02:32` The window opens at six, exactly when the sum settles, and that just works.
+- `02:38` Now try six.
+- `02:40` The window opens at five, the adder is still working,
+- `02:43` and the register stores whatever happens to be on the wire.
+- `02:47` The total is wrong, and so is every total after it.
+- `02:52` So seven nanoseconds is the shortest period, and we can read off where it comes from.
+- `02:59` One nanosecond for the register to show its value, five for the adder,
+- `03:04` and one for the setup time of the register that catches the result.
+- `03:08` In general the period has to be at least the clock to q delay,
+- `03:13` plus the delay of the logic, plus the setup time.
+- `03:17` The hold time is not in this sum, because it concerns what happens just after an edge,
+- `03:23` not how long the logic takes.
+- `03:26` A clock is usually described by its frequency, which is one divided by the period.
+- `03:32` A period of seven nanoseconds is one seventh of a gigahertz,
+- `03:37` or about a hundred and forty three megahertz.
+- `03:42` Real circuits have many routes from one register to the next.
+- `03:46` Here is one from the course notes, with four AND gates that each take one nanosecond.
+- `03:52` The register has a clock to q delay and a setup time of one nanosecond each,
+- `03:58` and the four inputs on the left come from other registers of the same kind.
+- `04:03` Every route has to finish within one period, so the slowest route sets the pace.
+- `04:09` Let's time them.
+- `04:11` From this input the signal passes two gates before it reaches the register,
+- `04:17` and from these two it also passes two.
+- `04:20` But start from this input, or from the register's own output coming back around,
+- `04:25` and the signal passes this gate, then this one, then this one.
+- `04:29` That makes three.
+- `04:32` No route goes through all four, because the lower gate sits beside that chain and not in it.
+- `04:39` The slowest route is called the critical path.
+- `04:42` Here it costs one nanosecond for clock to q, three for the gates and one for setup, which is five in all.
+- `04:50` So the clock can run at one fifth of a gigahertz, and that is two hundred megahertz.
+- `04:57` The setup time gave us a rule that the logic must not be too slow.
+- `05:02` The hold time gives a second rule, and it points the other way.
+- `05:07` Take two registers on the same clock with almost nothing between them.
+- `05:12` At a rising edge the second register samples its input,
+- `05:16` and it needs that input to stay put until its hold time is over.
+- `05:21` But the same edge makes the first register change its output, one clock to q delay later.
+- `05:27` That change sets off down the wire toward the second register.
+- `05:32` If it gets there before the hold time is over, the second register's input moves inside the window.
+- `05:40` Say the hold time is two nanoseconds, clock to q is one, and the wire takes no time.
+- `05:46` The new value arrives at one, which is too early.
+- `05:51` So the second rule is that clock to q plus the fastest route
+- `05:55` through the logic must be at least the hold time.
+- `05:59` Notice that the clock period is not in it.
+- `06:02` Both events follow the same edge, so slowing the clock down does not help at all.
+- `06:08` What helps is to put some delay on the route.
+- `06:11` With one nanosecond of delay here, the new value arrives at two, just as the window closes.
+- `06:18` In practice this problem is rare,
+- `06:20` because flip-flops are usually built with a hold time no longer than their clock to q delay.
+- `06:26` Then even a bare wire is slow enough.
+- `06:31` So the clock period has a floor, set by the slowest route between two registers.
+- `06:36` And every route has a floor of its own, set by the hold time.
+- `06:42` With timing under control we can ask what a register in a loop is good for besides adding.
+- `06:47` Our circuit remembered a running total.
+- `06:50` What else could a circuit choose to remember?
+
+## 04-three-ones-in-a-row
+
+- `00:06` Here is a wire that brings one bit in each clock period.
+- `00:10` We want a circuit that watches it and raises its output for one
+- `00:14` period whenever it has just seen three ones in a row.
+- `00:18` After that it starts counting again from nothing.
+- `00:22` Let's see what that means on a stream.
+- `00:25` A single one, and then two ones, give us nothing.
+- `00:29` Then come three ones, and on the third the output goes high.
+- `00:35` With four ones in a row we still get a single pulse, on the third, and the fourth is a fresh start.
+- `00:42` Six in a row give two pulses.
+- `00:47` Can logic gates alone do this?
+- `00:49` Look at these two moments.
+- `00:51` In both the input is a one, but at the first the output must be zero and at the second it must be one.
+- `00:59` Gates without memory give the same output for the same input, so the answer is no.
+- `01:08` The circuit has to remember something about the past, but not the whole history.
+- `01:13` Ask what it must know in order to deal with the next bit.
+- `01:17` All it needs is how many ones in a row it has just seen, and that is none, one or two.
+- `01:23` On the third it fires and goes back to none.
+- `01:28` Give those three situations names.
+- `01:31` S zero means no ones yet, S one means one so far, and S two means two so far.
+- `01:39` We draw each as a circle and call it a state.
+- `01:42` At any moment the machine is in exactly one of them.
+- `01:47` Now go through them and ask what each bit does.
+- `01:50` In S zero a one arrives, which makes one in a row, so we move to S one and the output stays zero.
+- `01:59` We draw that as an arrow, labelled with the input, a slash, and the output.
+- `02:04` If a zero arrives instead we stay where we are,
+- `02:08` and that is an arrow from the state back to itself, called a self loop.
+- `02:13` In S one, another one takes us to S two, still with output zero.
+- `02:19` A zero breaks the run, so we go back to S zero.
+- `02:24` In S two, a one is the third in a row.
+- `02:27` This is the arrow that carries an output of one, and it leads back to S zero to start over.
+- `02:35` A zero from S two also leads back to S zero, with output zero.
+- `02:41` That makes six arrows, two out of every state, so the machine always knows what to do.
+- `02:48` A picture like this is called a finite state machine.
+- `02:52` It has inputs, outputs, a fixed set of states,
+- `02:56` and arrows that say where each input leads and what to output on the way.
+- `03:02` Let's run the stream through it.
+- `03:04` A zero, and we stay.
+- `03:06` A one takes us to S one, and the next zero sends us back.
+- `03:11` Then one and one bring us to S two, but a zero sends us home again.
+- `03:18` Now one, one, and one more.
+- `03:21` On that last arrow the output is one, and we are back in S zero, ready for the next run.
+- `03:37` To build this, the states have to become bits.
+- `03:40` Three states fit in two bits, so let S zero be zero zero, S one be zero one, and S two be one zero.
+- `03:50` Then every arrow becomes a row of a table.
+- `03:53` On the left go the present state and the input, and on the right the next state and the output.
+- `04:00` Take the arrow from S one on a one.
+- `04:03` Its row reads present state zero one, input one, next state one zero, output zero.
+- `04:11` Six arrows give six rows.
+- `04:14` The pattern one one never appears, because no arrow leads to it.
+- `04:21` Look at what this table is.
+- `04:23` Its left side decides its right side with no memory involved, so it is a job for plain logic gates.
+- `04:30` The only thing that has to be remembered is the present state,
+- `04:35` which is two bits, and we know what remembers bits.
+- `04:39` So the circuit is a register for two bits and a block of logic.
+- `04:43` The register's output is the present state.
+- `04:47` The logic takes that and the input bit and produces the output and the next state.
+- `04:52` And the next state goes around to the register's input, where it waits for the clock.
+- `04:59` At each rising edge the next state becomes the present state, and the logic starts on the following bit.
+- `05:06` This is the same loop as our running sum, with the adder swapped for a table.
+- `05:13` What is inside the logic block?
+- `05:16` We can read it off the table.
+- `05:18` The output is one in a single row, where the present state is one zero and the input is one.
+- `05:25` So the output is the high state bit, and not the low state bit, and the input.
+- `05:32` The next state works the same way.
+- `05:34` Its high bit is one only in the row with state zero one and input one,
+- `05:40` and its low bit only in the row with state zero zero and input one.
+- `05:45` That is three AND gates and a few inverters, and the machine is complete.
+- `05:52` The same recipe works for any diagram.
+- `05:55` Here is a smaller one with two states.
+- `05:57` On a zero it stays where it is and outputs zero,
+- `06:01` and on a one it switches to the other state and outputs one.
+- `06:06` One flip-flop holds the state, and a little logic does the rest.
+- `06:12` Real processors are full of machines like this.
+- `06:15` The controller of a cache, for instance, steps through states as it serves a request,
+- `06:21` first checking, then fetching from memory, then storing.
+- `06:25` Any step by step procedure with a fixed number of situations can be built from a register and logic.
+- `06:34` So a register in a loop can remember anything we can number,
+- `06:38` and the logic decides how that memory changes.
+- `06:42` There is one more use for a register, and it has nothing to do with remembering.
+- `06:47` Sometimes we add one just to make the clock faster.
+
+## 05-a-register-to-go-faster
+
+- `00:06` The clock period has to cover the slowest route from one register to the next.
+- `00:12` Today we use that rule backwards.
+- `00:14` If a route is too slow, we change the route.
+- `00:20` Here is a piece of a processor.
+- `00:22` Two numbers come out of a register, an adder adds them, a shifter shifts the sum,
+- `00:28` and the result goes into a second register.
+- `00:31` For example three plus one is four, and shifted left by one bit that becomes eight.
+- `00:38` For the timing, say the adder takes five nanoseconds and the shifter three,
+- `00:44` and each register has a clock to q delay of one and a setup time of one.
+- `00:49` The only route goes through everything,
+- `00:52` so the period is one plus five plus three plus one, which is ten nanoseconds.
+- `00:58` At every edge a new pair goes in on the left, and the previous result is caught on the right.
+- `01:05` So we get one result every ten nanoseconds,
+- `01:08` and each result takes ten nanoseconds from going in to being caught.
+- `01:14` Suppose that is not fast enough.
+- `01:16` We can't make the adder or the shifter any quicker.
+- `01:20` But notice why the period is long.
+- `01:23` It is long only because one signal must get through both of them between two edges.
+- `01:30` So let's stop asking for that.
+- `01:32` Put a third register between the adder and the shifter.
+- `01:36` Now the sum is caught in the middle at one edge, and the shifter works on it during the next period.
+- `01:43` Each period only has to cover one of the two halves.
+- `01:47` The first half is one plus five plus one, seven nanoseconds,
+- `01:52` and the second is one plus three plus one, five.
+- `01:57` One clock drives all the registers, so the period has to suit the slower half.
+- `02:02` That gives seven nanoseconds instead of ten.
+- `02:08` Watch the data move.
+- `02:09` At the first edge the pair three and one goes in.
+- `02:14` At the second edge its sum, four, is caught in the middle.
+- `02:18` And at that same edge a new pair goes in on the left, because the adder is free again.
+- `02:25` At the third edge the first result, eight, is caught on the right.
+- `02:29` The second sum moves to the middle, and a third pair goes in.
+- `02:34` From then on a finished result comes out at every edge,
+- `02:38` and two computations are always under way at once, one in each half.
+- `02:44` Now compare the two designs.
+- `02:47` Before, we got one result every ten nanoseconds, and now we get one every seven.
+- `02:54` The number of results per second is called the throughput, and it has gone up by more than forty percent.
+- `03:01` But follow one single pair.
+- `03:04` It needs two periods to get through, and two times seven is fourteen nanoseconds,
+- `03:10` where before it needed ten.
+- `03:12` The time one item takes from start to finish is called the latency, and it got worse.
+- `03:19` It got worse for two reasons.
+- `03:21` The item now passes an extra register and pays that register's clock to q and setup time.
+- `03:28` And the faster half sits idle for two nanoseconds in every period,
+- `03:33` because the clock is set by the slower half.
+- `03:37` This move is called pipelining.
+- `03:39` It is the right trade when you care about results per second,
+- `03:44` as a processor running a long stream of instructions does.
+- `03:48` It is the wrong one when you only care how soon a single answer comes back.
+- `03:55` Step back and look at the three circuits of this series,
+- `03:59` the running sum, the machine that counts ones, and this pipeline.
+- `04:03` They are all built the same way.
+- `04:05` There are blocks of logic with no memory, separated by registers,
+- `04:10` and a clock that connects to the registers and to nothing else.
+- `04:15` Sometimes a register's output loops back, as in the first two, and sometimes the data only moves forward.
+- `04:23` Registers can sit back to back, and so can logic blocks.
+- `04:28` That is the whole model of a synchronous digital system, and a processor is a large one of these.

@@ -1,0 +1,228 @@
+1
+00:00:06,350 --> 00:00:12,232
+The clock period has to cover the slowest route from one register to the next.
+
+2
+00:00:12,332 --> 00:00:14,894
+Today we use that rule backwards.
+
+3
+00:00:14,894 --> 00:00:18,848
+If a route is too slow, we change the route.
+
+4
+00:00:20,083 --> 00:00:22,347
+Here is a piece of a processor.
+
+5
+00:00:22,347 --> 00:00:28,239
+Two numbers come out of a register, an adder adds them, a shifter shifts the sum,
+
+6
+00:00:28,239 --> 00:00:31,367
+and the result goes into a second register.
+
+7
+00:00:31,467 --> 00:00:38,293
+For example three plus one is four, and shifted left by one bit that becomes eight.
+
+8
+00:00:38,750 --> 00:00:44,146
+For the timing, say the adder takes five nanoseconds and the shifter three,
+
+9
+00:00:44,146 --> 00:00:49,328
+and each register has a clock to q delay of one and a setup time of one.
+
+10
+00:00:49,428 --> 00:00:52,426
+The only route goes through everything,
+
+11
+00:00:52,426 --> 00:00:58,346
+so the period is one plus five plus three plus one, which is ten nanoseconds.
+
+12
+00:00:58,783 --> 00:01:05,395
+At every edge a new pair goes in on the left, and the previous result is caught on the right.
+
+13
+00:01:05,495 --> 00:01:08,722
+So we get one result every ten nanoseconds,
+
+14
+00:01:08,722 --> 00:01:13,825
+and each result takes ten nanoseconds from going in to being caught.
+
+15
+00:01:14,283 --> 00:01:16,703
+Suppose that is not fast enough.
+
+16
+00:01:16,703 --> 00:01:20,827
+We can't make the adder or the shifter any quicker.
+
+17
+00:01:20,927 --> 00:01:23,263
+But notice why the period is long.
+
+18
+00:01:23,263 --> 00:01:29,585
+It is long only because one signal must get through both of them between two edges.
+
+19
+00:01:30,016 --> 00:01:32,150
+So let's stop asking for that.
+
+20
+00:01:32,150 --> 00:01:36,600
+Put a third register between the adder and the shifter.
+
+21
+00:01:36,700 --> 00:01:43,330
+Now the sum is caught in the middle at one edge, and the shifter works on it during the next period.
+
+22
+00:01:43,783 --> 00:01:47,469
+Each period only has to cover one of the two halves.
+
+23
+00:01:47,469 --> 00:01:52,740
+The first half is one plus five plus one, seven nanoseconds,
+
+24
+00:01:52,740 --> 00:01:56,957
+and the second is one plus three plus one, five.
+
+25
+00:01:57,057 --> 00:02:02,623
+One clock drives all the registers, so the period has to suit the slower half.
+
+26
+00:02:02,623 --> 00:02:06,795
+That gives seven nanoseconds instead of ten.
+
+27
+00:02:08,016 --> 00:02:09,778
+Watch the data move.
+
+28
+00:02:09,778 --> 00:02:14,080
+At the first edge the pair three and one goes in.
+
+29
+00:02:14,180 --> 00:02:18,376
+At the second edge its sum, four, is caught in the middle.
+
+30
+00:02:18,376 --> 00:02:24,722
+And at that same edge a new pair goes in on the left, because the adder is free again.
+
+31
+00:02:25,183 --> 00:02:29,783
+At the third edge the first result, eight, is caught on the right.
+
+32
+00:02:29,783 --> 00:02:34,611
+The second sum moves to the middle, and a third pair goes in.
+
+33
+00:02:34,711 --> 00:02:38,734
+From then on a finished result comes out at every edge,
+
+34
+00:02:38,734 --> 00:02:43,709
+and two computations are always under way at once, one in each half.
+
+35
+00:02:44,950 --> 00:02:47,344
+Now compare the two designs.
+
+36
+00:02:47,344 --> 00:02:54,486
+Before, we got one result every ten nanoseconds, and now we get one every seven.
+
+37
+00:02:54,586 --> 00:03:01,466
+The number of results per second is called the throughput, and it has gone up by more than forty percent.
+
+38
+00:03:01,916 --> 00:03:04,118
+But follow one single pair.
+
+39
+00:03:04,118 --> 00:03:10,340
+It needs two periods to get through, and two times seven is fourteen nanoseconds,
+
+40
+00:03:10,340 --> 00:03:12,414
+where before it needed ten.
+
+41
+00:03:12,514 --> 00:03:18,754
+The time one item takes from start to finish is called the latency, and it got worse.
+
+42
+00:03:19,216 --> 00:03:21,514
+It got worse for two reasons.
+
+43
+00:03:21,514 --> 00:03:28,872
+The item now passes an extra register and pays that register's clock to q and setup time.
+
+44
+00:03:28,972 --> 00:03:33,891
+And the faster half sits idle for two nanoseconds in every period,
+
+45
+00:03:33,891 --> 00:03:37,170
+because the clock is set by the slower half.
+
+46
+00:03:37,616 --> 00:03:39,904
+This move is called pipelining.
+
+47
+00:03:39,904 --> 00:03:44,112
+It is the right trade when you care about results per second,
+
+48
+00:03:44,112 --> 00:03:48,112
+as a processor running a long stream of instructions does.
+
+49
+00:03:48,212 --> 00:03:53,890
+It is the wrong one when you only care how soon a single answer comes back.
+
+50
+00:03:55,116 --> 00:03:59,015
+Step back and look at the three circuits of this series,
+
+51
+00:03:59,015 --> 00:04:03,540
+the running sum, the machine that counts ones, and this pipeline.
+
+52
+00:04:03,640 --> 00:04:05,852
+They are all built the same way.
+
+53
+00:04:05,852 --> 00:04:10,569
+There are blocks of logic with no memory, separated by registers,
+
+54
+00:04:10,569 --> 00:04:15,140
+and a clock that connects to the registers and to nothing else.
+
+55
+00:04:15,583 --> 00:04:23,239
+Sometimes a register's output loops back, as in the first two, and sometimes the data only moves forward.
+
+56
+00:04:23,239 --> 00:04:28,309
+Registers can sit back to back, and so can logic blocks.
+
+57
+00:04:28,409 --> 00:04:35,561
+That is the whole model of a synchronous digital system, and a processor is a large one of these.
+

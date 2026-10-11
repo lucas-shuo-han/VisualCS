@@ -1,0 +1,320 @@
+1
+00:00:06,350 --> 00:00:10,538
+Here is a wire that brings one bit in each clock period.
+
+2
+00:00:10,538 --> 00:00:14,782
+We want a circuit that watches it and raises its output for one
+
+3
+00:00:14,782 --> 00:00:18,354
+period whenever it has just seen three ones in a row.
+
+4
+00:00:18,454 --> 00:00:22,228
+After that it starts counting again from nothing.
+
+5
+00:00:22,683 --> 00:00:25,047
+Let's see what that means on a stream.
+
+6
+00:00:25,047 --> 00:00:29,695
+A single one, and then two ones, give us nothing.
+
+7
+00:00:29,795 --> 00:00:34,923
+Then come three ones, and on the third the output goes high.
+
+8
+00:00:35,383 --> 00:00:42,465
+With four ones in a row we still get a single pulse, on the third, and the fourth is a fresh start.
+
+9
+00:00:42,565 --> 00:00:45,993
+Six in a row give two pulses.
+
+10
+00:00:47,216 --> 00:00:49,736
+Can logic gates alone do this?
+
+11
+00:00:49,736 --> 00:00:51,748
+Look at these two moments.
+
+12
+00:00:51,748 --> 00:00:59,468
+In both the input is a one, but at the first the output must be zero and at the second it must be one.
+
+13
+00:00:59,568 --> 00:01:06,012
+Gates without memory give the same output for the same input, so the answer is no.
+
+14
+00:01:08,350 --> 00:01:13,280
+The circuit has to remember something about the past, but not the whole history.
+
+15
+00:01:13,280 --> 00:01:17,568
+Ask what it must know in order to deal with the next bit.
+
+16
+00:01:17,668 --> 00:01:23,668
+All it needs is how many ones in a row it has just seen, and that is none, one or two.
+
+17
+00:01:23,668 --> 00:01:27,520
+On the third it fires and goes back to none.
+
+18
+00:01:28,750 --> 00:01:31,648
+Give those three situations names.
+
+19
+00:01:31,648 --> 00:01:39,320
+S zero means no ones yet, S one means one so far, and S two means two so far.
+
+20
+00:01:39,420 --> 00:01:42,734
+We draw each as a circle and call it a state.
+
+21
+00:01:42,734 --> 00:01:47,036
+At any moment the machine is in exactly one of them.
+
+22
+00:01:47,483 --> 00:01:50,741
+Now go through them and ask what each bit does.
+
+23
+00:01:50,741 --> 00:01:59,037
+In S zero a one arrives, which makes one in a row, so we move to S one and the output stays zero.
+
+24
+00:01:59,137 --> 00:02:04,695
+We draw that as an arrow, labelled with the input, a slash, and the output.
+
+25
+00:02:04,695 --> 00:02:08,084
+If a zero arrives instead we stay where we are,
+
+26
+00:02:08,084 --> 00:02:13,203
+and that is an arrow from the state back to itself, called a self loop.
+
+27
+00:02:13,650 --> 00:02:19,200
+In S one, another one takes us to S two, still with output zero.
+
+28
+00:02:19,200 --> 00:02:24,064
+A zero breaks the run, so we go back to S zero.
+
+29
+00:02:24,516 --> 00:02:27,920
+In S two, a one is the third in a row.
+
+30
+00:02:27,920 --> 00:02:35,016
+This is the arrow that carries an output of one, and it leads back to S zero to start over.
+
+31
+00:02:35,116 --> 00:02:41,492
+A zero from S two also leads back to S zero, with output zero.
+
+32
+00:02:41,950 --> 00:02:48,888
+That makes six arrows, two out of every state, so the machine always knows what to do.
+
+33
+00:02:48,988 --> 00:02:52,458
+A picture like this is called a finite state machine.
+
+34
+00:02:52,458 --> 00:02:56,058
+It has inputs, outputs, a fixed set of states,
+
+35
+00:02:56,058 --> 00:03:01,772
+and arrows that say where each input leads and what to output on the way.
+
+36
+00:03:02,216 --> 00:03:04,338
+Let's run the stream through it.
+
+37
+00:03:04,338 --> 00:03:06,480
+A zero, and we stay.
+
+38
+00:03:06,480 --> 00:03:11,746
+A one takes us to S one, and the next zero sends us back.
+
+39
+00:03:11,846 --> 00:03:17,774
+Then one and one bring us to S two, but a zero sends us home again.
+
+40
+00:03:18,216 --> 00:03:21,312
+Now one, one, and one more.
+
+41
+00:03:21,312 --> 00:03:28,570
+On that last arrow the output is one, and we are back in S zero, ready for the next run.
+
+42
+00:03:37,016 --> 00:03:40,466
+To build this, the states have to become bits.
+
+43
+00:03:40,466 --> 00:03:50,358
+Three states fit in two bits, so let S zero be zero zero, S one be zero one, and S two be one zero.
+
+44
+00:03:50,458 --> 00:03:53,818
+Then every arrow becomes a row of a table.
+
+45
+00:03:53,818 --> 00:04:00,488
+On the left go the present state and the input, and on the right the next state and the output.
+
+46
+00:04:00,950 --> 00:04:03,892
+Take the arrow from S one on a one.
+
+47
+00:04:03,892 --> 00:04:11,872
+Its row reads present state zero one, input one, next state one zero, output zero.
+
+48
+00:04:11,972 --> 00:04:14,414
+Six arrows give six rows.
+
+49
+00:04:14,414 --> 00:04:19,960
+The pattern one one never appears, because no arrow leads to it.
+
+50
+00:04:21,183 --> 00:04:23,205
+Look at what this table is.
+
+51
+00:04:23,205 --> 00:04:30,813
+Its left side decides its right side with no memory involved, so it is a job for plain logic gates.
+
+52
+00:04:30,913 --> 00:04:35,435
+The only thing that has to be remembered is the present state,
+
+53
+00:04:35,435 --> 00:04:39,155
+which is two bits, and we know what remembers bits.
+
+54
+00:04:39,616 --> 00:04:43,816
+So the circuit is a register for two bits and a block of logic.
+
+55
+00:04:43,816 --> 00:04:47,546
+The register's output is the present state.
+
+56
+00:04:47,646 --> 00:04:52,980
+The logic takes that and the input bit and produces the output and the next state.
+
+57
+00:04:52,980 --> 00:04:58,942
+And the next state goes around to the register's input, where it waits for the clock.
+
+58
+00:04:59,383 --> 00:05:06,767
+At each rising edge the next state becomes the present state, and the logic starts on the following bit.
+
+59
+00:05:06,867 --> 00:05:12,413
+This is the same loop as our running sum, with the adder swapped for a table.
+
+60
+00:05:13,650 --> 00:05:16,088
+What is inside the logic block?
+
+61
+00:05:16,088 --> 00:05:18,110
+We can read it off the table.
+
+62
+00:05:18,110 --> 00:05:25,488
+The output is one in a single row, where the present state is one zero and the input is one.
+
+63
+00:05:25,588 --> 00:05:31,696
+So the output is the high state bit, and not the low state bit, and the input.
+
+64
+00:05:32,150 --> 00:05:34,652
+The next state works the same way.
+
+65
+00:05:34,652 --> 00:05:40,028
+Its high bit is one only in the row with state zero one and input one,
+
+66
+00:05:40,028 --> 00:05:45,174
+and its low bit only in the row with state zero zero and input one.
+
+67
+00:05:45,274 --> 00:05:50,858
+That is three AND gates and a few inverters, and the machine is complete.
+
+68
+00:05:52,083 --> 00:05:55,159
+The same recipe works for any diagram.
+
+69
+00:05:55,159 --> 00:05:57,923
+Here is a smaller one with two states.
+
+70
+00:05:57,923 --> 00:06:01,631
+On a zero it stays where it is and outputs zero,
+
+71
+00:06:01,631 --> 00:06:06,267
+and on a one it switches to the other state and outputs one.
+
+72
+00:06:06,367 --> 00:06:11,861
+One flip-flop holds the state, and a little logic does the rest.
+
+73
+00:06:12,316 --> 00:06:15,546
+Real processors are full of machines like this.
+
+74
+00:06:15,546 --> 00:06:21,770
+The controller of a cache, for instance, steps through states as it serves a request,
+
+75
+00:06:21,770 --> 00:06:25,870
+first checking, then fetching from memory, then storing.
+
+76
+00:06:25,970 --> 00:06:33,104
+Any step by step procedure with a fixed number of situations can be built from a register and logic.
+
+77
+00:06:34,350 --> 00:06:38,860
+So a register in a loop can remember anything we can number,
+
+78
+00:06:38,860 --> 00:06:42,318
+and the logic decides how that memory changes.
+
+79
+00:06:42,418 --> 00:06:47,414
+There is one more use for a register, and it has nothing to do with remembering.
+
+80
+00:06:47,414 --> 00:06:51,518
+Sometimes we add one just to make the clock faster.
+

@@ -1,0 +1,344 @@
+1
+00:00:06,350 --> 00:00:10,144
+We have an adder with a register on its feedback wire,
+
+2
+00:00:10,144 --> 00:00:16,258
+and we know that a register needs its input steady in a window around each rising edge.
+
+3
+00:00:16,358 --> 00:00:22,142
+Today we put the two together and ask how fast this circuit can be clocked.
+
+4
+00:00:23,383 --> 00:00:25,355
+Give everything a number.
+
+5
+00:00:25,355 --> 00:00:32,589
+The register has a clock to q delay of one nanosecond and a setup time of one nanosecond.
+
+6
+00:00:32,689 --> 00:00:38,037
+The adder takes five nanoseconds, and the clock period is ten.
+
+7
+00:00:38,483 --> 00:00:42,007
+Follow one period, starting at a rising edge.
+
+8
+00:00:42,007 --> 00:00:47,163
+One nanosecond later the register's output shows the stored total.
+
+9
+00:00:47,263 --> 00:00:51,469
+Suppose the next number from the list shows up at that moment too.
+
+10
+00:00:51,469 --> 00:00:59,001
+The adder now has both inputs, and five nanoseconds later, at six, the new sum is ready.
+
+11
+00:00:59,450 --> 00:01:06,457
+The next edge comes at ten, and the register needs its input steady one nanosecond before that,
+
+12
+00:01:06,457 --> 00:01:07,638
+so from nine on.
+
+13
+00:01:07,738 --> 00:01:13,432
+The sum has been waiting since six, which leaves three nanoseconds to spare.
+
+14
+00:01:13,883 --> 00:01:17,939
+In a real machine the two inputs rarely arrive together.
+
+15
+00:01:17,939 --> 00:01:22,294
+Say the stored total shows up at one nanosecond as before,
+
+16
+00:01:22,294 --> 00:01:25,899
+but the next number from the list only at three.
+
+17
+00:01:26,350 --> 00:01:31,508
+For those two nanoseconds the adder sees the new total next to the old number.
+
+18
+00:01:31,508 --> 00:01:34,316
+Right after the first number was stored,
+
+19
+00:01:34,316 --> 00:01:39,160
+that means it starts adding three plus three, which nobody asked for.
+
+20
+00:01:39,616 --> 00:01:45,804
+That wrong sum does travel through the adder, so for a while the output is garbage.
+
+21
+00:01:45,904 --> 00:01:50,789
+Then at three the right number arrives, and five nanoseconds later,
+
+22
+00:01:50,789 --> 00:01:54,142
+at eight, the output settles on the right sum.
+
+23
+00:01:54,583 --> 00:01:56,675
+Eight is still before nine.
+
+24
+00:01:56,675 --> 00:02:03,885
+The register only looks during its small window around the edge, so it never sees the garbage.
+
+25
+00:02:03,985 --> 00:02:06,449
+This happens in every circuit.
+
+26
+00:02:06,449 --> 00:02:09,349
+Signals wobble in the middle of a period,
+
+27
+00:02:09,349 --> 00:02:13,875
+and all that matters is that they are quiet when the edge comes.
+
+28
+00:02:14,316 --> 00:02:16,722
+So how short can the period be?
+
+29
+00:02:16,722 --> 00:02:23,308
+Go back to both inputs arriving at one nanosecond, with the sum ready at six.
+
+30
+00:02:23,408 --> 00:02:25,280
+Try a period of eight.
+
+31
+00:02:25,280 --> 00:02:30,276
+The window now opens at seven, and the sum is there in time.
+
+32
+00:02:30,716 --> 00:02:32,168
+Try seven.
+
+33
+00:02:32,168 --> 00:02:38,504
+The window opens at six, exactly when the sum settles, and that just works.
+
+34
+00:02:38,604 --> 00:02:40,356
+Now try six.
+
+35
+00:02:40,356 --> 00:02:43,786
+The window opens at five, the adder is still working,
+
+36
+00:02:43,786 --> 00:02:47,604
+and the register stores whatever happens to be on the wire.
+
+37
+00:02:47,604 --> 00:02:52,454
+The total is wrong, and so is every total after it.
+
+38
+00:02:52,916 --> 00:02:59,358
+So seven nanoseconds is the shortest period, and we can read off where it comes from.
+
+39
+00:02:59,458 --> 00:03:04,051
+One nanosecond for the register to show its value, five for the adder,
+
+40
+00:03:04,051 --> 00:03:08,446
+and one for the setup time of the register that catches the result.
+
+41
+00:03:08,883 --> 00:03:13,605
+In general the period has to be at least the clock to q delay,
+
+42
+00:03:13,605 --> 00:03:17,337
+plus the delay of the logic, plus the setup time.
+
+43
+00:03:17,437 --> 00:03:23,834
+The hold time is not in this sum, because it concerns what happens just after an edge,
+
+44
+00:03:23,834 --> 00:03:25,991
+not how long the logic takes.
+
+45
+00:03:26,450 --> 00:03:32,820
+A clock is usually described by its frequency, which is one divided by the period.
+
+46
+00:03:32,920 --> 00:03:37,649
+A period of seven nanoseconds is one seventh of a gigahertz,
+
+47
+00:03:37,649 --> 00:03:41,196
+or about a hundred and forty three megahertz.
+
+48
+00:03:42,416 --> 00:03:46,516
+Real circuits have many routes from one register to the next.
+
+49
+00:03:46,516 --> 00:03:52,736
+Here is one from the course notes, with four AND gates that each take one nanosecond.
+
+50
+00:03:52,836 --> 00:03:58,053
+The register has a clock to q delay and a setup time of one nanosecond each,
+
+51
+00:03:58,053 --> 00:04:03,202
+and the four inputs on the left come from other registers of the same kind.
+
+52
+00:04:03,650 --> 00:04:09,160
+Every route has to finish within one period, so the slowest route sets the pace.
+
+53
+00:04:09,160 --> 00:04:11,362
+Let's time them.
+
+54
+00:04:11,462 --> 00:04:17,075
+From this input the signal passes two gates before it reaches the register,
+
+55
+00:04:17,075 --> 00:04:19,920
+and from these two it also passes two.
+
+56
+00:04:20,350 --> 00:04:25,678
+But start from this input, or from the register's own output coming back around,
+
+57
+00:04:25,678 --> 00:04:29,808
+and the signal passes this gate, then this one, then this one.
+
+58
+00:04:29,808 --> 00:04:32,160
+That makes three.
+
+59
+00:04:32,260 --> 00:04:39,006
+No route goes through all four, because the lower gate sits beside that chain and not in it.
+
+60
+00:04:39,450 --> 00:04:42,474
+The slowest route is called the critical path.
+
+61
+00:04:42,474 --> 00:04:50,260
+Here it costs one nanosecond for clock to q, three for the gates and one for setup, which is five in all.
+
+62
+00:04:50,360 --> 00:04:56,552
+So the clock can run at one fifth of a gigahertz, and that is two hundred megahertz.
+
+63
+00:04:57,783 --> 00:05:02,281
+The setup time gave us a rule that the logic must not be too slow.
+
+64
+00:05:02,281 --> 00:05:07,059
+The hold time gives a second rule, and it points the other way.
+
+65
+00:05:07,159 --> 00:05:12,371
+Take two registers on the same clock with almost nothing between them.
+
+66
+00:05:12,816 --> 00:05:16,814
+At a rising edge the second register samples its input,
+
+67
+00:05:16,814 --> 00:05:21,466
+and it needs that input to stay put until its hold time is over.
+
+68
+00:05:21,566 --> 00:05:27,498
+But the same edge makes the first register change its output, one clock to q delay later.
+
+69
+00:05:27,498 --> 00:05:32,250
+That change sets off down the wire toward the second register.
+
+70
+00:05:32,683 --> 00:05:39,933
+If it gets there before the hold time is over, the second register's input moves inside the window.
+
+71
+00:05:40,033 --> 00:05:46,959
+Say the hold time is two nanoseconds, clock to q is one, and the wire takes no time.
+
+72
+00:05:46,959 --> 00:05:51,333
+The new value arrives at one, which is too early.
+
+73
+00:05:51,783 --> 00:05:55,891
+So the second rule is that clock to q plus the fastest route
+
+74
+00:05:55,891 --> 00:05:59,247
+through the logic must be at least the hold time.
+
+75
+00:05:59,347 --> 00:06:02,099
+Notice that the clock period is not in it.
+
+76
+00:06:02,099 --> 00:06:08,061
+Both events follow the same edge, so slowing the clock down does not help at all.
+
+77
+00:06:08,516 --> 00:06:11,290
+What helps is to put some delay on the route.
+
+78
+00:06:11,290 --> 00:06:18,562
+With one nanosecond of delay here, the new value arrives at two, just as the window closes.
+
+79
+00:06:18,662 --> 00:06:20,750
+In practice this problem is rare,
+
+80
+00:06:20,750 --> 00:06:26,570
+because flip-flops are usually built with a hold time no longer than their clock to q delay.
+
+81
+00:06:26,570 --> 00:06:30,152
+Then even a bare wire is slow enough.
+
+82
+00:06:31,383 --> 00:06:36,979
+So the clock period has a floor, set by the slowest route between two registers.
+
+83
+00:06:36,979 --> 00:06:42,053
+And every route has a floor of its own, set by the hold time.
+
+84
+00:06:42,153 --> 00:06:47,867
+With timing under control we can ask what a register in a loop is good for besides adding.
+
+85
+00:06:47,867 --> 00:06:50,757
+Our circuit remembered a running total.
+
+86
+00:06:50,757 --> 00:06:54,291
+What else could a circuit choose to remember?
+
