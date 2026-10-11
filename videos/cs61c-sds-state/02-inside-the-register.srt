@@ -1,0 +1,304 @@
+1
+00:00:06,350 --> 00:00:09,264
+Last time a register saved our running sum.
+
+2
+00:00:09,264 --> 00:00:16,358
+It took in a new value at each rising edge of the clock and held it still for the rest of the period.
+
+3
+00:00:16,458 --> 00:00:19,230
+Today we open the box.
+
+4
+00:00:20,850 --> 00:00:27,662
+Our register stored a whole number, so it has several wires going in and several coming out.
+
+5
+00:00:27,762 --> 00:00:30,484
+Inside there is no clever machinery.
+
+6
+00:00:30,484 --> 00:00:37,628
+There is one small circuit for each bit, side by side, and all of them listen to the same clock.
+
+7
+00:00:38,083 --> 00:00:41,977
+Each of these small circuits is a register for a single bit.
+
+8
+00:00:41,977 --> 00:00:48,104
+It is called a flip-flop, because all it ever does is flip to one or flop back to zero,
+
+9
+00:00:48,104 --> 00:00:51,203
+and it takes about ten transistors to build.
+
+10
+00:00:51,303 --> 00:00:56,921
+By convention the input of a register is capital D and its output is capital Q.
+
+11
+00:00:56,921 --> 00:01:01,077
+For a single flip-flop we use the small letters.
+
+12
+00:01:01,516 --> 00:01:07,286
+So to understand a register of any width, we only have to understand one flip-flop.
+
+13
+00:01:07,286 --> 00:01:11,286
+Let's put a probe on its three wires and watch.
+
+14
+00:01:12,516 --> 00:01:17,160
+Here is the clock, and here is an input that changes whenever it likes.
+
+15
+00:01:17,160 --> 00:01:21,022
+Before the output appears, try to predict it.
+
+16
+00:01:21,122 --> 00:01:27,628
+All you need to know is that the flip-flop only looks at its input at each rising edge.
+
+17
+00:01:29,050 --> 00:01:33,558
+At the first edge the input is high, so the output goes high.
+
+18
+00:01:33,558 --> 00:01:40,582
+During this period the input drops and comes back up, and the output takes no notice at all.
+
+19
+00:01:40,682 --> 00:01:45,916
+At the second edge the input is low, so the output goes low.
+
+20
+00:01:46,350 --> 00:01:49,514
+At the third edge the input is low again.
+
+21
+00:01:49,514 --> 00:01:52,427
+The flip-flop does take that value in,
+
+22
+00:01:52,427 --> 00:01:57,870
+but it is the value the output already has, so nothing visible happens.
+
+23
+00:01:57,970 --> 00:02:03,126
+At the fourth the input is high, and the output goes high again.
+
+24
+00:02:03,583 --> 00:02:05,505
+So the rule is short.
+
+25
+00:02:05,505 --> 00:02:13,211
+At every rising edge q becomes whatever d is at that moment, and between edges q does not move.
+
+26
+00:02:13,311 --> 00:02:17,243
+This kind is called a positive edge triggered D flip-flop.
+
+27
+00:02:17,243 --> 00:02:23,109
+There is also a kind that acts on the falling edge, but we will only use this one.
+
+28
+00:02:24,350 --> 00:02:28,602
+That rule has a soft spot, and it is the phrase at that moment.
+
+29
+00:02:28,602 --> 00:02:36,254
+Let's zoom in on one rising edge, far enough to see that the clock itself takes a little while to rise.
+
+30
+00:02:36,716 --> 00:02:41,084
+Suppose the input changes right here, in the middle of the rise.
+
+31
+00:02:41,084 --> 00:02:45,320
+Is the value at the edge a zero or a one?
+
+32
+00:02:45,420 --> 00:02:49,751
+The transistors inside are partway through taking the old value in,
+
+33
+00:02:49,751 --> 00:02:52,336
+and now they are handed a different one.
+
+34
+00:02:52,336 --> 00:02:56,398
+What the output ends up as is anyone's guess.
+
+35
+00:02:56,850 --> 00:02:59,498
+So the flip-flop comes with a condition.
+
+36
+00:02:59,498 --> 00:03:06,764
+Its input has to be steady already a short time before the edge, so that the value has time to get in.
+
+37
+00:03:06,864 --> 00:03:09,956
+That time is called the setup time.
+
+38
+00:03:10,416 --> 00:03:14,599
+And the input has to stay steady for a short time after the edge,
+
+39
+00:03:14,599 --> 00:03:17,430
+until the flip-flop has safely let go of it.
+
+40
+00:03:17,430 --> 00:03:20,464
+That time is called the hold time.
+
+41
+00:03:20,564 --> 00:03:24,658
+Together they make a window around every rising edge.
+
+42
+00:03:24,658 --> 00:03:28,066
+Inside the window the input must not change.
+
+43
+00:03:28,066 --> 00:03:32,454
+Outside it, the input can do whatever it wants.
+
+44
+00:03:32,916 --> 00:03:36,160
+There is one more delay, on the output side.
+
+45
+00:03:36,160 --> 00:03:43,024
+Even when the input behaves, the new value does not show up at the output on the edge itself.
+
+46
+00:03:43,124 --> 00:03:48,738
+It appears a little later, and that delay is called the clock to q delay.
+
+47
+00:03:49,183 --> 00:03:52,595
+Three numbers, then, describe a flip-flop.
+
+48
+00:03:52,595 --> 00:04:00,017
+Setup and hold are demands it makes on its input, and clock to q is how long it makes its output wait.
+
+49
+00:04:01,250 --> 00:04:03,082
+Let's put numbers on them.
+
+50
+00:04:03,082 --> 00:04:08,037
+Take a flip-flop with a setup time of two and a half picoseconds,
+
+51
+00:04:08,037 --> 00:04:13,526
+a hold time of one and a half, and a clock to q delay of one and a half.
+
+52
+00:04:13,626 --> 00:04:17,658
+The clock period is thirteen picoseconds.
+
+53
+00:04:18,116 --> 00:04:20,478
+Draw the window at each edge.
+
+54
+00:04:20,478 --> 00:04:26,992
+It opens two and a half picoseconds before and closes one and a half after.
+
+55
+00:04:27,092 --> 00:04:32,827
+This input changes many times, but every change falls outside a window,
+
+56
+00:04:32,827 --> 00:04:35,654
+so each edge samples a clean value.
+
+57
+00:04:36,116 --> 00:04:37,698
+Now the output.
+
+58
+00:04:37,698 --> 00:04:44,518
+Before the first edge we have no idea what the flip-flop holds, so we shade it as unknown.
+
+59
+00:04:44,618 --> 00:04:51,544
+One and a half picoseconds after that edge, the output shows the value the input had, which was a one.
+
+60
+00:04:51,544 --> 00:04:55,218
+After the next edge it shows a zero.
+
+61
+00:04:55,650 --> 00:04:59,906
+Here the hold time and the clock to q delay happen to be equal.
+
+62
+00:04:59,906 --> 00:05:06,426
+Nothing forces that, because one describes the input and the other describes the output.
+
+63
+00:05:06,526 --> 00:05:13,334
+In practice, though, flip-flops are built so that the hold time is the smaller of the two,
+
+64
+00:05:13,334 --> 00:05:14,620
+or at most equal.
+
+65
+00:05:15,850 --> 00:05:18,820
+Here are two statements to test yourself on.
+
+66
+00:05:18,820 --> 00:05:25,368
+The first says that the clock to q delay is the time from the rising edge to the hold time.
+
+67
+00:05:25,468 --> 00:05:27,070
+That is false.
+
+68
+00:05:27,070 --> 00:05:33,120
+Clock to q runs from the rising edge to the moment the output shows the new value,
+
+69
+00:05:33,120 --> 00:05:35,850
+and the hold time is about the input.
+
+70
+00:05:36,283 --> 00:05:41,824
+The second says that a flip-flop only updates its output at a rising edge,
+
+71
+00:05:41,824 --> 00:05:44,595
+even if its input changes in between.
+
+72
+00:05:44,695 --> 00:05:49,543
+That one is true, and it is the whole point of the device.
+
+73
+00:05:50,783 --> 00:05:54,037
+So a register is a row of flip-flops.
+
+74
+00:05:54,037 --> 00:06:01,267
+Each one samples its input in a small window around the rising edge and answers a moment later.
+
+75
+00:06:01,367 --> 00:06:07,669
+Now put it back in our circuit, where the adder's result has to arrive before that window opens.
+
+76
+00:06:07,669 --> 00:06:12,607
+How short can we make the clock period before the sum stops being right?
+

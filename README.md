@@ -29,6 +29,27 @@
 成片在 [`videos/cs61c-riscv/zh/`](videos/cs61c-riscv/zh/) 与 [`videos/cs61c-riscv/en/`](videos/cs61c-riscv/en/)（1080p30）。
 全部旁白文字见 [`cs61c/riscv/SCRIPT.md`](cs61c/riscv/SCRIPT.md)（中文）与 [`cs61c/riscv/SCRIPT.en.md`](cs61c/riscv/SCRIPT.en.md)（English）。
 
+## CS61C · State and Timing（L18，note 18）· 5 集
+
+按课程笔记 [L18 State, Timing](https://notes.cs61c.org/content/sds-state/) 的六页内容编排，但顺序不照讲义：先让"加法器接一根反馈线"求和失败，再由失败引出寄存器和时钟。
+
+| 集 | Title | 内容 |
+|---|---|---|
+| 1 | The Sum That Ran Away | 波形图、0/1 电平与电平恢复、总线；传播延迟；反馈线上的和跑成 3、6、9、12；寄存器、LOAD、时钟、上升沿与周期；reset；3、4、8、10 |
+| 2 | Inside the Register | n 位寄存器 = n 个触发器；正边沿触发 D 触发器的波形；setup、hold、clock-to-q 各自从"会出什么错"引出；讲义的 2.5 / 1.5 / 1.5 ps 例子；两道判断题 |
+| 3 | How Fast Can the Clock Tick? | 一个周期里的 1 + 5 + 1 ns；输入不同时到达时的毛刺；把周期从 10 缩到 6 ns 直到存错；关键路径与最高频率；讲义的 quick check（200 MHz）；hold 违例，为什么放慢时钟没用 |
+| 4 | Three Ones in a Row | 为什么只有门电路不行；该记住什么；状态图一条箭头一条箭头地画；真值表；状态寄存器 + 组合逻辑；三个与门；两状态机与 cache 控制器 |
+| 5 | A Register to Go Faster | 加法器 + 移位器的 10 ns；中间加一个寄存器后 7 ns；数据逐拍流动；吞吐率与延迟的取舍；同步数字系统的一般模型 |
+
+只做英文版。成片在 [`videos/cs61c-sds-state/`](videos/cs61c-sds-state/)（1080p30，字幕在同名 `.srt` 里，不烧进画面），旁白全文见 [`cs61c/sds-state/SCRIPT.en.md`](cs61c/sds-state/SCRIPT.en.md)。
+代码在 `cs61c/sds-state/`：五集各一个 `epNN_*.py`，波形和电路符号在 `sds_common.py`，音色、语速、字体在 `series.py`（沿用 Newton–Schulz 的设置）。
+[`PLAN.md`](cs61c/sds-state/PLAN.md) 里有讲义逐项的覆盖表，以及和讲义不一致的五处（流水线延迟 14 ns 而不是 12 ns 等）；写动画之前的台词稿是 [`narration.md`](cs61c/sds-state/narration.md)。
+
+```bash
+.venv/Scripts/python .claude/skills/notes-to-3b1b-video/scripts/render.py cs61c/sds-state --out videos/cs61c-sds-state   # 五集成片（Windows 上 MANIM_CWD 和 --media 要放在 C: 盘）
+bash cs61c/sds-state/look.sh 3 /tmp/sheets cycle late        # 第 3 集的两个场景：带配音预览 + 逐句截图
+```
+
 ## CS182 · Newton–Schulz 迭代（第五次讨论课）
 
 | 集 | Title | 内容 |

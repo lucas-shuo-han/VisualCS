@@ -1,0 +1,359 @@
+Source: https://notes.cs61c.org/content/sds-state/ (L18 State, Timing; six pages), fetched 2026-10-11.
+Plain-text extraction for the coverage map; figures are not reproduced. [IMG ...] marks where a figure sits.
+
+
+=== PAGE: index ===
+
+# Signals, Waveforms, and the Clock
+By John Wawrzynek, with edits by Lisa Yan
+## 1Learning Outcomes¶
+Interpret the waveform diagram of the clock signal.
+Identify the propagation delay of a combinational logic circuit.
+In the previous chapter, we discussed a chip, which is composed of wires and transistors (among other things):
+[IMG /build/apple-a14-381670511a8b7bfde58a70afbd527485.jpg]
+Apple A14 Bionic Chip (sources: Wikipedia, TechInsights. Figure 2 in Intro to SDS.
+Surrounding the inner part of the chip—the core—is a set of connections to the outside world. Usually these connect through some wires in the plastic or ceramic package to the printed circuit board (PCB). In the case of most computers this PCB would be the motherboard. Some of these connections go to the main memory and the system bus. A fair number of the pins are used to connect to the power supply. The power supply takes the 110 Volt AC from the wall socket (provided by PG&E) and converts it to low voltage DC (usually in the range of around 1 to 5 volts, depending on the particular chip used). The DC voltage is measured relative to ground potential (GND). Power connections to the chip from the power supply are of two types; GND, and DC Voltage (labeled “Vdd”).
+The energy provided by the power supply drives the operation of the processor. The energy is used to move electric charge from place to place in the circuits and in the process is dissipated as heat. These days a processor may use on the order of 10 watts—like a not-so-bright light bulb.
+## 2The Clock¶
+Another special connection to the chip is the clock input signal[1]. The clock signal is generated on the motherboard and sent to the chip, where it is distributed throughout the processor on internal wires.
+The clock signal is the heartbeat of the system.
+It controls the timing of the flow of electric charge (and thus information) through out the processor and off-chip to the memory and system bus.
+If we had a very small probe we could examine the signal on the clock wires, by looking at the voltage level on the wire.
+We would see a blur, because the clock signal is oscillating at a very high frequency (around 1 billion cycles/second or 1GHz, these days). If we could record it for a brief instant and plot it out we would see something like Figure 2.
+[IMG /build/clock-waveform-0eb0c55031d959dfe0e72c8a44f7bef0.png]
+Figure 2:Waveform for a clock signal if recorded and plotted over time.
+The clock signal is very regular.
+This signal is a repeating “square wave”. One clock cycle (tick) is the time from any place on the waveform to the same place on the next instance of the waveform.
+For CS 61C, we will almost always measure the clock period from the rising-edge of the signal to the next rising-edge. We will see later that the clock signal is a very important signal and is present in all synchronous digital systems.
+Why are they called rising and falling edges of the clock signal?
+The idea of rising and falling edges comes from the idea of imagining that the signal might start at a low voltage and rise to the high voltage, stay there for half the period, and then fall to the low voltage, where it stays for another half period, etc.
+## 3Signals and Waveforms¶
+Similarly to the clock signal, we can look at other signals in the circuit. For instance, suppose we found an adder circuit. How would we know it’s an adder circuit? We could put a recording probe at its input and observe a waveform[1] like Figure 3.
+[IMG /build/adder-waveform-8de0890fe836608ed6edd209a1ce956d.png]
+Figure 3:Waveform for signals in an adder circuit if recorded and plotted over time.
+If we had two probes, we could look at two signals simultaneously. Imagine that we probe the two least significant bits of one of the inputs to the adder. Based on the recorded waveforms, displayed above the clock signal in Figure 3, we can make the following observations.
+Most of the time, the signals are in one of two positions: low voltage or high voltage.
+Why?
+By convention, low voltage is used to represent a binary 0 and high voltage is used to represent a binary 1. At different points in time, the particular bit position of the input to the adder has a value of 0, and at other times, has a value of 1.
+When the signals are at the high or low voltage levels, they are sometimes not quite all the way to the voltage extremes.
+Why?
+The transistor circuits that make up the adder and its subcircuits are robust against small errors in voltage. If the signal is close to high voltage, it is interpreted as a logic 1, and similarly, if it is close to 0 volts, it is interpreted as a logic 0. Therefore, errors (or deviations from ideal voltages) do not accumulate as signals move from circuit to circuit.
+The circuits have the property that they take input signals that may not be ideal, in the sense of being exactly at the voltage extremes, and produce outputs precisely at the voltage extremes. This restoration property is a critical property of digital circuits!
+Changes in the signals seem to correspond to changes in the clock signal, but they don’t always change every time the clock cycle changes.
+Why?
+In synchronous systems, all changes follow clock edges. The clock signal is used throughout the system to control when signals may take on new values.
+### 3.1Signal Wires¶
+Signal wires are often grouped together to transmit words of data, as shown in Figure 4. This drawing shows a collection of 4 wires used to transmit a 4-bit word. The waveforms show how the signals on the wires might change over time. Lower-case letters are used to label the individual wires and signals. The corresponding upper-case letter is used to label the collection of wires (sometimes referred to as a bus). Drawing a single waveform that represents all the signals on the bus is difficult because, at any instant, each wire could have a different value. If we need to show the timing of the changes of the signals on a bus, we can draw a waveform like Figure 4. Here, we draw the bus signal as simultaneously high and low voltage, and label each closed section with the value on the bus at that instant. In addition to the values on the bus, the timing of the changes is another important piece of information we can observe from waveforms like this.
+[IMG /build/signal-wires-97c2a4da773d916d02e8a2204d8e22af.png]
+Figure 4:Waveform diagram of signal change over time along 4 wires.
+## 4Circuit Delay: Propagation Delay¶
+Propagation Delay
+A measure of the delay from input to output, in general, is called the propagation delay. Propagation delay occurs in all circuits, including combinational logic circuits.
+However, the propagation delay of a circuit, like the adder, is always less than the clock period. We discuss this more in a later section.
+## 5Summary: Synchronous Digital System¶
+Figure 5 shows the general model for our synchronous systems:
+[IMG /build/general-model-sds-9b59ce14dd9b1fe9f685b2259c269e1c.png]
+Figure 5:General model for SDS.
+Our circuit is a collection of combinational logic blocks (CL blocks) separated by registers.
+Registers may be back-to-back; CL blocks may be back-to-back.
+Feedback is optional.
+Clock signal(s) connects only to clock input of registers. Combinational logic blocks are stateless and not clocked.
+Footnotes¶
+These notes are adapted from Professor John Wawrzynek’s notes: SDS Handout.
+↩↩
+
+=== PAGE: register ===
+
+# The Register
+Adapted from John Wawrzynek
+## 1Learning Outcomes¶
+Identify properties of a memory circuit.
+Describe the behavior of a positive edge-triggered d-type flip-flop.
+Identify setup time, hold time, and clk-to-q delay in a FF timing diagram.
+Explain the importance of setup time and hold time for sampling an input.
+As we’ve seen in a previous section, combinational logic circuits provide all the necessary functions needed to execute instructions, including all the arithmetic and logic operations, incrementing the program counter value, determining when to branch, calculating the new PC target values, etc, but they have no memory of their previous inputs or outputs. The memory circuit[1] is an example of another type of circuit used to make processors that does remember its inputs. This memory circuit is used to implement the general purpose register, as shown in Figure 1.
+[IMG /build/register-circuit-ca320e1d98c063fbba6a8c6690445000.png]
+Figure 1:Diagram of a register implemented through a memory circuit.
+## 2The General Register: A Memory Circuit¶
+Under the control of a special input, called LOAD, the register captures the value of the input signal and holds onto it indefinitely, or until another value is loaded. The value stored by the register appears at the output of the register (a very short time after it gets loaded). If the processor loads a value in a register at one point in time, it can come back later and read that same value back. Even if different values appear at the input to the register in the interim, the output value of the register will not change unless instructed to do so by signaling with the LOAD input. So, as long as the processor has control over the signaling of the LOAD input, it has total control over what gets saved and when.
+Often the system clock signal CLK (see The Clock), is used as the LOAD signal on a register, as shown in Figure 2. This configuration means that, for this register, a new value is loaded on each clock cycle. This is a valuable configuration we will explore in a future section.
+[IMG /build/clocked-register-77157a778486ec884007d47075d68516.png]
+Figure 2:Diagram of a clocked register implemented through a memory circuit.
+## 3What’s inside a register? Flip-Flops¶
+As shown in Figure 3, an n-bit wide register is nothing other than n instances of a simpler circuit[2].
+[IMG /build/register-components-254eecb8db1d60c2da72e355fe89c37f.png]
+Figure 3:Diagram of a register built from n instances of simpler circuits called flip-flops.
+We call these simple circuits flip-flops (FF), which are 1-bit wide registers named from the fact that when in operation, it flips (and flops) between holding a 0 or a 1. The CLK (or LOAD) signal is sent to the CLK (or LOAD) input of all n FFs. Each FF is responsible for storing one bit of the n-bit data stored by the register. By register convention, the input is labeled D and the output is labeled Q. In the case of a single bit, the input is labeled d and the output is labeled q.
+### 3.1Edge-Triggered D-Type Flip Flop¶
+The most common type of FF is called the edge-triggered d-type flip flop. Internally, each FF comprises around 10 transistors. The operation of the FF is illustrated as a waveform diagram in Figure 4. The figure shows the operation of a positive edge-triggered d-type flip-flop, one of two types of edge-triggered d-type flip-flops. The other type is a negative edge-triggered d-type flip-flop—but for CS 61C, we will focus on positive edge flip-flops.
+[IMG /build/ff-waveform-8b3176eea0833cb9e03cdb30f48cebf3.png]
+Figure 4:Waveform diagram of the operation of an edge-triggered d-type FF.
+### 3.2Positive Edge-Triggered D-Type Flip-Flops¶
+For positive edge-triggered d-type FFs, on each positive (rising) clock edge, the d input is sampled and transferred to the q output. At all other times, the d input is ignored.
+How do we verify the behavior of a positive edge-triggered d-type FF?
+We leave the verification of this process as an exercise for you! Start by looking at the waveforms of positive edge-triggered d-type FFs. You should see that the only time the q output changes is right after the rising edge of the clock. The d input can go up and down many times within a single clock cycle, but only its value right at the rising edge of the clock is important. This is when the input is sampled.
+You may also notice times when the FF output doesn’t change in response to the rising clock edge. This happens only when the d input and the q output are already the same value!
+Click to see an example simulator wavefrom diagram!
+[IMG /build/waveform-diagram-2cd57b0c891e8a2d4c1282ab8f6241db.png]
+Figure 5:Simulator waveform diagram for a positive d-type FF.
+### 3.3FF Timing Diagram¶
+A detailed FF timing diagram for a positive edge-triggered d-type FF is shown in Figure 6. Like combinational logic circuits, FFs cannot change their outputs instantaneously. Additionally, time is needed to transfer inputs internally. Therefore, the d input must be stable for a short amount of time before the rising clock edge (called the setup time) and remain stable for a short amount of time after the edge (called the hold time). Together, the setup and hold times create a time window when the d input cannot change. If it changes in this window, the FF will not reliably capture the new input. Note that, once the FF captures the new input in response to the rising clock edge, it also takes a small amount of time to transfer the new value to the output (called the clk-to-q delay)[3].
+[IMG /build/timing-diagram-2ff0477dcf9c94b10dc6fe6486280f8e.png]
+Figure 6:Timing diagram of a positive edge-triggered d-type FF.
+Looking at Figure 6 above:
+A illustrates the setup time.
+B illustrates the hold time.
+C illustrates the clk-to-q delay.
+The vertically dashed yellow lines illustrate the time window during which the input d must be stable (from the start of the setup time until the end of the hold time).
+Footnotes¶
+These notes are adapted from Professor John Wawrzynek’s notes: SDS Handout.
+These notes are adapted from Professor John Wawrzynek’s notes: State Handout.
+There is no particular relation between hold time and clk-to-q delay, because the former describes the input and the latter describes the output. However, in practice hold time is less than clk-to-q delay.
+
+=== PAGE: timing-synchronous-system ===
+
+# Timing a Synchronous System
+By John Wawrzynek, with edits by Lisa Yan
+## 1Learning Outcomes¶
+Explain why registers help stabilize synchronous systems.
+Compute the delay of a circuit’s critical path.
+Determine the maximum clock frequency for a given circuit.
+Explain a hold time violation and how to avoid it.
+Combination logic circuits produce outputs based purely on their
+input signals. They are used for a wide variety of functions. State elements, on the other hand, have a small number of very specific uses. These are circuits that remember their input signal values.
+Registers can be used to control the flow of signals between combination logic circuits.
+The accumulator example in this section should convince you that there are places where state elements are necessary for correct circuit function.
+Nevertheless, introducing state elements will impact how much can occur in a given clock period. We discuss this below.
+Registers can be used to increase the achievable clock frequency.
+With the concept of pipeline registers, we can add registers to a circuit to actually improve performance. We discuss this idea in the next section.
+## 2Accumulator Example¶
+Consider the design of a circuit whose job is to form the sum of a list of integers, $X_0, X_1, X_2, \dots, X_{n-1}$. Assume that some other circuit applies the numbers from the list one at a time—one per clock cycle. Below is a graphical depiction of an abstraction of our circuit used to form the sum–we’ll call the block “sum”. The $X$ values are applied, one per cycle, and after $n$ cycles the sum is present at the output, S.
+[IMG /build/accumulator-block-9825ab6b9489757c221c0629e5cf65c2.png]
+Figure 1:Block diagram for accumulator.
+What should we put inside the sum block to achieve the desired function? Obviously the circuit involves an adder. Also, on each step we need to take the current sum and pass it back to the adder so that it can add another X value to it.
+### 2.1Strawman: Unstable Circuit¶
+Figure 2 is our first try:
+[IMG /build/accumulator-circuit--c6c2d383d0c954a7e6fa2a62779789ae.png]
+Figure 2:Circuit diagram for accumulator.
+Let’s examine the operation of this circuit in detail to see if it does the job. Assume that $S$ begins at 0. We then apply $X_0$. After a short delay (the adder propagation delay, $\tau_{add}$) $S$ will change to $X_0$. Then after another $\tau_{add}$ of delay, S will change to $X_0 + X_0$, then after another $\tau_{add}$ of delay, S will change to $X_0 + X_0 + X_0$, etc. Because $\tau_{add}$ is typically less than the clock period, all of these adds of $X_0$ will
+happen before $X_1$ is applied.
+This is clearly not the correct operation of “sum”. The circuit is out of control! We need some way to control the computation, one step at a time.
+### 2.2Use a Register¶
+The way to control the computation is to put a register in the feedback path (the connection from the output of the adder to its input), as shown in Figure 3.
+[IMG /build/accumulator-circuit--5be6c4aa4bc162241da938646031d55c.png]
+Figure 3:Circuit diagram for accumulator with reset.
+The register holds the current value of $S$ while the next one is being formed. After we are happy with the next $S$, we load it into the register and apply the new $X$ value, then wait for a new $S$ to appear at the output of the adder. The process is repeated for all $n$ $X$ values.
+Reset signals are a common feature of register circuits. In the circuit diagram, this is the “reset” input signal to the register. This is a signal that can be used to clear the register value, and thus gives us a way to initialize the circuit.
+More on Reset Signals
+The “reset” input to the register is a special input that clears the register so that it holds all 0’s.
+The most common type of reset input is a called a synchronous reset: If the reset input signal has the value 1 on the rising edge of the clock signal, then the register is cleared, regardless of the value of the input D. In other words, the reset signal has priority over the data input and forces the register to all 0’s.
+### 2.3Waveform diagram¶
+Figure 4 shows the waveforms demonstrating the rough operation of the accumulator circuit, for a few iterations. Results are generated nicely one at time. In this example, the register is used to hold up the transfer of data from
+one place to another in the circuit.
+The output of the circuit is labeled $S_i$, and the output of the register is labeled $S_{i-1}$ to remind us that the register delays the signal for 1 cycle. So if the output of the circuit is holding the result of the ith iteration, then the register holds the result of the (i − 1)th iteration.
+[IMG /build/accumulator-timing-f0a1ab863c40305df311e46630a0ec0d.png]
+Figure 4:Rough timing diagram for accumulator, now with the waveform for the register output $S_{i-1}$.
+Show explanation of Figure 4
+Start by looking at the timing of the change on the output of the register $S_{i−1}$. This follows the positive-edge of the clock after a small delay (the clk-to-q time of the flip-flops used to implement the register). We assume that the input $X$ is applied at precisely the same time. The two values move through the adder together and after a small delay (the adder propagation delay $\tau_{add}$) a new result appears at the output of the adder, $S_i$. Then all is quiet until the rising edge of the clock. At that time the output value is transferred to the register and the whole process repeats.
+### 2.4Different signal arrival times¶
+In practice $X_i$ may not necessarily arrive at the same time as the feedback value, $S_{i−1}$. The waveforms below in Figure 5 show $X$ arriving a little bit later than $S_{i−1}$.
+[IMG /build/accumulator-timing-r-6eef4c09c32af8bb7b58876f08504f4b.png]
+Figure 5:Even though $X_i$ and $S_{i-1}$ arrive at different times to the accumulator, the clock period is long enough that $S_i$ is stable before the next rising edge of the clock.
+Show explanation of Figure 5
+When the register first captures $X_0$, for a small time period the $X$ input still has $X_0$, therefore
+the adder begins to compute $X_0 + X_0$! However, this erroneous calculation is quickly aborted when the $X$ input changes to $X_1$. Unfortunately, the aborted computation will probably make it through the adder, creating a sort of instability at the output. However, the instability in $S_i$ has no effect on $S_{i−1}$, as it captures its value from $S_i$ before it goes bad.
+As seen above, on each cycle there is a small time period where the adder has inconsistent inputs. This sort of arrival mismatch and subsequent output instability is common in many circuits. In properly designed circuits, this instability never happens around the rising-edge of the clock and therefore gets ignored by the registers and downstream circuitry.
+## 3Computing Maximum Clock Frequency¶
+Notice that the maximum clock frequency (minimum clock period) is limited by the propagation delay of the add/shift operation. If we try to make the clock period too short, then the add/shift logic
+would not have sufficient time to generate its output and the output register would capture an incorrect value.
+At the same time, we seek to create high-bandwidth circuits, which produce many outputs per second. We’d like to find an ideal balance between a high-frequency clock and stable outputs.
+The minimum clock period is the delay on the critical path.
+Critical path of a circuit: The path between input(s) and output(s) that incurs worst-case (maximum) delay. Typically this is determined by identifying the longest delay from any register (flip-flop) output to any register (flip-flop) input.
+The maximum clock frequency is the inverse of the minimum clock period.
+$T$ is clock period (in seconds, or nanoseconds), and $f$ is clock frequency (in cycles/second, or s-1, or Hz, or GHz).
+Relationship: $f = 1/T$.
+Figure 6 shows a typical circuit.
+[IMG /build/critical-path-fa7a069e105d91a925ff5d296e7cd79e.png]
+Figure 6:To determine the minimum clock period, compute the delay on the critical path.
+In this circuit, the critical path is:
+$\text{critical path} = \text{clk-to-q delay} + \text{CL delay} + \text{setup time}$
+where clk-to-q delay and setup time are properties of the register (e.g., internal flip flops), and CL delay is the delay through the combinational logic block.
+Quick Check
+What is the maximum clock frequency for the circuit shown in Figure 7?
+A. 5 GHz
+B. 200 MHz
+C. 500 MHz
+D. 1/7 GHz
+E. 1/6 GHz
+F. Something else
+Assume all registers have 1 ns clk-to-q delay, setup time, and hold time; AND gates have 1 ns propagation delay; and all unconnected inputs come from registers.
+[IMG /build/critical-path-practi-cc1e1283733466d8594615e6bdfaa99c.png]
+Figure 7:Example circuit.
+Show Answer
+B. 200 MHz
+The critical path is highlighted in Figure 8.
+[IMG /build/critical-path-answer-f1e8f3304d89453b32a7e7065d7be754.png]
+Figure 8:Example circuit, with highlighted critical path.
+$\begin{align}
+\text{critical path}
+ &= \text{clk-to-q delay} + \text{delay of 3 AND gates} + \text{setup time} \\
+ &= 1 \text{ns} + 3 \text{ns} + 1 \text{ns} \\
+ &= 5 \text{ns}
+\end{align}$
+The minimum clock period is 5 ns = 10-9 seconds per cycle. The maximum frequency is therefore $1/(5 \times 10^{-9} \text{s}) = (0.2 \times 10^9) \text{s}^{-1} = (200 \times 10^6) \text{Hz}$, or 200 MHz.
+## 4Hold Time Violations¶
+Above, the critical path determines the maximum clock frequency we can use to ensure a stable input to our register elements. We next present a different problem: hold time violations.
+Recall from earlier that the hold time is the duration during which a register’s input d must be stable after the rising edge of the clock. There are some cases where data propagates through the circuit so fast that the input to registers becomes unstable during the hold time.
+While rare[1], this may occur if the best-case delay between clocked elements is shorter than the hold time. To mitigate this, we could add arbitrary delay to the circuit’s combinational logic to increase the best-case delay.
+Footnotes¶
+See the relevant footnote in a previous section.
+
+=== PAGE: fsm ===
+
+# Finite State Machines
+Adapted from John Wawrzynek
+## 1Learning Outcomes¶
+Define the components of a Finite State Machine (FSM).
+Describe how circuits can be represented as FSMs.
+Describe how FSMs transition between states.
+Express an example sequence detector circuit as a waveform diagram, FSM, truth table, and circuit.
+Finite State Machines (FSMs)[1] are a useful abstraction for many types of computing tasks. These show up in many areas of computer science and are often used in hardware design. As an example, for a hardware controlled cache in a processor design, a FSM would be used to control the set of actions associated with servicing loads and stores from the processor. It would go through a series of “states” as it responds to requests from the processor, as times needing to access main memory and put new data into the cache. We can imagine describing the cache behavior as an algorithm or program, and this algorithm would be implemented in hardware with a FSM!
+## 2Finite State Machines¶
+A FSM has a set of inputs, a set of outputs, and a finite collection of states. At any point in time, the machine is in one of the states. Each state can have one or more arcs that takes the machine from the current state to a new state when certain input values appear. Output values are associated with arcs, meaning that when a machine leaves a state, it can change its output value, depending on which new state it is transitioning to and which input value was seen. FSM states are given unique names and, by convention, arcs are labeled with their associated input and output values as seen in Figure 1.
+[IMG /build/fsm-3ba46decb8e8121c9949a88ebd038f7b.png]
+Figure 1:Three state FSM diagram with transition arcs and a self-loop.
+What is a “self-loop”?
+Self-loops are FSM arcs that represent no change in state (see State 2 in Figure 1). These arcs indicate that a certain input, associated with that arc, did not change the machine’s current state. However, these self-loop arcs can still be associated with a change in output value.
+## 3Example: Three One’s¶
+Given combinational logic circuits and registers, FSMs can be implemented in hardware. As an example, let’s consider a small circuit that is used to detect the occurrence of three 1’s in a row in an input sequence of bits.
+### 3.1Waveform Diagram¶
+In this circuit, we assume single bit values are applied one per cycle to the input of the FSM, as shown in the timing diagram in Figure 2. On the cycle when the third 1 of a string of three 1’s appears at the input of the FSM, the machine’s output changes to a 1 for one cycle. After, the output returns to 0 until the FSM detects another string of three 1’s.
+[IMG /build/three1s-timing-90c08e7e115883968c8f6833043bd59d.png]
+Figure 2:Input and output timing diagram for a circuit detecting three sequential 1 bits.
+### 3.2Finite State Machine¶
+To design the FSM for this example circuit, we start by drawing the state diagram.
+The S0 state is the state the machine is in when it begins counting 1’s. This occurs both at the beginning of the sequence, and every time the machine resets and begins looking for a sequence of three 1’s again.
+The S1 state is the state the machine is in when it has seen one 1.
+The S2 state is the state the machine is in when it has seen two sequential 1 bits.
+In state S0, if the machine sees a 1, it transitions to state S1 with 0 output. If the machine sees a 0, there is a self-loop and it remains in S0 with 0 output.
+In state S1, if the machine sees a 1, the output still remains 0 and the machine transitions to state S2. If the machine sees a 0, it resets, returning to state S0 with 0 output.
+In state S2, if the machine sees another 1, then the output is changed to a 1 and the machine resets, returning to state S0. If the machine is in state S2 and it sees a 0, then the output remains 0 and the machine resets, returning to state S0.
+Using the states and state transitions identified above, we can draw the FSM state diagram (Figure 3) with labeled states and labeled transition arcs.
+[IMG /build/three1s-fsm-c67c64cf368a0a17c75b9e4b25e7790b.png]
+Figure 3:Complete FSM state diagram for three-state circuit detecting three sequential 1 bits.
+### 3.3Truth Table¶
+Using the FSM state diagram we drew above (Figure 3), we can now construct a truth table for our example circuit. To map our state diagram to the truth table, we use the bit patterns 00, 01, and 10, for states S0, S1, and S2, respectively.
+The left half of the table shows the present state (PS), also called the current state, and the input value. The right half of the table shows the resulting next state (NS) and output value. Table 1 shows the truth table for our example sequence detecting circuit.
+Table 1:Three-1’s Circuit Truth Table.
+PS | INPUT | NS | OUTPUT | 
+00 | 0 | 00 | 0 | 
+00 | 1 | 01 | 0 | 
+01 | 0 | 00 | 0 | 
+01 | 1 | 10 | 0 | 
+10 | 0 | 00 | 0 | 
+10 | 1 | 00 | 1 | 
+### 3.4Circuit¶
+In the hardware implementation of a FSM, we assume that the state transitions are controlled by the clock.
+On each clock cycle, the machine:
+Checks the inputs
+Transitions to a new state
+Produces a new output
+In order to do these steps, we need a register (Figure 4) to hold the current state of the machine. We assign a unique bit pattern, as in the truth table, for each of the states in the state diagram. The register can then keep track of which state the machine is currently in by holding the bit pattern corresponding to the particular state.
+Next, we need to design a circuit that implements a function to map the input and present state to the next state and output, as outlined in the truth table in Table 1. We can use a combinational logic circuit (Figure 5) since this circuit doesn’t need to remember anything on its own.
+[IMG /build/three1s-register-0ee2b60dc8c9b8eaa88e6f271fbfe610.png]
+Figure 4:Register design for present state (PS).
+[IMG /build/three1s-cl-8d1d35513676198a87d06a077f886aa8.png]
+Figure 5:CL design for PS/INPUT $\rightarrow$ NS/OUTPUT.
+Recall that input bits are applied to the FSM one per clock cycle. Therefore, we want to force a state transition on each clock cycle and can put the combinational logic block in a loop with the state register as shown in Figure 6.
+[IMG /build/three1s-circuit-7482bdb0bfe0cd3a8575d13b9ef71bc4.png]
+Figure 6:State register and combinational logic implementation of example sequence detector circuit.
+On each clock cycle, the combinational logic block looks at the present state and input value to produce the bit pattern for the next state and value of the output (0 or 1). On the rising edge of the clock, the new state value is captured by the register and the process starts again.
+What’s inside the CL block?
+CL blocks contain the combinational logic needed to implement the circuit’s truth table. In most cases, we use a collection of logic gates to implement any CL function. In CS 61C, we use these logic gates as the basic building blocks for our circuits!
+The CL for this example sequence detector circuit is shown in Figure 7.
+See Logic Gates and Boolean Algebra for more details on the common gates and how to translate a truth table into combinational logic!
+[IMG /build/three1s-cl-gates-aa277c739e60b50c248fa1f82e9ba773.png]
+Figure 7:Combinational logic for example sequence detector circuit.
+Footnotes¶
+These notes are adapted from Professor John Wawrzynek’s notes: State Handout.
+
+=== PAGE: pipelining ===
+
+# Pipelining for Performance
+By John Wawrzynek, with edits by Lisa Yan
+This content is out of scope for the midterm exam.
+This content is covered when we discuss pipelining in the five-stage RISC-V datapath.
+## 1Learning Outcomes¶
+Explain how registers can be used to improve throughput performance of a circuit.
+Compare how input data is fed through a pipelined circuit and a non-pipelined circuit.
+In a previous section, we saw an example of where a register was needed to ensure correct circuit behavior. Now, we’ll see how registers can also be used to increase the achievable clock frequency and, thus, improve the performance of the circuit through pipelining [1].
+## 2Non-Pipelined Circuit¶
+Suppose we had the need to cascade two combinational logic circuits, an adder and a shifter. The idea of this circuit is that, when input values arrive, they are added together and then shifted by some amount. We can imagine that this circuit composition is part of a processor. Figure 1 illustrates this example circuit on the left and timing diagram on the right.
+[IMG /build/non-pipelined-adder-e4fbe1764e04b37429c785bbe310c804.png]
+Figure 1:Diagram of a non-pipelined add/shift circuit and the associated timing diagram.
+We assume that the input values come from a register (shown in Figure 1 as one combined register block) and the output goes into a register. On each clock cycle, we simultaneously capture a new pair of input values in the input register and the previous result in the output register. The waveforms for the operation of this circuit are shown on the right in Figure 1. There is a delay of one clock cycle from input (output of the input register) to output (output of the output register $R_{i-1}$).
+## 3Pipelined Circuit¶
+The maximum clock frequency (minimum clock period) is limited by the propagation delay of the add/shift operation. If we try to make the clock period too short, then the add/shift logic would not have sufficient time to generate its output. Consequently, the output register would capture an incorrect value.
+If we felt that the clock period for the correctly functioning circuit was too long, we could choose to split up the add/shift operation into two cycles, performing the add operation on the first cycle and the shift operation on the second cycle. We can implement this idea by introducing a new register between the two blocks, as shown on the left in Figure 2.
+[IMG /build/pipelined-adder-e853a5474525348155cdb2374f7d0ea3.png]
+Figure 2:Diagram of a pipelined add/shift circuit and the associated timing diagram.
+On each clock cycle, data moves from the output of reg1, through the adder, to the input of reg2, or moves from the output of reg2, through the shifter, to the input of reg3. Since the data no longer needs to move through both blocks in a single clock cycle, the clock frequency can be increased. The waveforms for this pipelined add/shift operation are shown on the right in Figure 2.
+Can this circuit take new input values on each clock cycle?
+Yes! An interesting observation about this new pipelined circuit is that, after the data moves through the adder and gets captured in reg2, on the next clock cycle, when the data moves into the shifter, new data can simultaneously move into the adder since the adder is now free. Therefore, new input data values can be fed into the circuit on each clock cycle.
+## 4Adding Registers to Improve Performance¶
+As illustrated by the equations below, there will now be a two clock cycle delay from the insertion of a set of data into the circuit until when it appears at the output. However, the new clock period is shorter, so in absolute time, the delay from data insertion until output (i.e., latency) is not significantly worse. More importantly, because of the transformation and the new higher clock rate, results will be generated at a higher rate (more outputs per second, i.e., throughput).
+Non-pipelined circuit (Figure 1)
+$\begin{aligned}
+\text{Critical path delay} &= t_{\texttt{clk-to-q}} + t_{\texttt{add}} + t_{\texttt{shift}} + t_{\texttt{setup}} \\
+\text{latency} &= t_{\texttt{clk-to-q}} + t_{\texttt{add}} + t_{\texttt{shift}} + t_{\texttt{setup}} \\
+\end{aligned}$
+Pipelined circuit (Figure 2)
+$\begin{aligned}
+\text{Critical path delay} &= \max \{ t_{\texttt{clk-to-q}} + t_{\texttt{add}} + t_{\texttt{setup}}, t_{\texttt{clk-to-q}} + t_{\texttt{shift}} + t_{\texttt{setup}} \} \\
+\\
+\text{Latency} &= t_{\texttt{clk-to-q}} + t_{\texttt{add}} + t_{\texttt{setup}} + t_{\texttt{clk-to-q}} + t_{\texttt{shift}} + t_{\texttt{setup}}
+\end{aligned}$
+Pipelining is a good transformation if you are evaluating on results/time, or throughput. If you are more interested in latency (or delay) for any one set of input values, then this transformation is less ideal.
+Footnotes¶
+These notes are adapted from Professor John Wawrzynek’s notes: State Handout.
+
+=== PAGE: summary ===
+
+# Summary
+## 1And in Conclusion$\dots$¶
+A finite state machine is a type of simple automaton where the next state and output depend only on the current state and input. Each state is represented by a circle, and every proper finite state machine has a starting state, signified either with the label “Start” or a single arrow leading into it. Each transition between states is labeled [input]/[output].
+For example, Figure 1 below is a finite state machine with two states (0 and 1). It outputs 1 when the state
+changes, and 0 when the state stays the same.
+The machine starts in state 0. When the input is 0, it stays in its current state and outputs 0. When the input is 1, it switches to the other state and outputs 1. When in state 1, the machine behaves the same way: it stays in state 1 and outputs 0 when the
+input is 0, and switches back to state 0 with an output of 1 when the input is 1.
+[IMG /build/FSM_Precheck_Disc8-357ee0f1704f692c9aac9417060444ca.png]
+Figure 1:FSM diagram for the description above.
+With combinational logic and registers, any FSM can be implemented in hardware!
+The input to the register has to be stable for a certain amount of time around the rising edge of the clock for the input to be sampled accurately. The amount of time before the rising edge the input must be stable is called the setup time, and the time after the rising edge the input must be stable is called the hold time. Hold time is generally included in clk-to-q delay, so clk-to-q time will usually be greater than or equal to hold time.
+Logically, the fact that clk-to-q ≥ hold time makes sense since it only takes clk-to-q seconds to copy the value over, so there’s no need to have the value fed into the register for any longer. Examine the register circuit in Figure 2 and assume setup time of 2.5ps, hold time of 1.5ps, and a clk-to-q time of 1.5ps. The clock signal has a period of 13ps.
+[IMG /build/register_circuit_exa-ead10579c5d0e606217176db4b247bda.png]
+Figure 2:Example register circuit with timing diagram.
+Notice that the value of the output in the diagram doesn’t change immediately after the rising edge of the clock. Until enough time has passed for the output to reflect the input, the value held by the output is garbage; this is represented by the shaded gray part of the output graph. Clock cycle time must be small enough that inputs to registers don’t change within the hold time and large enough to account for clk-to-q times, setup times, and combinational logic delays.
+A few important SDS relationships are below:
+$\tau_{\text{critical path delay}} = \tau_{\text{clk-to-q}} + \tau_{\text{combinational logic delay}} + \tau_{\text{setup time}}$
+where $\tau_{\text{combinational logic delay}}$ is the maximum combinational logic delay for any register $\rightarrow$ register
+path in the circuit. The path with the maximum delay is called the critical path
+Additionally, circuits must satisfy hold-time constraints because hold times may be violated if
+data propagates too quickly:
+$\tau_{\text{clk-to-q}} + \tau_{\text{smallest combinational delay}} \geq \tau_{\text{hold time}}$
+## 2Textbook Readings¶
+P&H A.3-A.6
+## 3Additional References¶
+Intro to SDS Handout - Clocks, Delay
+State Handout - Registers, FSMs
+## 4Exercises¶
+Check your knowledge!
+### 4.1Conceptual Review¶
+Exercise 1
+True/False: Register “clk-to-q” delay is the time between the rising edge of the clock signal and the register’s hold time.
+Solution to Exercise 1 #
+False. “clk-to-q” delay is the time between the rising edge of the clock signal and the time it takes for the register’s output to reflect the new input.
+Exercise 2
+True/False: State elements only update their output on the rising edge of the clock, even if the inputs change between clock rising edges.
+Solution to Exercise 2 #
+True. State elements will update their output on the rising edge of the clock signal. Between rising edges, the state element’s output will remain constant regardless of the inputs.
