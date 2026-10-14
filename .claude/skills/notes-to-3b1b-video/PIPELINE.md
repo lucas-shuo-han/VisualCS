@@ -12,7 +12,7 @@ Judgement once by a strong model; the long render-look-fix loop on cheap models 
 | Coordinator | you | reports, not notes | 1080p render, final message | below |
 
 ## Contract
-The board is the only hand-over; the builder decides nothing. It holds: exact narration (`### id` + `> ` lines per `say()`), per beat what is on stage and what changes on which phrase, layout with coordinates, every fact with its notes line. `check.py` FAILs if a `say()` differs from the board. Builder never edits the board; doubts go to its report as questions for the author.
+The board is the only hand-over; the builder decides nothing. It holds: exact narration (`### id` + `> ` lines per `say()`), per beat what is on stage and what changes on which phrase, layout with coordinates, every fact with its notes line. `board_lint.py` checks the board's form before hand-over; `check.py` FAILs if a `say()` differs from the board. Builder never edits the board; doubts go to its report as questions for the author.
 
 ## Order
 1. Author: PLAN → user go → two pilot boards (easiest, hardest).

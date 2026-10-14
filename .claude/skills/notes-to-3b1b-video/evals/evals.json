@@ -13,7 +13,10 @@
         "Subtitles episode.srt exist with at least 10 captions",
         "Final shortest distances stated are correct: S=0, B=1, A=3, C=4, D=7",
         "The agent reviewed rendered frames (contact sheet / frame images saved in outputs)",
-        "No overlapping text or content hidden under captions in the final frames (visual check)"
+        "No overlapping text or content hidden under captions in the final frames (visual check)",
+        "PLAN.md gives, per episode, the question, why a viewer cares, and the obvious first attempt with where it fails",
+        "The video shows that failing attempt on concrete numbers before the working idea (visual or caption check)",
+        "asr_check.py was run on each episode and its flagged items were fixed or reported"
       ]
     },
     {
@@ -27,24 +30,26 @@
         "Captions explain that the gradient of the loss w.r.t. the logits is p - y",
         "Numbers shown for the worked example are internally consistent (softmax of the logits sums to 1 and matches)",
         "The agent reviewed rendered frames (contact sheet / frame images saved in outputs)",
-        "No overlapping text or content hidden under captions in the final frames (visual check)"
+        "No overlapping text or content hidden under captions in the final frames (visual check)",
+        "PLAN.md gives, per episode, the question, why a viewer cares, and the obvious first attempt with where it fails",
+        "The video shows that failing attempt on concrete numbers before the working idea (visual or caption check)",
+        "asr_check.py was run on each episode and its flagged items were fixed or reported"
       ]
     },
     {
       "id": 2,
-      "prompt": "这是我们课的笔记 two_complement_notes.md（补码、符号扩展、溢出）。做成两集 3b1b 风格的视频，中文和英文各一版，要有配音，尽量覆盖笔记里的所有内容。",
-      "expected_output": "Two episodes rendered in zh and en (480p is fine), each with an audio track, burned-in captions and .srt; a coverage table",
+      "prompt": "Here are our course notes two_complement_notes.md (two's complement, sign extension, overflow). Make two voiced 3b1b-style episodes covering everything in the notes.",
+      "expected_output": "Two voiced 480p episodes with .srt, PLAN.md with a design per episode, and a coverage table",
       "files": [
         "two_complement_notes.md"
       ],
       "assertions": [
-        "series.py lists 2 episodes with zh and en titles; SOURCE_LANG is zh",
-        "i18n_check.py reports ok for both episodes",
-        "Four videos exist (2 episodes x zh/en) and each has an audio stream",
-        "English videos contain no Chinese text in captions or labels (visual check of contact sheets)",
+        "Two videos exist and each has an audio stream",
         "A coverage table maps every item of the notes (two's complement, sign extension, overflow, and each worked example) to an episode/caption or states why it was omitted",
         "Worked-example numbers are computed in Python (asserts present), e.g. -5 in 8-bit two's complement is 0b11111011",
-        "The agent looked at contact sheets for both languages"
+        "PLAN.md gives, per episode, the question, why a viewer cares, and the obvious first attempt with where it fails",
+        "The video shows that failing attempt on concrete numbers before the working idea (visual or caption check)",
+        "asr_check.py was run on each episode and its flagged items were fixed or reported"
       ]
     },
     {
@@ -60,7 +65,10 @@
         "The worked example's numbers (e.g. 2*(1,0) + 3*(0,1) = (2,3)) are computed in Python",
         "The agent looked at a contact sheet",
         "Narration is written in beats: most say() calls hold two or more sentences, and cue() is used to time animations to phrases",
-        "The .srt shows one sentence per cue (no cue longer than two subtitle lines)"
+        "The .srt shows one sentence per cue (no cue longer than two subtitle lines)",
+        "PLAN.md gives, per episode, the question, why a viewer cares, and the obvious first attempt with where it fails",
+        "The video shows that failing attempt on concrete numbers before the working idea (visual or caption check)",
+        "asr_check.py was run on each episode and its flagged items were fixed or reported"
       ]
     },
     {
@@ -74,7 +82,10 @@
         "The script derives the condition by trying learning rates (e.g. 0.4, 0.9, 1.1) before stating |1 - 2*lr| < 1, rather than announcing it",
         "narration_lint.py reports no split, choppy, colon or cue findings",
         "Every number spoken or shown is computed in Python",
-        "The final report says exactly where the preview files are and which scenes were inspected"
+        "The final report says exactly where the preview files are and which scenes were inspected",
+        "PLAN.md gives, per episode, the question, why a viewer cares, and the obvious first attempt with where it fails",
+        "The video shows that failing attempt on concrete numbers before the working idea (visual or caption check)",
+        "asr_check.py was run on each episode and its flagged items were fixed or reported"
       ]
     },
     {
@@ -90,7 +101,10 @@
         "PLAN.md has a chain table per scene and every 'uses' cell names an earlier row or the screen",
         "manim_kit.py and tts.py in the unit are byte-identical to the skill's copies",
         "REPORT.md has one line per contact sheet, and states that nobody listened to the voice",
-        "The agent stopped after the preview and asked about the voice and the 1080p render instead of rendering it"
+        "The agent stopped after the preview and asked about the voice and the 1080p render instead of rendering it",
+        "PLAN.md gives, per episode, the question, why a viewer cares, and the obvious first attempt with where it fails",
+        "The video shows that failing attempt on concrete numbers before the working idea (visual or caption check)",
+        "asr_check.py was run on each episode and its flagged items were fixed or reported"
       ]
     }
   ]

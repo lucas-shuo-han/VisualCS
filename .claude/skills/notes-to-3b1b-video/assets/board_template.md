@@ -42,12 +42,9 @@ Stage: <what is where, with centres and widths>. Kept from before: <...>. Remove
 ## End card
 - <result as a full sentence> ×3
 
-## Author's check (all yes)
+## Author's check
+`scripts/board_lint.py` must PASS (holes, design, facts, beat length, cues, changes, narration lint). Then, by judgement, all yes:
 - First beat: one concrete case with real numbers, before any definition.
-- Every "uses" names an earlier beat, a fact, or the screen.
-- Names and formulas come after the viewer sees the thing.
-- Every beat has a drawn object that changes; >35 words → ≥ 2 changes.
-- Every "on" phrase is copied from its beat and unique there.
+- Every "uses" names an earlier beat, a fact, or the screen; names come after the thing is seen.
 - Counted things are shown exactly, separately.
-- No skipped step; added steps listed.
-- Every notes item in range is in a beat or "Left out".
+- No skipped step; added steps listed. Every notes item in range is in a beat or "Left out".

@@ -18,4 +18,6 @@ On every board:
 - Every fact with its notes line and all conditions; own memory marked or left out.
 - ~140 words per minute; count words, split rather than run long. `series.py`'s `sub` is spoken: write it as narration.
 
+Each board passes `PY K/scripts/board_lint.py <board>` before you hand it over.
+
 Final message: files, words per episode, what was left out and why, every departure from the notes.
