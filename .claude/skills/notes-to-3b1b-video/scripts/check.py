@@ -44,7 +44,7 @@ LOG_TAGS = ("[cue]", "[narration]", "[layout]", "[still]", "i18n: missing")
 SOFT_TAGS = ("[empty]", "[textonly]")     # warnings, FAIL with --strict
 FIX = {
     "code": "see each line; the episode template in assets/ shows the expected shape",
-    "lint": "rewrite the beats named (references/narration-writing.md); never silence the linter by gluing sentences",
+    "lint": "rewrite the beats named (references/script.md); never silence the linter by gluing sentences",
     "board": "copy each beat's `> ` text from the BOARD file into its say() unchanged; a wording you think is "
              "wrong goes into REPORT as a question for the author, not into the code",
     "i18n": "python i18n_check.py UNIT N --skeleton prints the missing entries",

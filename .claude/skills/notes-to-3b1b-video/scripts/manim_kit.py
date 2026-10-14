@@ -13,7 +13,7 @@ Contents (search for the section banners):
   code .................. CodeListing (asm / c / python highlighting), pc_arrow()
   bits .................. bit_row(), set_bit_row(), BitField, FormatScene helpers
   machine state ......... RegBox, reg_column(), RegisterFile, MemoryView, WordColumn, alu_shape()
-  ML / math ............. nn_diagram(), heatmap()  (see references/visual-patterns.md for more)
+  ML / math ............. nn_diagram(), heatmap()  (see references/kit.md for more)
 
 Every episode is one NarratedScene, narrated in beats:
 
@@ -99,7 +99,7 @@ BURN_CAPTIONS = (os.environ["KIT_CAPTIONS"] != "0" if os.environ.get("KIT_CAPTIO
 # typeface (for a math-heavy series; needs LaTeX). "pango": the caption font.
 TEXT_FONT = _SERIES.get("TEXT_FONT", "pango")
 # pauses of the voice-over, in seconds: between sentences, between the paragraphs of one
-# beat, and after a beat. A derivation wants more (0.75 / 1.6 / 1.8), see narration-writing.md.
+# beat, and after a beat. A derivation wants more (0.75 / 1.6 / 1.8), see references/voice.md.
 PACE = {"sentence": 0.4, "paragraph": 1.0, "beat": 0.8, **_SERIES.get("PACE", {})}
 EPISODES = [dict(e, num=i + 1) for i, e in enumerate(_SERIES.get("EPISODES", []))]
 _BY_SCENE = {e["scene"]: e for e in EPISODES}

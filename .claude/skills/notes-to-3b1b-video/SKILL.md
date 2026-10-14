@@ -9,49 +9,26 @@ Small or cheap model, or "strict mode": follow `STRICT.md` instead.
 
 ## Pipeline
 
-| Stage | Output | Decides | Parallel |
+| Stage | Role | Output | Reads only |
 |---|---|---|---|
-| 1 Design | `PLAN.md` | what each episode teaches, in what order | no |
-| 2 Board | `BOARD-epNN.md` | every spoken word + what changes on which word | per episode, after pilot |
-| 3 Build | `epNN_*.py` | nothing, executes the board | per episode, ≤2 renders/machine |
-| 4 Check | `REVIEW-epNN.md` | frames match board? sounds right? | per episode |
-| 5 Deliver | `videos/` | nothing | — |
+| 1 Design | author | `PLAN.md`, `COVERAGE.md` | notes, `references/teaching.md` |
+| 2 Board | author | `BOARD-epNN.md` | PLAN, `teaching.md`, `script.md`, `picture.md` |
+| 3 Build | builder | `epNN_*.py`, 480p preview | its board, `STRICT.md` (or `references/kit.md`) |
+| 4a Voice | pronouncer | `say_as.py`, rewordings | `ASR-epNN.md`, `references/voice.md` |
+| 4b Frames | reviewer, verifier | `REVIEW-epNN.md` | board, contact sheets |
+| 5 Deliver | coordinator | `videos/` | reports, `references/production.md` |
 
-Subtitles, voice, timing come from the board text automatically. Quality is decided in 1–2.
-Multi-agent split: `PIPELINE.md`.
+The coordinator runs the stages, owns the decisions taken with the user (minutes, voice, speed, pauses) and reads reports, not notes. Each role reads only its row; the board is the only thing passed from author to builder.
 
-User gates: after 1; after a pilot (easiest + hardest episode, voiced preview) before boarding the rest.
+Alone on a few episodes, you play each role in turn and read that row's files when you enter its stage. For many episodes on a budget, run the roles as separate agents: `PIPELINE.md`.
 
-## 1. Design (per episode)
+Subtitles, voice and timing come from the board text automatically. Quality is decided in stages 1–2.
 
-Supply what the notes skip:
-- the question, and why a viewer would care
-- the obvious attempt, failing visibly on real numbers; the real idea is the repair
-- one concrete example carrying the episode
-- the aha and the picture that makes it
-- order: case before rule, reason before definition, name after seeing
-- what is left out, and why; length agreed with the user
+## User gates
+1. After design (PLAN.md), unless the user said go ahead.
+2. After a pilot (easiest + hardest episode through stage 4, a voiced preview heard) before boarding the rest.
 
-## 2. Board
+## Checks (scripts, no tokens)
+`board_lint.py` (stage 2), `check.py` (stage 3: lint, render, layout, audio/video, pace, code = board), `asr_check.py` (stage 4a: misheard words, pauses, rate, clipped endings), contact sheets (4b). A human hears the flagged clips. The final message states what was not checked.
 
-- Spoken: linked sentences, plain words, symbols as words, ~140 wpm with pauses.
-- Each sentence made true by the picture as it is said; no bullet text.
-- No skipped step; added steps marked. Every number computed and asserted.
-- Camera on the small thing that matters. One typeface, one colour per concept.
-
-## 3–5. Build, check, deliver
-
-- Kit API: `scripts/manim_kit.py` docstring; example `assets/example_episode.py`.
-- Voice/speed chosen by the user's ear (`audition.py`) before the first full render.
-- `scripts/check.py <unit> N` must PASS; `asr_check.py <unit> N` lists what the voice gets wrong; then open every contact sheet, and have a human hear the flagged clips.
-- User review notes → written plan (cause, fix, check) before code.
-- Final: `render.py`, `srt_to_script.py`, README. Report what was not checked.
-
-## References
-
-- `references/narration-writing.md` — writing the script
-- `references/derivation-episodes.md` — long arguments; acting on review notes
-- `references/visual-patterns.md` — layout, camera, typeface
-- `references/production.md` — coverage, delivery
-- `references/voice.md` — engines, choosing a voice, pronunciation
-- `references/pitfalls.md` — when something breaks
+Setup: `scripts/setup_env.sh` (or `.ps1`); copy `manim_kit.py`, `tts.py`, `assets/series_template.py` → `series.py`, `assets/say_as_asm.py` → `say_as.py` into `<course>/<unit>/`. When something breaks: `references/pitfalls.md`.

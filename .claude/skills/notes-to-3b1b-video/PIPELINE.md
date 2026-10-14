@@ -4,12 +4,12 @@ Judgement once by a strong model; the long render-look-fix loop on cheap models 
 
 | Role | Model | Reads | Writes | Brief |
 |---|---|---|---|---|
-| Author | strongest | notes, `SKILL.md`, narration-writing, derivation-episodes, visual-patterns | `PLAN.md`, `series.py`, `BOARD-epNN.md` | `assets/roles/author.md` |
+| Author | strongest | notes, `teaching.md`, `script.md`, `picture.md`, templates | `PLAN.md`, `series.py`, `BOARD-epNN.md` | `assets/roles/author.md` |
 | Builder | cheap | `STRICT.md`, the board | `epNN_*.py`, `REPORT-epNN.md`, 480p preview | `assets/roles/builder.md` |
-| Pronouncer | small | `ASR-epNN.md` from `asr_check.py` | `say_as.py`, rewordings for the author | `assets/roles/pronouncer.md` |
+| Pronouncer | small | `voice.md`, `ASR-epNN.md` from `asr_check.py` | `say_as.py`, rewordings for the author | `assets/roles/pronouncer.md` |
 | Reviewer | mid | board, contact sheets, `.srt` | `REVIEW-epNN.md` | `assets/roles/reviewer.md` |
 | Verifier | small | review, board, new sheets | FIXED / NOT FIXED / CANNOT TELL per row | `assets/roles/verifier.md` |
-| Coordinator | you | reports, not notes | 1080p render, final message | below |
+| Coordinator | you | `SKILL.md`, this file, `production.md`, `voice.md` (pace), reports — not notes | 1080p render, final message | below |
 
 ## Contract
 The board is the only hand-over; the builder decides nothing. It holds: exact narration (`### id` + `> ` lines per `say()`), per beat what is on stage and what changes on which phrase, layout with coordinates, every fact with its notes line. `board_lint.py` checks the board's form before hand-over; `check.py` FAILs if a `say()` differs from the board. Builder never edits the board; doubts go to its report as questions for the author.

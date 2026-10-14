@@ -11,7 +11,7 @@
 
 Run it from a copy next to the episode, or from the skill with --unit. The
 episode needs a `SCENES = [...]` list and the KIT_ONLY branch in construct()
-(references/derivation-episodes.md, "Words and animation").
+(references/kit.md, "Beats and timing").
 
 Each scene renders in its own process and media folder, so a change to one scene
 costs one short render. Previews have the voice-over and the subtitles on the
