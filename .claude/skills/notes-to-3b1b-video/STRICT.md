@@ -24,7 +24,8 @@ If your brief names `U/BOARD-epNN.md`:
 - Step 1: assert each board fact that has a formula.
 - Skip step 2.
 - Skip the Narration rules of step 3 and the `asr_check.py` line of step 6: wording belongs to the author, pronunciation to the pronouncer.
-- Step 3: each `### id` = one `say()`; its `> ` lines copied unchanged as one text. "with the first word" = anims in `say()`; each `on "phrase"` = `self.cue("phrase", ...)`. Place things as the Stage line says. - Lint FAIL on board words, or a beat you think wrong: build as written, list it under "questions for the author". If it blocks the gate, stop and report.
+- Step 3: each `### id` = one `say()`; its `> ` lines copied unchanged as one text. "with the first word" = anims in `say()`; each `on "phrase"` = `self.cue("phrase", ...)`. Place things as the Stage line says.
+- Lint FAIL on board words, or a beat you think wrong: build as written, list it under "questions for the author". If it blocks the gate, stop and report.
 
 ## Step 0. Set up
 ```bash

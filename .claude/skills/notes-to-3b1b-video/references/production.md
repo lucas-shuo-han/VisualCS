@@ -4,7 +4,7 @@
 Unit folder `<course>/<topic>/`, videos in `videos/<course>-<topic>/`. House style: the latest unit of the same course. Machine and voice defaults: the repo's `CLAUDE.md`.
 
 ## Decisions with the user, before the first full render
-- Total minutes for the unit, before the author splits it.
+Defaults stand unless the user objects; the voice is usually fixed in `CLAUDE.md`.
 - Voice, speed and pauses (`voice.md`): `audition.py`, the user picks by ear. A change later redoes every clip.
 - Subtitles burned in or `.srt` only.
 

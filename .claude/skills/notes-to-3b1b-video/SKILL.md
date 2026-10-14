@@ -24,9 +24,10 @@ Alone on a few episodes, you play each role in turn and read that row's files wh
 
 Subtitles, voice and timing come from the board text automatically. Quality is decided in stages 1–2.
 
-## User gates
-1. After design (PLAN.md), unless the user said go ahead.
-2. After a pilot (easiest + hardest episode through stage 4, a voiced preview heard) before boarding the rest.
+## Checkpoints (non-blocking)
+Send the user the file and keep going; they interrupt if something is wrong, and may not look at all.
+1. PLAN.md, when design is done.
+2. The pilot: easiest + hardest episode through stage 4 before the rest are boarded, so review findings become rules first. Send its voiced preview.
 
 ## Checks (scripts, no tokens)
 `board_lint.py` (stage 2), `check.py` (stage 3: lint, render, layout, audio/video, pace, code = board), `asr_check.py` (stage 4a: misheard words, pauses, rate, clipped endings), contact sheets (4b). A human hears the flagged clips. The final message states what was not checked.

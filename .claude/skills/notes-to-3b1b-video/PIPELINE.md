@@ -2,7 +2,7 @@
 
 Judgement once by a strong model; the long render-look-fix loop on cheap models that decide nothing. Each role has its own context and reads only its row.
 
-Defaults, unless the user says otherwise: Claude sub-agents with the models below; no stops besides the two user gates in `SKILL.md`; findings of the pilot go into the briefs.
+Defaults, unless the user says otherwise: Claude sub-agents with the models below; no stops; the checkpoints in `SKILL.md` are sent, not waited on; findings of the pilot go into the briefs.
 
 | Role | Model | Reads | Writes | Brief |
 |---|---|---|---|---|
@@ -17,8 +17,8 @@ Defaults, unless the user says otherwise: Claude sub-agents with the models belo
 The board is the only hand-over; the builder decides nothing. It holds: exact narration (`### id` + `> ` lines per `say()`), per beat what is on stage and what changes on which phrase, layout with coordinates, every fact with its notes line. `board_lint.py` checks the board's form before hand-over; `check.py` FAILs if a `say()` differs from the board. Builder never edits the board; doubts go to its report as questions for the author.
 
 ## Order
-1. Author: PLAN → user go → two pilot boards (easiest, hardest).
-2. Builders on the pilots; reviewer; user hears one preview; findings become rules in the briefs.
+1. Author: PLAN (sent to the user) → two pilot boards (easiest, hardest).
+2. Builders on the pilots; pronouncer; reviewer; preview sent to the user; findings become rules in the briefs.
 3. Pronouncer on each pilot; its `say_as.py` serves the whole unit, so later episodes rarely flag.
 4. Author boards the rest. Builders, ≤ 2 per machine.
 5. Reviewer per episode. `author` rows → author edits the board; `builder` rows → fix round. ≤ 2 rounds.

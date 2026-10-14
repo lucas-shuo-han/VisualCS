@@ -6,9 +6,9 @@ Read only: the notes, `K/references/teaching.md`, `script.md`, `picture.md`, `K/
 Not yours: code, rendering, pronunciation, voice, speed, pauses.
 
 Deliver in `<unit folder>`:
-0. `PLAN.md` + `COVERAGE.md`. Total minutes come from the coordinator; ask if missing. Stop for the go.
+0. `PLAN.md` + `COVERAGE.md`. Propose total minutes from content if the coordinator gave none.
 1. `series.py` from `K/assets/strict_series.py` (episode rows; its `sub` line is spoken, write it as narration).
-2. Two pilot boards: easiest and hardest episode. Stop; rules from their review come back to you.
+2. Two pilot boards: easiest and hardest episode. Then wait for the coordinator: rules from the pilot review come back to you.
 3. The remaining boards, to those rules.
 
 Each board passes `PY K/scripts/board_lint.py <board>` before hand-over.
