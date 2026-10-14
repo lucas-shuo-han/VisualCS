@@ -1,5 +1,8 @@
 # Production (coordinator)
 
+## Conventions
+Unit folder `<course>/<topic>/`, videos in `videos/<course>-<topic>/`. House style: the latest unit of the same course. Machine and voice defaults: the repo's `CLAUDE.md`.
+
 ## Decisions with the user, before the first full render
 - Total minutes for the unit, before the author splits it.
 - Voice, speed and pauses (`voice.md`): `audition.py`, the user picks by ear. A change later redoes every clip.
@@ -32,7 +35,7 @@ Order: baseline commit → board wording → voice by ear → code, scene by sce
 - [ ] `render.py U --out videos/<course>-<unit>` (1080p, once, in the background); `pace.py`
 - [ ] 1080p spot check: sheets of 2–3 episodes, one heard
 - [ ] `srt_to_script.py`; README with episode table and how to re-render
-- [ ] commit; final message: paths, episodes, coverage, notes errors, what was not checked
+- [ ] commit; final message: paths, episodes, coverage, notes errors, clips the user should hear, tokens per role (coordinator included), what was not checked
 
 ## Publishing (only when asked)
 The user uploads, as Private, in their own browser. The description discloses: unofficial, not affiliated with the course, AI-assisted, synthetic voice, Manim, 3b1b-inspired. Raise course policy and voice licence first.

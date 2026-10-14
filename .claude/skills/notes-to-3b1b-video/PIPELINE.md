@@ -2,13 +2,15 @@
 
 Judgement once by a strong model; the long render-look-fix loop on cheap models that decide nothing. Each role has its own context and reads only its row.
 
+Defaults, unless the user says otherwise: Claude sub-agents with the models below; no stops besides the two user gates in `SKILL.md`; findings of the pilot go into the briefs.
+
 | Role | Model | Reads | Writes | Brief |
 |---|---|---|---|---|
-| Author | strongest | notes, `teaching.md`, `script.md`, `picture.md`, templates | `PLAN.md`, `series.py`, `BOARD-epNN.md` | `assets/roles/author.md` |
-| Builder | cheap | `STRICT.md`, the board | `epNN_*.py`, `REPORT-epNN.md`, 480p preview | `assets/roles/builder.md` |
-| Pronouncer | small | `voice.md`, `ASR-epNN.md` from `asr_check.py` | `say_as.py`, rewordings for the author | `assets/roles/pronouncer.md` |
-| Reviewer | mid | board, contact sheets, `.srt` | `REVIEW-epNN.md` | `assets/roles/reviewer.md` |
-| Verifier | small | review, board, new sheets | FIXED / NOT FIXED / CANNOT TELL per row | `assets/roles/verifier.md` |
+| Author | Opus | notes, `teaching.md`, `script.md`, `picture.md`, templates | `PLAN.md`, `series.py`, `BOARD-epNN.md` | `assets/roles/author.md` |
+| Builder | Haiku | `STRICT.md`, the board | `epNN_*.py`, `REPORT-epNN.md`, 480p preview | `assets/roles/builder.md` |
+| Pronouncer | Haiku | `voice.md`, `ASR-epNN.md` from `asr_check.py` | `say_as.py`, rewordings for the author | `assets/roles/pronouncer.md` |
+| Reviewer | Sonnet | board, contact sheets, `.srt` | `REVIEW-epNN.md` | `assets/roles/reviewer.md` |
+| Verifier | Haiku | review, board, new sheets | FIXED / NOT FIXED / CANNOT TELL per row | `assets/roles/verifier.md` |
 | Coordinator | you | `SKILL.md`, this file, `production.md`, `voice.md` (pace), reports — not notes | 1080p render, final message | below |
 
 ## Contract
