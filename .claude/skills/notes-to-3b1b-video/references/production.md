@@ -12,7 +12,7 @@ The notes are the root of everything: exact beats cheap. They reach `<unit>/note
 | PDF, slides, scans, handwriting | `fetch_notes.py <file.pdf> ...` (page images + text layer, batches in `TRANSCRIBE.md`) | one transcriber (Haiku) per batch, in parallel; `fetch_notes.py --out U/notes --verify`; flagged pages re-transcribed by Sonnet |
 | Markdown / HTML files | `fetch_notes.py <file> ...` | — |
 
-The author gets text and images together: `images/` for web figures, `pages/` for PDF pages. `[unclear]` marks in a transcript go to the author as open questions, never silently filled.
+The author gets text and images together: `images/` for web figures, `pages/` for PDF pages. A whole textbook (hundreds of pages): consider MinerU (local, no tokens) for the first pass and transcribers only on the pages it gets wrong; not set up yet. `[unclear]` marks in a transcript go to the author as open questions, never silently filled.
 Unit folder `<course>/<topic>/`, videos in `videos/<course>-<topic>/`. House style: the latest unit of the same course. Machine and voice defaults: the repo's `CLAUDE.md`.
 
 ## Decisions with the user, before the first full render
