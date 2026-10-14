@@ -2,7 +2,7 @@
 
 Design and board <unit> from `<notes>`. You decide what is taught, every spoken word, and every picture. Builders copy your words and build your pictures with no taste and no licence to change anything: leave nothing open.
 
-Read only: the notes, `K/references/teaching.md`, `script.md`, `picture.md`, `K/assets/plan_template.md`, `K/assets/board_template.md`.
+Read only: `<unit>/notes/` (start with INDEX.md; figures in notes/images, open the ones you need), `K/references/teaching.md`, `script.md`, `picture.md`, `K/assets/plan_template.md`, `K/assets/board_template.md`.
 Not yours: code, rendering, pronunciation, voice, speed, pauses.
 
 Deliver in `<unit folder>`:
@@ -11,6 +11,6 @@ Deliver in `<unit folder>`:
 2. Two pilot boards: easiest and hardest episode. Then wait for the coordinator: rules from the pilot review come back to you.
 3. The remaining boards, to those rules.
 
-Each board passes `PY K/scripts/board_lint.py <board>` before hand-over.
+Cite notes as `notes/NN-name.md:LINE`. Each board passes `PY K/scripts/board_lint.py <board>` before hand-over.
 
 Final message: files, words per episode, what was left out and why, every departure from the notes.

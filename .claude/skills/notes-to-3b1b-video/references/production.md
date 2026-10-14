@@ -1,6 +1,7 @@
 # Production (coordinator)
 
 ## Conventions
+Notes go into `<unit>/notes/` by `fetch_notes.py`, never through the coordinator's context. Residue it reports: a Haiku sub-agent cleans the named files (markup only, never content) and returns one line per file.
 Unit folder `<course>/<topic>/`, videos in `videos/<course>-<topic>/`. House style: the latest unit of the same course. Machine and voice defaults: the repo's `CLAUDE.md`.
 
 ## Decisions with the user, before the first full render

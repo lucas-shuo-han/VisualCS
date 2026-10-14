@@ -11,14 +11,15 @@ Small or cheap model, or "strict mode": follow `STRICT.md` instead.
 
 | Stage | Role | Output | Reads only |
 |---|---|---|---|
-| 1 Design | author | `PLAN.md`, `COVERAGE.md` | notes, `references/teaching.md` |
+| 0 Source | script | `notes/*.md`, `notes/images/`, `notes/INDEX.md` | — (`fetch_notes.py`) |
+| 1 Design | author | `PLAN.md`, `COVERAGE.md` | `notes/`, `references/teaching.md` |
 | 2 Board | author | `BOARD-epNN.md` | PLAN, `teaching.md`, `script.md`, `picture.md` |
 | 3 Build | builder | `epNN_*.py`, 480p preview | its board, `STRICT.md` (or `references/kit.md`) |
 | 4a Voice | pronouncer | `say_as.py`, rewordings | `ASR-epNN.md`, `references/voice.md` |
 | 4b Frames | reviewer, verifier | `REVIEW-epNN.md` | board, contact sheets |
 | 5 Deliver | coordinator | `videos/` | reports, `references/production.md` |
 
-The coordinator runs the stages, owns the decisions taken with the user (minutes, voice, speed, pauses) and reads reports, not notes. Each role reads only its row; the board is the only thing passed from author to builder.
+The coordinator never reads or fetches the notes itself: `fetch_notes.py <url|pdf|md> --out <unit>/notes` converts them and prints a summary table. If it reports markup residue, a small model cleans those files in its own context. The coordinator runs the stages, owns the decisions taken with the user (minutes, voice, speed, pauses) and reads reports, not notes. Each role reads only its row; the board is the only thing passed from author to builder.
 
 Alone on a few episodes, you play each role in turn and read that row's files when you enter its stage. For many episodes on a budget, run the roles as separate agents: `PIPELINE.md`.
 
@@ -30,6 +31,6 @@ Send the user the file and keep going; they interrupt if something is wrong, and
 2. The pilot: easiest + hardest episode through stage 4 before the rest are boarded, so review findings become rules first. Send its voiced preview.
 
 ## Checks (scripts, no tokens)
-`board_lint.py` (stage 2), `check.py` (stage 3: lint, render, layout, audio/video, pace, code = board), `asr_check.py` (stage 4a: misheard words, pauses, rate, clipped endings), contact sheets (4b). A human hears the flagged clips. The final message states what was not checked.
+`fetch_notes.py` (stage 0), `board_lint.py` (stage 2), `check.py` (stage 3: lint, render, layout, audio/video, pace, code = board), `asr_check.py` (stage 4a: misheard words, pauses, rate, clipped endings), contact sheets (4b). A human hears the flagged clips. The final message states what was not checked.
 
 Setup: `scripts/setup_env.sh` (or `.ps1`); copy `manim_kit.py`, `tts.py`, `assets/series_template.py` → `series.py`, `assets/say_as_asm.py` → `say_as.py` into `<course>/<unit>/`. When something breaks: `references/pitfalls.md`.
