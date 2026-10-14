@@ -13,7 +13,7 @@ Contents (search for the section banners):
   code .................. CodeListing (asm / c / python highlighting), pc_arrow()
   bits .................. bit_row(), set_bit_row(), BitField, FormatScene helpers
   machine state ......... RegBox, reg_column(), RegisterFile, MemoryView, WordColumn, alu_shape()
-  ML / math ............. nn_diagram(), heatmap()  (see references/visual-patterns.md for more)
+  ML / math ............. nn_diagram(), heatmap()  (see references/kit.md for more)
 
 Every episode is one NarratedScene, narrated in beats:
 
@@ -28,7 +28,7 @@ Subtitles are drawn on the frame and exported as an .srt next to the video, one
 sentence at a time with the same timing. With BURN_CAPTIONS = False in series.py
 (or KIT_CAPTIONS=0) nothing is drawn on the frame and the .srt is the only subtitle.
 
-Optional files next to this one (see the skill's references/bilingual-and-voice.md):
+Optional files next to this one (see the skill's references/voice.md):
   series.py ............. episode order, titles per language, SOURCE_LANG, LANGS.
                           title_card() / end_card() then need no arguments and
                           "next episode" / "the end" are automatic. Also the
@@ -99,7 +99,7 @@ BURN_CAPTIONS = (os.environ["KIT_CAPTIONS"] != "0" if os.environ.get("KIT_CAPTIO
 # typeface (for a math-heavy series; needs LaTeX). "pango": the caption font.
 TEXT_FONT = _SERIES.get("TEXT_FONT", "pango")
 # pauses of the voice-over, in seconds: between sentences, between the paragraphs of one
-# beat, and after a beat. A derivation wants more (0.75 / 1.6 / 1.8), see narration-writing.md.
+# beat, and after a beat. A derivation wants more (0.75 / 1.6 / 1.8), see references/voice.md.
 PACE = {"sentence": 0.4, "paragraph": 1.0, "beat": 0.8, **_SERIES.get("PACE", {})}
 EPISODES = [dict(e, num=i + 1) for i, e in enumerate(_SERIES.get("EPISODES", []))]
 _BY_SCENE = {e["scene"]: e for e in EPISODES}
@@ -1385,11 +1385,14 @@ class NarratedScene(MovingCameraScene):
                 print(f"[narration] speak= has {len(said)} sentences, the text {len(sents)}: "
                       f"speaking the text instead", file=sys.stderr)
             said = [None] * len(sents)
+        clips = [None] * len(sents)
+        if TTS:   # the whole beat as one passage, so the sentences connect (tts.synth_beat)
+            import tts
+            clips = tts.synth_beat([x for x, _ in sents], LANG, said)
         sched, t, pos = [], 0.15, 0
-        for (x, last), sp in zip(sents, said):
+        for (x, last), sp, clip in zip(sents, said, clips):
             if TTS:
-                import tts
-                path, dur = tts.synth(x, LANG, speak=sp)
+                path, dur = clip
                 self.add_sound(str(path), time_offset=t)
             else:   # silent render: about the time the sentence takes to say
                 cjk = sum(1 for c in x if ord(c) > 0x2E7F)

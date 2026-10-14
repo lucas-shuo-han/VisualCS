@@ -188,6 +188,35 @@ def math_letters(s: str, lang: str) -> str:
     return "".join(out) + s[last:]
 
 
+# Notation common to every technical course, read wrongly or skipped by every engine.
+# Rarer things are left to say_as.py and to asr_check.py, which hears what slipped through.
+_ABBREV = {"e.g.": "for example", "i.e.": "that is", "etc.": "and so on", "vs.": "versus",
+           "w.r.t.": "with respect to", "s.t.": "such that", "iff": "if and only if"}
+_SUP = {"²": " squared", "³": " cubed", "ᵀ": " transpose", "⁻¹": " inverse", "ⁿ": " to the n",
+        "⁺": " plus", "*": " star"}
+_UNITS = {"ms": "milliseconds", "μs": "microseconds", "ns": "nanoseconds",
+          "KB": "kilobytes", "MB": "megabytes", "GB": "gigabytes", "TB": "terabytes",
+          "KiB": "kibibytes", "MiB": "mebibytes", "GiB": "gibibytes",
+          "Hz": "hertz", "kHz": "kilohertz", "MHz": "megahertz", "GHz": "gigahertz"}
+
+
+def _common_en(s: str, sub) -> str:
+    for k, v in _ABBREV.items():
+        s = sub(rf"(?<!\w){re.escape(k)}(?!\w)", v, s)
+    s = sub(r"‖([^‖]+)‖", r"the norm of \1", s)
+    s = sub(r"\bO\(([^()]+)\)", r"big O of \1", s)
+    s = sub(r"\b([A-Za-z])''", r"\1 double prime", s)
+    s = sub(r"\b([A-Za-z])'(?![A-Za-z])", r"\1 prime", s)
+    for k, v in _SUP.items():
+        if k == "*":
+            s = sub(r"(?<=\b[A-Za-z])\*(?!\w)", v, s)   # x* = x star; a product keeps its spaces
+        else:
+            s = s.replace(k, v)
+    s = sub(r"(\d)\s?(" + "|".join(sorted(_UNITS, key=len, reverse=True)) + r")\b",
+            lambda m: f"{m[1]} {_UNITS[m[2]]}", s)
+    return s
+
+
 def spoken(text: str, lang: str) -> str:
     """What the voice should say for caption `text`."""
     w = _WORDS.get(lang, _WORDS["en"])
@@ -200,6 +229,8 @@ def spoken(text: str, lang: str) -> str:
         rep = reps.get(lang, reps.get("en")) if isinstance(reps, dict) else reps
         if rep is not None:
             s = sub(pat, (lambda m, r=rep: r(m)) if callable(rep) else rep, s)
+    if lang[:2] == "en":
+        s = _common_en(s, sub)
     # pauses and decorations
     s = sub(r"^[…\s]+", "", s)
     s = sub(r"[…]+|——|—", w["pause"], s)
@@ -292,7 +323,47 @@ async def _edge(text: str, voice: str, out: Path):
     if ca and os.path.exists(ca) and not getattr(_comm, "_kit_ca", False):
         _comm._SSL_CTX.load_verify_locations(ca)
         _comm._kit_ca = True
-    await edge_tts.Communicate(text, voice, rate=RATE).save(str(out))
+    bounds = []   # (start ms, end ms) of each sentence, as the engine split the text
+    with open(out, "wb") as f:
+        async for ch in edge_tts.Communicate(text, voice, rate=RATE, boundary="SentenceBoundary").stream():
+            if ch["type"] == "audio":
+                f.write(ch["data"])
+            elif ch["type"] == "SentenceBoundary":
+                bounds.append((ch["offset"] / 1e4, (ch["offset"] + ch["duration"]) / 1e4))
+    return bounds
+
+
+def _edge_retry(text: str, lang: str, out: Path):
+    for attempt in range(5):
+        try:
+            return asyncio.run(_edge(text, voice_for(lang), out))
+        except Exception as e:  # network hiccups, throttling
+            if attempt == 4:
+                raise RuntimeError(f"TTS failed for {text!r}: {e}") from e
+            time.sleep(2 + 3 * attempt)
+
+
+def _decode(src: Path):
+    # decode with PyAV (a Manim dependency), so no ffmpeg binary is needed
+    from manim.scene.scene_file_writer import convert_audio
+    from pydub import AudioSegment
+    raw = src.with_suffix(".raw.wav")
+    convert_audio(src, raw, "pcm_s16le")
+    seg = AudioSegment.from_file(raw)
+    for f in (src, raw):
+        f.unlink(missing_ok=True)
+    return seg
+
+
+def _store(seg, wav: Path):
+    """Trim leading and trailing silence and write `wav` atomically."""
+    from pydub.silence import detect_leading_silence
+    lead = detect_leading_silence(seg, silence_threshold=-45.0)
+    tail = detect_leading_silence(seg.reverse(), silence_threshold=-45.0)
+    seg = seg[max(0, lead - 40):max(lead + 1, len(seg) - max(0, tail - 80))]
+    tmp = wav.with_suffix(f".{os.getpid()}.tmp.wav")
+    seg.export(tmp, format="wav")
+    os.replace(tmp, wav)   # atomic: parallel renders may synthesize the same line
 
 
 def synth(caption: str, lang: str, speak: str | None = None) -> tuple[Path, float]:
@@ -311,31 +382,42 @@ def synth(caption: str, lang: str, speak: str | None = None) -> tuple[Path, floa
         import subprocess
         mp3 = mp3.with_suffix(".pico.wav")
         subprocess.run(["pico2wave", "-l", PICO_LANG.get(lang, "en-US"), "-w", str(mp3), text], check=True)
-    for attempt in range(5 if ENGINE == "edge" else 0):
-        try:
-            asyncio.run(_edge(text, voice_for(lang), mp3))
-            break
-        except Exception as e:  # network hiccups, throttling
-            if attempt == 4:
-                raise RuntimeError(f"TTS failed for {text!r}: {e}") from e
-            time.sleep(2 + 3 * attempt)
-    # decode with PyAV (a Manim dependency), so no ffmpeg binary is needed
-    from manim.scene.scene_file_writer import convert_audio
-    from pydub import AudioSegment
-    from pydub.silence import detect_leading_silence
-
-    raw = wav.with_suffix(f".{os.getpid()}.raw.wav")
-    convert_audio(mp3, raw, "pcm_s16le")
-    seg = AudioSegment.from_file(raw)
-    lead = detect_leading_silence(seg, silence_threshold=-45.0)
-    tail = detect_leading_silence(seg.reverse(), silence_threshold=-45.0)
-    seg = seg[max(0, lead - 40):max(lead + 1, len(seg) - max(0, tail - 80))]
-    tmp = wav.with_suffix(f".{os.getpid()}.tmp.wav")
-    seg.export(tmp, format="wav")
-    os.replace(tmp, wav)   # atomic: parallel renders may synthesize the same line
-    for f in (mp3, raw):
-        f.unlink(missing_ok=True)
+    else:
+        _edge_retry(text, lang, mp3)
+    _store(_decode(mp3), wav)
     return wav, _duration(wav)
+
+
+# Spoken one at a time, every sentence starts and ends like a sentence read alone: the
+# same rise, the same fall, no link to the one before. So a beat is synthesized in one
+# piece and cut where the engine says each sentence ends; the pauses between them stay
+# PACE's. Each clip is cached under its own text and its beat, so a reworded sentence
+# re-synthesizes its beat. KIT_TTS_BEAT=0 goes back to sentence by sentence.
+BEAT = os.environ.get("KIT_TTS_BEAT", "1") != "0"
+
+
+def synth_beat(captions: list[str], lang: str, speaks: list | None = None) -> list[tuple[Path, float]]:
+    """(wav path, seconds) per sentence of one beat, spoken as one passage."""
+    speaks = speaks or [None] * len(captions)
+    texts = [s if s is not None else spoken(c, lang) for c, s in zip(captions, speaks)]
+    if not BEAT or ENGINE != "edge" or len(texts) < 2:
+        return [synth(c, lang, speak=s) for c, s in zip(captions, speaks)]
+    d = CACHE / lang
+    ctx = _key("\n".join(texts), lang)[:8]
+    wavs = [d / f"{_key(t, lang)}.b{ctx}.wav" for t in texts]
+    if not all(w.exists() for w in wavs):
+        d.mkdir(parents=True, exist_ok=True)
+        mp3 = d / f"b{ctx}.{os.getpid()}.mp3"
+        bounds = _edge_retry(" ".join(texts), lang, mp3)
+        seg = _decode(mp3)
+        if len(bounds) != len(texts):   # the engine split the sentences differently ("e.g.", "3.5")
+            print(f"[tts] beat cut into {len(bounds)} sentences, expected {len(texts)}: "
+                  f"speaking them one at a time", file=sys.stderr)
+            return [synth(c, lang, speak=s) for c, s in zip(captions, speaks)]
+        cuts = [0] + [(bounds[i][1] + bounds[i + 1][0]) / 2 for i in range(len(bounds) - 1)] + [len(seg)]
+        for i, w in enumerate(wavs):
+            _store(seg[int(cuts[i]):int(cuts[i + 1])], w)
+    return [(w, _duration(w)) for w in wavs]
 
 
 if __name__ == "__main__":
