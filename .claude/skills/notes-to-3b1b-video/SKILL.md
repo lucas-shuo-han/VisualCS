@@ -5,114 +5,131 @@ description: Turn course notes, lecture slides, textbook chapters, a derivation 
 
 # Notes → 3Blue1Brown-style videos
 
-**Two editions.** This file is the lean one: requirements and lessons, for a model that
-plans and judges well on its own. A small or cheap model, or anyone told to work in
-strict mode, follows `STRICT.md` instead and reads nothing else here. For a large unit
-on a budget, `PIPELINE.md` splits the work: a strong model writes a storyboard per
-episode, cheap models build from it, a mid model reviews the frames. Pilot two
-episodes before the batch, and have the user listen before anything is scaled up.
+This file is for a model that plans and judges on its own: it states what the video must
+achieve and leaves the how to you. A small or cheap model, or anyone told to work in
+strict mode, follows `STRICT.md` instead and reads nothing else here.
 
-You write the narration, write one Manim scene class per episode on the bundled kit,
-render, look at the frames and listen, fix, and ship MP4 + SRT + scripts. Everything
-below was learned on a 14-episode Chinese/English CS61C series and a CS182 derivation
-that went through several rounds of user review.
+## The pipeline
 
-## Done means
+Five stages, each leaving one file the next stage works from. Subtitles, voice and
+timing are not stages: the kit derives all three from the narration text, so the only
+things anyone writes are the lesson design, the script with its pictures, and the code.
 
-1. `python scripts/check.py <unit> N` is PASS for every episode and language, and you
-   opened every contact sheet it produced. It runs the lint, a voiced 480p preview, the
-   kit's own findings (`[layout]` text overlapping, off the frame or in the subtitle
-   band; `[still]` a long beat with one animation; `[cue]`), audio against video, pace.
-   It cannot see a text over a shape, a leftover label, a wrong number or bad prosody.
-2. Every item of the notes is mapped to a beat or omitted with a written reason.
-3. Every number on screen or spoken is computed in Python, the key ones asserted,
-   including the notes' own examples. Notes errors are corrected and reported.
-4. Delivered: 1080p MP4 + `.srt` per language, `SCRIPT.<lang>.md`, README episode table.
-5. The final message gives paths, the episode list, the coverage table, and plainly
-   what was not done: content from your own knowledge, scenes not re-inspected, whether
-   anyone listened to the voice.
-
-## The model: beats
-
-```python
-self.say("Here is a sorted list of ten numbers, and we want to know whether twenty-three "
-         "is in it. Checking them one by one could take ten comparisons.\n"   # \n: paragraph pause
-         "But the list is sorted, and that lets us do much better.",
-         Write(head), FadeIn(row))                       # plays as the beat starts
-self.cue("Checking them one by one", Indicate(row))      # plays when the voice gets there
+```
+notes ─► 1 DESIGN ─► 2 BOARD ─► 3 BUILD ─► 4 CHECK ─► 5 DELIVER
+         teaching     script +    Manim       machine,     1080p, srt,
+         decisions    pictures    code        frames, ear  script, README
+         PLAN.md      BOARD-epNN  epNN_*.py   REVIEW-epNN  videos/
+         (judgement)  (judgement) (execution) (judgement + execution)
 ```
 
-A beat is one `say()`: two to four connected sentences (8 to 25 s) about one picture,
-voiced sentence by sentence with the pauses of `PACE`; the subtitle shows one sentence at
-a time. The words are the baseline and always spoken in full; the animation adapts
-(`run_time`, `hold()`, or a silent demonstration between two beats). Also `speak=` (other
-words aloud, same sentence count), `clear_stage()`, `zoom_to()` / `zoom_back()` / `pin()`,
-`title_card()`, `end_card([...])`. The docstring of `scripts/manim_kit.py` is the API
-reference; `assets/example_episode.py` is a whole small episode.
+| Stage | Decides | Parallel? | Who, in a pipeline run |
+|---|---|---|---|
+| 1 Design | what each episode teaches, in what order, and why the viewer cares | no: one mind per unit | strongest model, then the user |
+| 2 Board | every spoken word and what changes on which word | per episode, after a pilot | strongest model |
+| 3 Build | nothing; it executes the board | per episode (two renders per machine) | cheap model on `STRICT.md` |
+| 4 Check | whether the frames match the board; whether it sounds right | per episode | mid model for frames, the user for the ear |
+| 5 Deliver | nothing | — | coordinator |
 
-## What the users asked for, as rules
+Working alone on a few episodes, you play every role, but keep the files: the board is
+what the user reviews, and it is what `check.py` holds the code to. For a large unit on
+a budget, `PIPELINE.md` runs the roles as separate agents with their own briefs.
 
-- **A script that sounds spoken.** Sentences of 10 to 25 words, linked ("so", "which
-  means", "now"), contractions, plain words. No colons, no numerals or symbols left to
-  the voice, no slide fragments ("Why 12 bits?"), a sentence never split over two
-  `say()` calls, no run of short beats. Notation goes on screen, the idea is said.
-- **Derive, never announce.** Each sentence uses only what the previous one produced.
-  Try, fail, try again, succeed, then name the pattern. No spoilers, no "this will
-  matter later", no "we require". A concrete case before the rule; the overview last.
-- **The picture makes the sentence true as it is said.** One `cue()` per thing named.
-  Build and change objects, never bullet text. Transform the old picture into the new
-  one. Every step of an argument is a line on screen; say which facts go unproven.
-- **Show the small thing.** Move the camera to the crossing the argument rests on (a
-  move, not a cut), or draw an inset. Pick example values the picture can tell apart.
-- **Pace.** 130 to 150 words per minute including pauses. Pauses do the work, the rate
-  a little. Never cut words to slow a video down.
-- **Voice and speed are the user's taste.** `audition.py`, they choose, it goes into
-  `TTS` in series.py, all before the first full render (a change redoes every clip).
-- **One look.** One typeface (`TEXT_FONT = "latex"` when math-heavy), three font sizes,
-  one colour and one spoken form per concept (GLOSSARY.md, `say_as.py`).
-- **Review material is watchable.** Voiced, subtitles on the frame, one scene per clip,
-  the exact path. Send the first one as soon as it exists.
-- **Decide details yourself and list them**; ask only what the user alone can decide.
-  Review notes become a written plan first (cause with file and line, fix, check), and
-  new content goes into the script before any code.
+Quality is decided in stages 1 and 2. A cheap builder passing every gate on a weak
+board makes a weak video; a strong builder cannot rescue it either. Spend effort there.
 
-## Workflow
+**Two user gates.** After stage 1 (the design, short enough to read in two minutes)
+unless the user said to go ahead; and after a pilot (the easiest and the hardest
+episode built through stage 4 and heard as a voiced preview) before the other episodes
+are boarded. Voice, speed and pace were what forced every earlier series to be redone.
 
-1. **Material and choices.** Notes to Markdown. Languages (default English; for two,
-   write the CJK one and translate through tables, which the kit can then prove
-   complete). Shape: a series from notes (episodes of 4 to 8 min, one idea each) or one
-   derivation (scenes of 1 to 3 min in `narration.md`; past 25 min, split into episodes
-   that each end on the next one's question). For a derivation set
-   `PACE = {"sentence": 0.75, "paragraph": 1.6, "beat": 1.8}`.
-2. **Plan in writing**: `assets/plan_template.md` as PLAN.md with the coverage map,
-   `series.py`, GLOSSARY.md. Commit and go on unless the user asked to approve it.
-3. **Set up.** `scripts/setup_env.sh .venv` (`--latex`; Windows `setup_env.ps1`). Copy
-   `manim_kit.py`, `tts.py`, `assets/series_template.py` → `series.py`,
-   `assets/say_as_asm.py` → `say_as.py` into `<course>/<unit>/`: the project is
-   self-contained. Ignore `media/`, `.tts_cache/`, `preview/`.
-4. **Words, then pictures.** Write a scene's beats as prose, read them in order, then
-   animate. Give each episode `SCENES = [...]` and `if self.preview_only(...): return`.
-5. **Loop** per scene, then per episode, in every language:
-   `check.py <unit> N [--scenes a b] [--lang xx]` → fix → open the sheets → fix.
-   `captions.py <unit> N --spoken` shows what the voice will say; `preview.py` renders
-   scenes in parallel into `<unit>/preview/` for the user.
-6. **Review** coverage, the script read as a viewer, the translation. With many
-   episodes: write the first two yourself, then one agent per episode from
-   `assets/agent_brief_template.md`, three at a time, and a fresh reviewer per pair.
-7. **Final render once**: `i18n_check.py <unit>`, then
-   `render.py <unit> --out videos/<course>-<unit> --jobs 4`, `pace.py`,
-   `srt_to_script.py`. Spot-check the 1080p output with a sheet and by ear.
+## 1. Design: what makes it teaching, not a reading of the notes
+
+Notes are written for someone sitting the course; they state results in their final
+order and skip the reasons a learner would want them. The video's job is to supply
+what the notes leave out. For each episode decide, in `PLAN.md`:
+
+- **The question** the viewer cannot answer before and can after, and why they would
+  want to: a concrete situation where it matters, not "today we learn X".
+- **The obvious attempt and where it fails.** The natural first idea, tried on real
+  numbers, breaking in a way the viewer sees. The idea that works is the repair. The
+  failures are content; a video that only shows the correct path announces instead of
+  derives.
+- **The concrete case** carrying the episode, with real numbers computed in Python, the
+  notes' own example where there is one.
+- **The moment it clicks**, and the picture that makes it click.
+- **The order**: each step uses only what the one before produced. A case before the
+  rule, the reason before the definition, a name after the thing has been seen, the
+  overview last.
+- **What to leave out**, with the reason. Coverage means every substantive item of the
+  notes is in an episode or omitted on purpose (`COVERAGE.md`), not that every line is
+  narrated.
+- **Length** from content: ask the user how many minutes the unit deserves before
+  splitting it into episodes.
+
+## 2. Board: the script and its pictures together
+
+Which word a picture changes on is one decision, so words and pictures are written in
+one file, `BOARD-epNN.md` (`assets/board_template.md`). Requirements:
+
+- **Spoken, not read.** Linked sentences, plain words, numbers and symbols as words,
+  notation on screen and the idea aloud (`speak=`). Paced near 140 words per minute
+  including pauses; pauses do the work, never cut words to slow down.
+- **The picture makes each sentence true as it is said.** Objects that build and
+  transform, never bullet text; every claim of an argument as a line on screen when
+  spoken; the eye drawn to what is named.
+- **Show the small thing**: move the camera to where the argument lives; choose values
+  the picture can tell apart.
+- **No step skipped.** Where the notes say "clearly" or jump two lines of algebra, the
+  step is worked out and added, marked as added. Facts used without proof are said so.
+- **Every number** computed and asserted in code; notes errors corrected and reported.
+- **One look**: one typeface (LaTeX when math-heavy), few sizes, one colour and one
+  spoken form per concept (`GLOSSARY.md`, `say_as.py`).
+
+`references/narration-writing.md` has the spoken-script craft; `derivation-episodes.md`
+the craft of one long argument; `visual-patterns.md` the frame and camera.
+
+## 3. Build
+
+The kit: `say(text, *anims)` voices a beat (two to four sentences about one picture)
+sentence by sentence and shows one subtitle sentence at a time; `cue("phrase", *anims)`
+lands an animation on a phrase of the beat; `zoom_to` / `pin` / `clear_stage` /
+`title_card` / `end_card`. API in the docstring of `scripts/manim_kit.py`, a whole
+episode in `assets/example_episode.py`. Set up with `scripts/setup_env.sh` (or `.ps1`)
+and copy `manim_kit.py`, `tts.py`, `series_template.py` → `series.py`, `say_as_asm.py`
+→ `say_as.py` into `<course>/<unit>/` so the project stands alone.
+
+Choose before the first full render, because a change redoes every clip: languages
+(for two, write the CJK one and translate through tables), voice and speed by the
+user's ear (`audition.py`), `PACE`, `TEXT_FONT`, subtitles burned or not.
+
+## 4. Check
+
+`python scripts/check.py <unit> N` runs the lint, a voiced 480p preview, the kit's
+layout and stillness findings, audio against video, pace, and, with a board present,
+that the code says the board's words in order. PASS is necessary, not sufficient: it
+cannot see a weak explanation, a label over a shape, a wrong number or bad prosody.
+So open every contact sheet against the board, and get the voice heard. Send the user
+the first voiced preview with its exact path as soon as it exists.
+
+Review notes from the user become a written plan first (cause with file and line, fix,
+check); new content goes into the board before any code (`derivation-episodes.md` §6).
+
+## 5. Deliver
+
+`i18n_check.py`, then one `render.py <unit> --out videos/<course>-<unit>`, `pace.py`,
+`srt_to_script.py`; spot-check the 1080p output; README with an episode table; commit.
+The final message gives paths, episodes, the coverage table, and plainly what was not
+done: content from your own knowledge, scenes not re-inspected, whether anyone listened.
 
 ## Read when
 
-| File | Read it when |
+| File | When |
 |---|---|
-| `references/narration-writing.md` | before the first script; when the lint or a listener objects |
+| `PIPELINE.md` | the roles as separate agents; cheap builders on other providers |
+| `references/narration-writing.md` | before the first board; when a listener objects |
 | `references/derivation-episodes.md` | one long argument; "too rough / too fast / just states things"; acting on review notes |
-| `references/visual-patterns.md` | layout budget, kit snippets (code, bits, plots, networks), camera, typeface |
-| `references/bilingual-and-voice.md` | a second language; choosing an engine or voice; a mispronounced term |
-| `references/production.md` | coverage map, parallel agents, delivery, publishing to YouTube |
-| `references/pitfalls.md` | before the first render on a machine, and when something breaks |
-
-Other scripts: `narration.py` + `bind_scene.py` (the script as an editable
-`narration.md`), `narration_lint.py --audition` (clips of risky terms), `contact_sheet.py`.
+| `references/visual-patterns.md` | layout budget, kit snippets, camera, typeface |
+| `references/bilingual-and-voice.md` | a second language; engine or voice; a mispronounced term |
+| `references/production.md` | coverage map, delivery checklist, publishing |
+| `references/pitfalls.md` | before the first render on a machine; when something breaks |

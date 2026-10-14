@@ -1,7 +1,9 @@
 # PLAN: <series title>
 
-<!-- Fill in, save as PLAN.md next to the unit, commit. Keep it current: it is the
-     task list, the brief for episode agents, and the answer to "did you miss anything?". -->
+<!-- Stage 1 (design). Fill in, save as PLAN.md next to the unit, commit. The episode
+     table and the design bullets are what the user reads at the first gate; scene
+     tables can follow. Keep it current: it is the task list and the answer to
+     "did you miss anything?". -->
 
 Source: <notes files / URL / "own knowledge">  ·  Languages: <en | zh + en>  ·
 Voice: <edge-tts voice | kokoro>  ·  Subtitles on frame: <yes | .srt only>
@@ -17,6 +19,10 @@ Audience: <who, and what they already know>
 ## Episode <N>: <title>
 
 - **Question.** What the viewer cannot answer before and can after.
+- **Why they care.** The situation where the question bites. Not "today we learn X".
+- **What the notes skip.** The motive or step the notes take for granted, which this
+  episode supplies.
+- **Obvious attempt.** The natural first idea, and where it visibly fails on the example.
 - **Worked example.** The concrete case, with its real numbers (computed in code).
   Reuse the notes' own example when there is one.
 - **Aha.** The one moment that should surprise, and the picture that resolves it.

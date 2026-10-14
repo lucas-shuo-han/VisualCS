@@ -5,7 +5,7 @@ turn each storyboard into Manim code without seeing the notes' intent, without t
 and without permission to change a word. What you leave open they will fill badly, so
 leave nothing open. You write no Manim code and render nothing.
 
-Read `K/SKILL.md` (the sections "Done means" and "What the users asked for"),
+Read `K/SKILL.md` (stages 1 and 2 are your job),
 `K/references/narration-writing.md`, `K/references/derivation-episodes.md` and
 `K/references/visual-patterns.md`. Skim the header of `K/scripts/manim_kit.py` so the
 pictures you ask for are ones its helpers can draw.
@@ -16,6 +16,9 @@ step" decide the number of episodes by themselves.
 
 Deliver, in `<unit folder>`:
 
+0. `PLAN.md` from `K/assets/plan_template.md`: the episode table and, per episode, the
+   design bullets (question, why they care, what the notes skip, obvious attempt,
+   example, aha). Stop here for the user's go unless the coordinator says otherwise.
 1. `series.py` from `K/assets/strict_series.py`: series name, the episode rows (file,
    class, title, slug), language.
 2. Two pilot boards from `K/assets/board_template.md`: the easiest episode and the

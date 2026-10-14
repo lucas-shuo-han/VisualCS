@@ -1,6 +1,9 @@
 # BOARD: episode NN, <title>
 
 Source: `notes.txt` lines <a> to <b>. Language: <en>. Aim: <4 to 6> minutes.
+Design, copied from PLAN.md: the question <...>; why the viewer cares <...>; the
+obvious attempt and where it fails <...>; the aha <...>. Every beat serves this line.
+
 File `epNN_<topic>.py`, class `EpNN<Topic>`. Scenes, in order: `hook`, `<name>`, `<name>`.
 
 The builder copies every `> ` line into a `say()` unchanged, one beat per `say()`, and
