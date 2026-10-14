@@ -1,128 +1,35 @@
-# Pipeline: one strong author, cheap builders
+# Pipeline: strong author, cheap builders
 
-For a unit of many episodes where cost matters. The decisions that make a video good
-(what to say, what to draw, in which order) are made once by a strong model and written
-down; the long render-look-fix loop, where most tokens go, runs on a cheap model that
-is not allowed to decide anything. Each role has its own context and reads only what
-its row names.
+Judgement once by a strong model; the long render-look-fix loop on cheap models that decide nothing. Each role has its own context and reads only its row.
 
-| # | Role | Model | Reads | Writes | Brief |
-|---|---|---|---|---|---|
-| 1 | Author | strongest (Opus) | the notes, `SKILL.md`, `references/narration-writing.md`, `derivation-episodes.md`, `visual-patterns.md` | `PLAN.md`, `series.py`, `BOARD-epNN.md` per episode | `assets/roles/author.md` |
-| 2 | Builder | cheap (DeepSeek, Haiku) | `STRICT.md`, the BOARD | `epNN_*.py`, `REPORT-epNN.md`, voiced 480p preview | `assets/roles/builder.md` |
-| 3 | Reviewer | mid (Sonnet) | the BOARD, the contact sheets, the `.srt` | `REVIEW-epNN.md` | `assets/roles/reviewer.md` |
-| 4 | Verifier | small (Haiku) | the review, the BOARD, the new sheets | a verdict per review row | `assets/roles/verifier.md` |
-| 5 | Coordinator | whoever runs the job | the reports, not the notes | the 1080p render, the final message | below |
+| Role | Model | Reads | Writes | Brief |
+|---|---|---|---|---|
+| Author | strongest | notes, `SKILL.md`, narration-writing, derivation-episodes, visual-patterns | `PLAN.md`, `series.py`, `BOARD-epNN.md` | `assets/roles/author.md` |
+| Builder | cheap | `STRICT.md`, the board | `epNN_*.py`, `REPORT-epNN.md`, 480p preview | `assets/roles/builder.md` |
+| Reviewer | mid | board, contact sheets, `.srt` | `REVIEW-epNN.md` | `assets/roles/reviewer.md` |
+| Verifier | small | review, board, new sheets | FIXED / NOT FIXED / CANNOT TELL per row | `assets/roles/verifier.md` |
+| Coordinator | you | reports, not notes | 1080p render, final message | below |
 
-The author does words and pictures together: which word a picture changes on is one
-decision, and a second model would have to load the first one's whole context to make
-it. The reviewer sits at the end because judging a frame is what cheap models do worst,
-and its context is small (a dozen images and the board).
+## Contract
+The board is the only hand-over; the builder decides nothing. It holds: exact narration (`### id` + `> ` lines per `say()`), per beat what is on stage and what changes on which phrase, layout with coordinates, every fact with its notes line. `check.py` FAILs if a `say()` differs from the board. Builder never edits the board; doubts go to its report as questions for the author.
 
-There is no separate mathematics checker. The author carries that duty as a rule of
-the storyboard: no step of a proof or a derivation is skipped, and a step the notes
-leave out ("it is easy to see", "left as an exercise", a jump of two lines of algebra)
-is worked out and added, marked as added.
-
-## The contract between the roles
-
-`BOARD-epNN.md` (`assets/board_template.md`) is the only thing the author hands over,
-so it has to be complete enough that the builder decides nothing:
-
-- the narration, word for word, one `### id` beat with its `> ` lines per `say()`;
-- per beat, what is on the stage, what appears with the first word, and each later
-  change with the exact phrase it happens on;
-- the layout of each scene in words and coordinates (left block, right block, where
-  the result line goes), and what stays from the scene before;
-- every number, date, name and theorem with the line of the notes it comes from.
-
-`check.py` enforces the words: with a BOARD file in the unit, the `board` stage FAILs
-when a `say()` is not a beat of it, word for word and in order. The builder may not
-edit the BOARD. A wording, a number or a picture it believes is wrong goes into its
-report as a question, and the coordinator takes it back to the author.
-
-## Order of work
-
-1. **Author**, once per unit: the episode split and `series.py`, then one BOARD per
-   episode. The narration lint needs code, so at this point the author holds the BOARD
-   against `narration-writing.md` itself (the builder's lint will repeat it).
-   **Pilot before the batch.** The author writes two boards first: the easiest episode
-   and the hardest one (a proof or a long derivation). Both are built and reviewed,
-   the user listens to one preview (voice and pace forced the rewrites of every
-   earlier series), and what the review finds goes into the briefs as rules. Only
-   then does the author write the remaining boards. Writing all the boards after one
-   build repeats the first build's faults in every episode and buys a fix round each.
-2. **Builder**, one per episode. At most two at once on one machine: renders that
-   compete take three times as long, and a full drive corrupts the caches.
-3. **Reviewer**, per episode, on the builder's last sheets. Rows it marks "author" go
-   to the author, who changes the BOARD's picture lines (one message for several
-   episodes); or the coordinator decides them in the review file when speed matters.
-   The coordinator drops rows the sheets cannot support (a change one subtitle early
-   inside a sentence). The list, as `REVIEW-epNN.md`, goes to a builder for a fix
-   round. Two rounds at most; what is still open after that goes to the coordinator.
-4. **Verifier**, after a fix round: a small model answers FIXED / NOT FIXED / CANNOT
-   TELL per row from the new sheets. The coordinator looks at every NOT FIXED itself.
-5. **Coordinator**: for each episode, `check.py U N --strict --no-render` says PASS and
-   `REVIEW-epNN.md` has no open item; then the 1080p render, after the user has heard
-   a preview.
+## Order
+1. Author: PLAN → user go → two pilot boards (easiest, hardest).
+2. Builders on the pilots; reviewer; user hears one preview; findings become rules in the briefs.
+3. Author boards the rest. Builders, ≤ 2 per machine.
+4. Reviewer per episode. `author` rows → author edits the board; `builder` rows → fix round. ≤ 2 rounds.
+5. Verifier after each fix round; coordinator looks at every NOT FIXED.
+6. Coordinator: `check.py U N --strict --no-render` PASS and no open review row → 1080p render.
 
 ## Keeping the coordinator cheap
+- Queue builders with a background shell loop that prints only result tables.
+- Read summaries (check table, questions, review table), not transcripts.
+- Reviewer's model does the triage; author only for board changes.
+- Any shortcut (coordinator edits code or decides an author row) is written in the review file and final message.
 
-The coordinator is usually the strongest model, and every report, review and
-notification of every worker lands in its context. That cost is easy to miss, because
-only the workers' tokens are printed. Three habits keep it down:
+## Builders on other providers
+Claude models run as sub-agents. Others via Claude Code headless with a swapped endpoint:
+`MODEL=deepseek-flash bash scripts/run_with_model.sh <key file outside repo> <brief>.txt <repo>`
+Empty config, no git changes, no installs; key only in the process environment. Fallback without Claude Code: `scripts/agent_loop.py`.
 
-- Queue with a shell loop, not by hand: one background command runs the builders of
-  a lane one after another and prints only each one's result table, so the
-  coordinator is woken once per lane instead of once per step.
-- Read summaries, not transcripts: the last check table and the "questions for the
-  author" of a builder, the table of a reviewer. Open a contact sheet yourself only
-  for a row someone marked NOT FIXED or to spot-check a verifier.
-- Hand triage down: dropping review rows the sheets cannot support and writing the
-  `REVIEW-epNN.md` file is work for the reviewer's own model; the author's model is
-  needed only for rows that change a board.
-
-Report the coordinator's own usage with the workers' when you report the cost of a unit.
-
-## Before you start: is the pipeline the right tool
-
-- Grain. Ten episodes came out of a nine-page note under "four to six minutes, skip
-  no step". Ask the user how many minutes the unit deserves before the author splits
-  it; an episode count is a decision, not a consequence.
-- Reach. The one full run was one language, a fixed camera, tables and arrows, no
-  LaTeX, the default voice. Two languages, zooms, formula-heavy derivations and an
-  auditioned voice are untested in this arrangement: for those, pilot first or use
-  `SKILL.md` with one strong model.
-- Shortcuts leave a mark. When the coordinator decides an author's row itself or
-  edits an episode's code directly to save a round, it says so in the review file
-  and in the final message; otherwise the next reader takes the board for the truth.
-
-## Running a builder on another provider
-
-Use an existing agent harness, not a hand-written loop: the harness brings the tools,
-the permission rules and the context handling. For a model behind an
-Anthropic-compatible endpoint that harness is Claude Code itself, started headless
-with the endpoint swapped:
-
-```bash
-MODEL=deepseek-flash bash scripts/run_with_model.sh <key file outside the repo> \
-    <builder brief with the paths filled in>.txt <repo>
-```
-
-The coordinator runs this in the background from its own Claude Code session and is
-told when it ends, like a sub-agent. The worker gets its own empty config folder (no
-plugins, memory or hooks of the user), may not change git state, install or download,
-and its final message is printed with turns, minutes and tokens. Tested with DeepSeek:
-tool calls work, and it sees images through the Read tool. The key is read from the
-file into the process environment; it never goes into a prompt, a repository file or a
-log. A model with its own desktop harness can be given the same brief there by hand.
-
-Claude models (Haiku, Sonnet) run as sub-agents of the coordinator with the same
-brief. `scripts/agent_loop.py` is a fallback for a machine without Claude Code.
-
-## Evidence
-
-Measured runs (tokens, minutes and what the reviews found, per role) are in
-`HISTORY.md`. In short: a cheap model alone passes every gate and still makes a
-mediocre video; the split above is why. Nobody has yet listened to a pipeline-made
-unit end to end, so the pilot gate is not optional.
+Measured runs: `HISTORY.md`.

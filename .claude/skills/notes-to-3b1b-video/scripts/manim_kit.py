@@ -28,7 +28,7 @@ Subtitles are drawn on the frame and exported as an .srt next to the video, one
 sentence at a time with the same timing. With BURN_CAPTIONS = False in series.py
 (or KIT_CAPTIONS=0) nothing is drawn on the frame and the .srt is the only subtitle.
 
-Optional files next to this one (see the skill's references/bilingual-and-voice.md):
+Optional files next to this one (see the skill's references/voice.md):
   series.py ............. episode order, titles per language, SOURCE_LANG, LANGS.
                           title_card() / end_card() then need no arguments and
                           "next episode" / "the end" are automatic. Also the

@@ -53,4 +53,5 @@ Supply what the notes skip:
 - `references/derivation-episodes.md` — long arguments; acting on review notes
 - `references/visual-patterns.md` — layout, camera, typeface
 - `references/production.md` — coverage, delivery
+- `references/voice.md` — engines, choosing a voice, pronunciation
 - `references/pitfalls.md` — when something breaks
