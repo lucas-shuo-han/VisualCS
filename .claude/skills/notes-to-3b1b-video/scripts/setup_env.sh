@@ -40,6 +40,6 @@ fi
 
 python3 -m venv "$VENV"
 "$VENV/bin/pip" install -q --upgrade pip setuptools wheel
-"$VENV/bin/pip" install -q -U manim edge-tts faster-whisper "audioop-lts; python_version>='3.13'"
+"$VENV/bin/pip" install -q -U manim edge-tts faster-whisper pypdfium2 "audioop-lts; python_version>='3.13'"
 "$VENV/bin/python" -c "import manim, manimpango; print('manim', manim.__version__, '| fonts:', len(manimpango.list_fonts()))"
 echo "manim binary: $VENV/bin/manim"

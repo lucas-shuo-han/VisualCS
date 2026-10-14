@@ -1,7 +1,18 @@
 # Production (coordinator)
 
 ## Conventions
-Notes go into `<unit>/notes/` by `fetch_notes.py`, never through the coordinator's context. Residue it reports: a Haiku sub-agent cleans the named files (markup only, never content) and returns one line per file.
+
+## Sources (stage 0)
+The notes are the root of everything: exact beats cheap. They reach `<unit>/notes/` as Markdown + images, never through the coordinator's context; it reads only the script's summary table.
+
+| Source | Run | Then |
+|---|---|---|
+| web page with its source on GitHub (MyST, Jupyter Book) | `fetch_notes.py <url> --out U/notes` | — (exact source, toc order, figures) |
+| other web page | `fetch_notes.py <url> ...` per page | residue reported → Haiku cleans markup only |
+| PDF, slides, scans, handwriting | `fetch_notes.py <file.pdf> ...` (page images + text layer, batches in `TRANSCRIBE.md`) | one transcriber (Haiku) per batch, in parallel; `fetch_notes.py --out U/notes --verify`; flagged pages re-transcribed by Sonnet |
+| Markdown / HTML files | `fetch_notes.py <file> ...` | — |
+
+The author gets text and images together: `images/` for web figures, `pages/` for PDF pages. `[unclear]` marks in a transcript go to the author as open questions, never silently filled.
 Unit folder `<course>/<topic>/`, videos in `videos/<course>-<topic>/`. House style: the latest unit of the same course. Machine and voice defaults: the repo's `CLAUDE.md`.
 
 ## Decisions with the user, before the first full render

@@ -6,6 +6,7 @@ Defaults, unless the user says otherwise: Claude sub-agents with the models belo
 
 | Role | Model | Reads | Writes | Brief |
 |---|---|---|---|---|
+| Transcriber | Haiku | page images + text layers of its batch | one `notes/NN-*.md` per batch | `assets/roles/transcriber.md` |
 | Author | Opus | `notes/` (from `fetch_notes.py`), `teaching.md`, `script.md`, `picture.md`, templates | `PLAN.md`, `series.py`, `BOARD-epNN.md` | `assets/roles/author.md` |
 | Builder | Haiku | `STRICT.md`, the board | `epNN_*.py`, `REPORT-epNN.md`, 480p preview | `assets/roles/builder.md` |
 | Pronouncer | Haiku | `voice.md`, `ASR-epNN.md` from `asr_check.py` | `say_as.py`, rewordings for the author | `assets/roles/pronouncer.md` |
@@ -17,7 +18,7 @@ Defaults, unless the user says otherwise: Claude sub-agents with the models belo
 The board is the only hand-over; the builder decides nothing. It holds: exact narration (`### id` + `> ` lines per `say()`), per beat what is on stage and what changes on which phrase, layout with coordinates, every fact with its notes line. `board_lint.py` checks the board's form before hand-over; `check.py` FAILs if a `say()` differs from the board. Builder never edits the board; doubts go to its report as questions for the author.
 
 ## Order
-0. Coordinator: `fetch_notes.py` into `<unit>/notes`; read only its table.
+0. Sources (`production.md`): `fetch_notes.py`; for PDFs, transcribers in parallel, then `--verify`.
 1. Author: PLAN (sent to the user) → two pilot boards (easiest, hardest).
 2. Builders on the pilots; pronouncer; reviewer; preview sent to the user; findings become rules in the briefs.
 3. Pronouncer on each pilot; its `say_as.py` serves the whole unit, so later episodes rarely flag.

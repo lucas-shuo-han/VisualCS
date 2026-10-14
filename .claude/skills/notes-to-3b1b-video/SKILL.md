@@ -11,7 +11,7 @@ Small or cheap model, or "strict mode": follow `STRICT.md` instead.
 
 | Stage | Role | Output | Reads only |
 |---|---|---|---|
-| 0 Source | script | `notes/*.md`, `notes/images/`, `notes/INDEX.md` | — (`fetch_notes.py`) |
+| 0 Source | script; transcriber for PDFs | `notes/*.md` + `images/` or `pages/`, `INDEX.md` | page images (transcriber) |
 | 1 Design | author | `PLAN.md`, `COVERAGE.md` | `notes/`, `references/teaching.md` |
 | 2 Board | author | `BOARD-epNN.md` | PLAN, `teaching.md`, `script.md`, `picture.md` |
 | 3 Build | builder | `epNN_*.py`, 480p preview | its board, `STRICT.md` (or `references/kit.md`) |
@@ -19,7 +19,7 @@ Small or cheap model, or "strict mode": follow `STRICT.md` instead.
 | 4b Frames | reviewer, verifier | `REVIEW-epNN.md` | board, contact sheets |
 | 5 Deliver | coordinator | `videos/` | reports, `references/production.md` |
 
-The coordinator never reads or fetches the notes itself: `fetch_notes.py <url|pdf|md> --out <unit>/notes` converts them and prints a summary table. If it reports markup residue, a small model cleans those files in its own context. The coordinator runs the stages, owns the decisions taken with the user (minutes, voice, speed, pauses) and reads reports, not notes. Each role reads only its row; the board is the only thing passed from author to builder.
+The coordinator never reads or fetches the notes itself; stage 0 is in `references/production.md` ("Sources"). The coordinator runs the stages, owns the decisions taken with the user (minutes, voice, speed, pauses) and reads reports, not notes. Each role reads only its row; the board is the only thing passed from author to builder.
 
 Alone on a few episodes, you play each role in turn and read that row's files when you enter its stage. For many episodes on a budget, run the roles as separate agents: `PIPELINE.md`.
 
