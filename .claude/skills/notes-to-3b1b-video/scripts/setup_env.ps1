@@ -14,7 +14,7 @@ $py = Get-Command py -ErrorAction SilentlyContinue
 if ($py) { & py -3 -m venv $Venv } else { & python -m venv $Venv }
 $pyexe = Join-Path $Venv "Scripts\python.exe"
 & $pyexe -m pip install -q --upgrade pip
-& $pyexe -m pip install -q manim edge-tts "audioop-lts; python_version>='3.13'"
+& $pyexe -m pip install -q -U manim edge-tts faster-whisper "audioop-lts; python_version>='3.13'"
 & $pyexe (Join-Path $PSScriptRoot "win_fonts.py")
 & $pyexe -c "import manim, manimpango; print('manim', manim.__version__, '| Noto CJK:', 'Noto Sans CJK SC' in manimpango.list_fonts())"
 Write-Host "manim binary: $(Join-Path $Venv 'Scripts\manim.exe')"

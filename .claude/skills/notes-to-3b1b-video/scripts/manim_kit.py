@@ -1385,11 +1385,14 @@ class NarratedScene(MovingCameraScene):
                 print(f"[narration] speak= has {len(said)} sentences, the text {len(sents)}: "
                       f"speaking the text instead", file=sys.stderr)
             said = [None] * len(sents)
+        clips = [None] * len(sents)
+        if TTS:   # the whole beat as one passage, so the sentences connect (tts.synth_beat)
+            import tts
+            clips = tts.synth_beat([x for x, _ in sents], LANG, said)
         sched, t, pos = [], 0.15, 0
-        for (x, last), sp in zip(sents, said):
+        for (x, last), sp, clip in zip(sents, said, clips):
             if TTS:
-                import tts
-                path, dur = tts.synth(x, LANG, speak=sp)
+                path, dur = clip
                 self.add_sound(str(path), time_offset=t)
             else:   # silent render: about the time the sentence takes to say
                 cjk = sum(1 for c in x if ord(c) > 0x2E7F)

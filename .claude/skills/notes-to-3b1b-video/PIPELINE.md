@@ -6,6 +6,7 @@ Judgement once by a strong model; the long render-look-fix loop on cheap models 
 |---|---|---|---|---|
 | Author | strongest | notes, `SKILL.md`, narration-writing, derivation-episodes, visual-patterns | `PLAN.md`, `series.py`, `BOARD-epNN.md` | `assets/roles/author.md` |
 | Builder | cheap | `STRICT.md`, the board | `epNN_*.py`, `REPORT-epNN.md`, 480p preview | `assets/roles/builder.md` |
+| Pronouncer | small | `ASR-epNN.md` from `asr_check.py` | `say_as.py`, rewordings for the author | `assets/roles/pronouncer.md` |
 | Reviewer | mid | board, contact sheets, `.srt` | `REVIEW-epNN.md` | `assets/roles/reviewer.md` |
 | Verifier | small | review, board, new sheets | FIXED / NOT FIXED / CANNOT TELL per row | `assets/roles/verifier.md` |
 | Coordinator | you | reports, not notes | 1080p render, final message | below |
@@ -16,10 +17,11 @@ The board is the only hand-over; the builder decides nothing. It holds: exact na
 ## Order
 1. Author: PLAN → user go → two pilot boards (easiest, hardest).
 2. Builders on the pilots; reviewer; user hears one preview; findings become rules in the briefs.
-3. Author boards the rest. Builders, ≤ 2 per machine.
-4. Reviewer per episode. `author` rows → author edits the board; `builder` rows → fix round. ≤ 2 rounds.
-5. Verifier after each fix round; coordinator looks at every NOT FIXED.
-6. Coordinator: `check.py U N --strict --no-render` PASS and no open review row → 1080p render.
+3. Pronouncer on each pilot; its `say_as.py` serves the whole unit, so later episodes rarely flag.
+4. Author boards the rest. Builders, ≤ 2 per machine.
+5. Reviewer per episode. `author` rows → author edits the board; `builder` rows → fix round. ≤ 2 rounds.
+6. Verifier after each fix round; coordinator looks at every NOT FIXED.
+7. Coordinator: `check.py U N --strict --no-render` PASS and no open review row → 1080p render.
 
 ## Keeping the coordinator cheap
 - Queue builders with a background shell loop that prints only result tables.

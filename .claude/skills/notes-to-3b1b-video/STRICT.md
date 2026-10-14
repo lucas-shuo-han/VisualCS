@@ -119,6 +119,7 @@ All no → scene done. Any yes → fix, step 4, look again. Image tool truly fai
 
 ## Step 6. Whole episode
 Fill `end_card([...])`: 3–4 full sentences, results only. `PY K/scripts/check.py U 1 --strict` (first run ends `FAIL report`: expected). Look at every sheet as in step 5, then rerun with `--no-render`.
+Then `PY K/scripts/asr_check.py U 1 --out U/ASR-ep01.md`: add a `say_as.py` entry for each misheard term; list misheard ordinary words, pauses and rate flags in the report (don't reword a board).
 **Gate:** `RESULT: PASS` and every sheet answered. `pace` WARN: >165 → each `PACE` value +0.2; <120 → −0.2; rerun without `--no-render` and look again. Never change words for pace.
 
 ## Step 7. Report and stop

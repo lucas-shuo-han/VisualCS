@@ -43,7 +43,7 @@ Supply what the notes skip:
 
 - Kit API: `scripts/manim_kit.py` docstring; example `assets/example_episode.py`.
 - Voice/speed chosen by the user's ear (`audition.py`) before the first full render.
-- `scripts/check.py <unit> N` must PASS; then open every contact sheet and get it heard.
+- `scripts/check.py <unit> N` must PASS; `asr_check.py <unit> N` lists what the voice gets wrong; then open every contact sheet, and have a human hear the flagged clips.
 - User review notes → written plan (cause, fix, check) before code.
 - Final: `render.py`, `srt_to_script.py`, README. Report what was not checked.
 
