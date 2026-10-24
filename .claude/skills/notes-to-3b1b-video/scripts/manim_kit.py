@@ -56,7 +56,12 @@ Checks while rendering (lines on stderr, so in the render log; check.py collects
             Looked at whenever the picture has settled: after a cue(), at hold(), before
             clear_stage(), at the end of a beat.
   [empty]   nothing was on the stage during a beat.     [textonly] only words were on
-            the stage during a beat (a slide, not a picture). Warnings outside --strict.
+            the stage during a beat. Warnings outside --strict.
+  [slide]   every shape of a beat only frames text (boxes of words, no arrow, wire,
+            plot or other drawing): a slide, not a picture.
+  [wordy]   more than 15 words on the stage at once (heading, subtitle and code
+            listings not counted).   [sentence] one text of 7+ words on screen: say
+            it, and show a picture or a short label.   [heading] over 6 words.
   [still]   a beat of more than 14 s of narration with a single animation step (26 s:
             two): the picture stands still while the voice talks. Add cue()s.
   [cue]     a cue() phrase that is not in its beat.   [narration] a speak= mismatch.
@@ -1138,6 +1143,8 @@ class NarratedScene(MovingCameraScene):
     _beat_no = 0
     _beat_plays = 0
     _beat_had = set()
+    _beat_words = 0
+    _in_card = False
     _TEXT_TYPES = (Text, MarkupText, SingleStringMathTex)   # MathTex and Tex are the last
 
     def _note(self, tag, msg):
@@ -1161,32 +1168,37 @@ class NarratedScene(MovingCameraScene):
         """(texts, shapes) on stage now: texts as (name, ink box, is it code), shapes as
         the visible non-text mobjects with points. The caption and headings are left out."""
         texts, shapes = [], []
+        self._stage_full = []   # (full text, ink box, inside a CodeListing)
 
-        def walk(m):
+        def walk(m, code=False):
             if m is self._cap or getattr(m, "_kit_ui", False):
                 return
+            code = code or isinstance(m, CodeListing)
             if isinstance(m, self._TEXT_TYPES):
                 box = self._ink_box(m)
                 if box is not None:
                     name = (getattr(m, "original_text", None) or getattr(m, "text", None)
                             or getattr(m, "tex_string", "") or "?")
-                    texts.append((" ".join(str(name).split())[:28], box, isinstance(m, MarkupText)))
+                    full = " ".join(str(name).split())
+                    texts.append((full[:28], box, isinstance(m, MarkupText)))
+                    self._stage_full.append((full, box, code))
                 return
             if isinstance(m, VMobject) and len(m.points) and (
                     m.get_fill_opacity() > 0.05 or (m.get_stroke_opacity() > 0.05 and m.get_stroke_width() > 0)):
                 shapes.append(m)
             for sub in m.submobjects:
-                walk(sub)
+                walk(sub, code)
 
         for m in self.mobjects:
             walk(m)
         return texts, shapes
 
     def _layout_check(self):
-        if not CHECKS or self._ff:
+        if not CHECKS or self._ff or self._in_card:
             return
         try:
             texts, shapes = self._stage()
+            self._picture_check(shapes)
             # what the beat has shown so far (a stage cleared for the next beat is not "empty")
             self._beat_had |= {"shape"} if shapes else set()
             self._beat_had |= {"code" if code else "text" for _, _, code in texts}
@@ -1233,6 +1245,33 @@ class NarratedScene(MovingCameraScene):
         except Exception as e:   # a check must never break a render
             self._note("layout", f"check skipped ({type(e).__name__}: {e})")
 
+    def _picture_check(self, shapes):
+        """Words on stage, sentences on screen, and whether any shape is more than a frame
+        around text (an arrow, a wire, a plot, a drawn object)."""
+        words = 0
+        for full, _, code in self._stage_full:
+            if code:
+                self._beat_had.add("picture")   # a code listing is the subject itself
+                continue
+            # words of prose: numbers, hex values and one-letter variables are data, not words
+            n = len(re.findall(r"(?<![\w])[A-Za-z]{2,}[A-Za-z'-]*", full)) + len(re.findall(r"[一-鿿]", full)) // 2
+            words += n
+            if n >= 7:
+                self._note("sentence", f"a sentence on screen: '{full[:48]}': say it; show a picture "
+                                       f"or a label of at most four words")
+        self._beat_words = max(self._beat_words, words)
+        boxes = [b for _, b, _ in self._stage_full]
+        for s in shapes:
+            sb = self._ink_box(s)
+            if sb is None:
+                continue
+            area = (sb[2] - sb[0]) * (sb[3] - sb[1])
+            framed = sum((b[2] - b[0]) * (b[3] - b[1]) for b in boxes
+                         if b[0] >= sb[0] - 0.05 and b[2] <= sb[2] + 0.05 and b[1] >= sb[1] - 0.05 and b[3] <= sb[3] + 0.05)
+            if area < 0.05 or framed < 0.2 * area:   # a line or arrow, or a shape that is not a text frame
+                self._beat_had.add("picture")
+                return
+
     def _beat_report(self):
         """The beat on stage has been spoken: look at its picture and at how much moved."""
         if not CHECKS or self._ff or self._cap_text is None:
@@ -1243,6 +1282,11 @@ class NarratedScene(MovingCameraScene):
         elif self._beat_had == {"text"}:
             self._note("textonly", "only words were on the stage during this beat: build the thing "
                                    "the words describe (boxes, arrows, a graph) and change it")
+        elif "picture" not in self._beat_had:
+            self._note("slide", "every shape in this beat only frames text: draw the thing itself "
+                                "(arrows, wires, a plot, an object that moves) instead of boxes of words")
+        if self._beat_words > 15:
+            self._note("wordy", f"{self._beat_words} words on the stage at once: say them, keep labels")
         talk, n = self._cap_span, self._beat_plays
         if n < (3 if talk > 26 else 2 if talk > 14 else 0):
             self._note("still", f"{talk:.0f} s of narration with {n} animation step(s): add cue()s "
@@ -1450,6 +1494,7 @@ class NarratedScene(MovingCameraScene):
         self._beat_no += 1
         self._beat_plays = 1 if anims else 0
         self._beat_had = set()
+        self._beat_words = 0
         self._layout_check()
 
     def cue(self, phrase, *anims, run_time=None, lead=0.3):
@@ -1553,6 +1598,9 @@ class NarratedScene(MovingCameraScene):
 
     # -- set pieces
     def heading(self, text, color=YELLOW_D) -> VGroup:
+        if len(str(text).split()) > 6:
+            self._note("heading", f"heading '{text}' has {len(str(text).split())} words: a noun phrase "
+                                  f"of at most six")
         t = txt(text, 34, color)
         t.to_corner(UL, buff=0.45)
         line = Line(t.get_left(), t.get_right(), stroke_color=color, stroke_width=2)
@@ -1562,6 +1610,13 @@ class NarratedScene(MovingCameraScene):
         return head
 
     def title_card(self, ep=None, title=None, subtitle=None):
+        self._in_card = True
+        try:
+            return self._title_card(ep, title, subtitle)
+        finally:
+            self._in_card = False
+
+    def _title_card(self, ep=None, title=None, subtitle=None):
         """Series tag + "Episode n" + title (+ subtitle), spoken with a
         voice-over. With series.py all three come from there; pass ep=None and
         a title for a one-off video."""
@@ -1600,6 +1655,7 @@ class NarratedScene(MovingCameraScene):
         series.py, "The End". Also closes the last caption (for the .srt)."""
         self.uncaption()
         self.clear_stage()
+        self._in_card = True   # the recap is full sentences by design: not checked
         lines = [tr(s) for s in lines]
         head = txt(S("summary"), 40, YELLOW_D)
         items = VGroup(*[

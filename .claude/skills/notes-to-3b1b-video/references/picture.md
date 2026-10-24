@@ -19,4 +19,4 @@ Frame x −7.1…7.1, y −4…4. Heading top left (y ≈ 3.5); content y −2.9
 Code listings with a moving line highlight and token circling; register columns; bit rows and bit fields; memory grids and stacks; neural-network diagrams with a passing flash; heatmaps; axes and plots with a moving tracker; LaTeX formulas split into parts that recolour or transform. Anything else is built from shapes, arrows and labels.
 
 ## Rejected by the builder's check, so don't ask for it
-A highlight as a second rectangle (recolour the border); a line through text; two lines between the same two points (bend them apart); a words-only beat; a beat over 35 words with fewer than two changes, over 65 with fewer than three; anything below y = −2.9.
+A highlight as a second rectangle (recolour the border); a line through text; two lines between the same two points (bend them apart); a words-only beat; a beat over 35 words with fewer than two changes, over 65 with fewer than three; anything below y = −2.9; boxes that only hold words (a slide); a text of seven or more words; over fifteen words on stage at once; a heading over six words. `render.py` refuses such an episode.

@@ -14,7 +14,7 @@ Stages, in order. A FAIL in a cheap stage stops before the expensive one (--keep
   board     when the unit has BOARD-epNN.md (PIPELINE.md): every say() is a beat of it, word for word
   i18n      i18n_check.py, when the unit has more than one language
   render    render.py --preview --voice, from a folder on the system drive
-  log       [cue] [narration] [layout] [still] lines the kit wrote while rendering
+  log       [cue] [narration] [layout] [still] [slide] [wordy] [sentence] [heading] lines the kit wrote while rendering
   av        an audio stream; audio as long as the video; no silence over 9 s
   pace      words per minute from the .srt (120 to 165 is the range users accepted)
   sheets    contact sheets (end and mid of every subtitle) for you to open
@@ -40,7 +40,7 @@ from pace import cues, words  # noqa: E402
 from project import Unit, narration  # noqa: E402
 
 LINT_FAIL = ("choppy", "split", "long", "colon", "numeral", "cue")
-LOG_TAGS = ("[cue]", "[narration]", "[layout]", "[still]", "i18n: missing")
+LOG_TAGS = ("[cue]", "[narration]", "[layout]", "[still]", "[slide]", "[wordy]", "[sentence]", "[heading]", "i18n: missing")
 SOFT_TAGS = ("[empty]", "[textonly]")     # warnings, FAIL with --strict
 FIX = {
     "code": "see each line; the episode template in assets/ shows the expected shape",
@@ -51,7 +51,7 @@ FIX = {
     "render": "read the last lines of the log; fix the Python error; run again",
     "log": "[layout]: move the text named (next_to / shorter text); bend or offset one of two identical shapes. "
            "[still]: add cue() steps to that beat. [cue]: copy the phrase from the beat's text again. "
-           "[narration]: give speak= one sentence per sentence. [textonly] / [empty]: draw the thing the beat "
+           "[slide] / [wordy] / [sentence]: the frame is a slide; draw the thing the words describe, keep only labels of at most four words, and let the voice say the rest. [heading]: a noun phrase of at most six words. [narration]: give speak= one sentence per sentence. [textonly] / [empty]: draw the thing the beat "
            "talks about and keep it on stage",
     "report": "write the line for each sheet in REPORT.md (REPORT-epNN.md from the second episode on), "
               "then run again with --no-render",

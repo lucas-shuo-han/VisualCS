@@ -44,7 +44,7 @@ Order: baseline commit → board wording → voice by ear → code, scene by sce
 
 ## Delivery
 - [ ] `check.py` PASS and `asr_check.py` flags settled per episode
-- [ ] `render.py U --out videos/<course>-<unit>` (1080p, once, in the background); `pace.py`
+- [ ] `render.py U --out videos/<course>-<unit>` (1080p, once, in the background); `pace.py`. It refuses an episode with kit findings or a narration-lint FAIL and forces the checks on.
 - [ ] 1080p spot check: sheets of 2–3 episodes, one heard
 - [ ] `srt_to_script.py`; README with episode table and how to re-render
 - [ ] commit; final message: paths, episodes, coverage, notes errors, clips the user should hear, tokens per role (coordinator included), what was not checked

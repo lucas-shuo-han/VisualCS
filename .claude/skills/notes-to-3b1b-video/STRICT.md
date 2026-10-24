@@ -12,7 +12,8 @@ Follow the steps in order. Read no other file of this skill unless a step names 
 5. Never pass a check by weakening the work (gluing sentences, deleting an `assert`, moving text off-stage, `KIT_CHECKS=0`).
 6. Three failures at one gate: stop, report the last output.
 7. Deliver a voiced 480p preview and a report. 1080p only on the user's go.
-8. Report only what you did. "Not checked" is fine; an unverified claim is not.
+8. `render.py` refuses an episode with any kit finding or a narration-lint FAIL: there is no way around a gate.
+9. Report only what you did. "Not checked" is fine; an unverified claim is not.
 
 Fixed: one language; 2–5 scenes, 3–6 beats each, 2–6 min; default edge-tts voice (no network → `--no-voice`, say so); `PACE` from `assets/strict_series.py`; `txt()` for words, `mono()` for code and numbers, `MathTex` only if `latex --version` works; fixed camera.
 
@@ -100,6 +101,9 @@ self.cue("Five times eleven", FadeIn(product))
 | `[layout] runs through the text` | move label away, or end line at shape edge |
 | `[layout] shapes on top of each other` | bend one or remove the copy |
 | `[textonly]` | draw the thing the beat talks about |
+| `[slide]` | the shapes only frame words: draw the object itself (arrows, wires, a plot, parts that move) |
+| `[wordy]` / `[sentence]` | delete on-screen sentences; labels of at most four words; the voice says the rest |
+| `[heading]` | a noun phrase of at most six words |
 | `[empty]` | bring the picture in with the `say()` |
 | `[still]` | add `cue()` steps |
 | `av` | rerun; still failing → `--no-voice`, report it |
