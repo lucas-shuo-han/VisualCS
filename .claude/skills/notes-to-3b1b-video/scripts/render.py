@@ -31,6 +31,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from project import Unit, find_manim, latex_path  # noqa: E402
 
+# kit findings that keep an episode out of the delivery folder (check.py fails on the same)
+HARD_TAGS = ("[layout]", "[still]", "[slide]", "[wordy]", "[sentence]", "[heading]", "[cue]", "[textonly]", "[empty]")
+
 
 def render(unit, ep, lang, a, voice):
     n, scene = ep["num"], ep["scene"]
@@ -38,13 +41,18 @@ def render(unit, ep, lang, a, voice):
     media = media_root / lang / f"ep{n:02d}"
     media.mkdir(parents=True, exist_ok=True)
     quality = ["-ql"] if a.preview else ["-r", "1920,1080", "--fps", "30"]
-    env = {**os.environ, "KIT_LANG": lang, "PYTHONIOENCODING": "utf-8",
+    env = {**os.environ, "KIT_LANG": lang, "PYTHONIOENCODING": "utf-8", "KIT_CHECKS": "1",
            "KIT_TTS": "1" if voice else "0",
            "KIT_TTS_CACHE": os.environ.get("KIT_TTS_CACHE", str(media_root / "tts"))}
     if a.lax:
         env["KIT_I18N_LAX"] = "1"
     if latex_path():
         env["PATH"] = f"{latex_path()}{os.pathsep}{env['PATH']}"
+    if not a.preview:   # choppy, split or colon-ridden narration is not rendered at all
+        from check import lint_stage
+        status, summary, details = lint_stage(unit.src, n, lang)
+        if status == "FAIL":
+            return f"REFUSED, narration lint {summary}: " + " | ".join(details[:3])
     log = media_root / lang / f"ep{n:02d}.log"
     with open(log, "w", encoding="utf-8") as fh:
         # no animation cache: on a cache hit Manim's clock does not advance and the voice-over drifts
@@ -59,6 +67,12 @@ def render(unit, ep, lang, a, voice):
     if rc != 0:
         tail = log.read_text(encoding="utf-8", errors="replace").strip().splitlines()[-3:]
         return f"FAILED ({log}): " + " | ".join(tail)
+    # The kit's findings are a gate, not advice: a slide, a sentence on screen, a frozen beat or
+    # an overlap keeps the episode out of the delivery folder, whoever skipped check.py.
+    found = [x for x in log.read_text(encoding="utf-8", errors="replace").splitlines()
+             if x.startswith(HARD_TAGS)]
+    if found and not a.preview:
+        return f"REFUSED, {len(found)} kit finding(s), fix them (check.py shows how): " + " | ".join(found[:3])
     qdir = "480p15" if a.preview else "1080p30"
     mp4 = next((media / "videos").rglob(f"{qdir}/{scene}.mp4"))
     srt = mp4.with_suffix(".srt")
@@ -91,6 +105,11 @@ def main():
     a.manim = a.manim or find_manim()
 
     unit = Unit(a.src)
+    for f in ("manim_kit.py", "tts.py"):   # the checks live in the kit: a changed copy may have lost them
+        own, skill = Path(unit.src) / f, Path(__file__).resolve().parent / f
+        if own.exists() and own.read_bytes() != skill.read_bytes():
+            print(f"note: {own} differs from the skill's {f}; copy it again unless the change is deliberate "
+                  f"and reported", file=sys.stderr)
     eps = unit.select(a.episodes)
     if not eps:
         sys.exit(f"no episodes found in {unit.src}")
